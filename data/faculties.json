@@ -1,0 +1,202 @@
+[
+  {
+    "id": "bca",
+    "name": "Bachelor of Computer Application",
+    "slug": "bca",
+    "icon": "💻",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "csit",
+    "name": "B.Sc. Computer Science & Information Technology",
+    "slug": "csit",
+    "icon": "🖥️",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bit",
+    "name": "Bachelor of Information Technology",
+    "slug": "bit",
+    "icon": "🔧",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bba",
+    "name": "Bachelor of Business Administration",
+    "slug": "bba",
+    "icon": "💼",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bbm",
+    "name": "Bachelor of Business Management",
+    "slug": "bbm",
+    "icon": "📈",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bim",
+    "name": "Bachelor of Information Management",
+    "slug": "bim",
+    "icon": "📊",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bhm",
+    "name": "Bachelor of Hotel Management",
+    "slug": "bhm",
+    "icon": "🏨",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bttm",
+    "name": "Bachelor of Travel and Tourism Management",
+    "slug": "bttm",
+    "icon": "✈️",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bpa",
+    "name": "Bachelor of Public Administration",
+    "slug": "bpa",
+    "icon": "🏛️",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "btech",
+    "name": "B.Tech (Food Technology)",
+    "slug": "btech",
+    "icon": "🍎",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "be",
+    "name": "Bachelor of Engineering (Computer)",
+    "slug": "be",
+    "icon": "⚙️",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "barch",
+    "name": "Bachelor of Architecture",
+    "slug": "barch",
+    "icon": "📐",
+    "systemType": "SEMESTER",
+    "semCount": 10
+  },
+  {
+    "id": "bsag",
+    "name": "B.Sc. Agriculture",
+    "slug": "bsag",
+    "icon": "🌱",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bvsc",
+    "name": "B.V.Sc. & AH (Veterinary Science)",
+    "slug": "bvsc",
+    "icon": "🐾",
+    "systemType": "SEMESTER",
+    "semCount": 10
+  },
+  {
+    "id": "bsfor",
+    "name": "B.Sc. Forestry",
+    "slug": "bsfor",
+    "icon": "🌲",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bicte",
+    "name": "BICTE (B.Ed. in ICT)",
+    "slug": "bicte",
+    "icon": "🎓",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "ballb",
+    "name": "BA LLB (Integrated Law)",
+    "slug": "ballb",
+    "icon": "⚖️",
+    "systemType": "SEMESTER",
+    "semCount": 10
+  },
+  {
+    "id": "bscnur",
+    "name": "B.Sc. Nursing / Allied Health",
+    "slug": "bscnur",
+    "icon": "🏥",
+    "systemType": "SEMESTER",
+    "semCount": 8
+  },
+  {
+    "id": "bbs",
+    "name": "Bachelor of Business Studies",
+    "slug": "bbs",
+    "icon": "📈",
+    "systemType": "YEARLY",
+    "semCount": 4
+  },
+  {
+    "id": "ba",
+    "name": "Bachelor of Arts",
+    "slug": "ba",
+    "icon": "🎨",
+    "systemType": "YEARLY",
+    "semCount": 4
+  },
+  {
+    "id": "bsw",
+    "name": "Bachelor of Social Work",
+    "slug": "bsw",
+    "icon": "🤝",
+    "systemType": "YEARLY",
+    "semCount": 4
+  },
+  {
+    "id": "bed",
+    "name": "B.Ed. (General Education)",
+    "slug": "bed",
+    "icon": "📚",
+    "systemType": "YEARLY",
+    "semCount": 4
+  },
+  {
+    "id": "llb",
+    "name": "Bachelor of Law",
+    "slug": "llb",
+    "icon": "⚖️",
+    "systemType": "YEARLY",
+    "semCount": 3
+  },
+  {
+    "id": "bsc",
+    "name": "B.Sc. (General Science)",
+    "slug": "bsc",
+    "icon": "🔬",
+    "systemType": "YEARLY",
+    "semCount": 4
+  },
+  {
+    "id": "mbbs",
+    "name": "MBBS / BDS",
+    "slug": "mbbs",
+    "icon": "🩺",
+    "systemType": "YEARLY",
+    "semCount": 4
+  }
+]

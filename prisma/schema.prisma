@@ -1,0 +1,143 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum Package {
+  FREE
+  SEMESTER_PASS
+  ELITE_AI
+}
+
+enum SystemType {
+  SEMESTER
+  YEARLY
+}
+
+enum NoteType {
+  HANDWRITTEN
+  SLIDES_PPT
+  PDF_BOOK
+  SHORT_NOTES
+  PROJECT_WORK
+  PROJECT
+  GUIDE
+}
+
+enum ExamType {
+  BOARD_EXAM
+  INTERNAL_EXAM
+  BACK_PAPER
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  name                  String
+  email                 String    @unique
+  password              String
+  role                  Role      @default(STUDENT)
+  packageType           Package   @default(FREE)
+  isEmailVerified       Boolean   @default(false)
+  subscriptionExpiresAt DateTime?
+  facultyId             String?
+  semesterOrder         Int?      // which semester/year the student is in
+  payments              Payment[]
+  createdAt             DateTime  @default(now())
+}
+
+model VerificationOTP {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  type      String   // 'REGISTER' | 'FORGOT_PASSWORD'
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, type])
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  transactionId String   @unique
+  screenshotUrl String?
+  amount        Int
+  status        String   @default("PENDING") // PENDING | COMPLETED | FAILED
+  packageBought Package
+  createdAt     DateTime @default(now())
+}
+
+model Faculty {
+  id         String     @id
+  name       String
+  slug       String     @unique
+  icon       String?
+  systemType SystemType @default(SEMESTER)
+  semesters  Semester[]
+}
+
+model Semester {
+  id        String    @id @default(uuid())
+  name      String
+  order     Int       @default(1)
+  facultyId String
+  faculty   Faculty   @relation(fields: [facultyId], references: [id])
+  subjects  Subject[]
+}
+
+model Subject {
+  id          String       @id @default(uuid())
+  title       String
+  code        String
+  semesterId  String
+  semester    Semester     @relation(fields: [semesterId], references: [id])
+  notes       Note[]
+  pastPapers  PastPaper[]
+  cheatsheets Cheatsheet[]
+}
+
+model Note {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  cloudinaryUrl String
+  fileSize      String?
+  noteType      NoteType @default(PDF_BOOK)
+  isPremium     Boolean  @default(false)
+  author        String?
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id])
+  downloadCount Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model PastPaper {
+  id            String   @id @default(uuid())
+  year          Int
+  examType      ExamType @default(BOARD_EXAM)
+  cloudinaryUrl String
+  extractedText String?  @db.LongText
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+model Cheatsheet {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.LongText
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  createdAt DateTime @default(now())
+}
