@@ -3,17 +3,32 @@ import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
 import FacultiesList from '@/components/FacultiesList'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'All TU Faculties — BCA, CSIT, BIT, BBS, BBA & More',
   description: 'Browse all Tribhuvan University faculties and access free study notes, past papers, and AI exam predictions.',
 }
 
 export default async function FacultiesPage() {
-  const faculties = await prisma.faculty.findMany({
-    where: { visible: true },
-    orderBy: { name: 'asc' },
-    include: { _count: { select: { semesters: true } } },
-  })
+  let faculties: Array<{
+    id: string
+    name: string
+    slug: string
+    icon: string | null
+    systemType: 'SEMESTER' | 'YEARLY'
+    _count: { semesters: number }
+  }> = []
+
+  try {
+    faculties = await prisma.faculty.findMany({
+      where: { visible: true },
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { semesters: true } } },
+    })
+  } catch {
+    faculties = []
+  }
 
   return (
     <div className="container" style={{ padding: '60px 24px' }}>

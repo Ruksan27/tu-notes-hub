@@ -3,6 +3,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'TU Notes Hub – Free Notes, Past Papers & AI Exam Predictions for Nepal Students',
   description: 'Download free study notes and past papers for all TU faculties (BCA, CSIT, BIT, BBS, BBA). Get AI-powered exam question predictions.',
@@ -16,11 +18,18 @@ const STATS = [
 ]
 
 export default async function HomePage() {
-  const faculties = await prisma.faculty.findMany({
-    where: { visible: true },
-    take: 8,
-    orderBy: { name: 'asc' },
-  })
+  let faculties: Array<{ id: string; name: string; slug: string; icon: string | null }> = []
+
+  try {
+    faculties = await prisma.faculty.findMany({
+      where: { visible: true },
+      take: 8,
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, slug: true, icon: true },
+    })
+  } catch {
+    faculties = []
+  }
 
   return (
     <>
