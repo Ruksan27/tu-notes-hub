@@ -130,7 +130,7 @@ export default function FacultiesList({ initialFaculties }: { initialFaculties: 
                 <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', marginBottom: '16px', lineHeight: 1.5 }}>
                   {f.name}
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyComposite: 'space-between', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
                     {f._count.semesters} {f.systemType === 'YEARLY' ? 'Years' : 'Semesters'}
                   </span>
