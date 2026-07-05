@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import SubjectRow from '@/components/SubjectRow'
+import AdUnit from '@/components/ads/AdUnit'
 
 interface Props { params: Promise<{ slug: string; semester: string }> }
 
@@ -62,7 +64,7 @@ export default async function SemesterPage({ params }: Props) {
       </div>
 
       {/* Header */}
-      <div style={{ marginBottom: '48px' }}>
+      <div style={{ marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '14px',
@@ -83,7 +85,10 @@ export default async function SemesterPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Subjects List */}
+      {/* Top Banner Ad */}
+      <AdUnit type="banner" slot="semester-top-banner" />
+
+      {/* Subjects List & Sidebar Grid */}
       {sem.subjects.length === 0 ? (
         <div className="glass-card" style={{ padding: '60px 40px', textAlign: 'center' }}>
           <div style={{ fontSize: '56px', marginBottom: '16px' }}>📚</div>
@@ -93,125 +98,19 @@ export default async function SemesterPage({ params }: Props) {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {sem.subjects.map((subject) => {
-            const totalContent = subject.notes.length + subject.pastPapers.length + subject.cheatsheets.length
-            return (
-              <div key={subject.id} className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-                {/* Subject Header */}
-                <div style={{
-                  padding: '24px 28px',
-                  borderBottom: '1px solid var(--clr-border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '16px',
-                  flexWrap: 'wrap',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{
-                      padding: '6px 12px',
-                      borderRadius: '8px',
-                      background: 'rgba(6,182,212,0.12)',
-                      color: 'var(--clr-accent)',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      fontFamily: 'var(--font-display)',
-                    }}>{subject.code}</div>
-                    <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{subject.title}</h3>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <span className="badge badge-free">📄 {subject.notes.length}</span>
-                    <span className="badge badge-semester">📝 {subject.pastPapers.length}</span>
-                    <span className="badge badge-elite">📋 {subject.cheatsheets.length}</span>
-                  </div>
-                </div>
+        <div className="semester-layout-grid" style={{ marginTop: '24px' }}>
+          {/* Subjects List */}
+          <div className="subjects-column">
+            {sem.subjects.map((subject) => (
+              <SubjectRow key={subject.id} subject={subject as any} />
+            ))}
+          </div>
 
-                {/* Content */}
-                {totalContent === 0 ? (
-                  <div style={{ padding: '32px', textAlign: 'center', color: 'var(--clr-text-3)', fontSize: '14px' }}>
-                    📭 No content uploaded yet for this subject.
-                  </div>
-                ) : (
-                  <div style={{ padding: '20px 28px' }}>
-                    {/* Notes */}
-                    {subject.notes.length > 0 && (
-                      <div style={{ marginBottom: '20px' }}>
-                        <h4 style={{ fontSize: '14px', color: 'var(--clr-text-3)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📄 Study Notes</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
-                          {subject.notes.map((note) => (
-                            <Link key={note.id} href={`/download/${note.id}?type=note`} style={{ textDecoration: 'none' }}>
-                              <div style={{
-                                padding: '14px 16px',
-                                background: 'rgba(255,255,255,0.03)',
-                                border: '1px solid rgba(255,255,255,0.06)',
-                                borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                              }}>
-                                <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px', lineHeight: 1.4 }}>{note.title}</p>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <span style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>
-                                    {note.noteType.replace('_', ' ')}
-                                  </span>
-                                  {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '1px 6px' }}>PREMIUM</span>}
-                                  <span style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>⬇ {note.downloadCount}</span>
-                                </div>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Past Papers */}
-                    {subject.pastPapers.length > 0 && (
-                      <div style={{ marginBottom: '20px' }}>
-                        <h4 style={{ fontSize: '14px', color: 'var(--clr-text-3)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📝 Past Papers</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-                          {subject.pastPapers.map((pp) => (
-                            <Link key={pp.id} href={`/download/${pp.id}?type=paper`} style={{ textDecoration: 'none' }}>
-                              <div style={{
-                                padding: '14px 16px',
-                                background: 'rgba(6,182,212,0.05)',
-                                border: '1px solid rgba(6,182,212,0.15)',
-                                borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                              }}>
-                                <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{pp.year} {pp.examType.replace('_', ' ')}</p>
-                                <span style={{ fontSize: '11px', color: 'var(--clr-accent)' }}>View Paper →</span>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Cheatsheets */}
-                    {subject.cheatsheets.length > 0 && (
-                      <div>
-                        <h4 style={{ fontSize: '14px', color: 'var(--clr-text-3)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📋 Cheatsheets</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-                          {subject.cheatsheets.map((cs) => (
-                            <div key={cs.id} style={{
-                              padding: '14px 16px',
-                              background: 'rgba(99,102,241,0.05)',
-                              border: '1px solid rgba(99,102,241,0.15)',
-                              borderRadius: 'var(--radius-sm)',
-                            }}>
-                              <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)' }}>{cs.title}</p>
-                              <span className="badge badge-elite" style={{ fontSize: '9px', marginTop: '6px' }}>ELITE AI ONLY</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+          {/* Sidebar Ads Column */}
+          <div className="ads-sidebar-column">
+            <AdUnit type="sidebar" slot="semester-sidebar-1" />
+            <AdUnit type="inline" slot="semester-sidebar-2" />
+          </div>
         </div>
       )}
     </div>

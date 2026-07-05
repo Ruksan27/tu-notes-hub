@@ -32,6 +32,7 @@ enum NoteType {
   PROJECT_WORK
   PROJECT
   GUIDE
+  LAB_WORK
 }
 
 enum ExamType {
@@ -85,6 +86,7 @@ model Faculty {
   icon       String?
   systemType SystemType @default(SEMESTER)
   semesters  Semester[]
+  visible    Boolean    @default(false)
 }
 
 model Semester {

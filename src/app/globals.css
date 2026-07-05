@@ -741,3 +741,36 @@ img { max-width: 100%; display: block; }
   .sidebar { position: static; }
 }
 
+/* ── Semester Subjects-Ads Layout Grid ── */
+.semester-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 28px;
+  align-items: start;
+}
+
+.subjects-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ads-sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 84px;
+}
+
+@media (max-width: 1024px) {
+  .semester-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  .ads-sidebar-column {
+    position: static;
+    margin-top: 20px;
+  }
+}
+
+

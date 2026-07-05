@@ -6,7 +6,7 @@ import { toast } from 'react-toastify'
 import { motion } from 'motion/react'
 import { AdminSkeleton } from '@/components/SkeletonLoader'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats'
 
 interface Payment {
   id: string
@@ -24,6 +24,7 @@ interface Faculty {
   name: string
   icon: string
   systemType: 'SEMESTER' | 'YEARLY'
+  visible?: boolean
 }
 
 export default function AdminPage() {
@@ -84,6 +85,7 @@ export default function AdminPage() {
   const navItems: { id: AdminTab; icon: string; label: string }[] = [
     { id: 'overview',  icon: '📊', label: 'Overview' },
     { id: 'payments',  icon: '💳', label: 'Verify Payments' },
+    { id: 'stats',     icon: '📈', label: 'Material Stats' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
   ]
@@ -179,6 +181,7 @@ export default function AdminPage() {
                   style={{
                     background: 'rgba(245,158,11,0.07)',
                     border: '1px solid rgba(245,158,11,0.25)',
+                    marginBottom: '16px',
                   }}
                 >
                   <div className="flex items-center gap-4">
@@ -201,6 +204,48 @@ export default function AdminPage() {
                   </button>
                 </motion.div>
               )}
+
+              {/* Database and Visibility Sync Alert */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center justify-between flex-wrap gap-4 p-6 rounded-xl"
+                style={{
+                  background: 'rgba(99,102,241,0.07)',
+                  border: '1px solid rgba(99,102,241,0.25)',
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <span className="text-3xl">🎛️</span>
+                  <div>
+                    <h4 className="font-bold" style={{ color: 'var(--clr-primary-h)', marginBottom: '2px' }}>
+                      Database Visibility Sync
+                    </h4>
+                    <p className="text-sm" style={{ color: 'var(--clr-text-2)' }}>
+                      Set BCA as the only visible faculty on the frontend (and hide other faculties).
+                    </p>
+                  </div>
+                </div>
+                <button
+                  className="btn btn-sm"
+                  style={{ background: 'var(--grad-brand)', color: '#fff', fontWeight: 700, border: 'none' }}
+                  onClick={async () => {
+                    if (!window.confirm('Run visibility migration? This sets BCA as the only visible faculty.')) return
+                    try {
+                      const res = await fetch('/api/admin/migrate', { method: 'POST' })
+                      const data = await res.json()
+                      if (res.ok) {
+                        toast.success('Database visibility synchronized successfully! 🎉')
+                      } else {
+                        toast.error(data.error || 'Synchronization failed')
+                      }
+                    } catch {
+                      toast.error('Network error during sync')
+                    }
+                  }}
+                >
+                  ⚡ Sync Faculty Defaults
+                </button>
+              </motion.div>
             </motion.div>
           )}
 
@@ -295,6 +340,9 @@ export default function AdminPage() {
           {/* ── Faculties Tab ── */}
           {tab === 'faculties' && <FacultiesTab />}
 
+          {/* ── Stats Tab ── */}
+          {tab === 'stats' && <StatsTab />}
+
           {/* ── Upload Tab ── */}
           {tab === 'upload' && <UploadTab />}
         </main>
@@ -307,12 +355,21 @@ export default function AdminPage() {
 function UploadTab() {
   const [contentType, setContentType] = useState<'NOTE' | 'PAST_PAPER' | 'CHEATSHEET'>('NOTE')
   const [faculties, setFaculties] = useState<Faculty[]>([])
-  const [semesters, setSemesters] = useState<{ id: string; name: string }[]>([])
+  const [semesters, setSemesters] = useState<{ id: string; name: string; order: number }[]>([])
   const [subjects, setSubjects] = useState<{ id: string; name: string; code: string; title: string }[]>([])
   const [uploading, setUploading] = useState(false)
+  const [projectRestriction, setProjectRestriction] = useState<{
+    isRestricted: boolean
+    maxProjects: number | null
+    projectCount: number
+    canUpload: boolean
+    existingProjects: { id: string; title: string }[]
+  } | null>(null)
+  const [checkingRestriction, setCheckingRestriction] = useState(false)
 
   const [facultyId, setFacultyId] = useState('')
   const [semesterId, setSemesterId] = useState('')
+  const [semesterOrder, setSemesterOrder] = useState(0)
   const [subjectId, setSubjectId] = useState('')
   const [noteTitle, setNoteTitle] = useState('')
   const [noteDescription, setNoteDescription] = useState('')
@@ -331,18 +388,41 @@ function UploadTab() {
   }, [])
 
   useEffect(() => {
-    if (!facultyId) { setSemesters([]); setSemesterId(''); return }
+    if (!facultyId) { setSemesters([]); setSemesterId(''); setSemesterOrder(0); return }
     fetch(`/api/admin/semesters?facultyId=${facultyId}`).then(r => r.json()).then(d => setSemesters(d.semesters || []))
   }, [facultyId])
 
   useEffect(() => {
     if (!semesterId) { setSubjects([]); setSubjectId(''); return }
+    const sem = semesters.find(s => s.id === semesterId)
+    if (sem) setSemesterOrder(sem.order || 0)
     fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => setSubjects(d.subjects || []))
-  }, [semesterId])
+  }, [semesterId, semesters])
+
+  // Check project restrictions whenever subjectId or noteType changes
+  useEffect(() => {
+    if (!subjectId || noteType !== 'PROJECT') {
+      setProjectRestriction(null)
+      return
+    }
+    setCheckingRestriction(true)
+    fetch(`/api/admin/projects/check?subjectId=${subjectId}`)
+      .then(r => r.json())
+      .then(d => setProjectRestriction(d))
+      .catch(() => setProjectRestriction(null))
+      .finally(() => setCheckingRestriction(false))
+  }, [subjectId, noteType])
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
     if (!subjectId) { toast.error('Please select a subject'); return }
+
+    // Block upload if project restriction is exceeded
+    if (noteType === 'PROJECT' && projectRestriction && !projectRestriction.canUpload) {
+      toast.error(`⚠️ BCA Sem ${semesterOrder} can only have 1 project per subject. Delete the existing project first.`)
+      return
+    }
+
     setUploading(true)
     const fd = new FormData()
     fd.append('contentType', contentType)
@@ -444,13 +524,86 @@ function UploadTab() {
               style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Note Title</label>
-                <input className="input-field" placeholder="e.g. OOP Full Notes — Chapter 1-8" required value={noteTitle} onChange={e => setNoteTitle(e.target.value)} />
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
+                  {noteType === 'PROJECT' ? 'Project Title' : noteType === 'LAB_WORK' ? 'Lab Work Title' : 'Note Title'}
+                </label>
+                <input
+                  className="input-field"
+                  placeholder={
+                    noteType === 'PROJECT'
+                      ? 'e.g. E-Commerce System with Recommendation Engine'
+                      : noteType === 'LAB_WORK'
+                      ? 'e.g. Computer Graphics Lab Work 1-10'
+                      : 'e.g. OOP Full Notes — Chapter 1-8'
+                  }
+                  required
+                  value={noteTitle}
+                  onChange={e => setNoteTitle(e.target.value)}
+                />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Description (optional)</label>
-                <textarea className="input-field" placeholder="What does this document cover?" style={{ minHeight: '80px', resize: 'vertical' }} value={noteDescription} onChange={e => setNoteDescription(e.target.value)} />
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
+                  {noteType === 'PROJECT' ? 'Project Description (Abstract & Features)' : 'Description (optional)'}
+                </label>
+                <textarea
+                  className="input-field"
+                  placeholder={
+                    noteType === 'PROJECT'
+                      ? 'Describe what this project does. List major features, technologies used, database system, etc.'
+                      : 'What does this document cover?'
+                  }
+                  style={{ minHeight: '80px', resize: 'vertical' }}
+                  value={noteDescription}
+                  onChange={e => setNoteDescription(e.target.value)}
+                />
               </div>
+
+              {/* Project Restriction Banner */}
+              {noteType === 'PROJECT' && subjectId && (
+                <div>
+                  {checkingRestriction ? (
+                    <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', fontSize: '13px', color: 'var(--clr-text-3)' }}>
+                      <span className="spinner" style={{ width: '14px', height: '14px', marginRight: '8px' }} /> Checking project restrictions...
+                    </div>
+                  ) : projectRestriction ? (
+                    <div style={{
+                      padding: '16px',
+                      borderRadius: '10px',
+                      background: projectRestriction.canUpload
+                        ? 'rgba(16, 185, 129, 0.07)'
+                        : 'rgba(239, 68, 68, 0.08)',
+                      border: `1px solid ${
+                        projectRestriction.canUpload
+                          ? 'rgba(16,185,129,0.3)'
+                          : 'rgba(239,68,68,0.3)'
+                      }`,
+                    }}>
+                      {projectRestriction.isRestricted ? (
+                        <>
+                          <p style={{ fontWeight: 700, marginBottom: '6px', fontSize: '13px', color: projectRestriction.canUpload ? '#6ee7b7' : '#fca5a5' }}>
+                            {projectRestriction.canUpload
+                              ? `✅ BCA Sem ${semesterOrder}: Slot available (0/1 project uploaded)`
+                              : `❌ BCA Sem ${semesterOrder}: Project limit reached (1/1)`
+                            }
+                          </p>
+                          {!projectRestriction.canUpload && projectRestriction.existingProjects.length > 0 && (
+                            <p style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
+                              Existing: <strong style={{ color: 'var(--clr-text-2)' }}>{projectRestriction.existingProjects[0].title}</strong>
+                            </p>
+                          )}
+                          <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
+                            BCA 4th, 5th & 7th semester allows only 1 project per subject.
+                          </p>
+                        </>
+                      ) : (
+                        <p style={{ fontSize: '13px', color: '#6ee7b7' }}>
+                          ✅ No project limit for this semester. ({projectRestriction.projectCount} project(s) already uploaded)
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Format</label>
@@ -459,6 +612,10 @@ function UploadTab() {
                     <option value="HANDWRITTEN">✍️ Handwritten</option>
                     <option value="SLIDES_PPT">🖥️ Slides/PPTX</option>
                     <option value="SHORT_NOTES">📝 Short Notes</option>
+                    <option value="PROJECT_WORK">📁 Project Work</option>
+                    <option value="PROJECT">💻 Project</option>
+                    <option value="GUIDE">📘 Guide</option>
+                    <option value="LAB_WORK">🧪 Lab Work</option>
                   </select>
                 </div>
                 <div>
@@ -565,14 +722,77 @@ function FileDropZone({ label, accept, file, onFile, hint, required }: {
 /* ── Faculties Tab ── */
 function FacultiesTab() {
   const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
   }, [])
 
+  async function toggleVisibility(facultyId: string, currentVisible: boolean) {
+    try {
+      const res = await fetch('/api/admin/faculties', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ facultyId, visible: !currentVisible }),
+      })
+      if (res.ok) {
+        toast.success('Faculty visibility updated! 🎉')
+        setFaculties(prev => prev.map(f => f.id === facultyId ? { ...f, visible: !currentVisible } : f))
+      } else {
+        toast.error('Failed to update visibility')
+      }
+    } catch {
+      toast.error('Network error updating visibility')
+    }
+  }
+
+  const filtered = faculties.filter(f =>
+    f.name.toLowerCase().includes(search.toLowerCase()) ||
+    f.id.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h3 className="section-title">🏫 Course Catalogue</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div>
+          <h3 className="section-title" style={{ margin: 0 }}>🏫 Course Catalogue</h3>
+          <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
+            Tick ✓ to show on frontend. Untick to hide. Students only see checked faculties.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            className="input-field"
+            placeholder="🔍 Search faculties..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ maxWidth: '220px', padding: '8px 14px', borderRadius: '8px' }}
+          />
+          <button
+            className="btn btn-sm"
+            style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', color: 'var(--clr-primary-h)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+            onClick={async () => {
+              if (!window.confirm('This will make BCA the ONLY visible faculty and hide all others. Continue?')) return
+              try {
+                const res = await fetch('/api/admin/faculties/set-defaults', { method: 'POST' })
+                const data = await res.json()
+                if (res.ok) {
+                  toast.success('Done! BCA is now the only visible faculty.')
+                  fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
+                } else {
+                  toast.error(data.error || 'Failed to reset defaults')
+                }
+              } catch {
+                toast.error('Network error')
+              }
+            }}
+          >
+            🔄 Reset: BCA Only
+          </button>
+        </div>
+      </div>
+
       <div className="table-wrap">
         <table>
           <thead>
@@ -581,17 +801,18 @@ function FacultiesTab() {
               <th>Faculty Name</th>
               <th>Code</th>
               <th>System</th>
+              <th style={{ textAlign: 'center' }}>Visible on Frontend</th>
             </tr>
           </thead>
           <tbody>
-            {faculties.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'center', padding: '48px', color: 'var(--clr-text-3)' }}>
-                  No faculties configured.
+                <td colSpan={5} style={{ textAlign: 'center', padding: '48px', color: 'var(--clr-text-3)' }}>
+                  {faculties.length === 0 ? 'No faculties configured.' : 'No matching faculties found.'}
                 </td>
               </tr>
             ) : (
-              faculties.map((f) => (
+              filtered.map((f) => (
                 <tr key={f.id}>
                   <td style={{ fontSize: '22px' }}>{f.icon}</td>
                   <td style={{ fontWeight: 600, color: 'var(--clr-text-1)' }}>{f.name}</td>
@@ -605,12 +826,138 @@ function FacultiesTab() {
                       {f.systemType}
                     </span>
                   </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!f.visible}
+                      onChange={() => toggleVisibility(f.id, !!f.visible)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        cursor: 'pointer',
+                        accentColor: 'var(--clr-primary)',
+                      }}
+                    />
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+    </motion.div>
+  )
+}
+
+/* ── Stats Tab ── */
+function StatsTab() {
+  const [statsData, setStatsData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    fetch('/api/admin/stats')
+      .then(r => r.json())
+      .then(d => {
+        setStatsData(d.stats || [])
+        setLoading(false)
+      })
+      .catch(() => {
+        toast.error('Failed to load material stats')
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center', color: 'var(--clr-text-3)' }}>
+        <span className="spinner" /> Loading statistics...
+      </div>
+    )
+  }
+
+  const filtered = statsData.filter(fac =>
+    fac.name.toLowerCase().includes(search.toLowerCase()) ||
+    fac.id.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+        <div>
+          <h3 className="section-title" style={{ margin: 0 }}>📈 Course Material Statistics</h3>
+          <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: '4px 0 0 0' }}>
+            Detailed breakdown of uploaded resource counts by faculty and semester/year.
+          </p>
+        </div>
+        <input
+          type="text"
+          className="input-field"
+          placeholder="🔍 Search stats by faculty..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ maxWidth: '280px', padding: '8px 14px', borderRadius: '8px' }}
+        />
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: 'var(--clr-text-3)' }}>
+          {statsData.length === 0 ? 'No data available.' : 'No matching statistics found.'}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          {filtered.map((fac) => (
+            <div key={fac.id} className="glass-card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--clr-border)', paddingBottom: '12px' }}>
+                <span style={{ fontSize: '28px' }}>{fac.icon || '🏫'}</span>
+                <div>
+                  <h4 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--clr-text-1)' }}>
+                    {fac.name} ({fac.id.toUpperCase()})
+                  </h4>
+                  <p style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
+                    System Type: {fac.systemType}
+                  </p>
+                </div>
+              </div>
+
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Period</th>
+                      <th>Notes</th>
+                      <th>Lab Work</th>
+                      <th>Project Work</th>
+                      <th>Projects</th>
+                      <th>Guides</th>
+                      <th>Past Papers</th>
+                      <th>Cheatsheets</th>
+                      <th>Total Resources</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fac.semesters.map((sem: any) => (
+                      <tr key={sem.id}>
+                        <td style={{ fontWeight: 600, color: 'var(--clr-primary-h)' }}>
+                          {fac.systemType === 'YEARLY' ? `${sem.order} Year` : `Semester ${sem.order}`}
+                        </td>
+                        <td>{sem.notesCount}</td>
+                        <td>{sem.labWorkCount || 0}</td>
+                        <td>{sem.projectWorkCount}</td>
+                        <td>{sem.projectCount}</td>
+                        <td>{sem.guideCount}</td>
+                        <td>{sem.pastPapersCount}</td>
+                        <td>{sem.cheatsheetsCount}</td>
+                        <td style={{ fontWeight: 700, color: 'var(--clr-accent)' }}>{sem.total}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </motion.div>
   )
 }

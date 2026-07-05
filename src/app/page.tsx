@@ -16,7 +16,11 @@ const STATS = [
 ]
 
 export default async function HomePage() {
-  const faculties = await prisma.faculty.findMany({ take: 8, orderBy: { name: 'asc' } })
+  const faculties = await prisma.faculty.findMany({
+    where: { visible: true },
+    take: 8,
+    orderBy: { name: 'asc' },
+  })
 
   return (
     <>
