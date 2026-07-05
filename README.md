@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TU Notes Hub
 
-## Getting Started
+TU Notes Hub is a Next.js app for browsing and managing semester/year notes with authentication, admin tooling, AI comparison, payments, and uploads.
 
-First, run the development server:
+## Local setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create your env file:
+
+```bash
+copy .env.example .env.local
+```
+
+3. Fill required values in `.env.local`.
+
+4. Start dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Required environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Minimum required to build and run:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `DATABASE_URL`
+- `JWT_SECRET`
 
-## Learn More
+Used by email features:
 
-To learn more about Next.js, take a look at the following resources:
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USER`
+- `EMAIL_PASS`
+- `EMAIL_FROM`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Used by AI features:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `GEMINI_KEY_1`
+- `GEMINI_KEY_2`
+- `GEMINI_KEY_3`
 
-## Deploy on Vercel
+Used by upload/media features:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Optional:
+
+- `NEXT_TELEMETRY_DISABLED=1`
+
+## Vercel deployment checklist
+
+Add the same environment variables in Vercel Project Settings for all needed environments (Production, Preview, Development).
+
+Most common Prisma error:
+
+```txt
+Environment variable not found: DATABASE_URL
+--> schema.prisma
+```
+
+Fix: add `DATABASE_URL` in Vercel settings and redeploy.
+
+## Scripts
+
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
