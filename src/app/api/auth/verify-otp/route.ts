@@ -21,6 +21,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'OTP expired. Please request a new one.' }, { status: 400 })
     }
 
+    if (type === 'FORGOT_PASSWORD') {
+      // Don't delete OTP here, keep it for the actual reset-password step
+      return NextResponse.json({ message: 'OTP is valid' })
+    }
+
     const user = await prisma.user.update({
       where: { email },
       data: { isEmailVerified: true },
@@ -28,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.verificationOTP.delete({ where: { id: record.id } })
 
-    // Set auth cookie on verification
+    // Set auth cookie on registration verification
     await setAuthCookie({
       userId: user.id,
       email: user.email,

@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
     const res = await fetch('/api/auth/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code, type: 'RESET' }),
+      body: JSON.stringify({ email, code, type: 'FORGOT_PASSWORD' }),
     })
     setLoading(false)
     if (res.ok) { toast.success('OTP verified!'); setStep('RESET') }

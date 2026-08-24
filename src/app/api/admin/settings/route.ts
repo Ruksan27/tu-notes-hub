@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { uploadToCloudinary } from '@/lib/cloudinary'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,15 +28,31 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { whatsappLink, paymentQrUrl } = await req.json()
+    const fd = await req.formData()
+    const whatsappLink = fd.get('whatsappLink') as string
+    const paymentQrFile = fd.get('paymentQr') as File | null
+
     if (!whatsappLink) {
       return NextResponse.json({ error: 'whatsappLink is required' }, { status: 400 })
     }
 
+    let paymentQrUrl: string | undefined = undefined
+
+    if (paymentQrFile && paymentQrFile.size > 0) {
+      const buffer = Buffer.from(await paymentQrFile.arrayBuffer())
+      const uploadRes = await uploadToCloudinary(buffer, 'tu-notes/settings', 'image')
+      paymentQrUrl = uploadRes.url
+    }
+
+    const updateData: any = { whatsappLink }
+    if (paymentQrUrl !== undefined) {
+      updateData.paymentQrUrl = paymentQrUrl
+    }
+
     const settings = await prisma.siteSettings.upsert({
       where: { id: 'singleton' },
-      create: { id: 'singleton', whatsappLink, paymentQrUrl },
-      update: { whatsappLink, paymentQrUrl },
+      create: { id: 'singleton', whatsappLink, ...(paymentQrUrl && { paymentQrUrl }) },
+      update: updateData,
     })
 
     return NextResponse.json({ success: true, settings })
