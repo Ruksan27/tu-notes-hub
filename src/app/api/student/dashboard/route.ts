@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
         role: true,
         facultyId: true,
         semesterOrder: true,
+        sellerProfile: true,
       },
     })
 

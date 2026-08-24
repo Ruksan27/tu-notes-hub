@@ -5,8 +5,9 @@ import { toast } from 'react-toastify'
 import { motion } from 'motion/react'
 import { AdminSkeleton } from '@/components/SkeletonLoader'
 import AdminProjectsTab from '@/components/admin/AdminProjectsTab'
+import AdminSellersTab from '@/components/admin/AdminSellersTab'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers'
 
 interface Payment {
   id: string
@@ -108,6 +109,7 @@ export default function AdminPage() {
     { id: 'overview',  icon: '📊', label: 'Overview' },
     { id: 'users',     icon: '👥', label: 'Users & Plans' },
     { id: 'payments',  icon: '💳', label: 'Verify Payments' },
+    { id: 'sellers',   icon: '🛍️', label: 'Seller Applications' },
     { id: 'stats',     icon: '📈', label: 'Material Stats' },
     { id: 'materials', icon: '🛠️', label: 'Manage Materials' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
@@ -283,6 +285,12 @@ export default function AdminPage() {
             {tab === 'projects' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <AdminProjectsTab externalSubTab={projectSubTab} />
+              </motion.div>
+            )}
+
+            {tab === 'sellers' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <AdminSellersTab />
               </motion.div>
             )}
 

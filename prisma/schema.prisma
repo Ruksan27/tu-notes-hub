@@ -54,7 +54,32 @@ model User {
   semesterOrder         Int?      // which semester/year the student is in
   payments              Payment[]
   projectOrders         ProjectOrder[]
+  sellerProfile         SellerProfile?
+  projectsListed        ProjectItem[]
+  projectReviews        ProjectReview[]
   createdAt             DateTime  @default(now())
+}
+
+model SellerProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  college     String?
+  bio         String?  @db.LongText
+  experience  String?
+  skills      String?  @db.LongText // comma-separated or JSON
+  profilePic  String?
+  isVerified  Boolean  @default(false)
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  // Social Links
+  github      String?
+  linkedin    String?
+  youtube     String?
+  instagram   String?
+  tiktok      String?
+  
+  createdAt   DateTime @default(now())
 }
 
 model VerificationOTP {
@@ -148,16 +173,44 @@ model Cheatsheet {
 model ProjectItem {
   id                 String         @id @default(uuid())
   title              String
+  shortDescription   String?        @db.Text
   description        String         @db.LongText
+  category           String?
+  projectType        String?
   technologies       String         // Comma separated e.g. "NextJS, React, Python"
+  
+  modules            String?        @db.LongText
+  requirements       String?        @db.LongText
+  installation       String?        @db.LongText
+  limitations        String?        @db.LongText
+  version            String?
+  license            String?
+  salesType          String?
+  
   originalPrice      Int
   discountPercentage Int            @default(0)
+  
   thumbnailUrl       String?
+  images             String?        @db.LongText // JSON array of Cloudinary URLs
+  
   demoUrl            String?
+  demoLinks          String?        @db.LongText // JSON object for various links
+  
   features           String?        @db.LongText // JSON array or text
-  status             String         @default("ACTIVE") // ACTIVE | INACTIVE
+  
+  sourceDriveLink    String?
+  
+  rating             Float          @default(0)
+  reviewCount        Int            @default(0)
+
+  status             String         @default("ACTIVE") // PENDING | ACTIVE | INACTIVE | REJECTED
   createdAt          DateTime       @default(now())
+  
+  sellerId           String?
+  user               User?          @relation(fields: [sellerId], references: [id])
+  
   orders             ProjectOrder[]
+  reviews            ProjectReview[]
 }
 
 model ProjectOrder {
@@ -171,5 +224,27 @@ model ProjectOrder {
   screenshotUrl   String?
   amount          Int
   message         String?     @db.Text
+  
+  orderEmail         String?
+  deliveryLink       String?
+  buyerTermsAccepted Boolean        @default(false)
+  
   createdAt       DateTime    @default(now())
+}
+
+model ProjectReview {
+  id              String      @id @default(uuid())
+  projectId       String
+  projectItem     ProjectItem @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating          Int
+  comment         String?     @db.Text
+  createdAt       DateTime    @default(now())
+}
+
+model SiteSettings {
+  id             String   @id @default("singleton")
+  whatsappLink   String   @default("https://wa.me/9800000000")
+  updatedAt      DateTime @updatedAt
 }

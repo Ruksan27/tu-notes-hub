@@ -15,6 +15,7 @@ interface ProjectItem {
   demoUrl: string | null
   features: string | null
   status: string
+  user: { id: string; name: string } | null // seller info
   _count?: { orders: number }
 }
 
@@ -54,8 +55,10 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null)
   const [formData, setFormData] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
-  const screenshotRef = useRef<HTMLInputElement>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Sync external tab selection (from sidebar dropdown)
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
     setLoading(true)
     try {
       const [projRes, ordRes] = await Promise.all([
-        fetch('/api/projects'),
+        fetch('/api/admin/projects'),  // admin route shows ALL projects
         fetch('/api/admin/projects/orders'),
       ])
       if (projRes.ok) {
@@ -89,7 +92,8 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
   function openAddModal() {
     setEditingProject(null)
     setFormData(EMPTY_FORM)
-    setScreenshotPreview(null)
+    setImageFile(null)
+    setImagePreview(null)
     setIsModalOpen(true)
   }
 
@@ -107,31 +111,49 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
         try { return p.features ? JSON.parse(p.features).join('\n') : '' } catch { return p.features ?? '' }
       })(),
     })
-    setScreenshotPreview(p.thumbnailUrl ?? null)
+    setImageFile(null)
+    setImagePreview(p.thumbnailUrl ?? null)
     setIsModalOpen(true)
+  }
+
+  function handleImageChange(file: File) {
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setImagePreview(reader.result as string)
+    reader.readAsDataURL(file)
+    setFormData(f => ({ ...f, thumbnailUrl: '' })) // clear URL if file chosen
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     try {
-      const payload = {
-        ...formData,
-        features: formData.features
-          ? JSON.stringify(formData.features.split('\n').map(s => s.trim()).filter(Boolean))
-          : null,
+      const featuresJson = formData.features
+        ? JSON.stringify(formData.features.split('\n').map(s => s.trim()).filter(Boolean))
+        : null
+
+      const fd = new FormData()
+      fd.append('title', formData.title)
+      fd.append('description', formData.description)
+      fd.append('technologies', formData.technologies)
+      fd.append('originalPrice', String(formData.originalPrice))
+      fd.append('discountPercentage', String(formData.discountPercentage))
+      fd.append('demoUrl', formData.demoUrl)
+      if (featuresJson) fd.append('features', featuresJson)
+      if (imageFile) {
+        fd.append('thumbnail', imageFile)
+      } else {
+        fd.append('thumbnailUrl', formData.thumbnailUrl)
       }
+
       const url = editingProject
         ? `/api/admin/projects/${editingProject.id}`
         : '/api/admin/projects'
       const method = editingProject ? 'PUT' : 'POST'
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      const res = await fetch(url, { method, body: fd })
+
       if (res.ok) {
-        toast.success(editingProject ? 'Project updated!' : 'Project created!')
+        toast.success(editingProject ? 'Project updated! ✅' : 'Project published! 🚀')
         setIsModalOpen(false)
         fetchData()
       } else {
@@ -300,6 +322,16 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                         <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
                           <span className={`badge ${p.status === 'ACTIVE' ? 'badge-strong' : 'badge-free'}`}>
                             {p.status === 'ACTIVE' ? '● LIVE' : '○ HIDDEN'}
+                          </span>
+                        </div>
+                        {/* Seller attribution badge */}
+                        <div style={{ position: 'absolute', bottom: '10px', left: '10px' }}>
+                          <span style={{
+                            fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px',
+                            background: p.user ? 'rgba(99,102,241,0.85)' : 'rgba(6,182,212,0.85)',
+                            color: '#fff', backdropFilter: 'blur(4px)',
+                          }}>
+                            {p.user ? `👤 ${p.user.name}` : '🛡️ By Admin'}
                           </span>
                         </div>
                         {p.discountPercentage > 0 && (
@@ -562,39 +594,76 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
 
               <form onSubmit={handleSave} style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-                {/* Thumbnail preview */}
+                {/* Thumbnail Upload */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
                     Project Thumbnail
                   </label>
-                  <div style={{
-                    width: '100%', height: '160px', borderRadius: '12px',
-                    border: '2px dashed rgba(99,102,241,0.3)',
-                    background: 'rgba(255,255,255,0.02)',
-                    overflow: 'hidden', position: 'relative',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    marginBottom: '10px',
-                  }}>
-                    {(screenshotPreview || formData.thumbnailUrl) ? (
+
+                  {/* Drop Zone */}
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={e => {
+                      e.preventDefault(); setIsDragging(false)
+                      const file = e.dataTransfer.files?.[0]
+                      if (file && file.type.startsWith('image/')) handleImageChange(file)
+                    }}
+                    style={{
+                      width: '100%', height: '170px', borderRadius: '12px', cursor: 'pointer',
+                      border: `2px dashed ${isDragging ? 'var(--clr-primary)' : 'rgba(99,102,241,0.3)'}`,
+                      background: isDragging ? 'rgba(99,102,241,0.05)' : 'rgba(255,255,255,0.02)',
+                      overflow: 'hidden', position: 'relative',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      marginBottom: '10px',
+                      transition: 'border-color 0.2s, background 0.2s',
+                    }}
+                  >
+                    {(imagePreview || formData.thumbnailUrl) ? (
                       <Image
-                        src={screenshotPreview || formData.thumbnailUrl!}
+                        src={imagePreview || formData.thumbnailUrl!}
                         alt="Thumbnail preview"
-                        fill
-                        style={{ objectFit: 'cover' }}
-                        unoptimized
+                        fill style={{ objectFit: 'cover' }} unoptimized
                       />
                     ) : (
-                      <div style={{ textAlign: 'center', color: 'var(--clr-text-3)' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '6px' }}>🖼️</div>
-                        <div style={{ fontSize: '12px' }}>Paste image URL below</div>
+                      <div style={{ textAlign: 'center', color: 'var(--clr-text-3)', pointerEvents: 'none' }}>
+                        <div style={{ fontSize: '36px', marginBottom: '8px' }}>📸</div>
+                        <div style={{ fontSize: '13px', fontWeight: 600 }}>Click or drag & drop to upload</div>
+                        <div style={{ fontSize: '11px', marginTop: '4px' }}>PNG, JPG, WEBP — Max 5MB</div>
                       </div>
                     )}
+                    {(imagePreview || formData.thumbnailUrl) && (
+                      <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); setImageFile(null); setImagePreview(null); setFormData(f => ({ ...f, thumbnailUrl: '' })) }}
+                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.7)', border: 'none', borderRadius: '6px', color: '#fff', padding: '3px 8px', cursor: 'pointer', fontSize: '12px' }}
+                      >
+                        ✕ Clear
+                      </button>
+                    )}
                   </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file" accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (file) handleImageChange(file)
+                    }}
+                  />
+
+                  <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginBottom: '8px' }}>— or paste an image URL —</p>
                   <input
                     className="input-field"
                     placeholder="https://res.cloudinary.com/... or any image URL"
                     value={formData.thumbnailUrl}
-                    onChange={e => { setFormData({ ...formData, thumbnailUrl: e.target.value }); setScreenshotPreview(e.target.value || null) }}
+                    onChange={e => {
+                      setFormData({ ...formData, thumbnailUrl: e.target.value })
+                      setImageFile(null)
+                      setImagePreview(e.target.value || null)
+                    }}
                   />
                 </div>
 

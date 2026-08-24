@@ -957,3 +957,7 @@ img { max-width: 100%; display: block; }
   overflow-y: auto;
   padding: 40px 32px;
 }
+
+.admin-content-inner {
+  max-width: 1200px;
+}

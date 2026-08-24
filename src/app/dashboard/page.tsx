@@ -6,13 +6,16 @@ import Link from 'next/link'
 import { toast } from 'react-toastify'
 import { motion } from 'motion/react'
 import { DashboardSkeleton } from '@/components/SkeletonLoader'
+import BecomeSellerTab from '@/components/dashboard/BecomeSellerTab'
+import SellerCenterTab from '@/components/dashboard/SellerCenterTab'
 
-type Tab = 'overview' | 'compare' | 'payment'
+type Tab = 'overview' | 'compare' | 'payment' | 'become-seller' | 'seller-center'
 
 interface User {
   id: string; name: string; email: string
   packageType: string; role: string
   facultyId: string | null; semesterOrder: number | null
+  sellerProfile: { id: string; status: string; isVerified: boolean } | null
 }
 interface Faculty { id: string; name: string; icon: string; systemType: 'SEMESTER' | 'YEARLY' }
 interface Note {
@@ -131,8 +134,16 @@ export default function DashboardPage() {
   const navItems = [
     { id: 'overview', icon: '📚', label: 'My Subjects' },
     { id: 'compare', icon: '🤖', label: 'AI Exam Predictor' },
-    { id: 'payment', icon: '💎', label: 'Upgrade Plan' },
+    // Only show Upgrade Plan if user is on FREE tier
+    ...(!isPremium ? [{ id: 'payment', icon: '💎', label: 'Upgrade Plan' }] : []),
   ]
+  
+  // Add Seller Tab
+  if (!user.sellerProfile || user.sellerProfile.status === 'REJECTED') {
+    navItems.push({ id: 'become-seller', icon: '🛍️', label: 'Become a Seller' })
+  } else {
+    navItems.push({ id: 'seller-center', icon: '🏬', label: 'Seller Center' })
+  }
 
   return (
     <div className="admin-page-container">
@@ -216,7 +227,7 @@ export default function DashboardPage() {
         </header>
 
         {/* ── Content Scroll Area ── */}
-        <div className="admin-content-scroll">
+        <div className="admin-scrollable-content">
           <main className="admin-content-inner">
           {/* ── Overview Tab ── */}
           {tab === 'overview' && (
@@ -469,6 +480,20 @@ export default function DashboardPage() {
           {tab === 'payment' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <PaymentTab currentPlan={user.packageType} />
+            </motion.div>
+          )}
+
+          {/* ── Become a Seller Tab ── */}
+          {tab === 'become-seller' && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <BecomeSellerTab user={user} />
+            </motion.div>
+          )}
+
+          {/* ── Seller Center Tab ── */}
+          {tab === 'seller-center' && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <SellerCenterTab user={user} />
             </motion.div>
           )}
           </main>
