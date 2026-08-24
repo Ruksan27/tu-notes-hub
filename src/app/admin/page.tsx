@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { motion } from 'motion/react'
 import { AdminSkeleton } from '@/components/SkeletonLoader'
+import AdminProjectsTab from '@/components/admin/AdminProjectsTab'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects'
 
 interface Payment {
   id: string
@@ -109,6 +110,7 @@ export default function AdminPage() {
     { id: 'materials', icon: '🛠️', label: 'Manage Materials' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
+    { id: 'projects',  icon: '💻', label: 'Projects Market' },
   ]
 
   const statCards = [

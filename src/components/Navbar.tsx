@@ -77,6 +77,7 @@ export default function Navbar() {
   const pkg = user ? (pkgBadge[user.packageType] ?? pkgBadge.FREE) : null
 
   const navLinks = [
+    { href: '/projects',  label: 'Projects' },
     { href: '/faculties', label: 'Faculties' },
     { href: '/pricing',   label: 'Pricing' },
     { href: '/about',     label: 'About' },

@@ -48,7 +48,11 @@ export default function DashboardPage() {
     }
 
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 60000) // 60s timeout for cold start
+    let isTimeout = false
+    const timeout = setTimeout(() => {
+      isTimeout = true
+      controller.abort()
+    }, 60000) // 60s timeout for cold start
 
     fetch('/api/student/dashboard', { signal: controller.signal })
       .then(async (res) => {
@@ -71,12 +75,16 @@ export default function DashboardPage() {
       })
       .catch((err) => {
         if (err.name === 'AbortError') {
-          setError('Request timed out. Please check your connection.')
+          if (isTimeout) {
+            setError('Request timed out. Please check your connection.')
+            setLoading(false)
+          }
+          // If not a timeout, it was aborted by React StrictMode cleanup, so do nothing.
         } else {
           setError(err.message || 'Failed to load dashboard')
           toast.error(err.message || 'Failed to load dashboard')
+          setLoading(false)
         }
-        setLoading(false)
       })
 
     return () => { clearTimeout(timeout); controller.abort() }
@@ -178,7 +186,7 @@ export default function DashboardPage() {
       </motion.aside>
 
       {/* ── Main Content Area ── */}
-      <div className="admin-main-content">
+      <div className="admin-content-wrapper">
         
         {/* ── Top App Bar ── */}
         <header className="admin-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
