@@ -7,9 +7,9 @@ export async function GET() {
   try {
     const projects = await prisma.projectItem.findMany({
       where: { status: 'ACTIVE' },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { orders: true } } },
     })
-    
     return NextResponse.json({ projects })
   } catch (error) {
     console.error('[PROJECTS_GET]', error)

@@ -33,6 +33,8 @@ export default function AdminPage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [stats, setStats] = useState({ users: 0, payments: 0, pending: 0, revenue: 0 })
   const [loading, setLoading] = useState(true)
+  const [projectsExpanded, setProjectsExpanded] = useState(false)
+  const [projectSubTab, setProjectSubTab] = useState<'ITEMS' | 'ORDERS'>('ITEMS')
   const [dropOpen, setDropOpen] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -110,7 +112,6 @@ export default function AdminPage() {
     { id: 'materials', icon: '🛠️', label: 'Manage Materials' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
-    { id: 'projects',  icon: '💻', label: 'Projects Market' },
   ]
 
   const statCards = [
@@ -157,6 +158,42 @@ export default function AdminPage() {
                 )}
               </button>
             ))}
+
+            {/* Projects Dropdown Menu */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <button
+                className={`sidebar-item${tab === 'projects' ? ' active' : ''}`}
+                onClick={() => { setTab('projects'); setProjectsExpanded(!projectsExpanded); }}
+              >
+                <span className="text-lg">💻</span>
+                <span>Projects Market</span>
+                <span style={{ marginLeft: 'auto', transform: projectsExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                  ▼
+                </span>
+              </button>
+              
+              {/* Dropdown Items */}
+              <motion.div 
+                initial={false}
+                animate={{ height: projectsExpanded ? 'auto' : 0, opacity: projectsExpanded ? 1 : 0 }}
+                style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '32px', marginTop: '4px' }}
+              >
+                <button
+                  className="sidebar-item"
+                  style={{ fontSize: '13px', padding: '8px 12px', background: tab === 'projects' && projectSubTab === 'ITEMS' ? 'rgba(99,102,241,0.1)' : 'transparent' }}
+                  onClick={() => { setTab('projects'); setProjectSubTab('ITEMS'); }}
+                >
+                  <span className="text-sm">📦</span> Manage Projects
+                </button>
+                <button
+                  className="sidebar-item"
+                  style={{ fontSize: '13px', padding: '8px 12px', background: tab === 'projects' && projectSubTab === 'ORDERS' ? 'rgba(99,102,241,0.1)' : 'transparent' }}
+                  onClick={() => { setTab('projects'); setProjectSubTab('ORDERS'); }}
+                >
+                  <span className="text-sm">🛒</span> Orders & Inquiries
+                </button>
+              </motion.div>
+            </div>
           </div>
         </div>
 
@@ -236,13 +273,19 @@ export default function AdminPage() {
               ADMIN CONTROL CENTER
             </div>
             <h2 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--clr-text-1)' }}>
-              {navItems.find(item => item.id === tab)?.label}
+              {navItems.find(item => item.id === tab)?.label || (tab === 'projects' ? 'Projects Market' : '')}
             </h2>
           </motion.div>
 
           {/* Tab Screen Render */}
           <main>
             {/* ── Overview Tab ── */}
+            {tab === 'projects' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <AdminProjectsTab externalSubTab={projectSubTab} />
+              </motion.div>
+            )}
+
             {tab === 'overview' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {/* Stat Cards */}

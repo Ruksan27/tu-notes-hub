@@ -77,13 +77,13 @@ export default function Navbar() {
   const pkg = user ? (pkgBadge[user.packageType] ?? pkgBadge.FREE) : null
 
   const navLinks = [
-    { href: '/projects',  label: 'Projects' },
     { href: '/faculties', label: 'Faculties' },
+    { href: '/projects',  label: 'Projects' },
     { href: '/pricing',   label: 'Pricing' },
     { href: '/about',     label: 'About' },
   ]
 
-  if (pathname?.startsWith('/admin')) return null
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')) return null
 
   return (
     <>
@@ -237,7 +237,7 @@ export default function Navbar() {
               {/* Nav links */}
               {navLinks.map((link) => (
                 <Link key={link.href} href={link.href} className="nav-mobile-link">
-                  {link.label === 'Faculties' ? '📚' : link.label === 'Pricing' ? '💎' : 'ℹ️'} {link.label}
+                  {link.label === 'Faculties' ? '📚' : link.label === 'Projects' ? '💻' : link.label === 'Pricing' ? '💎' : 'ℹ️'} {link.label}
                 </Link>
               ))}
 
