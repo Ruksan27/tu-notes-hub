@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { v2 as cloudinary } from 'cloudinary'
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
+import { uploadToCloudinary } from '@/lib/cloudinary'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,19 +65,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Handle Image Uploads
     const uploadImage = async (file: File | null) => {
       if (!file || file.size === 0) return null
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
-      const uploadResult = await new Promise<any>((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: 'tu-notes/seller-projects', resource_type: 'image' },
-          (error, result) => error ? reject(error) : resolve(result)
-        )
-        stream.end(buffer)
-      })
-      return uploadResult.secure_url
+      try {
+        const result = await uploadToCloudinary(buffer, 'tu-notes/seller-projects', 'image')
+        return result.url
+      } catch (e) {
+        console.error('Cloudinary upload error:', e)
+        return null
+      }
     }
 
     const thumbnailUrl = await uploadImage(formData.get('thumbnail') as File) || (formData.get('thumbnailUrl') as string)
@@ -169,8 +161,8 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ success: true, project }, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('[SELLER_PROJECTS_POST]', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

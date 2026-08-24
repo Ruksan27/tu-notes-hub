@@ -29,7 +29,7 @@ export async function uploadToCloudinary(
         {
           folder,
           resource_type: resourceType,
-          allowed_formats: resourceType === 'raw' ? ['pdf', 'docx', 'doc', 'pptx', 'ppt', 'txt'] : ['jpg', 'jpeg', 'png', 'webp'],
+          allowed_formats: resourceType === 'raw' ? ['pdf', 'docx', 'doc', 'pptx', 'ppt', 'txt'] : ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'bmp', 'tiff'],
           // Provide credentials directly for this specific upload
           cloud_name: account.cloud_name,
           api_key: account.api_key,

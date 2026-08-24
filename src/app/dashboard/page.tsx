@@ -284,7 +284,14 @@ export default function DashboardPage() {
 
               {/* Subjects */}
               <div>
-                <h3 className="section-title">📚 Course Materials</h3>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <h3 className="section-title" style={{ margin: 0 }}>📚 Course Materials</h3>
+                  {subjects.length > 0 && (
+                    <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', background: 'rgba(99,102,241,0.1)', padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(99,102,241,0.2)' }}>
+                      {subjects.length} subjects
+                    </span>
+                  )}
+                </div>
                 {subjects.length === 0 ? (
                   <div className="glass-card" style={{ padding: '64px', textAlign: 'center' }}>
                     <div style={{ fontSize: '52px', marginBottom: '16px' }}>📭</div>
@@ -337,9 +344,13 @@ export default function DashboardPage() {
                           </div>
 
                           {total === 0 ? (
-                            <p className="px-6 py-4 text-sm" style={{ color: 'var(--clr-text-3)' }}>
-                              No files uploaded for this subject yet.
-                            </p>
+                            <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(99,102,241,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>📂</div>
+                              <div>
+                                <p style={{ color: 'var(--clr-text-3)', fontSize: '13px', margin: 0 }}>No files uploaded yet</p>
+                                <p style={{ color: 'var(--clr-text-3)', fontSize: '11px', margin: '2px 0 0', opacity: 0.6 }}>Admin will add materials soon</p>
+                              </div>
+                            </div>
                           ) : (
                             <div className="p-5" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                               {/* Notes */}
