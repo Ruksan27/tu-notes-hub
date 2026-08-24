@@ -1,12 +1,11 @@
 'use client'
-// src/app/admin/page.tsx — Premium admin control center with Tailwind CSS
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { motion } from 'motion/react'
 import { AdminSkeleton } from '@/components/SkeletonLoader'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials'
 
 interface Payment {
   id: string
@@ -28,11 +27,13 @@ interface Faculty {
 }
 
 export default function AdminPage() {
-  const [user, setUser] = useState<{ role: string; name: string } | null>(null)
+  const [user, setUser] = useState<{ role: string; name: string; email: string; packageType: string } | null>(null)
   const [tab, setTab] = useState<AdminTab>('overview')
   const [payments, setPayments] = useState<Payment[]>([])
   const [stats, setStats] = useState({ users: 0, payments: 0, pending: 0, revenue: 0 })
   const [loading, setLoading] = useState(true)
+  const [dropOpen, setDropOpen] = useState(false)
+  const dropRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -43,6 +44,24 @@ export default function AdminPage() {
     setUser(u)
     setLoading(false)
   }, [router])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+        setDropOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    localStorage.removeItem('tu_user')
+    toast.success('See you soon! 👋')
+    router.push('/')
+  }
+
 
   const loadPayments = useCallback(async () => {
     try {
@@ -76,7 +95,7 @@ export default function AdminPage() {
 
   if (loading || !user) {
     return (
-      <div className="container" style={{ padding: '40px 24px', minHeight: 'calc(100vh - 68px)' }}>
+      <div className="container" style={{ padding: '48px 32px', minHeight: 'calc(100vh - 72px)' }}>
         <AdminSkeleton />
       </div>
     )
@@ -84,8 +103,10 @@ export default function AdminPage() {
 
   const navItems: { id: AdminTab; icon: string; label: string }[] = [
     { id: 'overview',  icon: '📊', label: 'Overview' },
+    { id: 'users',     icon: '👥', label: 'Users & Plans' },
     { id: 'payments',  icon: '💳', label: 'Verify Payments' },
     { id: 'stats',     icon: '📈', label: 'Material Stats' },
+    { id: 'materials', icon: '🛠️', label: 'Manage Materials' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
   ]
@@ -98,258 +119,819 @@ export default function AdminPage() {
   ]
 
   return (
-    <div className="container" style={{ padding: '40px 24px', minHeight: 'calc(100vh - 68px)' }}>
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-        <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--clr-text-3)' }}>
-          ⚙️ Admin Control Center
-        </p>
-        <h1 style={{ fontSize: 'clamp(26px,4vw,36px)' }}>
-          System <span className="text-gradient">Dashboard</span>
-        </h1>
-      </motion.div>
+    <div className="admin-page-container">
+      {/* ── Left Sidebar Nav ── */}
+      <motion.aside
+        initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+        className="admin-sidebar-nav"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+          {/* Logo / Header */}
+          <div className="admin-brand-header">
+            <div className="nav-logo-icon">📚</div>
+            <div>
+              <span className="font-bold text-sm uppercase tracking-wider block" style={{ color: 'var(--clr-text-3)', fontSize: '10px' }}>SYSTEM CONTROL</span>
+              <span className="font-extrabold text-lg block" style={{ color: 'var(--clr-text-1)', marginTop: '-2px' }}>TU Notes Hub</span>
+            </div>
+          </div>
 
-      <div className="sidebar-layout">
-        {/* Sidebar */}
-        <motion.aside
-          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
-          className="sidebar"
-        >
-          <p className="text-xs font-bold uppercase tracking-widest px-3 pb-3" style={{ color: 'var(--clr-text-3)' }}>
-            Admin Menu
-          </p>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className={`sidebar-item${tab === item.id ? ' active' : ''}`}
-              onClick={() => setTab(item.id)}
-            >
-              <span className="text-lg">{item.icon}</span>
-              <span>{item.label}</span>
-              {item.id === 'payments' && stats.pending > 0 && (
-                <span
-                  className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: '#f59e0b', color: '#000', minWidth: '22px', textAlign: 'center' }}
-                >
-                  {stats.pending}
-                </span>
-              )}
-            </button>
-          ))}
-        </motion.aside>
-
-        {/* Content */}
-        <main>
-          {/* ── Overview Tab ── */}
-          {tab === 'overview' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              {/* Stat Cards */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                  gap: '16px',
-                  marginBottom: '28px',
-                }}
+          {/* Navigation Menu */}
+          <div className="admin-nav-menu">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                className={`sidebar-item${tab === item.id ? ' active' : ''}`}
+                onClick={() => setTab(item.id)}
               >
-                {statCards.map((s, i) => (
-                  <motion.div
-                    key={s.label}
-                    initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.07 }}
-                    className="glass-card"
-                    style={{ padding: '22px', borderLeft: `3px solid ${s.accent}` }}
+                <span className="text-lg">{item.icon}</span>
+                <span>{item.label}</span>
+                {item.id === 'payments' && stats.pending > 0 && (
+                  <span
+                    className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: '#f59e0b', color: '#000', minWidth: '22px', textAlign: 'center' }}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--clr-text-3)' }}>
-                        {s.label}
-                      </span>
-                      <span className="text-2xl">{s.icon}</span>
-                    </div>
-                    <div style={{ fontSize: '36px', fontWeight: 800, color: s.accent, fontFamily: 'var(--font-display)' }}>
-                      {s.value}
-                    </div>
-                  </motion.div>
-                ))}
+                    {stats.pending}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer Parameters Panel (Sleek reference style widget) */}
+        <div className="admin-sidebar-footer">
+          <div className="admin-param-widget">
+            <div className="admin-param-label">Database Connection</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-success)', fontWeight: 600 }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--clr-success)', display: 'inline-block' }}></span>
+              TiDB Serverless
+            </div>
+          </div>
+          <div className="admin-param-widget">
+            <div className="admin-param-label">CPU Usage</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--clr-text-2)', marginBottom: '4px' }}>
+              <span>Load Average</span>
+              <span>24%</span>
+            </div>
+            <div className="admin-param-bar-bg">
+              <div className="admin-param-bar-fill" style={{ width: '24%' }}></div>
+            </div>
+          </div>
+        </div>
+      </motion.aside>
+
+      {/* ── Right Content Panel ── */}
+      <div className="admin-content-wrapper">
+        {/* Top Navbar */}
+        <header className="admin-top-bar">
+          {/* Left search input */}
+          <div className="admin-search-box">
+            <span>🔍</span>
+            <input type="text" placeholder="Search system logs, notes, users..." className="admin-search-input" />
+          </div>
+
+          {/* Right profile area */}
+          <div className="admin-user-menu" ref={dropRef}>
+            <button className="admin-user-trigger" onClick={() => setDropOpen(!dropOpen)}>
+              <div className="nav-avatar" style={{ width: '36px', height: '36px', fontSize: '15px' }}>{user.name[0].toUpperCase()}</div>
+              <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+                <span className="text-sm font-semibold block" style={{ color: 'var(--clr-text-1)', lineHeight: 1.2 }}>{user.name}</span>
+                <span className="text-xs block" style={{ color: 'var(--clr-text-3)', fontSize: '10.5px' }}>Administrator</span>
               </div>
+              <span style={{ fontSize: '10px', opacity: 0.5, marginLeft: '8px', color: 'var(--clr-text-3)' }}>▼</span>
+            </button>
 
-              {/* Pending Alert Banner */}
-              {stats.pending > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center justify-between flex-wrap gap-4 p-6 rounded-xl"
-                  style={{
-                    background: 'rgba(245,158,11,0.07)',
-                    border: '1px solid rgba(245,158,11,0.25)',
-                    marginBottom: '16px',
-                  }}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">⏳</span>
-                    <div>
-                      <h4 className="font-bold" style={{ color: '#fcd34d', marginBottom: '2px' }}>
-                        Action Required
-                      </h4>
-                      <p className="text-sm" style={{ color: 'var(--clr-text-2)' }}>
-                        {stats.pending} payment{stats.pending !== 1 ? 's' : ''} awaiting screenshot verification.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    className="btn btn-sm"
-                    style={{ background: '#f59e0b', color: '#000', fontWeight: 700 }}
-                    onClick={() => setTab('payments')}
-                  >
-                    Verify Payments →
-                  </button>
-                </motion.div>
-              )}
-
-              {/* Database and Visibility Sync Alert */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center justify-between flex-wrap gap-4 p-6 rounded-xl"
-                style={{
-                  background: 'rgba(99,102,241,0.07)',
-                  border: '1px solid rgba(99,102,241,0.25)',
-                }}
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-3xl">🎛️</span>
-                  <div>
-                    <h4 className="font-bold" style={{ color: 'var(--clr-primary-h)', marginBottom: '2px' }}>
-                      Database Visibility Sync
-                    </h4>
-                    <p className="text-sm" style={{ color: 'var(--clr-text-2)' }}>
-                      Set BCA as the only visible faculty on the frontend (and hide other faculties).
-                    </p>
-                  </div>
+            {dropOpen && (
+              <div className="nav-dropdown" style={{ top: 'calc(100% + 6px)', right: 0 }}>
+                <div className="nav-drop-header">
+                  <p style={{ fontWeight: 600, color: 'var(--clr-text-1)', fontSize: '14px' }}>{user.name}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '2px' }}>{user.email || 'admin@tunoteshub.com'}</p>
                 </div>
-                <button
-                  className="btn btn-sm"
-                  style={{ background: 'var(--grad-brand)', color: '#fff', fontWeight: 700, border: 'none' }}
-                  onClick={async () => {
-                    if (!window.confirm('Run visibility migration? This sets BCA as the only visible faculty.')) return
-                    try {
-                      const res = await fetch('/api/admin/migrate', { method: 'POST' })
-                      const data = await res.json()
-                      if (res.ok) {
-                        toast.success('Database visibility synchronized successfully! 🎉')
-                      } else {
-                        toast.error(data.error || 'Synchronization failed')
-                      }
-                    } catch {
-                      toast.error('Network error during sync')
-                    }
+                <div className="nav-drop-divider" />
+                <button onClick={() => { setTab('overview'); setDropOpen(false) }} className="nav-drop-item">
+                  <span>📊</span> Overview
+                </button>
+                <button onClick={() => router.push('/')} className="nav-drop-item">
+                  <span>🏠</span> Go to Portal Home
+                </button>
+                <button onClick={() => router.push('/dashboard')} className="nav-drop-item">
+                  <span>🎓</span> Student Dashboard
+                </button>
+                <div className="nav-drop-divider" />
+                <button className="nav-drop-item nav-drop-danger" onClick={handleLogout}>
+                  <span>🚪</span> Log out
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Dynamic Tab Scroll Area */}
+        <div className="admin-scrollable-content">
+          {/* Header */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '32px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-primary-h)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '4px' }}>
+              ADMIN CONTROL CENTER
+            </div>
+            <h2 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--clr-text-1)' }}>
+              {navItems.find(item => item.id === tab)?.label}
+            </h2>
+          </motion.div>
+
+          {/* Tab Screen Render */}
+          <main>
+            {/* ── Overview Tab ── */}
+            {tab === 'overview' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                {/* Stat Cards */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                    gap: '16px',
+                    marginBottom: '28px',
                   }}
                 >
-                  ⚡ Sync Faculty Defaults
-                </button>
-              </motion.div>
-            </motion.div>
-          )}
+                  {statCards.map((s, i) => (
+                    <motion.div
+                      key={s.label}
+                      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.07 }}
+                      className="glass-card"
+                      style={{ padding: '22px', borderLeft: `3px solid ${s.accent}` }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--clr-text-3)' }}>
+                          {s.label}
+                        </span>
+                        <span className="text-2xl">{s.icon}</span>
+                      </div>
+                      <div style={{ fontSize: '36px', fontWeight: 800, color: s.accent, fontFamily: 'var(--font-display)' }}>
+                        {s.value}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
 
-          {/* ── Payments Tab ── */}
-          {tab === 'payments' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <h3 className="section-title">💳 Subscription Requests</h3>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Student</th>
-                      <th>Plan</th>
-                      <th>Receipt</th>
-                      <th>Txn ID / Amount</th>
-                      <th>Date</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.length === 0 ? (
+                {/* Pending Alert Banner */}
+                {stats.pending > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center justify-between flex-wrap gap-4 p-6 rounded-xl"
+                    style={{
+                      background: 'rgba(245,158,11,0.07)',
+                      border: '1px solid rgba(245,158,11,0.25)',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-3xl">⏳</span>
+                      <div>
+                        <h4 className="font-bold" style={{ color: '#fcd34d', marginBottom: '2px' }}>
+                          Action Required
+                        </h4>
+                        <p className="text-sm" style={{ color: 'var(--clr-text-2)' }}>
+                          {stats.pending} payment{stats.pending !== 1 ? 's' : ''} awaiting screenshot verification.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setTab('payments')}
+                      style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', border: 'none', color: '#000', fontWeight: 700 }}
+                    >
+                      Verify Now ↗
+                    </button>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ── Verify Payments Tab ── */}
+            {tab === 'payments' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <h3 className="section-title">💳 Verify Student Transactions</h3>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
                       <tr>
-                        <td colSpan={7} style={{ textAlign: 'center', padding: '60px', color: 'var(--clr-text-3)' }}>
-                          No payment records found.
-                        </td>
+                        <th>Date</th>
+                        <th>Student Details</th>
+                        <th>Amount</th>
+                        <th>Plan Bought</th>
+                        <th>Transaction ID</th>
+                        <th>Screenshot Proof</th>
+                        <th>Status / Actions</th>
                       </tr>
-                    ) : (
-                      payments.map((p) => (
-                        <tr key={p.id}>
-                          <td>
-                            <div style={{ fontWeight: 600, color: 'var(--clr-text-1)' }}>{p.user?.name}</div>
-                            <div style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>{p.user?.email}</div>
-                          </td>
-                          <td>
-                            <span className={`badge ${p.packageBought === 'ELITE_AI' ? 'badge-elite' : 'badge-semester'}`}>
-                              {p.packageBought?.replace('_', ' ')}
-                            </span>
-                          </td>
-                          <td>
-                            {p.screenshotUrl ? (
-                              <a
-                                href={p.screenshotUrl} target="_blank" rel="noopener noreferrer"
-                                className="btn btn-outline btn-sm"
-                                style={{ padding: '4px 10px', fontSize: '11px', color: 'var(--clr-accent)', borderColor: 'rgba(6,182,212,0.3)' }}
-                              >
-                                View 🖼️
-                              </a>
-                            ) : (
-                              <span style={{ color: 'var(--clr-text-3)', fontSize: '12px' }}>No image</span>
-                            )}
-                          </td>
-                          <td>
-                            <code style={{ display: 'block', fontSize: '11px', background: 'rgba(255,255,255,0.04)', padding: '2px 6px', borderRadius: '4px', marginBottom: '4px' }}>
-                              {p.transactionId}
-                            </code>
-                            <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--clr-text-1)' }}>Rs. {p.amount}</span>
-                          </td>
-                          <td style={{ fontSize: '12px' }}>
-                            {p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-NP', { dateStyle: 'medium' }) : '—'}
-                          </td>
-                          <td>
-                            <span className={`badge ${p.status === 'PENDING' ? 'badge-pending' : p.status === 'APPROVED' ? 'badge-success' : 'badge-low'}`}>
-                              {p.status}
-                            </span>
-                          </td>
-                          <td>
-                            {p.status === 'PENDING' && (
-                              <div style={{ display: 'flex', gap: '6px' }}>
-                                <button
-                                  className="btn btn-sm"
-                                  style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }}
-                                  onClick={() => verifyPayment(p.id, 'APPROVED')}
-                                >
-                                  ✓ Approve
-                                </button>
-                                <button className="btn btn-sm btn-danger" onClick={() => verifyPayment(p.id, 'REJECTED')}>
-                                  ✕ Reject
-                                </button>
-                              </div>
-                            )}
+                    </thead>
+                    <tbody>
+                      {payments.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: 'var(--clr-text-3)' }}>
+                            No payment transactions recorded.
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
-          )}
+                      ) : (
+                        payments.map((p) => (
+                          <tr key={p.id}>
+                            <td style={{ fontSize: '13px' }}>{new Date(p.createdAt).toLocaleDateString()}</td>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{p.user?.name || 'Deleted User'}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>{p.user?.email || '—'}</div>
+                            </td>
+                            <td style={{ fontWeight: 700, color: 'var(--clr-text-1)' }}>Rs. {p.amount}</td>
+                            <td>
+                              <span className={`badge ${p.packageBought === 'ELITE_AI' ? 'badge-elite' : 'badge-semester'}`}>
+                                {p.packageBought.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td>
+                              <code style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>
+                                {p.transactionId}
+                              </code>
+                            </td>
+                            <td>
+                              {p.screenshotUrl ? (
+                                <a
+                                  href={p.screenshotUrl}
+                                  target="_blank" rel="noopener noreferrer"
+                                  className="btn btn-sm btn-outline"
+                                  style={{ padding: '4px 10px', fontSize: '11px' }}
+                                >
+                                  🖼️ View Screenshot
+                                </a>
+                              ) : (
+                                <span style={{ color: 'var(--clr-text-3)', fontSize: '12px' }}>No file</span>
+                              )}
+                            </td>
+                            <td>
+                              {p.status !== 'PENDING' ? (
+                                <span className={`badge ${p.status === 'APPROVED' ? 'badge-strong' : 'badge-low'}`}>
+                                  {p.status}
+                                </span>
+                              ) : (
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <button
+                                    className="btn btn-sm"
+                                    style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }}
+                                    onClick={() => verifyPayment(p.id, 'APPROVED')}
+                                  >
+                                    ✓ Approve
+                                  </button>
+                                  <button className="btn btn-sm btn-danger" onClick={() => verifyPayment(p.id, 'REJECTED')}>
+                                    ✕ Reject
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
 
-          {/* ── Faculties Tab ── */}
-          {tab === 'faculties' && <FacultiesTab />}
+            {/* ── Faculties Tab ── */}
+            {tab === 'faculties' && <FacultiesTab />}
 
-          {/* ── Stats Tab ── */}
-          {tab === 'stats' && <StatsTab />}
+            {/* ── Stats Tab ── */}
+            {tab === 'stats' && <StatsTab />}
 
-          {/* ── Upload Tab ── */}
-          {tab === 'upload' && <UploadTab />}
-        </main>
+            {/* ── Users Tab ── */}
+            {tab === 'users' && <UsersTab />}
+
+            {/* ── Manage Materials Tab ── */}
+            {tab === 'materials' && <ManageMaterialsTab />}
+
+            {/* ── Upload Tab ── */}
+            {tab === 'upload' && <UploadTab />}
+          </main>
+        </div>
       </div>
     </div>
   )
 }
+
+/* ── Manage Materials Tab ── */
+function ManageMaterialsTab() {
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [semesters, setSemesters] = useState<{ id: string; name: string; order: number }[]>([])
+  const [subjects, setSubjects] = useState<{ id: string; name: string; code: string; title: string }[]>([])
+  const [facultyId, setFacultyId] = useState('')
+  const [semesterId, setSemesterId] = useState('')
+  const [subjectId, setSubjectId] = useState('')
+  const [notes, setNotes] = useState<any[]>([])
+  const [pastPapers, setPastPapers] = useState<any[]>([])
+  const [cheatsheets, setCheatsheets] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [editItem, setEditItem] = useState<any>(null)
+  const [editType, setEditType] = useState('')
+  const [editForm, setEditForm] = useState<any>({})
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
+  }, [])
+
+  useEffect(() => {
+    if (!facultyId) { setSemesters([]); setSemesterId(''); return }
+    fetch(`/api/admin/semesters?facultyId=${facultyId}`).then(r => r.json()).then(d => setSemesters(d.semesters || []))
+  }, [facultyId])
+
+  useEffect(() => {
+    if (!semesterId) { setSubjects([]); setSubjectId(''); return }
+    fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => setSubjects(d.subjects || []))
+  }, [semesterId])
+
+  async function loadMaterials() {
+    if (!subjectId) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/materials?subjectId=${subjectId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setNotes(data.notes || [])
+        setPastPapers(data.pastPapers || [])
+        setCheatsheets(data.cheatsheets || [])
+      } else {
+        toast.error('Failed to load materials')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (subjectId) loadMaterials()
+    else { setNotes([]); setPastPapers([]); setCheatsheets([]) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subjectId])
+
+  function openEdit(item: any, type: string) {
+    setEditItem(item)
+    setEditType(type)
+    if (type === 'note') {
+      setEditForm({ title: item.title, description: item.description || '', noteType: item.noteType, isPremium: item.isPremium, author: item.author || '' })
+    } else if (type === 'pastpaper') {
+      setEditForm({ year: item.year, examType: item.examType })
+    } else {
+      setEditForm({ title: item.title, content: item.content })
+    }
+  }
+
+  async function handleSave() {
+    if (!editItem) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/materials', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editItem.id, type: editType, ...editForm }),
+      })
+      if (res.ok) {
+        toast.success('Updated successfully! 🎉')
+        setEditItem(null)
+        loadMaterials()
+      } else {
+        toast.error('Failed to update')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete(id: string, type: string, name: string) {
+    if (!window.confirm(`⚠️ Are you sure you want to permanently delete "${name}"?\n\nThis will also remove the file from Cloudinary. This action cannot be undone.`)) return
+    try {
+      const res = await fetch(`/api/admin/materials?id=${id}&type=${type}`, { method: 'DELETE' })
+      if (res.ok) {
+        toast.success('Deleted successfully!')
+        loadMaterials()
+      } else {
+        toast.error('Failed to delete')
+      }
+    } catch {
+      toast.error('Network error')
+    }
+  }
+
+  const totalItems = notes.length + pastPapers.length + cheatsheets.length
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <h3 className="section-title">🛠️ Manage Materials</h3>
+      <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '20px' }}>
+        Select a Faculty → Semester → Subject to view, edit, or delete uploaded documents.
+      </p>
+
+      {/* Filter Dropdowns */}
+      <div className="glass-card" style={{ padding: '24px', marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Faculty</label>
+            <select className="input-field" value={facultyId} onChange={e => { setFacultyId(e.target.value); setSemesterId(''); setSubjectId('') }} style={{ cursor: 'pointer' }}>
+              <option value="">— Choose Faculty —</option>
+              {faculties.map(f => <option key={f.id} value={f.id}>{f.icon} {f.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Semester / Year</label>
+            <select className="input-field" value={semesterId} onChange={e => { setSemesterId(e.target.value); setSubjectId('') }} disabled={!facultyId} style={{ cursor: facultyId ? 'pointer' : 'not-allowed' }}>
+              <option value="">— Choose Period —</option>
+              {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Subject</label>
+            <select className="input-field" value={subjectId} onChange={e => setSubjectId(e.target.value)} disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
+              <option value="">— Choose Subject —</option>
+              {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Results */}
+      {!subjectId ? (
+        <div className="glass-card" style={{ padding: '60px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📂</div>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: '15px' }}>Select a subject above to manage its materials.</p>
+        </div>
+      ) : loading ? (
+        <div className="glass-card" style={{ padding: '60px', textAlign: 'center' }}>
+          <span className="spinner" style={{ width: '28px', height: '28px' }} />
+          <p style={{ color: 'var(--clr-text-3)', marginTop: '12px' }}>Loading materials...</p>
+        </div>
+      ) : totalItems === 0 ? (
+        <div className="glass-card" style={{ padding: '60px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: '15px' }}>No materials uploaded for this subject yet.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Notes Section */}
+          {notes.length > 0 && (
+            <div>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                📄 Notes ({notes.length})
+              </h4>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Type</th>
+                      <th>Access</th>
+                      <th>Downloads</th>
+                      <th>Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {notes.map(n => (
+                      <tr key={n.id}>
+                        <td>
+                          <div style={{ fontWeight: 600, maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
+                          {n.author && <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>by {n.author}</div>}
+                        </td>
+                        <td><span className="badge badge-semester" style={{ fontSize: '11px' }}>{n.noteType?.replace('_', ' ')}</span></td>
+                        <td><span className={`badge ${n.isPremium ? 'badge-elite' : 'badge-success'}`}>{n.isPremium ? '💎 Premium' : '🔓 Free'}</span></td>
+                        <td style={{ fontWeight: 600 }}>{n.downloadCount || 0}</td>
+                        <td style={{ fontSize: '12px' }}>{new Date(n.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(n, 'note')}>✏️ Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(n.id, 'note', n.title)}>🗑️ Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Past Papers Section */}
+          {pastPapers.length > 0 && (
+            <div>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                📝 Past Papers ({pastPapers.length})
+              </h4>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th>
+                      <th>Exam Type</th>
+                      <th>File</th>
+                      <th>Date Added</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pastPapers.map(p => (
+                      <tr key={p.id}>
+                        <td style={{ fontWeight: 700, fontSize: '16px' }}>{p.year}</td>
+                        <td><span className="badge badge-pending">{p.examType?.replace('_', ' ')}</span></td>
+                        <td>
+                          <a href={p.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline" style={{ padding: '3px 8px', fontSize: '11px' }}>
+                            View File ↗
+                          </a>
+                        </td>
+                        <td style={{ fontSize: '12px' }}>{new Date(p.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(p, 'pastpaper')}>✏️ Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id, 'pastpaper', `${p.year} ${p.examType}`)}>🗑️ Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Cheatsheets Section */}
+          {cheatsheets.length > 0 && (
+            <div>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                📋 Cheatsheets ({cheatsheets.length})
+              </h4>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Content Preview</th>
+                      <th>Date Added</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cheatsheets.map(c => (
+                      <tr key={c.id}>
+                        <td style={{ fontWeight: 600 }}>{c.title}</td>
+                        <td style={{ fontSize: '12px', color: 'var(--clr-text-3)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.content?.substring(0, 80)}...</td>
+                        <td style={{ fontSize: '12px' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(c, 'cheatsheet')}>✏️ Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id, 'cheatsheet', c.title)}>🗑️ Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editItem && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', padding: '20px' }} onClick={() => setEditItem(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="glass-card"
+            style={{ padding: '32px', maxWidth: '520px', width: '100%', maxHeight: '80vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '20px' }}>
+              ✏️ Edit {editType === 'note' ? 'Note' : editType === 'pastpaper' ? 'Past Paper' : 'Cheatsheet'}
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {editType === 'note' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Title</label>
+                    <input className="input-field" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Description</label>
+                    <textarea className="input-field" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} style={{ minHeight: '80px', resize: 'vertical' }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Format</label>
+                      <select className="input-field" value={editForm.noteType || ''} onChange={e => setEditForm({ ...editForm, noteType: e.target.value })} style={{ cursor: 'pointer' }}>
+                        <option value="PDF_BOOK">📚 PDF Book</option>
+                        <option value="HANDWRITTEN">✍️ Handwritten</option>
+                        <option value="SLIDES_PPT">🖥️ Slides/PPTX</option>
+                        <option value="SHORT_NOTES">📝 Short Notes</option>
+                        <option value="PROJECT_WORK">📁 Project Work</option>
+                        <option value="PROJECT">💻 Project</option>
+                        <option value="GUIDE">📘 Guide</option>
+                        <option value="LAB_WORK">🧪 Lab Work</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Access</label>
+                      <select className="input-field" value={editForm.isPremium ? 'true' : 'false'} onChange={e => setEditForm({ ...editForm, isPremium: e.target.value === 'true' })} style={{ cursor: 'pointer' }}>
+                        <option value="false">🔓 Free</option>
+                        <option value="true">💎 Premium</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author</label>
+                    <input className="input-field" value={editForm.author || ''} onChange={e => setEditForm({ ...editForm, author: e.target.value })} />
+                  </div>
+                </>
+              )}
+
+              {editType === 'pastpaper' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Year</label>
+                    <input className="input-field" type="number" value={editForm.year || ''} onChange={e => setEditForm({ ...editForm, year: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Type</label>
+                    <select className="input-field" value={editForm.examType || ''} onChange={e => setEditForm({ ...editForm, examType: e.target.value })} style={{ cursor: 'pointer' }}>
+                      <option value="BOARD_EXAM">🎓 Board Exam</option>
+                      <option value="INTERNAL_EXAM">🏫 Internal Exam</option>
+                      <option value="BACK_PAPER">🔄 Back Paper</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {editType === 'cheatsheet' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Title</label>
+                    <input className="input-field" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Content (Markdown)</label>
+                    <textarea className="input-field" value={editForm.content || ''} onChange={e => setEditForm({ ...editForm, content: e.target.value })} style={{ minHeight: '200px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px' }} />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
+              <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--clr-border)', color: 'var(--clr-text-2)' }} onClick={() => setEditItem(null)}>Cancel</button>
+              <button className="btn btn-sm" style={{ background: 'linear-gradient(135deg, #6366f1, #06b6d4)', color: '#fff', border: 'none', fontWeight: 700 }} onClick={handleSave} disabled={saving}>
+                {saving ? <><span className="spinner" style={{ width: '14px', height: '14px' }} /> Saving...</> : '💾 Save Changes'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
+/* ── Users Tab ── */
+function UsersTab() {
+  const [users, setUsers] = useState<any[]>([])
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  async function fetchUsers() {
+    try {
+      const res = await fetch('/api/admin/users')
+      if (res.ok) {
+        const data = await res.json()
+        setUsers(data.users || [])
+      }
+    } catch {
+      toast.error('Failed to load users')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function updateUserPlan(userId: string, packageType: string, months: number) {
+    const label = packageType === 'FREE' ? 'Free' : packageType === 'SEMESTER_PASS' ? 'Semester Pass' : 'Elite AI'
+    if (!window.confirm(`Are you sure you want to set this user's plan to "${label}"?`)) return
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, packageType, months }),
+      })
+      if (res.ok) {
+        toast.success('User plan updated successfully! 🎉')
+        fetchUsers()
+      } else {
+        toast.error('Failed to update user plan')
+      }
+    } catch {
+      toast.error('Network error')
+    }
+  }
+
+  const filtered = users.filter(u =>
+    (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div>
+          <h3 className="section-title" style={{ margin: 0 }}>👥 Users & Plans</h3>
+          <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
+            Manage registered students, grant premium access manually, and view active subscriptions.
+          </p>
+        </div>
+        <div>
+          <input
+            type="text"
+            className="input-field"
+            placeholder="🔍 Search by name or email..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ minWidth: '260px', padding: '8px 14px', borderRadius: '8px' }}
+          />
+        </div>
+      </div>
+
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Role</th>
+              <th>Current Plan</th>
+              <th>Subscription Expires</th>
+              <th>Actions (Grant Access)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px' }}><span className="spinner" /> Loading users...</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'var(--clr-text-3)' }}>No users found.</td></tr>
+            ) : (
+              filtered.map(u => (
+                <tr key={u.id}>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{u.name || 'Unknown'}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>{u.email}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--clr-text-3)', marginTop: '2px' }}>
+                      Joined: {new Date(u.createdAt).toLocaleDateString()}
+                      {u.isEmailVerified ? ' ✅' : ' ⚠️ unverified'}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`badge ${u.role === 'ADMIN' ? 'badge-elite' : 'badge-low'}`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${u.packageType === 'ELITE_AI' ? 'badge-elite' : u.packageType === 'SEMESTER_PASS' ? 'badge-success' : 'badge-low'}`}>
+                      {u.packageType === 'ELITE_AI' ? '💎 Elite AI' : u.packageType === 'SEMESTER_PASS' ? '🎓 Sem Pass' : '🆓 Free'}
+                    </span>
+                  </td>
+                  <td style={{ fontSize: '12px', color: 'var(--clr-text-2)' }}>
+                    {u.subscriptionExpiresAt
+                      ? new Date(u.subscriptionExpiresAt).toLocaleDateString('en-NP', { dateStyle: 'medium' })
+                      : '—'}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <button className="btn btn-sm" style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }} onClick={() => updateUserPlan(u.id, 'SEMESTER_PASS', 6)}>
+                        + Sem Pass (6m)
+                      </button>
+                      <button className="btn btn-sm" style={{ background: 'rgba(217,70,239,0.12)', color: '#e879f9', border: '1px solid rgba(217,70,239,0.3)' }} onClick={() => updateUserPlan(u.id, 'ELITE_AI', 12)}>
+                        + Elite (1yr)
+                      </button>
+                      {u.packageType !== 'FREE' && (
+                        <button className="btn btn-sm btn-danger" onClick={() => updateUserPlan(u.id, 'FREE', 0)}>
+                          Revoke Access
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </motion.div>
+  )
+}
+
 
 /* ── Upload Tab ── */
 function UploadTab() {

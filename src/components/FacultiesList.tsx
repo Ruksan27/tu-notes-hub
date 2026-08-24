@@ -75,17 +75,26 @@ export default function FacultiesList({ initialFaculties }: { initialFaculties: 
         )}
       </div>
 
-      {/* Faculty Grid */}
+      {/* Faculty Cards */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: '20px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '24px',
+          justifyContent: 'center',
         }}
       >
         {filtered.length > 0 ? (
           filtered.map((f) => (
-            <Link key={f.id} href={`/faculty/${f.id}`} style={{ textDecoration: 'none' }}>
+            <Link
+              key={f.id}
+              href={`/faculty/${f.id}`}
+              style={{
+                textDecoration: 'none',
+                width: '100%',
+                maxWidth: '320px',
+              }}
+            >
               <div
                 className="glass-card"
                 style={{
@@ -93,6 +102,7 @@ export default function FacultiesList({ initialFaculties }: { initialFaculties: 
                   cursor: 'pointer',
                   overflow: 'hidden',
                   position: 'relative',
+                  height: '100%',
                 }}
               >
                 {/* Glow accent top-left */}
@@ -130,7 +140,7 @@ export default function FacultiesList({ initialFaculties }: { initialFaculties: 
                 <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', marginBottom: '16px', lineHeight: 1.5 }}>
                   {f.name}
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
                   <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
                     {f._count.semesters} {f.systemType === 'YEARLY' ? 'Years' : 'Semesters'}
                   </span>

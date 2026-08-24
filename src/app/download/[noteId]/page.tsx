@@ -55,8 +55,9 @@ export default function DownloadPage() {
                   fileUrl.toLowerCase().endsWith('.webp') ||
                   fileUrl.toLowerCase().endsWith('.gif')
 
-  // Generate secure preview URL: Google Docs Viewer works great for PDFs and Word/PPTX files
-  const previewUrl = isImage 
+  // Generate secure preview URL: Browsers support PDF viewing natively. Use Google Docs Viewer for Word/PPTX.
+  const isPdf = fileUrl.toLowerCase().endsWith('.pdf')
+  const previewUrl = (isImage || isPdf)
     ? fileUrl 
     : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
 

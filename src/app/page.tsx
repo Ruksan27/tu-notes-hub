@@ -10,26 +10,37 @@ export const metadata: Metadata = {
   description: 'Download free study notes and past papers for all TU faculties (BCA, CSIT, BIT, BBS, BBA). Get AI-powered exam question predictions.',
 }
 
-const STATS = [
-  { label: 'Notes Available', value: '5,000+' },
-  { label: 'TU Students', value: '50,000+' },
-  { label: 'Faculties Covered', value: '10+' },
-  { label: 'Past Papers', value: '2,000+' },
-]
+
 
 export default async function HomePage() {
   let faculties: Array<{ id: string; name: string; slug: string; icon: string | null }> = []
+  let stats = { notes: 0, students: 0, faculties: 0, papers: 0 }
 
   try {
-    faculties = await prisma.faculty.findMany({
-      where: { visible: true },
-      take: 8,
-      orderBy: { name: 'asc' },
-      select: { id: true, name: true, slug: true, icon: true },
-    })
+    const [f, notesCount, usersCount, facCount, papersCount] = await Promise.all([
+      prisma.faculty.findMany({
+        where: { visible: true },
+        take: 8,
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true, slug: true, icon: true },
+      }),
+      prisma.note.count(),
+      prisma.user.count(),
+      prisma.faculty.count({ where: { visible: true } }),
+      prisma.pastPaper.count()
+    ])
+    faculties = f
+    stats = { notes: notesCount, students: usersCount, faculties: facCount, papers: papersCount }
   } catch {
     faculties = []
   }
+
+  const dynamicStats = [
+    { label: 'Notes & Resources', value: `${stats.notes}+` },
+    { label: 'Registered Students', value: `${stats.students}+` },
+    { label: 'Faculties Covered', value: `${stats.faculties}` },
+    { label: 'Past Papers', value: `${stats.papers}+` },
+  ]
 
   return (
     <>
@@ -60,12 +71,11 @@ export default async function HomePage() {
           <p className="animate-fade-in" style={{
             color: 'var(--clr-text-2)',
             fontSize: 'clamp(16px,2vw,20px)',
-            maxWidth: '600px',
+            maxWidth: '640px',
             margin: '0 auto 40px',
-            lineHeight: 1.7,
+            lineHeight: 1.8,
           }}>
-            Free notes, past papers, and AI exam predictions for <strong style={{ color: 'var(--clr-text-1)' }}>all Tribhuvan University faculties</strong>.
-            Study smarter, not harder.
+            Access handwritten notes, verified past papers, and AI-driven exam predictions tailored specifically for <strong style={{ color: 'var(--clr-text-1)' }}>Tribhuvan University students</strong>. Say goodbye to scattered PDFs and missing pages!
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/faculties" className="btn btn-primary btn-lg">
@@ -80,13 +90,13 @@ export default async function HomePage() {
 
       {/* ── Stats ─────────────────────────────────── */}
       <section style={{ padding: '40px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)' }}>
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '32px' }}>
-          {STATS.map((s) => (
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '40px' }}>
+          {dynamicStats.map((s) => (
             <div key={s.label} className="text-center">
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: '36px', fontWeight: 800, background: 'var(--grad-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: '42px', fontWeight: 800, background: 'var(--grad-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-1px' }}>
                 {s.value}
               </p>
-              <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', marginTop: '4px' }}>{s.label}</p>
+              <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginTop: '8px', fontWeight: 600 }}>{s.label}</p>
             </div>
           ))}
         </div>

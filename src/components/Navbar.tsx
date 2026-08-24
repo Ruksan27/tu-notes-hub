@@ -59,6 +59,8 @@ export default function Navbar() {
     { href: '/about',     label: 'About' },
   ]
 
+  if (pathname?.startsWith('/admin')) return null
+
   return (
     <>
       {/* ── Main Navbar ── */}
@@ -75,14 +77,12 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* ── Desktop Nav Links ── */}
           <div className="nav-links">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="nav-link"
-                style={pathname === link.href ? { color: 'var(--clr-text-1)', background: 'rgba(255,255,255,0.07)' } : {}}
+                className={`nav-link ${pathname === link.href ? 'nav-link--active' : ''}`}
               >
                 {link.label}
               </Link>

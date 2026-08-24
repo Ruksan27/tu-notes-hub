@@ -19,6 +19,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Subject is required' }, { status: 400 })
     }
 
+    // Fetch Subject, Semester, and Faculty to construct nested folder structure
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+      include: { semester: { include: { faculty: true } } }
+    })
+
+    if (!subject) {
+      return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
+    }
+
     if (contentType === 'CHEATSHEET') {
       const title = formData.get('title') as string
       const content = formData.get('content') as string
@@ -48,7 +58,20 @@ export async function POST(req: NextRequest) {
     const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(fileExtension)
     const resourceType = isImage ? 'image' : 'raw'
 
-    const folder = contentType === 'NOTE' ? 'notes' : 'past-papers'
+    const facultySlug = subject.semester.faculty.slug
+    const semesterSlug = subject.semester.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    let typeFolder = ''
+
+    if (contentType === 'NOTE') {
+      const noteType = formData.get('noteType') as string || 'PDF_BOOK'
+      typeFolder = noteType.toLowerCase()
+    } else if (contentType === 'PAST_PAPER') {
+      typeFolder = 'past-papers'
+    } else {
+      typeFolder = 'misc'
+    }
+
+    const folder = `tu-notes-hub/${facultySlug}/${semesterSlug}/${typeFolder}`
     const { url } = await uploadToCloudinary(buffer, folder, resourceType)
 
     if (contentType === 'NOTE') {
