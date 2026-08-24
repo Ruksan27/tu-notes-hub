@@ -167,6 +167,32 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
     }
   }
 
+  async function updateProjectStatusAdmin(id: string, newStatus: string, requireNote = false) {
+    let adminNote = undefined
+    if (requireNote) {
+      const note = window.prompt('Enter reason for requesting changes:')
+      if (note === null) return // cancelled
+      if (!note.trim()) { toast.error('Note is required'); return }
+      adminNote = note.trim()
+    }
+
+    try {
+      const res = await fetch(`/api/admin/projects/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, ...(adminNote && { adminNote }) })
+      })
+      if (res.ok) {
+        toast.success('Project status updated')
+        fetchData()
+      } else {
+        toast.error('Failed to update status')
+      }
+    } catch {
+      toast.error('Network error')
+    }
+  }
+
   async function toggleProjectStatus(p: ProjectItem) {
     const newStatus = p.status === 'ACTIVE' ? 'HIDDEN' : 'ACTIVE'
     try {
@@ -395,35 +421,39 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                           )}
                         </div>
 
-                        {/* Action buttons */}
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={() => openEditModal(p)}
-                            style={{ flex: 1, justifyContent: 'center' }}
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            className="btn btn-sm"
-                            onClick={() => toggleProjectStatus(p)}
-                            style={{
-                              flex: 1, justifyContent: 'center',
-                              background: p.status === 'ACTIVE' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
-                              color: p.status === 'ACTIVE' ? '#fcd34d' : '#6ee7b7',
-                              border: `1px solid ${p.status === 'ACTIVE' ? 'rgba(245,158,11,0.25)' : 'rgba(16,185,129,0.25)'}`,
-                            }}
-                          >
-                            {p.status === 'ACTIVE' ? '🙈 Hide' : '👁 Show'}
-                          </button>
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => deleteProject(p.id)}
-                            style={{ padding: '6px 10px' }}
-                          >
-                            🗑
-                          </button>
+                        {/* Admin Action buttons */}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                          {['PENDING', 'CHANGES_REQUESTED'].includes(p.status) ? (
+                            <>
+                              <button className="btn btn-sm" onClick={() => updateProjectStatusAdmin(p.id, 'ACTIVE')} style={{ flex: 1, justifyContent: 'center', background: 'rgba(16,185,129,0.15)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }}>
+                                ✓ Approve & Publish
+                              </button>
+                              <button className="btn btn-sm" onClick={() => updateProjectStatusAdmin(p.id, 'CHANGES_REQUESTED', true)} style={{ flex: 1, justifyContent: 'center', background: 'rgba(249,115,22,0.15)', color: '#fdba74', border: '1px solid rgba(249,115,22,0.3)' }}>
+                                ✍️ Request Changes
+                              </button>
+                              <button className="btn btn-sm" onClick={() => updateProjectStatusAdmin(p.id, 'REJECTED')} style={{ padding: '6px 12px', background: 'rgba(239,68,68,0.15)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)' }}>
+                                ✗ Reject
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button className="btn btn-outline btn-sm" onClick={() => openEditModal(p)} style={{ flex: 1, justifyContent: 'center' }}>✏️ Edit</button>
+                              <button className="btn btn-sm" onClick={() => toggleProjectStatus(p)} style={{ flex: 1, justifyContent: 'center', background: p.status === 'ACTIVE' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)', color: p.status === 'ACTIVE' ? '#fcd34d' : '#6ee7b7', border: `1px solid ${p.status === 'ACTIVE' ? 'rgba(245,158,11,0.25)' : 'rgba(16,185,129,0.25)'}` }}>
+                                {p.status === 'ACTIVE' ? '🙈 Hide' : '👁 Show'}
+                              </button>
+                              <button className="btn btn-sm btn-danger" onClick={() => deleteProject(p.id)} style={{ padding: '6px 10px' }}>🗑</button>
+                            </>
+                          )}
                         </div>
+                        
+                        {/* Source Drive Link for verification */}
+                        {(p as any).sourceDriveLink && (
+                          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                            <a href={(p as any).sourceDriveLink} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#a5b4fc', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              📁 Verify Drive Files (Admin Only)
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )

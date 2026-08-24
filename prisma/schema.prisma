@@ -176,34 +176,67 @@ model ProjectItem {
   shortDescription   String?        @db.Text
   description        String         @db.LongText
   category           String?
+  subcategory        String?
   projectType        String?
-  technologies       String         // Comma separated e.g. "NextJS, React, Python"
   
+  // Section B
+  projectObjective   String?        @db.LongText
   modules            String?        @db.LongText
   requirements       String?        @db.LongText
   installation       String?        @db.LongText
   limitations        String?        @db.LongText
   version            String?
+  features           String?        @db.LongText
+  
+  // Section C
+  technologies       String
+  frontend           String?
+  backend            String?
+  dbType             String?
+  framework          String?
+  libraries          String?
+  
+  // Section H & I & J
+  originalPrice      Int
+  discountPercentage Int            @default(0)
+  negotiable         Boolean        @default(false)
   license            String?
   salesType          String?
   
-  originalPrice      Int
-  discountPercentage Int            @default(0)
-  
+  // Section D
   thumbnailUrl       String?
-  images             String?        @db.LongText // JSON array of Cloudinary URLs
+  screenshot1        String?
+  screenshot2        String?
+  screenshot3        String?
+  screenshot4        String?
+  images             String?        @db.LongText // Legacy/other images
   
+  // Section E
   demoUrl            String?
-  demoLinks          String?        @db.LongText // JSON object for various links
+  demoLinks          String?        @db.LongText // Legacy
+  youtubeUrl         String?
+  tiktokUrl          String?
+  instagramUrl       String?
+  linkedinUrl        String?
+  githubUrl          String?
+  portfolioUrl       String?
   
-  features           String?        @db.LongText // JSON array or text
-  
+  // Section F
   sourceDriveLink    String?
+  
+  // Section G
+  demoCredentials    String?        @db.LongText // JSON
+  
+  // Section K
+  sellerDeclared     Boolean        @default(false)
+  
+  // Admin Review
+  adminNote          String?        @db.Text
   
   rating             Float          @default(0)
   reviewCount        Int            @default(0)
 
-  status             String         @default("ACTIVE") // PENDING | ACTIVE | INACTIVE | REJECTED
+  status             String         @default("ACTIVE") // PENDING | ACTIVE | INACTIVE | REJECTED | CHANGES_REQUESTED
   createdAt          DateTime       @default(now())
   
   sellerId           String?

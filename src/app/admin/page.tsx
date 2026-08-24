@@ -7,7 +7,7 @@ import { AdminSkeleton } from '@/components/SkeletonLoader'
 import AdminProjectsTab from '@/components/admin/AdminProjectsTab'
 import AdminSellersTab from '@/components/admin/AdminSellersTab'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings'
 
 interface Payment {
   id: string
@@ -114,6 +114,7 @@ export default function AdminPage() {
     { id: 'materials', icon: '🛠️', label: 'Manage Materials' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
+    { id: 'settings',  icon: '⚙️', label: 'Site Settings' },
   ]
 
   const statCards = [
@@ -291,6 +292,12 @@ export default function AdminPage() {
             {tab === 'sellers' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <AdminSellersTab />
+              </motion.div>
+            )}
+
+            {tab === 'settings' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <SiteSettingsTab />
               </motion.div>
             )}
 
@@ -1593,6 +1600,91 @@ function StatsTab() {
           ))}
         </div>
       )}
+    </motion.div>
+  )
+}
+
+/* ── Site Settings Tab ── */
+function SiteSettingsTab() {
+  const [whatsappLink, setWhatsappLink] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then(r => r.json())
+      .then(d => { if (d.settings) setWhatsappLink(d.settings.whatsappLink) })
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ whatsappLink }),
+      })
+      if (res.ok) {
+        toast.success('Settings saved! ✅')
+      } else {
+        toast.error('Failed to save settings')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <h2 className="text-3xl font-bold mb-2">⚙️ Site Settings</h2>
+      <p style={{ color: 'var(--clr-text-2)', marginBottom: '32px' }}>Manage platform-wide settings.</p>
+
+      <div className="glass-card" style={{ padding: '36px', maxWidth: '600px' }}>
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+            <div className="spinner" style={{ width: '32px', height: '32px' }} />
+          </div>
+        ) : (
+          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
+                💬 WhatsApp Contact Link
+              </label>
+              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '10px', lineHeight: 1.5 }}>
+                This link is shown to verified sellers in their Seller Center for direct admin contact. Use format: <code style={{ color: '#a5b4fc' }}>https://wa.me/977XXXXXXXXXX</code>
+              </p>
+              <input
+                type="url"
+                required
+                className="input-field"
+                placeholder="https://wa.me/9779800000000"
+                value={whatsappLink}
+                onChange={e => setWhatsappLink(e.target.value)}
+              />
+              {whatsappLink && (
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '13px', color: '#6ee7b7', textDecoration: 'underline' }}
+                >
+                  ↗ Test Link
+                </a>
+              )}
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
+              <button type="submit" disabled={saving} className="btn btn-primary">
+                {saving ? <><div className="spinner" style={{ width: '16px', height: '16px' }} /> Saving…</> : '💾 Save Settings'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </motion.div>
   )
 }

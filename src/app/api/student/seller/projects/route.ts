@@ -11,7 +11,6 @@ cloudinary.config({
 
 export const dynamic = 'force-dynamic'
 
-// GET — list this seller's projects
 export async function GET() {
   try {
     const user = await getCurrentUser()
@@ -37,7 +36,6 @@ export async function GET() {
   }
 }
 
-// POST — seller uploads a new project (status: PENDING, admin approves)
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -51,51 +49,123 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData()
+    
+    // Check required fields
     const title = formData.get('title') as string
+    const shortDescription = formData.get('shortDescription') as string
+    const category = formData.get('category') as string
+    const projectType = formData.get('projectType') as string
     const description = formData.get('description') as string
+    const features = formData.get('features') as string
+    const modules = formData.get('modules') as string
+    const requirements = formData.get('requirements') as string
+    const installation = formData.get('installation') as string
     const technologies = formData.get('technologies') as string
+    const frontend = formData.get('frontend') as string
+    const dbType = formData.get('dbType') as string
+    const sourceDriveLink = formData.get('sourceDriveLink') as string
     const originalPrice = Number(formData.get('originalPrice'))
-    const features = formData.get('features') as string | null
-    const demoUrl = formData.get('demoUrl') as string | null
+    const sellerDeclared = formData.get('sellerDeclared') === 'true'
 
-    if (!title || !description || !technologies || !originalPrice) {
+    if (!title || !shortDescription || !category || !projectType || !description || !features || !modules || !requirements || !installation || !technologies || !frontend || !dbType || !sourceDriveLink || !originalPrice || !sellerDeclared) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Handle thumbnail upload
-    let thumbnailUrl: string | null = null
-    const imageFile = formData.get('thumbnail') as File | null
-    const imageUrl = formData.get('thumbnailUrl') as string | null
-
-    if (imageFile && imageFile.size > 0) {
-      const arrayBuffer = await imageFile.arrayBuffer()
+    // Handle Image Uploads
+    const uploadImage = async (file: File | null) => {
+      if (!file || file.size === 0) return null
+      const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
       const uploadResult = await new Promise<any>((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: 'tu-notes/seller-projects', resource_type: 'image' },
-          (error, result) => {
-            if (error) reject(error)
-            else resolve(result)
-          }
+          (error, result) => error ? reject(error) : resolve(result)
         )
         stream.end(buffer)
       })
-      thumbnailUrl = uploadResult.secure_url
-    } else if (imageUrl) {
-      thumbnailUrl = imageUrl
+      return uploadResult.secure_url
+    }
+
+    const thumbnailUrl = await uploadImage(formData.get('thumbnail') as File) || (formData.get('thumbnailUrl') as string)
+    const screenshot1 = await uploadImage(formData.get('screenshot1') as File)
+    const screenshot2 = await uploadImage(formData.get('screenshot2') as File)
+    const screenshot3 = await uploadImage(formData.get('screenshot3') as File)
+    const screenshot4 = await uploadImage(formData.get('screenshot4') as File)
+
+    if (!thumbnailUrl || !screenshot1 || !screenshot2) {
+      return NextResponse.json({ error: 'Thumbnail and at least 2 screenshots are required' }, { status: 400 })
+    }
+
+    // Optional fields
+    const subcategory = formData.get('subcategory') as string || null
+    const projectObjective = formData.get('projectObjective') as string || null
+    const limitations = formData.get('limitations') as string || null
+    const version = formData.get('version') as string || null
+    const backend = formData.get('backend') as string || null
+    const framework = formData.get('framework') as string || null
+    const libraries = formData.get('libraries') as string || null
+    const negotiable = formData.get('negotiable') === 'true'
+    const license = formData.get('license') as string || null
+    const salesType = formData.get('salesType') as string || null
+    
+    // Demo & Social links
+    const demoUrl = formData.get('demoUrl') as string || null
+    const youtubeUrl = formData.get('youtubeUrl') as string || null
+    const tiktokUrl = formData.get('tiktokUrl') as string || null
+    const instagramUrl = formData.get('instagramUrl') as string || null
+    const linkedinUrl = formData.get('linkedinUrl') as string || null
+    const githubUrl = formData.get('githubUrl') as string || null
+    const portfolioUrl = formData.get('portfolioUrl') as string || null
+    
+    // Credentials
+    const demoCredentials = formData.get('demoCredentials') as string || null
+
+    if (!demoUrl && !youtubeUrl && !screenshot1) { // Redundant check for screenshots, but keeping logic
+       return NextResponse.json({ error: 'At least one demo method (Live, Video, or Screenshots) must be provided' }, { status: 400 })
     }
 
     const project = await prisma.projectItem.create({
       data: {
         title,
+        shortDescription,
+        category,
+        subcategory,
+        projectType,
         description,
+        projectObjective,
+        features,
+        modules,
+        requirements,
+        installation,
+        limitations,
+        version,
         technologies,
+        frontend,
+        backend,
+        dbType,
+        framework,
+        libraries,
         originalPrice,
         discountPercentage: 0,
+        negotiable,
+        license,
+        salesType,
         thumbnailUrl,
-        demoUrl: demoUrl || null,
-        features: features || null,
-        status: 'PENDING', // Admin must approve before going ACTIVE
+        screenshot1,
+        screenshot2,
+        screenshot3,
+        screenshot4,
+        demoUrl,
+        youtubeUrl,
+        tiktokUrl,
+        instagramUrl,
+        linkedinUrl,
+        githubUrl,
+        portfolioUrl,
+        sourceDriveLink,
+        demoCredentials,
+        sellerDeclared,
+        status: 'PENDING',
         sellerId: user.id,
       },
     })
