@@ -38,9 +38,11 @@ const sndClick = () => playTone(1800, 0.04, 0.05, 'sine')
 function EmailStep({ onSent }: { onSent: (email: string) => void }) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setEmailError('')
     setLoading(true)
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -53,9 +55,9 @@ function EmailStep({ onSent }: { onSent: (email: string) => void }) {
         onSent(email)
       } else {
         const d = await res.json()
-        toast.error(d.error || 'Failed to send OTP')
+        setEmailError(d.error || 'Failed to send OTP')
       }
-    } catch { toast.error('Network error') }
+    } catch { setEmailError('Network error. Please try again.') }
     finally { setLoading(false) }
   }
 
@@ -87,8 +89,32 @@ function EmailStep({ onSent }: { onSent: (email: string) => void }) {
             placeholder="hari@gmail.com"
             required
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => { setEmail(e.target.value); setEmailError('') }}
+            style={{ borderColor: emailError ? '#ff4d6a' : undefined }}
           />
+          {/* Inline error under input */}
+          {emailError && (
+            <div style={{
+              marginTop: 8, padding: '10px 14px', borderRadius: 10,
+              background: 'rgba(255,77,106,0.1)', border: '1px solid rgba(255,77,106,0.3)',
+              display: 'flex', alignItems: 'flex-start', gap: 8,
+            }}>
+              <span style={{ fontSize: 14, lineHeight: 1 }}>⚠️</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ color: '#ffa3b2', fontSize: 13, fontWeight: 500, margin: '0 0 4px', lineHeight: 1.4 }}>
+                  {emailError}
+                </p>
+                {emailError.toLowerCase().includes('register') && (
+                  <Link
+                    href="/register"
+                    style={{ color: '#ff8fa3', fontSize: 12, fontWeight: 700, textDecoration: 'underline' }}
+                  >
+                    Create a free account →
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <button
           type="submit"
@@ -98,9 +124,14 @@ function EmailStep({ onSent }: { onSent: (email: string) => void }) {
         >
           {loading ? <><span className="spinner" /> Sending OTP...</> : '📨 Send Reset Code'}
         </button>
-        <p style={{ textAlign: 'center', color: 'var(--clr-text-3)', fontSize: 13, margin: 0 }}>
-          Remember it? <Link href="/login" style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>Back to Login</Link>
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: 13, margin: 0 }}>
+            Remember it? <Link href="/login" style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>Login</Link>
+          </p>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: 13, margin: 0 }}>
+            New here? <Link href="/register" style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>Register</Link>
+          </p>
+        </div>
       </form>
     </div>
   )

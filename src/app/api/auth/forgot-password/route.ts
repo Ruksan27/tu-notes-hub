@@ -10,9 +10,11 @@ export async function POST(req: NextRequest) {
     if (!email) return NextResponse.json({ error: 'Email is required' }, { status: 400 })
 
     const user = await prisma.user.findUnique({ where: { email } })
-    // Return same message even if user not found (security — prevent enumeration)
     if (!user) {
-      return NextResponse.json({ message: 'If this email is registered, you will receive an OTP.' })
+      return NextResponse.json(
+        { error: 'No account found with this email address. Please register first.' },
+        { status: 404 }
+      )
     }
 
     const otp = generateOTP()
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     await sendOTPEmail(email, otp, 'FORGOT_PASSWORD')
 
-    return NextResponse.json({ message: 'If this email is registered, you will receive an OTP.' })
+    return NextResponse.json({ message: 'OTP sent successfully. Check your email inbox.' })
   } catch (error) {
     console.error('[FORGOT_PASSWORD]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
