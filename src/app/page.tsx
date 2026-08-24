@@ -17,11 +17,9 @@ export default async function HomePage() {
   let stats = { notes: 0, students: 0, faculties: 0, papers: 0 }
 
   try {
-    const [f, notesCount, usersCount, facCount, papersCount] = await Promise.all([
+    const [allFacs, notesCount, usersCount, facCount, papersCount] = await Promise.all([
       prisma.faculty.findMany({
         where: { visible: true },
-        take: 8,
-        orderBy: { name: 'asc' },
         select: { id: true, name: true, slug: true, icon: true },
       }),
       prisma.note.count(),
@@ -29,7 +27,24 @@ export default async function HomePage() {
       prisma.faculty.count({ where: { visible: true } }),
       prisma.pastPaper.count()
     ])
-    faculties = f
+
+    const PRIORITY_GROUPS: Record<string, number> = {
+      csit: 0, bca: 0, bit: 0, bscit: 0, bim: 0, be: 0,
+      bbs: 1, bba: 1, mba: 1,
+      bsc: 2, bsag: 2,
+      bed: 3, ba: 3,
+      llb: 4, mbbs: 4,
+    }
+
+    faculties = allFacs
+      .sort((a, b) => {
+        const pa = PRIORITY_GROUPS[a.id.toLowerCase()] ?? 99
+        const pb = PRIORITY_GROUPS[b.id.toLowerCase()] ?? 99
+        if (pa !== pb) return pa - pb
+        return a.id.localeCompare(b.id)
+      })
+      .slice(0, 8)
+
     stats = { notes: notesCount, students: usersCount, faculties: facCount, papers: papersCount }
   } catch {
     faculties = []
@@ -87,7 +102,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
+ 
       {/* ── Stats ─────────────────────────────────── */}
       <section style={{ padding: '40px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '40px' }}>
@@ -101,7 +116,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
-
+ 
       {/* ── Faculties Grid ────────────────────────── */}
       <section className="section">
         <div className="container">
@@ -111,11 +126,18 @@ export default async function HomePage() {
             </h2>
             <p style={{ color: 'var(--clr-text-2)' }}>Choose your faculty to access notes and past papers</p>
           </div>
-          <div className="grid-auto">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '20px',
+            }}
+            className="home-faculties-grid"
+          >
             {faculties.length > 0 ? faculties.map((f) => (
-              <Link key={f.id} href={`/faculty/${f.slug}`} className="glass-card" style={{ padding: '28px', cursor: 'pointer', display: 'block' }}>
-                <div style={{ fontSize: '36px', marginBottom: '12px' }}>{f.icon || '📖'}</div>
-                <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>{f.id.toUpperCase()}</h3>
+              <Link key={f.id} href={`/faculty/${f.slug}`} className="glass-card hover-lift" style={{ padding: '24px 20px', cursor: 'pointer', display: 'block', textDecoration: 'none' }}>
+                <div style={{ fontSize: '28px', marginBottom: '12px' }}>{f.icon || '📖'}</div>
+                <h3 style={{ fontSize: '18px', marginBottom: '4px' }}>{f.id.toUpperCase()}</h3>
                 <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', lineHeight: 1.5 }}>{f.name}</p>
               </Link>
             )) : (
@@ -129,6 +151,17 @@ export default async function HomePage() {
               ))
             )}
           </div>
+          <style>{`
+            @media (max-width: 1100px) {
+              .home-faculties-grid { grid-template-columns: repeat(3, 1fr) !important; }
+            }
+            @media (max-width: 760px) {
+              .home-faculties-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            }
+            @media (max-width: 480px) {
+              .home-faculties-grid { grid-template-columns: 1fr !important; }
+            }
+          `}</style>
         </div>
       </section>
 

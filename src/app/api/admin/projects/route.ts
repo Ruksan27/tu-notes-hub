@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const contentType = req.headers.get('content-type') || ''
 
-    let title = '', description = '', technologies = '', features = '', demoUrl = ''
+    let title = '', description = '', technologies = '', features = '', demoUrl = '', sourceDriveLink = '', adminDriveLink = ''
     let originalPrice = 0, discountPercentage = 0
     let thumbnailUrl: string | null = null
 
@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
       technologies = formData.get('technologies') as string
       features = formData.get('features') as string || ''
       demoUrl = formData.get('demoUrl') as string || ''
+      sourceDriveLink = formData.get('sourceDriveLink') as string || ''
+      adminDriveLink = formData.get('adminDriveLink') as string || ''
       originalPrice = Number(formData.get('originalPrice'))
       discountPercentage = Number(formData.get('discountPercentage') || 0)
 
@@ -79,6 +81,8 @@ export async function POST(req: NextRequest) {
       technologies = body.technologies
       features = body.features || ''
       demoUrl = body.demoUrl || ''
+      sourceDriveLink = body.sourceDriveLink || ''
+      adminDriveLink = body.adminDriveLink || ''
       originalPrice = body.originalPrice
       discountPercentage = body.discountPercentage || 0
       thumbnailUrl = body.thumbnailUrl || null
@@ -97,6 +101,8 @@ export async function POST(req: NextRequest) {
         discountPercentage,
         thumbnailUrl,
         demoUrl: demoUrl || null,
+        sourceDriveLink: sourceDriveLink || null,
+        adminDriveLink: adminDriveLink || null,
         features: features || null,
         status: 'ACTIVE',
         // No sellerId = admin-uploaded

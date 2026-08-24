@@ -16,6 +16,7 @@ interface ProjectItem {
   features: string | null
   status: string
   user: { id: string; name: string } | null // seller info
+  sourceDriveLink: string | null
   _count?: { orders: number }
 }
 
@@ -43,6 +44,7 @@ const EMPTY_FORM = {
   discountPercentage: 0,
   thumbnailUrl: '',
   demoUrl: '',
+  sourceDriveLink: '',
   features: '',
 }
 
@@ -59,6 +61,11 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Drive Link inline editor state for admin
+  const [editDriveLinkId, setEditDriveLinkId] = useState<string | null>(null)
+  const [editDriveLink, setEditDriveLink] = useState('')
+  const [savingDriveLink, setSavingDriveLink] = useState(false)
 
   // Sync external tab selection (from sidebar dropdown)
   useEffect(() => {
@@ -107,6 +114,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
       discountPercentage: p.discountPercentage,
       thumbnailUrl: p.thumbnailUrl ?? '',
       demoUrl: p.demoUrl ?? '',
+      sourceDriveLink: p.sourceDriveLink ?? '',
       features: (() => {
         try { return p.features ? JSON.parse(p.features).join('\n') : '' } catch { return p.features ?? '' }
       })(),
@@ -139,6 +147,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
       fd.append('originalPrice', String(formData.originalPrice))
       fd.append('discountPercentage', String(formData.discountPercentage))
       fd.append('demoUrl', formData.demoUrl)
+      fd.append('sourceDriveLink', formData.sourceDriveLink)
       if (featuresJson) fd.append('features', featuresJson)
       if (imageFile) {
         fd.append('thumbnail', imageFile)
@@ -203,6 +212,33 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
       })
       if (res.ok) { toast.success(`Project ${newStatus === 'ACTIVE' ? 'published' : 'hidden'}`); fetchData() }
     } catch { toast.error('Failed to update status') }
+  }
+
+  async function handleAdminSaveDriveLink(projectId: string) {
+    if (!editDriveLink.trim()) {
+      toast.error('Please enter a Google Drive link.')
+      return
+    }
+    setSavingDriveLink(true)
+    try {
+      const res = await fetch(`/api/admin/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceDriveLink: editDriveLink.trim() })
+      })
+      if (res.ok) {
+        toast.success('Drive link saved! ✅')
+        setEditDriveLinkId(null)
+        setEditDriveLink('')
+        fetchData()
+      } else {
+        toast.error('Failed to save drive link')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setSavingDriveLink(false)
+    }
   }
 
   async function deleteProject(id: string) {
@@ -446,14 +482,41 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                           )}
                         </div>
                         
-                        {/* Source Drive Link for verification */}
-                        {(p as any).sourceDriveLink && (
-                          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                            <a href={(p as any).sourceDriveLink} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#a5b4fc', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              📁 Verify Drive Files (Admin Only)
-                            </a>
-                          </div>
-                        )}
+                        {/* Drive Link Section (Admin Editor/Viewer) */}
+                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                          {editDriveLinkId === p.id ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <label style={{ fontSize: '11px', color: 'var(--clr-text-3)', fontWeight: 600 }}>📁 Google Drive Link (Admin)</label>
+                              <input
+                                type="url"
+                                className="input-field"
+                                value={editDriveLink}
+                                onChange={e => setEditDriveLink(e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                style={{ fontSize: '12px', padding: '8px 12px' }}
+                              />
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="btn btn-sm btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setEditDriveLinkId(null)}>Cancel</button>
+                                <button className="btn btn-sm btn-primary" style={{ flex: 2, justifyContent: 'center' }} disabled={savingDriveLink} onClick={() => handleAdminSaveDriveLink(p.id)}>
+                                  {savingDriveLink ? 'Saving...' : '💾 Save Link'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                              {p.sourceDriveLink ? (
+                                <a href={p.sourceDriveLink} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#6ee7b7', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  📁 Verify Drive Files ✓
+                                </a>
+                              ) : (
+                                <span style={{ fontSize: '11px', color: '#fca5a5' }}>⚠️ No drive link</span>
+                              )}
+                              <button className="btn btn-sm btn-outline" style={{ fontSize: '10px', padding: '4px 10px' }} onClick={() => { setEditDriveLinkId(p.id); setEditDriveLink(p.sourceDriveLink || '') }}>
+                                ✏️ {p.sourceDriveLink ? 'Edit Link' : 'Add Link'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </motion.div>
                   )
@@ -848,9 +911,24 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                   <input
                     className="input-field"
                     type="url"
-                    placeholder="https://your-demo-site.vercel.app"
+                    placeholder="https://myprojectdemo.com"
                     value={formData.demoUrl}
                     onChange={e => setFormData({ ...formData, demoUrl: e.target.value })}
+                  />
+                </div>
+
+                {/* Drive Link */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                    Google Drive Source Link *
+                  </label>
+                  <input
+                    required
+                    className="input-field"
+                    type="url"
+                    placeholder="https://drive.google.com/..."
+                    value={formData.sourceDriveLink}
+                    onChange={e => setFormData({ ...formData, sourceDriveLink: e.target.value })}
                   />
                 </div>
 

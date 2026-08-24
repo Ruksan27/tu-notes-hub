@@ -33,8 +33,8 @@ export async function PUT(req: NextRequest) {
     const picFile = formData.get('profilePic') as File | null
     if (picFile && picFile.size > 0) {
       const buffer = Buffer.from(await picFile.arrayBuffer())
-      const uploadRes = await uploadToCloudinary(buffer, picFile.name, 'tu-notes/profile-pics')
-      profilePicUrl = uploadRes.secure_url
+      const uploadRes = await uploadToCloudinary(buffer, 'tu-notes/profile-pics', 'image')
+      profilePicUrl = uploadRes.url
     }
 
     const updateData: any = {

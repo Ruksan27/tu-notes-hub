@@ -223,6 +223,7 @@ model ProjectItem {
   
   // Section F
   sourceDriveLink    String?
+  adminDriveLink     String?
   
   // Section G
   demoCredentials    String?        @db.LongText // JSON

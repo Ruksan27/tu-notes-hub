@@ -289,7 +289,6 @@ export default function SellerCenterTab({ user }: { user: User }) {
                   <h4 style={{ fontWeight: 700, fontSize: '15px', color: 'var(--clr-text-1)', margin: 0 }}>{p.title}</h4>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                     <span style={{ fontWeight: 800, fontSize: '18px', color: '#6ee7b7' }}>Rs. {p.originalPrice}</span>
-                    <span style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>🛒 {p._count?.orders ?? 0} orders</span>
                   </div>
                   {p.status === 'CHANGES_REQUESTED' && (
                     <div style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#fed7aa', marginTop: '8px' }}>
@@ -325,15 +324,17 @@ export default function SellerCenterTab({ user }: { user: User }) {
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                         {p.sourceDriveLink ? (
-                          <a href={p.sourceDriveLink} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#6ee7b7', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            📁 Drive Files ✓
-                          </a>
+                          <span style={{ fontSize: '11px', color: '#6ee7b7', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            📁 Drive Files Submitted ✓
+                          </span>
                         ) : (
-                          <span style={{ fontSize: '11px', color: '#fca5a5' }}>⚠️ No drive link</span>
+                          <>
+                            <span style={{ fontSize: '11px', color: '#fca5a5' }}>⚠️ No drive link</span>
+                            <button className="btn btn-sm btn-outline" style={{ fontSize: '10px', padding: '4px 10px' }} onClick={() => { setEditDriveLinkId(p.id); setEditDriveLink(p.sourceDriveLink || '') }}>
+                              ✏️ Add Link
+                            </button>
+                          </>
                         )}
-                        <button className="btn btn-sm btn-outline" style={{ fontSize: '10px', padding: '4px 10px' }} onClick={() => { setEditDriveLinkId(p.id); setEditDriveLink(p.sourceDriveLink || '') }}>
-                          ✏️ {p.sourceDriveLink ? 'Update' : 'Add Link'}
-                        </button>
                       </div>
                     )}
                   </div>

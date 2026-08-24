@@ -23,7 +23,6 @@ export default async function FacultiesPage() {
   try {
     faculties = await prisma.faculty.findMany({
       where: { visible: true },
-      orderBy: { name: 'asc' },
       include: { _count: { select: { semesters: true } } },
     })
   } catch {

@@ -48,12 +48,14 @@ export async function PUT(
         originalPrice: Number(fd.get('originalPrice')),
         discountPercentage: Number(fd.get('discountPercentage') || 0),
         demoUrl: fd.get('demoUrl') as string || null,
+        sourceDriveLink: fd.get('sourceDriveLink') as string || null,
+        adminDriveLink: fd.get('adminDriveLink') as string || null,
         features: fd.get('features') as string || null,
         ...(thumbnailUrl !== undefined && { thumbnailUrl }),
       }
     } else {
       const body = await req.json()
-      const { title, description, technologies, originalPrice, discountPercentage, thumbnailUrl, demoUrl, features, status, adminNote } = body
+      const { title, description, technologies, originalPrice, discountPercentage, thumbnailUrl, demoUrl, sourceDriveLink, adminDriveLink, features, status, adminNote } = body
       updateData = {
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
@@ -62,6 +64,8 @@ export async function PUT(
         ...(discountPercentage !== undefined && { discountPercentage }),
         ...(thumbnailUrl !== undefined && { thumbnailUrl }),
         ...(demoUrl !== undefined && { demoUrl }),
+        ...(sourceDriveLink !== undefined && { sourceDriveLink }),
+        ...(adminDriveLink !== undefined && { adminDriveLink }),
         ...(features !== undefined && { features }),
         ...(status !== undefined && { status }),
         ...(adminNote !== undefined && { adminNote }),

@@ -18,7 +18,7 @@ type Project = {
   _count?: { orders: number }
 }
 
-const TECH_FILTERS = ['All', 'Next.js', 'React', 'Node.js', 'PHP', 'Python', 'Laravel', 'Flutter', 'MongoDB', 'PostgreSQL']
+const TECH_FILTERS = ['All', 'MERN', 'Django', 'WordPress', 'Next.js', 'React', 'Node.js', 'PHP', 'Python', 'Laravel', 'Flutter', 'MongoDB', 'PostgreSQL']
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -305,11 +305,6 @@ export default function ProjectsPage() {
 
                     {/* Popularity / CTA */}
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '2px' }}>
-                      {project._count && project._count.orders > 0 && (
-                        <span style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>
-                          🛒 {project._count.orders} sold
-                        </span>
-                      )}
                       <Link
                         href={`/projects/${project.id}`}
                         style={{

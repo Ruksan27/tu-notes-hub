@@ -17,7 +17,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { name: true, email: true } },
-        projectItem: { select: { title: true, sourceDriveLink: true } }
+        projectItem: { select: { title: true, sourceDriveLink: true, adminDriveLink: true } }
       }
     })
 
@@ -44,13 +44,15 @@ export async function PUT(req: NextRequest) {
       where: { id: orderId },
       data: { status },
       include: {
-        projectItem: { select: { title: true, sourceDriveLink: true } }
+        projectItem: { select: { title: true, sourceDriveLink: true, adminDriveLink: true } }
       }
     })
 
     // Auto-send delivery email when order is APPROVED
     if (status === 'APPROVED') {
-      const driveLink = updatedOrder.projectItem?.sourceDriveLink
+      // adminDriveLink = the actual delivery link admin set (preferred)
+      // sourceDriveLink = seller's original upload (fallback only if admin hasn't set one)
+      const driveLink = updatedOrder.projectItem?.adminDriveLink || updatedOrder.projectItem?.sourceDriveLink
       const buyerEmail = updatedOrder.orderEmail
 
       if (buyerEmail && driveLink) {
@@ -66,6 +68,8 @@ export async function PUT(req: NextRequest) {
           // Log but don't fail the request if email fails
           console.error('[ORDER_DELIVERY_EMAIL_FAIL]', emailErr)
         }
+      } else if (buyerEmail && !driveLink) {
+        console.warn(`[ORDER_APPROVAL] Order ${orderId} approved but NO drive link set on project. Email NOT sent.`)
       }
     }
 
