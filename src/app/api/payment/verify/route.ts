@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sendPaymentApprovalEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,6 +37,16 @@ export async function POST(req: NextRequest) {
         where: { id: paymentId },
         data: { status: 'APPROVED' },
       })
+
+      // Send the approval email
+      const userToEmail = await prisma.user.findUnique({ where: { id: payment.userId } })
+      if (userToEmail) {
+        try {
+          await sendPaymentApprovalEmail(userToEmail.email, userToEmail.name, payment.packageBought, expiresAt)
+        } catch (e) {
+          console.error("Failed to send payment approval email:", e)
+        }
+      }
 
       return NextResponse.json({ message: 'Payment approved and plan activated!' })
     } else {

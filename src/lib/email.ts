@@ -57,3 +57,48 @@ export async function sendOTPEmail(email: string, otp: string, type: 'REGISTER' 
     html,
   })
 }
+
+export async function sendPaymentApprovalEmail(email: string, userName: string, packageBought: string, expiresAt: Date | null) {
+  const subject = 'Your Payment is Approved! - TU Notes Hub'
+  const title = 'Payment Approved & Subscription Active'
+  
+  const expiryText = expiresAt 
+    ? `Your <strong>${packageBought}</strong> subscription is now active until <strong>${expiresAt.toLocaleDateString()}</strong>.`
+    : `Your <strong>${packageBought}</strong> subscription is now active.`
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${subject}</title>
+    </head>
+    <body style="margin:0;padding:0;background:#0d0f1a;font-family:'Segoe UI',sans-serif;">
+      <div style="max-width:480px;margin:40px auto;background:linear-gradient(135deg,#1a1d2e,#151826);border:1px solid rgba(99,102,241,0.3);border-radius:16px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#10b981,#059669);padding:32px;text-align:center;">
+          <h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">🎉 Payment Approved!</h1>
+        </div>
+        <div style="padding:40px 32px;">
+          <h2 style="color:#e2e8f0;margin:0 0 12px;font-size:20px;">Hello, ${userName}!</h2>
+          <p style="color:#94a3b8;line-height:1.6;margin:0 0 24px;">Thank you for your purchase. We have verified your payment and updated your account.</p>
+          <div style="background:rgba(16,185,129,0.1);border:2px dashed rgba(16,185,129,0.4);border-radius:12px;padding:24px;text-align:center;margin-bottom:32px;">
+            <p style="color:#94a3b8;margin:0 0 8px;font-size:14px;">${expiryText}</p>
+          </div>
+          <p style="color:#64748b;font-size:14px;text-align:center;margin:0;">You can now log in and enjoy premium access!</p>
+        </div>
+        <div style="border-top:1px solid rgba(99,102,241,0.2);padding:20px 32px;text-align:center;">
+          <p style="color:#475569;font-size:12px;margin:0;">© 2025 TU Notes Hub. For Tribhuvan University Students.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject,
+    html,
+  })
+}

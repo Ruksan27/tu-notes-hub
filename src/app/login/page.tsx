@@ -1,6 +1,6 @@
 'use client'
 // src/app/login/page.tsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
@@ -9,6 +9,17 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data && data.authenticated && data.user) {
+          window.location.href = data.user.role === 'ADMIN' ? '/admin' : '/dashboard'
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()

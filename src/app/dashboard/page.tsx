@@ -38,6 +38,15 @@ export default function DashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
+    // Set initial tab from query parameter if present
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const urlTab = params.get('tab') as Tab
+      if (urlTab === 'payment' || urlTab === 'compare' || urlTab === 'overview') {
+        setTab(urlTab)
+      }
+    }
+
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 60000) // 60s timeout for cold start
 
@@ -82,14 +91,17 @@ export default function DashboardPage() {
   }
 
   if (error || !user) {
+    const isTimeout = error?.includes('timed out') || error?.includes('Failed to fetch')
     return (
-      <div className="flex-center flex-col" style={{ minHeight: '80vh', gap: '20px', textAlign: 'center' }}>
-        <div style={{ fontSize: '56px' }}>⚠️</div>
-        <h2 style={{ fontSize: '24px' }}>Something went wrong</h2>
-        <p style={{ color: 'var(--clr-text-2)', maxWidth: '400px' }}>{error || 'Session expired. Please log in again.'}</p>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn btn-outline" onClick={() => window.location.reload()}>↻ Retry</button>
-          <button className="btn btn-primary" onClick={() => router.push('/login')}>Go to Login</button>
+      <div className="flex flex-col items-center justify-center" style={{ minHeight: '100vh', gap: '20px', textAlign: 'center', backgroundColor: '#080a12' }}>
+        <div style={{ fontSize: '64px', marginBottom: '10px' }}>⚠️</div>
+        <h2 className="text-3xl font-bold text-white">Something went wrong</h2>
+        <p style={{ color: 'var(--clr-text-2)', maxWidth: '400px', marginBottom: '20px' }}>
+          {error || 'Session expired. Please log in again.'}
+        </p>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <button className="btn btn-outline" style={{ padding: '12px 24px' }} onClick={() => window.location.reload()}>↻ Try Again</button>
+          {!isTimeout && <button className="btn btn-primary" style={{ padding: '12px 24px' }} onClick={() => router.push('/login')}>Go to Login</button>}
         </div>
       </div>
     )
@@ -115,76 +127,89 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="container" style={{ padding: '40px 24px 80px', minHeight: 'calc(100vh - 68px)' }}>
-      {/* ── Header ── */}
-      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
-        className="flex items-start justify-between flex-wrap gap-4 mb-10"
+    <div className="admin-page-container">
+      {/* ── Left Sidebar Nav ── */}
+      <motion.aside
+        initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+        className="admin-sidebar-nav"
       >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--clr-text-3)' }}>
-            Welcome back 👋
-          </p>
-          <h1 style={{ fontSize: 'clamp(26px,4vw,36px)', marginBottom: '6px' }}>
-            {user.name.split(' ')[0]}&apos;s{' '}
-            <span className="text-gradient">Learning Portal</span>
-          </h1>
-          {faculty ? (
-            <p style={{ color: 'var(--clr-text-2)', fontSize: '15px' }}>
-              {faculty.icon} <strong>{faculty.name}</strong>{' '}
-              •{' '}
-              <span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{semesterName}</span>
-            </p>
-          ) : (
-            <p style={{ color: 'var(--clr-warning)', fontSize: '14px' }}>
-              ⚠️ No faculty/semester selected — go to{' '}
-              <Link href="/settings" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Settings</Link>
-            </p>
-          )}
-        </div>
-        <span
-          className="badge"
-          style={{ background: pkg.gradient, padding: '8px 18px', fontSize: '13px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px' }}
-        >
-          {pkg.label}
-        </span>
-      </motion.div>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+          {/* Logo / Header */}
+          <div className="admin-brand-header">
+            <div className="nav-logo-icon">🎓</div>
+            <div>
+              <span className="font-bold text-sm uppercase tracking-wider block" style={{ color: 'var(--clr-text-3)', fontSize: '10px' }}>STUDENT PORTAL</span>
+              <span className="font-extrabold text-lg block" style={{ color: 'var(--clr-text-1)', marginTop: '-2px' }}>TU Notes Hub</span>
+            </div>
+          </div>
 
-      <div className="sidebar-layout">
-        {/* ── Sidebar ── */}
-        <motion.aside
-          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
-          className="sidebar"
-        >
-          <p className="text-xs font-bold uppercase tracking-widest px-3 pb-3" style={{ color: 'var(--clr-text-3)' }}>
-            Navigation
-          </p>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className={`sidebar-item${tab === item.id ? ' active' : ''}`}
-              onClick={() => setTab(item.id as Tab)}
-            >
-              <span className="text-lg">{item.icon}</span> {item.label}
+          {/* Navigation Menu */}
+          <div className="admin-nav-menu">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                className={`sidebar-item${tab === item.id ? ' active' : ''}`}
+                onClick={() => setTab(item.id as Tab)}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+            
+            <div style={{ height: '1px', background: 'var(--clr-border)', margin: '16px 20px' }} />
+            
+            <button onClick={() => router.push('/faculties')} className="sidebar-item">
+              <span className="text-lg">🏫</span> Browse Faculties
             </button>
-          ))}
-          <div style={{ height: '1px', background: 'var(--clr-border)', margin: '12px 0' }} />
-          <Link href="/faculties" className="sidebar-item">
-            <span className="text-lg">🏫</span> Browse Faculties
-          </Link>
-          {!faculty && (
-            <Link href="/settings" className="sidebar-item" style={{ color: 'var(--clr-warning)' }}>
-              <span className="text-lg">⚙️</span> Setup Profile
-            </Link>
-          )}
-          {user.role === 'ADMIN' && (
-            <Link href="/admin" className="sidebar-item" style={{ color: 'var(--clr-primary-h)' }}>
-              <span className="text-lg">⚙️</span> Admin Panel
-            </Link>
-          )}
-        </motion.aside>
+            
+            {!faculty && (
+              <button onClick={() => router.push('/settings')} className="sidebar-item" style={{ color: 'var(--clr-warning)' }}>
+                <span className="text-lg">⚙️</span> Setup Profile
+              </button>
+            )}
+            
+            {user.role === 'ADMIN' && (
+              <button onClick={() => router.push('/admin')} className="sidebar-item" style={{ color: 'var(--clr-primary-h)' }}>
+                <span className="text-lg">⚙️</span> Admin Panel
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.aside>
 
-        {/* ── Main Content ── */}
-        <main>
+      {/* ── Main Content Area ── */}
+      <div className="admin-main-content">
+        
+        {/* ── Top App Bar ── */}
+        <header className="admin-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ fontSize: '20px', margin: 0, fontWeight: 700 }}>
+              Welcome back, <span className="text-gradient">{user.name.split(' ')[0]}</span> 👋
+            </h1>
+            {faculty ? (
+              <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, marginTop: '4px' }}>
+                {faculty.icon} {faculty.name} • <span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{semesterName}</span>
+              </p>
+            ) : (
+              <p style={{ color: 'var(--clr-warning)', fontSize: '12px', margin: 0, marginTop: '4px' }}>
+                ⚠️ No faculty selected. Update your settings.
+              </p>
+            )}
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span
+              className="badge"
+              style={{ background: pkg.gradient, padding: '8px 16px', fontSize: '12px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px' }}
+            >
+              {pkg.label}
+            </span>
+          </div>
+        </header>
+
+        {/* ── Content Scroll Area ── */}
+        <div className="admin-content-scroll">
+          <main className="admin-content-inner">
           {/* ── Overview Tab ── */}
           {tab === 'overview' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
@@ -438,7 +463,8 @@ export default function DashboardPage() {
               <PaymentTab currentPlan={user.packageType} />
             </motion.div>
           )}
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   )
@@ -601,6 +627,8 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 function PaymentTab({ currentPlan }: { currentPlan: string }) {
   const [showQR, setShowQR] = useState<string | null>(null)
   const [txnId, setTxnId] = useState('')
+  const [screenshot, setScreenshot] = useState<File | null>(null)
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
 
@@ -617,19 +645,48 @@ function PaymentTab({ currentPlan }: { currentPlan: string }) {
     },
   ]
 
-  async function handleSubmit() {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      setScreenshot(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setScreenshotPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
     if (!txnId.trim() || !showQR) return
     setSubmitting(true)
     try {
+      const formData = new FormData()
+      formData.append('transactionId', txnId)
+      formData.append('packageType', showQR)
+      if (screenshot) {
+        formData.append('screenshot', screenshot)
+      }
+
       const res = await fetch('/api/payment/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packageType: showQR, transactionId: txnId }),
+        body: formData,
       })
-      if (res.ok) setDone(true)
-      else toast.error('Submission failed. Try again.')
-    } catch { toast.error('Network error. Try again.') }
-    finally { setSubmitting(false) }
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setDone(true)
+        toast.success('Reference submitted! Verification pending. 🎉')
+      } else {
+        toast.error(data.error || 'Submission failed. Try again.')
+      }
+    } catch { 
+      toast.error('Network error. Try again.') 
+    } finally { 
+      setSubmitting(false) 
+    }
   }
 
   if (done) {
@@ -640,7 +697,7 @@ function PaymentTab({ currentPlan }: { currentPlan: string }) {
         <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
         <h2 className="text-3xl font-bold mb-3">Verification Pending</h2>
         <p style={{ color: 'var(--clr-text-2)', fontSize: '16px', maxWidth: '480px', margin: '0 auto' }}>
-          Your payment has been recorded. Our admins will verify and activate your premium status within 1–2 hours.
+          Your payment Reference <strong>({txnId})</strong> has been successfully submitted. Our admins will verify the screenshot proof and activate your premium status within 1–2 hours.
         </p>
       </motion.div>
     )
@@ -682,7 +739,7 @@ function PaymentTab({ currentPlan }: { currentPlan: string }) {
             </ul>
             {currentPlan !== plan.id && (
               <button className="btn btn-primary btn-lg" style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => setShowQR(plan.id)}
+                onClick={() => { setShowQR(plan.id); setTxnId(''); setScreenshot(null); setScreenshotPreview(null) }}
               >
                 Pay & Upgrade
               </button>
@@ -695,29 +752,76 @@ function PaymentTab({ currentPlan }: { currentPlan: string }) {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="glass-card" style={{ padding: '36px', maxWidth: '480px', margin: '0 auto' }}
         >
-          <h3 className="text-2xl font-bold text-center mb-6">📱 Scan to Pay</h3>
-          <div style={{
-            background: '#fff', borderRadius: '12px', padding: '24px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: '20px', minHeight: '200px',
-          }}>
-            <p style={{ color: '#000', fontWeight: 700, textAlign: 'center', fontSize: '15px' }}>
-              [QR Payment — Transfer Rs. {showQR === 'ELITE_AI' ? '199' : '99'}]
-            </p>
-          </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
-              Transaction Reference ID
-            </label>
-            <input className="input-field" placeholder="e.g. REF-8374928"
-              value={txnId} onChange={(e) => setTxnId(e.target.value)} style={{ padding: '14px', fontSize: '15px' }}
-            />
-          </div>
-          <button className="btn btn-primary btn-lg" style={{ width: '100%', justifyContent: 'center' }}
-            onClick={handleSubmit} disabled={submitting || !txnId.trim()}
-          >
-            {submitting ? <><span className="spinner" /> Processing...</> : '✅ I Have Paid — Submit'}
-          </button>
+          <form onSubmit={handleSubmit}>
+            <h3 className="text-2xl font-bold text-center mb-6">📱 Scan to Pay</h3>
+            <div style={{
+              background: '#fff', borderRadius: '12px', padding: '24px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: '20px', minHeight: '200px',
+            }}>
+              <p style={{ color: '#000', fontWeight: 700, textAlign: 'center', fontSize: '15px' }}>
+                [QR Payment — Transfer Rs. {showQR === 'ELITE_AI' ? '199' : '99'}]
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
+                  1. Transaction Reference ID <span style={{ color: 'red' }}>*</span>
+                </label>
+                <input required className="input-field" placeholder="e.g. REF-8374928"
+                  value={txnId} onChange={(e) => setTxnId(e.target.value)} style={{ padding: '14px', fontSize: '15px' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
+                  2. Upload Payment Screenshot
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: 0,
+                      cursor: 'pointer',
+                      zIndex: 2,
+                    }}
+                  />
+                  <div 
+                    style={{
+                      border: '2px dashed var(--clr-border)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      background: 'rgba(255,255,255,0.02)',
+                    }}
+                  >
+                    <span style={{ fontSize: '24px', display: 'block', marginBottom: '4px' }}>📸</span>
+                    <span style={{ fontSize: '13px', color: 'var(--clr-text-2)', fontWeight: 600 }}>
+                      {screenshot ? screenshot.name : 'Click to Upload screenshot'}
+                    </span>
+                  </div>
+                </div>
+
+                {screenshotPreview && (
+                  <div style={{ marginTop: '12px', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--clr-border)' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={screenshotPreview} alt="Screenshot Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', justifyContent: 'center' }}
+              disabled={submitting || !txnId.trim()}
+            >
+              {submitting ? <><span className="spinner" /> Processing...</> : '✅ I Have Paid — Submit'}
+            </button>
+          </form>
         </motion.div>
       )}
     </div>

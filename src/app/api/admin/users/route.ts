@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 // Fetch all users
 export async function GET() {
   try {

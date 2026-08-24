@@ -53,6 +53,7 @@ model User {
   facultyId             String?
   semesterOrder         Int?      // which semester/year the student is in
   payments              Payment[]
+  projectOrders         ProjectOrder[]
   createdAt             DateTime  @default(now())
 }
 
@@ -142,4 +143,33 @@ model Cheatsheet {
   subjectId String
   subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model ProjectItem {
+  id                 String         @id @default(uuid())
+  title              String
+  description        String         @db.LongText
+  technologies       String         // Comma separated e.g. "NextJS, React, Python"
+  originalPrice      Int
+  discountPercentage Int            @default(0)
+  thumbnailUrl       String?
+  demoUrl            String?
+  features           String?        @db.LongText // JSON array or text
+  status             String         @default("ACTIVE") // ACTIVE | INACTIVE
+  createdAt          DateTime       @default(now())
+  orders             ProjectOrder[]
+}
+
+model ProjectOrder {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  projectItemId   String
+  projectItem     ProjectItem @relation(fields: [projectItemId], references: [id])
+  status          String      @default("PENDING") // PENDING | APPROVED | REJECTED | INQUIRY
+  transactionId   String?     @unique
+  screenshotUrl   String?
+  amount          Int
+  message         String?     @db.Text
+  createdAt       DateTime    @default(now())
 }

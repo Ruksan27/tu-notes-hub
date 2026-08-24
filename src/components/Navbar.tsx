@@ -18,7 +18,30 @@ export default function Navbar() {
 
   useEffect(() => {
     const stored = localStorage.getItem('tu_user')
-    if (stored) { try { setUser(JSON.parse(stored)) } catch {} }
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored))
+      } catch {}
+    }
+    
+    // Verify server session
+    fetch('/api/auth/me')
+      .then((res) => {
+        if (res.status === 401) {
+          localStorage.removeItem('tu_user')
+          setUser(null)
+        } else if (res.ok) {
+          return res.json()
+        }
+      })
+      .then((data) => {
+        if (data && data.authenticated && data.user) {
+          localStorage.setItem('tu_user', JSON.stringify(data.user))
+          setUser(data.user)
+        }
+      })
+      .catch(() => {})
+
     const onScroll = () => setScrolled(window.scrollY > 8)
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
@@ -43,7 +66,7 @@ export default function Navbar() {
     setDropOpen(false)
     setMenuOpen(false)
     toast.success('See you soon! 👋')
-    router.push('/')
+    window.location.href = '/'
   }
 
   const pkgBadge: Record<string, { text: string; bg: string; color: string; border: string }> = {

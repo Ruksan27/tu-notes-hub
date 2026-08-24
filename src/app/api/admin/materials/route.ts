@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { deleteFromCloudinary } from '@/lib/cloudinary'
 import { getCurrentUser } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   try {
     const user = await getCurrentUser()

@@ -29,6 +29,17 @@ export default function RegisterPage() {
   const router = useRouter()
 
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data && data.authenticated && data.user) {
+          window.location.href = data.user.role === 'ADMIN' ? '/admin' : '/dashboard'
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
     // Fetch faculties list from API for registration dropdown
     fetch('/api/admin/faculties')
       .then((res) => res.json())
@@ -81,7 +92,7 @@ export default function RegisterPage() {
       }
       localStorage.setItem('tu_user', JSON.stringify(data.user))
       toast.success('Account verified! Welcome to TU Notes Hub 🎉')
-      router.push('/')
+      window.location.href = '/'
     } finally {
       setLoading(false)
     }
