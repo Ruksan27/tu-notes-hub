@@ -42,6 +42,11 @@ export default function AboutPage() {
             title: 'Works Everywhere',
             text: 'TU Notes Hub is a Progressive Web App (PWA) — install it on your phone, tablet, or laptop and access your notes even offline.',
           },
+          {
+            icon: '🤝',
+            title: 'Project Marketplace (Buyers & Sellers)',
+            text: 'We provide a secure platform for students to buy and sell projects. Sellers upload files securely to Google Drive (only accessible by Admins). Admins verify the source code, DB, and docs before listing. Buyers are guaranteed to receive exactly what is advertised after a verified purchase.',
+          },
         ].map((item) => (
           <div key={item.title} className="glass-card" style={{ padding: '28px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
             <div style={{ fontSize: '36px', flexShrink: 0 }}>{item.icon}</div>

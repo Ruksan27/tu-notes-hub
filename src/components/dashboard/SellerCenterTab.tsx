@@ -45,7 +45,6 @@ const EMPTY_FORM = {
   framework: '',
   libraries: '',
   originalPrice: 0,
-  negotiable: false,
   license: '',
   salesType: '',
   demoUrl: '',
@@ -282,7 +281,6 @@ export default function SellerCenterTab({ user }: { user: User }) {
             key="upload-bg"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
-            onClick={e => { if (e.target === e.currentTarget) setIsModalOpen(false) }}
           >
             <motion.div
               key="upload-modal"
@@ -454,18 +452,9 @@ export default function SellerCenterTab({ user }: { user: User }) {
                 {/* Section H */}
                 <div>
                   <h3 style={{ fontSize: '16px', color: '#a5b4fc', marginBottom: '16px', borderBottom: '1px solid rgba(165,180,252,0.2)', paddingBottom: '8px' }}>Section H — Pricing</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', marginBottom: '8px' }}>Expected Price (Rs.) *</label>
-                      <input type="number" required min={0} className="input-field" value={formData.originalPrice} onChange={e => setFormData({...formData, originalPrice: Number(e.target.value)})} />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', marginBottom: '8px' }}>Negotiable? *</label>
-                      <select required className="input-field" value={formData.negotiable ? 'Yes' : 'No'} onChange={e => setFormData({...formData, negotiable: e.target.value === 'Yes'})}>
-                        <option value="No">No</option>
-                        <option value="Yes">Yes</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', marginBottom: '8px' }}>Expected Price (Rs.) *</label>
+                    <input type="number" required min={0} className="input-field" value={formData.originalPrice} onChange={e => setFormData({...formData, originalPrice: Number(e.target.value)})} />
                   </div>
                 </div>
 
@@ -495,7 +484,10 @@ export default function SellerCenterTab({ user }: { user: User }) {
 
                 {/* Section K */}
                 <div>
-                  <h3 style={{ fontSize: '16px', color: '#a5b4fc', marginBottom: '16px', borderBottom: '1px solid rgba(165,180,252,0.2)', paddingBottom: '8px' }}>Section K — Seller Declaration</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(165,180,252,0.2)', paddingBottom: '8px' }}>
+                    <h3 style={{ fontSize: '16px', color: '#a5b4fc', margin: 0 }}>Section K — Seller Declaration</h3>
+                    <button type="button" onClick={() => setDeclarations(new Array(11).fill(true))} className="btn btn-outline btn-sm" style={{ padding: '4px 10px', fontSize: '11px' }}>✓ Tick All</button>
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {[
                       "I own or have the right to sell this project.",

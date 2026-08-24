@@ -17,14 +17,14 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const sellerProfile = await prisma.sellerProfile.findUnique({
-      where: { userId: user.id },
+      where: { userId: user.userId },
     })
     if (!sellerProfile || sellerProfile.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Not an approved seller' }, { status: 403 })
     }
 
     const projects = await prisma.projectItem.findMany({
-      where: { sellerId: user.id },
+      where: { sellerId: user.userId },
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { orders: true } } },
     })
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const sellerProfile = await prisma.sellerProfile.findUnique({
-      where: { userId: user.id },
+      where: { userId: user.userId },
     })
     if (!sellerProfile || sellerProfile.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Not an approved seller' }, { status: 403 })
@@ -104,7 +104,6 @@ export async function POST(req: NextRequest) {
     const backend = formData.get('backend') as string || null
     const framework = formData.get('framework') as string || null
     const libraries = formData.get('libraries') as string || null
-    const negotiable = formData.get('negotiable') === 'true'
     const license = formData.get('license') as string || null
     const salesType = formData.get('salesType') as string || null
     
@@ -147,7 +146,6 @@ export async function POST(req: NextRequest) {
         libraries,
         originalPrice,
         discountPercentage: 0,
-        negotiable,
         license,
         salesType,
         thumbnailUrl,
@@ -166,7 +164,7 @@ export async function POST(req: NextRequest) {
         demoCredentials,
         sellerDeclared,
         status: 'PENDING',
-        sellerId: user.id,
+        sellerId: user.userId,
       },
     })
 
