@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar'
 import AdBannerBottom from '@/components/ads/AdBannerBottom'
 import AdBlockerGuard from '@/components/ads/AdBlockerGuard'
 import PWARegister from '@/components/PWARegister'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata: Metadata = {
   title: {
@@ -66,6 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             fontFamily: 'Inter, sans-serif',
           }}
         />
+        <SpeedInsights />
       </body>
     </html>
   )
