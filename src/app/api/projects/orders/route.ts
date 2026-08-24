@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
       await prisma.projectOrder.create({
         data: {
-          userId: user.id,
+          userId: user.userId,
           projectItemId: projectId,
           status: 'PENDING',
           transactionId,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
       await prisma.projectOrder.create({
         data: {
-          userId: user.id,
+          userId: user.userId,
           projectItemId: projectId,
           status: 'INQUIRY',
           amount: 0,

@@ -23,6 +23,12 @@ export async function uploadToCloudinary(
   // Randomly select an account for load balancing
   const account = accounts[Math.floor(Math.random() * accounts.length)]
 
+  cloudinary.config({
+    cloud_name: account.cloud_name,
+    api_key: account.api_key,
+    api_secret: account.api_secret,
+  })
+
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
@@ -30,10 +36,6 @@ export async function uploadToCloudinary(
           folder,
           resource_type: resourceType,
           allowed_formats: resourceType === 'raw' ? ['pdf', 'docx', 'doc', 'pptx', 'ppt', 'txt'] : ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'bmp', 'tiff'],
-          // Provide credentials directly for this specific upload
-          cloud_name: account.cloud_name,
-          api_key: account.api_key,
-          api_secret: account.api_secret
         },
         (error, result) => {
           if (error || !result) return reject(error || new Error('Upload failed'))
@@ -52,11 +54,14 @@ export async function deleteFromCloudinary(publicId: string, resourceType: 'imag
   // Attempt deletion across all accounts until successful
   for (const account of accounts) {
     try {
-      const result = await cloudinary.uploader.destroy(publicId, { 
-        resource_type: resourceType,
+      cloudinary.config({
         cloud_name: account.cloud_name,
         api_key: account.api_key,
-        api_secret: account.api_secret
+        api_secret: account.api_secret,
+      })
+
+      const result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: resourceType,
       })
       if (result.result === 'ok') break; // Successfully deleted from this account
     } catch (e) {
