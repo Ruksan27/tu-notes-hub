@@ -861,6 +861,13 @@ function UsersTab() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
+  // Edit User State
+  const [editingUser, setEditingUser] = useState<any | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editRole, setEditRole] = useState('')
+  const [updating, setUpdating] = useState(false)
+
   useEffect(() => {
     fetchUsers()
   }, [])
@@ -899,6 +906,43 @@ function UsersTab() {
     }
   }
 
+  async function handleUpdateDetails(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingUser) return
+    setUpdating(true)
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: editingUser.id,
+          name: editName,
+          email: editEmail,
+          role: editRole,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || 'User details updated! ✅')
+        setEditingUser(null)
+        fetchUsers()
+      } else {
+        toast.error(data.error || 'Failed to update user details')
+      }
+    } catch {
+      toast.error('Failed to save details')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  function startEdit(u: any) {
+    setEditingUser(u)
+    setEditName(u.name || '')
+    setEditEmail(u.email || '')
+    setEditRole(u.role || 'STUDENT')
+  }
+
   const filtered = users.filter(u =>
     (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
     (u.email || '').toLowerCase().includes(search.toLowerCase())
@@ -933,7 +977,7 @@ function UsersTab() {
               <th>Role</th>
               <th>Current Plan</th>
               <th>Subscription Expires</th>
-              <th>Actions (Grant Access)</th>
+              <th>Actions (Grant Access & Edit)</th>
             </tr>
           </thead>
           <tbody>
@@ -968,7 +1012,10 @@ function UsersTab() {
                       : '—'}
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button className="btn btn-sm btn-outline" style={{ display: 'flex', gap: '4px', alignItems: 'center' }} onClick={() => startEdit(u)}>
+                        ✏️ Edit Details
+                      </button>
                       <button className="btn btn-sm" style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }} onClick={() => updateUserPlan(u.id, 'SEMESTER_PASS', 6)}>
                         + Sem Pass (6m)
                       </button>
@@ -988,6 +1035,41 @@ function UsersTab() {
           </tbody>
         </table>
       </div>
+
+      {/* Edit User Details Modal */}
+      {editingUser && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '440px', padding: '28px', border: '1px solid rgba(99,102,241,0.25)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0 }}>✏️ Edit User: {editingUser.name}</h3>
+              <button onClick={() => setEditingUser(null)} style={{ background: 'none', border: 'none', color: 'var(--clr-text-3)', fontSize: '24px', cursor: 'pointer' }}>×</button>
+            </div>
+            <form onSubmit={handleUpdateDetails} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Full Name</label>
+                <input type="text" required className="input-field" value={editName} onChange={e => setEditName(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Email Address</label>
+                <input type="email" required className="input-field" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>System Role</label>
+                <select className="input-field" value={editRole} onChange={e => setEditRole(e.target.value)}>
+                  <option value="STUDENT">STUDENT</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <button type="button" className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setEditingUser(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 2, justifyContent: 'center' }} disabled={updating}>
+                  {updating ? 'Saving...' : '💾 Save Details'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }

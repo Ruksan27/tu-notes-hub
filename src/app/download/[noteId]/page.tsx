@@ -6,6 +6,7 @@ import AdUnit from '@/components/ads/AdUnit'
 
 export default function DownloadPage() {
   const params = useParams()
+  const [isPaid, setIsPaid] = useState(false)
   const [countdown, setCountdown] = useState(10)
   const [note, setNote] = useState<{ title: string; cloudinaryUrl: string } | null>(null)
   const [ready, setReady] = useState(false)
@@ -15,6 +16,20 @@ export default function DownloadPage() {
   const [downloadAdCountdown, setDownloadAdCountdown] = useState(15)
 
   useEffect(() => {
+    // Check if user is a paid subscriber
+    try {
+      const stored = localStorage.getItem('tu_user')
+      if (stored) {
+        const user = JSON.parse(stored)
+        const pkg = user?.packageType ?? 'FREE'
+        if (pkg === 'SEMESTER_PASS' || pkg === 'ELITE_AI') {
+          setIsPaid(true)
+          setReady(true)
+          setCountdown(0)
+        }
+      }
+    } catch {}
+
     fetch(`/api/notes/${params.noteId}`)
       .then((r) => r.json())
       .then(setNote)
@@ -62,6 +77,18 @@ export default function DownloadPage() {
     : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
 
   const handleStartDownload = () => {
+    if (isPaid) {
+      if (note?.cloudinaryUrl) {
+        const link = document.createElement('a')
+        link.href = note.cloudinaryUrl
+        link.target = '_blank'
+        link.download = note.title || 'download'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+      return
+    }
     setDownloadAdCountdown(15)
     setDownloadAdActive(true)
   }

@@ -58,6 +58,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
   const [paymentQr, setPaymentQr] = useState<string | null>(null)
 
+  useEffect(() => {
     fetch('/api/admin/settings').then(r => r.json()).then(d => {
       if (d.settings?.whatsappLink) setWhatsapp(d.settings.whatsappLink)
       if (d.settings?.paymentQrUrl) setPaymentQr(d.settings.paymentQrUrl)

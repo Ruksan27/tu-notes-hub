@@ -36,7 +36,7 @@ export async function GET() {
   }
 }
 
-// Update a user's plan
+// Update user details
 export async function PUT(req: Request) {
   try {
     const admin = await getCurrentUser()
@@ -45,29 +45,45 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json()
-    const { userId, packageType, months } = body
+    const { userId, name, email, role, packageType, months } = body
 
-    if (!userId || !packageType) {
-      return NextResponse.json({ error: 'userId and packageType are required' }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
-    // Compute subscription expiry if premium
-    let subscriptionExpiresAt: Date | null = null
-    if (packageType !== 'FREE' && months) {
-      subscriptionExpiresAt = new Date()
-      subscriptionExpiresAt.setMonth(subscriptionExpiresAt.getMonth() + parseInt(months))
+    const updateData: any = {}
+    if (name) updateData.name = name
+    if (email) updateData.email = email
+    if (role) updateData.role = role as 'STUDENT' | 'ADMIN'
+    
+    if (packageType) {
+      updateData.packageType = packageType as 'FREE' | 'SEMESTER_PASS' | 'ELITE_AI'
+      
+      if (months !== undefined) {
+        if (packageType === 'FREE') {
+          updateData.subscriptionExpiresAt = null
+        } else if (months > 0) {
+          const subscriptionExpiresAt = new Date()
+          subscriptionExpiresAt.setMonth(subscriptionExpiresAt.getMonth() + parseInt(months))
+          updateData.subscriptionExpiresAt = subscriptionExpiresAt
+        }
+      }
     }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: {
-        packageType: packageType as 'FREE' | 'SEMESTER_PASS' | 'ELITE_AI',
-        subscriptionExpiresAt,
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        packageType: true,
+        subscriptionExpiresAt: true
       },
-      select: { id: true, name: true, email: true, packageType: true, subscriptionExpiresAt: true },
     })
 
-    return NextResponse.json({ user: updatedUser, message: 'User plan updated!' })
+    return NextResponse.json({ user: updatedUser, message: 'User details updated successfully! 🎉' })
   } catch (error) {
     console.error('[ADMIN_USERS_PUT]', error)
     return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })

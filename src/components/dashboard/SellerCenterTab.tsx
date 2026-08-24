@@ -14,6 +14,7 @@ interface Project {
   thumbnailUrl: string | null
   status: string
   adminNote: string | null
+  sourceDriveLink: string | null
   _count?: { orders: number }
 }
 
@@ -78,6 +79,11 @@ export default function SellerCenterTab({ user }: { user: User }) {
   const thumbInputRef = useRef<HTMLInputElement>(null)
   const screenRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
 
+  // Drive Link editing state
+  const [editDriveLinkId, setEditDriveLinkId] = useState<string | null>(null)
+  const [editDriveLink, setEditDriveLink] = useState('')
+  const [savingDriveLink, setSavingDriveLink] = useState(false)
+
   useEffect(() => {
     if (user.sellerProfile?.status === 'APPROVED') fetchProjects()
     fetchSettings()
@@ -127,6 +133,34 @@ export default function SellerCenterTab({ user }: { user: User }) {
       }
     }
     reader.readAsDataURL(file)
+  }
+
+  async function handleSaveDriveLink(projectId: string) {
+    if (!editDriveLink.trim()) {
+      toast.error('Please enter a valid Google Drive link.')
+      return
+    }
+    setSavingDriveLink(true)
+    try {
+      const res = await fetch(`/api/student/seller/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceDriveLink: editDriveLink.trim() })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success('Drive link saved! ✅')
+        setEditDriveLinkId(null)
+        setEditDriveLink('')
+        fetchProjects()
+      } else {
+        toast.error(data.error || 'Failed to save drive link')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setSavingDriveLink(false)
+    }
   }
 
   function openModal() {
@@ -267,6 +301,42 @@ export default function SellerCenterTab({ user }: { user: User }) {
                       ⏳ Awaiting admin approval
                     </div>
                   )}
+
+                  {/* Drive Link Section */}
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    {editDriveLinkId === p.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <label style={{ fontSize: '11px', color: 'var(--clr-text-3)', fontWeight: 600 }}>📁 Google Drive Source Link</label>
+                        <input
+                          type="url"
+                          className="input-field"
+                          value={editDriveLink}
+                          onChange={e => setEditDriveLink(e.target.value)}
+                          placeholder="https://drive.google.com/..."
+                          style={{ fontSize: '12px', padding: '8px 12px' }}
+                        />
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn btn-sm btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setEditDriveLinkId(null)}>Cancel</button>
+                          <button className="btn btn-sm btn-primary" style={{ flex: 2, justifyContent: 'center' }} disabled={savingDriveLink} onClick={() => handleSaveDriveLink(p.id)}>
+                            {savingDriveLink ? 'Saving...' : '💾 Save Link'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                        {p.sourceDriveLink ? (
+                          <a href={p.sourceDriveLink} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#6ee7b7', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            📁 Drive Files ✓
+                          </a>
+                        ) : (
+                          <span style={{ fontSize: '11px', color: '#fca5a5' }}>⚠️ No drive link</span>
+                        )}
+                        <button className="btn btn-sm btn-outline" style={{ fontSize: '10px', padding: '4px 10px' }} onClick={() => { setEditDriveLinkId(p.id); setEditDriveLink(p.sourceDriveLink || '') }}>
+                          ✏️ {p.sourceDriveLink ? 'Update' : 'Add Link'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))}
