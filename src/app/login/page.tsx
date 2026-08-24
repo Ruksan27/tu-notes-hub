@@ -23,7 +23,7 @@ export default function LoginPage() {
       if (!res.ok) { toast.error(data.error); return }
       localStorage.setItem('tu_user', JSON.stringify(data.user))
       toast.success(`Welcome back, ${data.user.name}! 👋`)
-      router.push(data.user.role === 'ADMIN' ? '/admin' : '/')
+      window.location.href = data.user.role === 'ADMIN' ? '/admin' : '/'
     } catch (err: any) {
       toast.error('Network error. Is the server running?')
     } finally {

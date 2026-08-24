@@ -59,7 +59,7 @@ export default function AdminPage() {
     await fetch('/api/auth/logout', { method: 'POST' })
     localStorage.removeItem('tu_user')
     toast.success('See you soon! 👋')
-    router.push('/')
+    window.location.href = '/'
   }
 
 

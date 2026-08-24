@@ -39,7 +39,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000)
+    const timeout = setTimeout(() => controller.abort(), 60000) // 60s timeout for cold start
 
     fetch('/api/student/dashboard', { signal: controller.signal })
       .then(async (res) => {
