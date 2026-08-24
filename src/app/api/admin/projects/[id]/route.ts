@@ -68,7 +68,21 @@ export async function PUT(
       }
     }
 
-    const updated = await prisma.projectItem.update({ where: { id }, data: updateData })
+    const updated = await prisma.projectItem.update({
+      where: { id },
+      data: updateData,
+      include: { user: { select: { email: true, name: true } } }
+    })
+
+    if (updateData.status === 'ACTIVE' && updated.user?.email) {
+      try {
+        const { sendProjectApprovedEmail } = await import('@/lib/email')
+        await sendProjectApprovedEmail(updated.user.email, updated.user.name, updated.title)
+      } catch (err) {
+        console.error('Failed to send project approval email:', err)
+      }
+    }
+
     return NextResponse.json({ success: true, project: updated })
   } catch (error) {
     console.error('[ADMIN_PROJECT_PUT]', error)

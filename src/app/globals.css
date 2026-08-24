@@ -814,8 +814,8 @@ img { max-width: 100%; display: block; }
 ═══════════════════════════════════════════════ */
 .admin-page-container {
   display: flex;
-  height: 100vh;
-  min-height: 100vh;
+  height: calc(100vh - 72px);
+  min-height: calc(100vh - 72px);
   background: var(--clr-bg-900);
   overflow: hidden;
   margin-bottom: -80px; /* Negates global layout paddingBottom */

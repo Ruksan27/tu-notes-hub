@@ -83,7 +83,7 @@ export default function Navbar() {
     { href: '/about',     label: 'About' },
   ]
 
-  if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')) return null
+  if (pathname?.startsWith('/admin')) return null
 
   return (
     <>
