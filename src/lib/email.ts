@@ -275,3 +275,56 @@ export async function sendProjectOrderConfirmEmail(
   `
   await transporter.sendMail({ from: process.env.EMAIL_FROM, to: buyerEmail, subject, html })
 }
+
+export async function sendProjectOrderDeliveredEmail(
+  buyerEmail: string,
+  projectTitle: string,
+  amount: number,
+  orderId: string,
+  driveLink: string
+) {
+  const subject = `✅ Your Project is Ready — "${projectTitle}" | TU Notes Hub`
+  const html = `
+    <!DOCTYPE html><html><head><meta charset="utf-8"><title>${subject}</title></head>
+    <body style="margin:0;padding:0;background:#0d0f1a;font-family:'Segoe UI',sans-serif;">
+      <div style="max-width:520px;margin:40px auto;background:linear-gradient(135deg,#1a1d2e,#151826);border:1px solid rgba(16,185,129,0.3);border-radius:16px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#059669,#10b981);padding:36px;text-align:center;">
+          <div style="font-size:52px;margin-bottom:12px;">📦</div>
+          <h1 style="margin:0;color:#fff;font-size:22px;font-weight:800;">Your Files Are Ready!</h1>
+          <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">TU Notes Hub — Order Delivered</p>
+        </div>
+        <div style="padding:40px 36px;">
+          <p style="color:#94a3b8;line-height:1.7;margin:0 0 24px;">
+            🎉 Great news! Admin has verified your payment and your order for <strong style="color:#6ee7b7;">"${projectTitle}"</strong> has been <strong>approved</strong>. Your project files are now ready to download!
+          </p>
+          
+          <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:24px;margin-bottom:24px;">
+            <table style="width:100%;border-collapse:collapse;">
+              <tr><td style="color:#64748b;font-size:13px;padding:6px 0;">Order ID</td><td style="color:#e2e8f0;font-weight:600;text-align:right;font-size:13px;">#${orderId.slice(0, 8).toUpperCase()}</td></tr>
+              <tr><td style="color:#64748b;font-size:13px;padding:6px 0;">Project</td><td style="color:#e2e8f0;font-weight:600;text-align:right;font-size:13px;">${projectTitle}</td></tr>
+              <tr><td style="color:#64748b;font-size:13px;padding:6px 0;">Amount Paid</td><td style="color:#6ee7b7;font-weight:800;text-align:right;font-size:15px;">Rs. ${amount}</td></tr>
+              <tr><td style="color:#64748b;font-size:13px;padding:6px 0;">Status</td><td style="color:#6ee7b7;font-weight:700;text-align:right;font-size:13px;">✅ Approved & Delivered</td></tr>
+            </table>
+          </div>
+
+          <div style="text-align:center;margin-bottom:28px;">
+            <a href="${driveLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:#fff;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:800;font-size:16px;letter-spacing:0.5px;">
+              📥 Download Project Files
+            </a>
+            <p style="color:#64748b;font-size:11px;margin:12px 0 0;">Click the button above to access your Google Drive folder with all source files, database dumps, and documentation.</p>
+          </div>
+
+          <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:16px 20px;">
+            <p style="color:#fcd34d;margin:0;font-size:13px;line-height:1.6;">
+              ⚠️ <strong>Important:</strong> Keep this link private. Do not share the source code publicly. This is for your personal/academic use only.
+            </p>
+          </div>
+        </div>
+        <div style="border-top:1px solid rgba(16,185,129,0.15);padding:20px 36px;text-align:center;">
+          <p style="color:#475569;font-size:12px;margin:0;">© 2025 TU Notes Hub — For Tribhuvan University Students</p>
+        </div>
+      </div>
+    </body></html>
+  `
+  await transporter.sendMail({ from: process.env.EMAIL_FROM, to: buyerEmail, subject, html })
+}

@@ -1,6 +1,5 @@
 'use client'
-// src/components/ads/AdUnit.tsx
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface AdUnitProps {
   type: 'banner' | 'sidebar' | 'inline'
@@ -9,7 +8,21 @@ interface AdUnitProps {
 }
 
 export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitProps) {
+  const [isPaidUser, setIsPaidUser] = useState(false)
+
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem('tu_user')
+      if (stored) {
+        const user = JSON.parse(stored)
+        const pkg = user?.packageType ?? 'FREE'
+        if (pkg === 'SEMESTER_PASS' || pkg === 'ELITE_AI') {
+          setIsPaidUser(true)
+          return
+        }
+      }
+    } catch {}
+
     try {
       // Initialize adsbygoogle script if present
       const adsbygoogle = (window as any).adsbygoogle || []
@@ -18,6 +31,8 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
       // Silently ignore in development or when blocked
     }
   }, [])
+
+  if (isPaidUser) return null
 
   const getStyle = (): React.CSSProperties => {
     switch (type) {

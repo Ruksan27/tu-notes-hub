@@ -485,9 +485,17 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                       <td>
                         <p style={{ fontWeight: 600, color: 'var(--clr-text-1)', fontSize: '13px' }}>{o.user.name}</p>
                         <p style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>{o.user.email}</p>
+                        {(o as any).orderEmail && (
+                          <p style={{ fontSize: '11px', color: '#a5b4fc', marginTop: '2px' }}>📧 Deliver to: {(o as any).orderEmail}</p>
+                        )}
                       </td>
                       <td>
                         <span style={{ color: 'var(--clr-primary-h)', fontWeight: 600, fontSize: '13px' }}>{o.projectItem.title}</span>
+                        {(o.projectItem as any).sourceDriveLink ? (
+                          <a href={(o.projectItem as any).sourceDriveLink} target="_blank" rel="noreferrer" style={{ display: 'block', fontSize: '11px', color: '#6ee7b7', marginTop: '3px', textDecoration: 'underline' }}>📁 Drive Link ✓</a>
+                        ) : (
+                          <span style={{ display: 'block', fontSize: '11px', color: '#fca5a5', marginTop: '3px' }}>⚠️ No drive link set</span>
+                        )}
                       </td>
                       <td>
                         {o.transactionId

@@ -1607,24 +1607,46 @@ function StatsTab() {
 /* ── Site Settings Tab ── */
 function SiteSettingsTab() {
   const [whatsappLink, setWhatsappLink] = useState('')
+  const [paymentQrUrl, setPaymentQrUrl] = useState<string | null>(null)
+  const [paymentQrFile, setPaymentQrFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/settings')
       .then(r => r.json())
-      .then(d => { if (d.settings) setWhatsappLink(d.settings.whatsappLink) })
+      .then(d => { 
+        if (d.settings) {
+          setWhatsappLink(d.settings.whatsappLink)
+          if (d.settings.paymentQrUrl) setPaymentQrUrl(d.settings.paymentQrUrl)
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Image size must be less than 2MB.')
+        return
+      }
+      setPaymentQrFile(file)
+      setPaymentQrUrl(URL.createObjectURL(file))
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     try {
+      const fd = new FormData()
+      fd.append('whatsappLink', whatsappLink)
+      if (paymentQrFile) fd.append('paymentQr', paymentQrFile)
+
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ whatsappLink }),
+        body: fd,
       })
       if (res.ok) {
         toast.success('Settings saved! ✅')
@@ -1675,6 +1697,37 @@ function SiteSettingsTab() {
                   ↗ Test Link
                 </a>
               )}
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
+                📷 Payment QR Code
+              </label>
+              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '10px', lineHeight: 1.5 }}>
+                Upload your eSewa, Khalti, or Mobile Banking QR code. Buyers will scan this QR to pay for projects.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ position: 'relative', border: '2px dashed rgba(99,102,241,0.25)', borderRadius: '12px', padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', cursor: 'pointer' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '24px', display: 'block', marginBottom: '4px' }}>📸</span>
+                    <span style={{ fontSize: '13px', color: 'var(--clr-text-2)', fontWeight: 600 }}>
+                      {paymentQrFile ? paymentQrFile.name : 'Click to upload QR Image'}
+                    </span>
+                  </div>
+                </div>
+                {(paymentQrUrl || paymentQrFile) && (
+                  <div style={{ width: '120px', height: '120px', position: 'relative', background: '#fff', borderRadius: '12px', padding: '8px', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
+                    {/* Use standard img tag for blob URLs to avoid Next/Image host config issues during preview */}
+                    <img src={paymentQrUrl!} alt="QR Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>

@@ -279,5 +279,6 @@ model ProjectReview {
 model SiteSettings {
   id             String   @id @default("singleton")
   whatsappLink   String   @default("https://wa.me/9800000000")
+  paymentQrUrl   String?
   updatedAt      DateTime @updatedAt
 }

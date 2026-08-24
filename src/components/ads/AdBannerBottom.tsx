@@ -1,10 +1,28 @@
 'use client'
 // src/components/ads/AdBannerBottom.tsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 export default function AdBannerBottom() {
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    // Check if user is a paid member — hide the ad for SEMESTER_PASS or ELITE_AI users
+    try {
+      const stored = localStorage.getItem('tu_user')
+      if (stored) {
+        const user = JSON.parse(stored)
+        const pkg = user?.packageType ?? 'FREE'
+        if (pkg === 'SEMESTER_PASS' || pkg === 'ELITE_AI') {
+          // Paid user — keep ad hidden
+          return
+        }
+      }
+    } catch {}
+    // Free user — show the ad
+    setVisible(true)
+  }, [])
+
   if (!visible) return null
 
   return (

@@ -27,15 +27,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { whatsappLink } = await req.json()
+    const { whatsappLink, paymentQrUrl } = await req.json()
     if (!whatsappLink) {
       return NextResponse.json({ error: 'whatsappLink is required' }, { status: 400 })
     }
 
     const settings = await prisma.siteSettings.upsert({
       where: { id: 'singleton' },
-      create: { id: 'singleton', whatsappLink },
-      update: { whatsappLink },
+      create: { id: 'singleton', whatsappLink, paymentQrUrl },
+      update: { whatsappLink, paymentQrUrl },
     })
 
     return NextResponse.json({ success: true, settings })

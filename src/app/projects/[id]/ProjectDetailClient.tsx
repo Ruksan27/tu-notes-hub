@@ -5,15 +5,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'react-toastify'
 
-interface Review {
-  id: string
-  rating: number
-  comment: string | null
-  createdAt: string
-  user: {
-    name: string
-  }
-}
+
 
 interface Project {
   id: string
@@ -64,22 +56,11 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
   const [step, setStep] = useState(1) // 1: Email, 2: QR & Upload
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Review states
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [userRating, setUserRating] = useState(5)
-  const [userComment, setUserComment] = useState('')
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
-  const [projRating, setProjRating] = useState(project.rating)
-  const [projReviewCount, setProjReviewCount] = useState(project.reviewCount)
+  const [paymentQr, setPaymentQr] = useState<string | null>(null)
 
-  useEffect(() => {
     fetch('/api/admin/settings').then(r => r.json()).then(d => {
       if (d.settings?.whatsappLink) setWhatsapp(d.settings.whatsappLink)
-    }).catch(() => {})
-
-    // Fetch reviews
-    fetch(`/api/projects/reviews?projectId=${project.id}`).then(r => r.json()).then(d => {
-      if (d.reviews) setReviews(d.reviews)
+      if (d.settings?.paymentQrUrl) setPaymentQr(d.settings.paymentQrUrl)
     }).catch(() => {})
   }, [project.id])
 
@@ -149,38 +130,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
     }
   }
 
-  const handleReviewSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmittingReview(true)
-    try {
-      const res = await fetch('/api/projects/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: project.id, rating: userRating, comment: userComment })
-      })
-      const data = await res.json()
-      if (res.ok) {
-        toast.success('Review submitted successfully! ✅')
-        setUserComment('')
-        // Refresh reviews list
-        const updatedRes = await fetch(`/api/projects/reviews?projectId=${project.id}`)
-        const updatedData = await updatedRes.json()
-        if (updatedData.reviews) {
-          setReviews(updatedData.reviews)
-          // Calculate local stats updates
-          const totalRating = updatedData.reviews.reduce((acc: number, r: Review) => acc + r.rating, 0)
-          setProjRating(totalRating / updatedData.reviews.length)
-          setProjReviewCount(updatedData.reviews.length)
-        }
-      } else {
-        toast.error(data.error || 'Failed to submit review.')
-      }
-    } catch (e) {
-      toast.error('Error submitting review.')
-    } finally {
-      setIsSubmittingReview(false)
-    }
-  }
+
 
   const buyMessage = encodeURIComponent(
     `Hi! I want to buy the project "${project.title}" listed on TU Notes Hub. Price: Rs. ${finalPrice}. Please confirm availability.`
@@ -215,9 +165,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
                   {project.projectType}
                 </span>
               )}
-              <span style={{ fontSize: '11px', color: '#fcd34d', background: 'rgba(252,211,77,0.1)', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(252,211,77,0.2)', fontWeight: 700 }}>
-                ⭐ {projRating > 0 ? projRating.toFixed(1) : 'No reviews'} ({projReviewCount})
-              </span>
+
             </div>
             <h1 style={{ fontSize: 'clamp(26px, 4vw, 42px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>{project.title}</h1>
             <p style={{ fontSize: '17px', color: 'var(--clr-text-2)', lineHeight: 1.7, margin: 0 }}>{project.shortDescription}</p>
@@ -319,86 +267,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
             )}
           </div>
 
-          {/* Reviews list & Review form */}
-          <div className="glass-card" style={{ padding: '28px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', color: 'var(--clr-primary-h)' }}>⭐ Project Reviews</h3>
-            
-            {/* Form */}
-            <form onSubmit={handleReviewSubmit} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '24px', marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '14px', color: 'var(--clr-text-2)', fontWeight: 700 }}>Your Rating:</span>
-                
-                <div className="radio" style={{ flexDirection: 'row-reverse', justifyContent: 'flex-end' }}>
-                  <input value="5" name="rating" type="radio" id="rating-5" checked={userRating === 5} onChange={() => setUserRating(5)} />
-                  <label title="5 stars" htmlFor="rating-5">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 576 512">
-                      <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                    </svg>
-                  </label>
 
-                  <input value="4" name="rating" type="radio" id="rating-4" checked={userRating === 4} onChange={() => setUserRating(4)} />
-                  <label title="4 stars" htmlFor="rating-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 576 512">
-                      <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                    </svg>
-                  </label>
-
-                  <input value="3" name="rating" type="radio" id="rating-3" checked={userRating === 3} onChange={() => setUserRating(3)} />
-                  <label title="3 stars" htmlFor="rating-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 576 512">
-                      <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                    </svg>
-                  </label>
-
-                  <input value="2" name="rating" type="radio" id="rating-2" checked={userRating === 2} onChange={() => setUserRating(2)} />
-                  <label title="2 stars" htmlFor="rating-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 576 512">
-                      <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                    </svg>
-                  </label>
-
-                  <input value="1" name="rating" type="radio" id="rating-1" checked={userRating === 1} onChange={() => setUserRating(1)} />
-                  <label title="1 star" htmlFor="rating-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 576 512">
-                      <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                    </svg>
-                  </label>
-                </div>
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <textarea
-                  required
-                  placeholder="Share your experience working with this project codebase..."
-                  className="input-field"
-                  rows={3}
-                  value={userComment}
-                  onChange={(e) => setUserComment(e.target.value)}
-                  style={{ padding: '12px', fontSize: '13px' }}
-                />
-              </div>
-              <button type="submit" disabled={isSubmittingReview} className="btn btn-primary btn-sm">
-                {isSubmittingReview ? 'Submitting...' : 'Post Review'}
-              </button>
-            </form>
-
-            {/* List */}
-            {reviews.length === 0 ? (
-              <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>No reviews yet. Be the first to write one!</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {reviews.map((rev) => (
-                  <div key={rev.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: 700, fontSize: '13px' }}>{rev.user.name}</span>
-                      <span style={{ color: '#fcd34d', fontSize: '12px' }}>{'⭐'.repeat(rev.rating)}</span>
-                    </div>
-                    {rev.comment && <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>{rev.comment}</p>}
-                    <span style={{ fontSize: '10px', color: 'var(--clr-text-3)', marginTop: '8px', display: 'block' }}>{new Date(rev.createdAt).toLocaleDateString()}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Right Sidebar */}
@@ -568,7 +437,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
                     </p>
                     {/* Placeholder for QR Code */}
                     <div style={{ width: '160px', height: '160px', position: 'relative', background: '#fff', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
-                      <Image src="/qr-placeholder.png" alt="QR Code" fill style={{ objectFit: 'contain', padding: '8px' }} />
+                      <Image src={paymentQr || "/qr-placeholder.png"} alt="QR Code" fill style={{ objectFit: 'contain', padding: '8px' }} />
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Merchant: TU Notes Hub</span>
                   </div>

@@ -6,6 +6,16 @@ export default function AdBlockerGuard() {
   const [detected, setDetected] = useState(false)
 
   useEffect(() => {
+    // Paid users get ad-free experience — skip ad blocker detection
+    try {
+      const stored = localStorage.getItem('tu_user')
+      if (stored) {
+        const user = JSON.parse(stored)
+        const pkg = user?.packageType ?? 'FREE'
+        if (pkg === 'SEMESTER_PASS' || pkg === 'ELITE_AI') return
+      }
+    } catch {}
+
     const bait = document.createElement('div')
     bait.className = 'adsbox google-ads ad-placement pub_300x250'
     bait.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;'

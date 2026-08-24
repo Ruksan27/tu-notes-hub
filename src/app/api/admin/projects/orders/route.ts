@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
+import { sendProjectOrderDeliveredEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { name: true, email: true } },
-        projectItem: { select: { title: true } }
+        projectItem: { select: { title: true, sourceDriveLink: true } }
       }
     })
 
@@ -41,8 +42,32 @@ export async function PUT(req: NextRequest) {
 
     const updatedOrder = await prisma.projectOrder.update({
       where: { id: orderId },
-      data: { status }
+      data: { status },
+      include: {
+        projectItem: { select: { title: true, sourceDriveLink: true } }
+      }
     })
+
+    // Auto-send delivery email when order is APPROVED
+    if (status === 'APPROVED') {
+      const driveLink = updatedOrder.projectItem?.sourceDriveLink
+      const buyerEmail = updatedOrder.orderEmail
+
+      if (buyerEmail && driveLink) {
+        try {
+          await sendProjectOrderDeliveredEmail(
+            buyerEmail,
+            updatedOrder.projectItem?.title ?? 'Project',
+            updatedOrder.amount,
+            updatedOrder.id,
+            driveLink
+          )
+        } catch (emailErr) {
+          // Log but don't fail the request if email fails
+          console.error('[ORDER_DELIVERY_EMAIL_FAIL]', emailErr)
+        }
+      }
+    }
 
     return NextResponse.json({ success: true, order: updatedOrder })
   } catch (error) {
