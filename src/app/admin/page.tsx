@@ -1605,7 +1605,14 @@ function StatsTab() {
     )
   }
 
-  const filtered = statsData.filter(fac =>
+  const sortedStatsData = [...statsData].map(fac => {
+    // Sort semesters by total resources descending
+    const sortedSemesters = [...fac.semesters].sort((a, b) => (b.total || 0) - (a.total || 0))
+    const facultyTotal = sortedSemesters.reduce((sum, sem) => sum + (sem.total || 0), 0)
+    return { ...fac, semesters: sortedSemesters, facultyTotal }
+  }).sort((a, b) => b.facultyTotal - a.facultyTotal)
+
+  const filtered = sortedStatsData.filter(fac =>
     fac.name.toLowerCase().includes(search.toLowerCase()) ||
     fac.id.toLowerCase().includes(search.toLowerCase())
   )
@@ -1616,7 +1623,7 @@ function StatsTab() {
         <div>
           <h3 className="section-title" style={{ margin: 0 }}>📈 Course Material Statistics</h3>
           <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: '4px 0 0 0' }}>
-            Detailed breakdown of uploaded resource counts by faculty and semester/year.
+            Detailed breakdown of uploaded resource counts by faculty and semester/year. Sorted by most resources.
           </p>
         </div>
         <input
@@ -1641,7 +1648,7 @@ function StatsTab() {
                 <span style={{ fontSize: '28px' }}>{fac.icon || '🏫'}</span>
                 <div>
                   <h4 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--clr-text-1)' }}>
-                    {fac.name} ({fac.id.toUpperCase()})
+                    {fac.name} ({fac.id.toUpperCase()}) <span style={{ color: 'var(--clr-primary-h)', fontSize: '14px', marginLeft: '8px' }}>• {fac.facultyTotal} Resources</span>
                   </h4>
                   <p style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
                     System Type: {fac.systemType}
