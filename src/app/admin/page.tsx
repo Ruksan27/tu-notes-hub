@@ -1152,35 +1152,137 @@ function UploadTab() {
       return
     }
 
-    setUploading(true)
-    const fd = new FormData()
-    fd.append('contentType', contentType)
-    fd.append('subjectId', subjectId)
-
-    if (contentType === 'NOTE') {
-      if (!noteFile) { toast.error('Please choose a file'); setUploading(false); return }
-      fd.append('title', noteTitle); fd.append('description', noteDescription)
-      fd.append('noteType', noteType); fd.append('isPremium', isPremium)
-      fd.append('author', author); fd.append('file', noteFile)
-    } else if (contentType === 'PAST_PAPER') {
-      if (!paperFile) { toast.error('Please choose a file'); setUploading(false); return }
-      fd.append('year', paperYear); fd.append('examType', examType); fd.append('file', paperFile)
-    } else {
-      if (!sheetTitle || !sheetContent) { toast.error('Title and content are required'); setUploading(false); return }
-      fd.append('title', sheetTitle); fd.append('content', sheetContent)
+    // For cheatsheets, no file upload needed — use old path
+    if (contentType === 'CHEATSHEET') {
+      if (!sheetTitle || !sheetContent) { toast.error('Title and content are required'); return }
+      setUploading(true)
+      try {
+        const fd = new FormData()
+        fd.append('contentType', 'CHEATSHEET')
+        fd.append('subjectId', subjectId)
+        fd.append('title', sheetTitle)
+        fd.append('content', sheetContent)
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        const data = await res.json()
+        if (res.ok) {
+          toast.success(data.message || 'Cheatsheet created! 🎉')
+          setSheetTitle(''); setSheetContent('')
+        } else { toast.error(data.error || 'Failed to create cheatsheet') }
+      } catch { toast.error('Network error') }
+      finally { setUploading(false) }
+      return
     }
 
+    // For NOTE and PAST_PAPER — use direct Cloudinary upload
+    const fileToUpload = contentType === 'NOTE' ? noteFile : paperFile
+    if (!fileToUpload) { toast.error('Please choose a file'); return }
+
+    // Validate file size — 100MB max
+    const maxSizeMB = 100
+    if (fileToUpload.size > maxSizeMB * 1024 * 1024) {
+      toast.error(`File too large! Max size is ${maxSizeMB}MB.`)
+      return
+    }
+
+    setUploading(true)
+
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (res.ok) {
-        toast.success(data.message || 'Uploaded successfully! 🎉')
+      // Determine the cloud folder path
+      const subject = await fetch(`/api/admin/subjects/${subjectId}`).then(r => r.json()).catch(() => null)
+      const fileExtension = fileToUpload.name.split('.').pop()?.toLowerCase() || ''
+      const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(fileExtension)
+      const resourceType = isImage ? 'image' : 'raw'
+
+      // Build folder path (same pattern as original backend)
+      let typeFolder = ''
+      if (contentType === 'NOTE') {
+        typeFolder = noteType.toLowerCase()
+      } else {
+        typeFolder = 'past-papers'
+      }
+      const folder = `tu-notes-hub/${typeFolder}`
+
+      // Step 1: Get upload signature from our backend
+      toast.loading('Preparing upload...', { id: 'upload-progress' })
+      const sigRes = await fetch('/api/upload/signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder })
+      })
+      if (!sigRes.ok) {
+        const err = await sigRes.json()
+        toast.error(err.error || 'Failed to get upload signature', { id: 'upload-progress' })
+        return
+      }
+      const { timestamp, signature, cloudName, apiKey, folder: signedFolder } = await sigRes.json()
+
+      // Step 2: Upload directly to Cloudinary (bypasses Vercel size limit!)
+      toast.loading('Uploading file to cloud...', { id: 'upload-progress' })
+      const cloudForm = new FormData()
+      cloudForm.append('file', fileToUpload)
+      cloudForm.append('api_key', apiKey)
+      cloudForm.append('timestamp', String(timestamp))
+      cloudForm.append('signature', signature)
+      cloudForm.append('folder', signedFolder)
+
+      const cloudRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+        { method: 'POST', body: cloudForm }
+      )
+      const cloudData = await cloudRes.json()
+
+      if (!cloudRes.ok || !cloudData.secure_url) {
+        toast.error(cloudData.error?.message || 'Cloudinary upload failed', { id: 'upload-progress' })
+        return
+      }
+
+      const cloudinaryUrl = cloudData.secure_url
+      const fileSize = `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
+
+      // Step 3: Save metadata to our database
+      toast.loading('Saving to database...', { id: 'upload-progress' })
+      const payload: any = {
+        contentType,
+        subjectId,
+        cloudinaryUrl,
+        fileSize,
+      }
+
+      if (contentType === 'NOTE') {
+        if (!noteTitle) { toast.error('Title is required', { id: 'upload-progress' }); return }
+        payload.title = noteTitle
+        payload.description = noteDescription
+        payload.noteType = noteType
+        payload.isPremium = isPremium
+        payload.author = author
+      } else if (contentType === 'PAST_PAPER') {
+        if (!paperYear) { toast.error('Year is required', { id: 'upload-progress' }); return }
+        payload.year = paperYear
+        payload.examType = examType
+      }
+
+      const saveRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const saveData = await saveRes.json()
+
+      if (saveRes.ok) {
+        toast.success(saveData.message || 'Uploaded successfully! 🎉', { id: 'upload-progress' })
         setNoteTitle(''); setNoteDescription(''); setAuthor('')
-        setNoteFile(null); setPaperFile(null); setSheetTitle(''); setSheetContent('')
-      } else { toast.error(data.error || 'Upload failed') }
-    } catch { toast.error('Upload failed — network error') }
-    finally { setUploading(false) }
+        setNoteFile(null); setPaperFile(null)
+      } else {
+        toast.error(saveData.error || 'Failed to save to database', { id: 'upload-progress' })
+      }
+    } catch (err) {
+      console.error('[UPLOAD ERROR]', err)
+      toast.error('Upload failed — please try again', { id: 'upload-progress' })
+    } finally {
+      setUploading(false)
+    }
   }
+
 
   const typeOptions = [
     { type: 'NOTE',       icon: '📄', label: 'Study Note' },
