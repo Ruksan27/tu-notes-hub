@@ -37,6 +37,7 @@ export default function AdminPage() {
   const [projectsExpanded, setProjectsExpanded] = useState(false)
   const [projectSubTab, setProjectSubTab] = useState<'ITEMS' | 'ORDERS'>('ITEMS')
   const [dropOpen, setDropOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -126,10 +127,16 @@ export default function AdminPage() {
 
   return (
     <div className="admin-page-container">
+      {/* Mobile Sidebar Overlay */}
+      <div 
+        className={`admin-sidebar-overlay ${sidebarOpen ? 'mobile-open' : ''}`} 
+        onClick={() => setSidebarOpen(false)} 
+      />
+
       {/* ── Left Sidebar Nav ── */}
       <motion.aside
         initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-        className="admin-sidebar-nav"
+        className={`admin-sidebar-nav ${sidebarOpen ? 'mobile-open' : ''}`}
       >
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
           {/* Logo / Header */}
@@ -147,7 +154,7 @@ export default function AdminPage() {
               <button
                 key={item.id}
                 className={`sidebar-item${tab === item.id ? ' active' : ''}`}
-                onClick={() => setTab(item.id)}
+                onClick={() => { setTab(item.id); setSidebarOpen(false); }}
               >
                 <span className="text-lg">{item.icon}</span>
                 <span>{item.label}</span>
@@ -226,6 +233,11 @@ export default function AdminPage() {
       <div className="admin-content-wrapper">
         {/* Top Navbar */}
         <header className="admin-top-bar">
+          {/* Mobile menu toggle */}
+          <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
+            ☰
+          </button>
+
           {/* Left search input */}
           <div className="admin-search-box">
             <span>🔍</span>
@@ -304,14 +316,7 @@ export default function AdminPage() {
             {tab === 'overview' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {/* Stat Cards */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                    gap: '16px',
-                    marginBottom: '28px',
-                  }}
-                >
+                <div className="admin-stat-grid">
                   {statCards.map((s, i) => (
                     <motion.div
                       key={s.label}

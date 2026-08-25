@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [tab, setTab] = useState<Tab>('overview')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -147,10 +148,16 @@ export default function DashboardPage() {
 
   return (
     <div className="admin-page-container">
+      {/* Mobile Sidebar Overlay */}
+      <div 
+        className={`admin-sidebar-overlay ${sidebarOpen ? 'mobile-open' : ''}`} 
+        onClick={() => setSidebarOpen(false)} 
+      />
+
       {/* ── Left Sidebar Nav ── */}
       <motion.aside
         initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-        className="admin-sidebar-nav"
+        className={`admin-sidebar-nav ${sidebarOpen ? 'mobile-open' : ''}`}
       >
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
           {/* Logo / Header */}
@@ -168,7 +175,7 @@ export default function DashboardPage() {
               <button
                 key={item.id}
                 className={`sidebar-item${tab === item.id ? ' active' : ''}`}
-                onClick={() => setTab(item.id as Tab)}
+                onClick={() => { setTab(item.id as Tab); setSidebarOpen(false); }}
               >
                 <span className="text-lg">{item.icon}</span>
                 <span>{item.label}</span>
@@ -201,12 +208,16 @@ export default function DashboardPage() {
         
         {/* ── Top App Bar ── */}
         <header className="admin-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ fontSize: '20px', margin: 0, fontWeight: 700 }}>
-              Welcome back, <span className="text-gradient">{user.name.split(' ')[0]}</span> 👋
-            </h1>
-            {faculty ? (
-              <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, marginTop: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
+              ☰
+            </button>
+            <div>
+              <h1 style={{ fontSize: '20px', margin: 0, fontWeight: 700 }}>
+                Welcome back, <span className="text-gradient">{user.name.split(' ')[0]}</span> 👋
+              </h1>
+              {faculty ? (
+                <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, marginTop: '4px' }}>
                 {faculty.icon} {faculty.name} • <span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{semesterName}</span>
               </p>
             ) : (

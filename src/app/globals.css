@@ -857,9 +857,11 @@ img { max-width: 100%; display: block; }
   background: rgba(13,15,26,0.6);
   border: 1px solid rgba(99,102,241,0.15);
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
-.table-wrap table { width: 100%; border-collapse: collapse; }
+.table-wrap table { width: 100%; border-collapse: collapse; min-width: 600px; }
 .table-wrap th {
   padding: 14px 18px;
   font-size: 11.5px;
@@ -870,6 +872,7 @@ img { max-width: 100%; display: block; }
   background: rgba(99,102,241,0.05);
   text-align: left;
   border-bottom: 1px solid rgba(99,102,241,0.12);
+  white-space: nowrap;
 }
 .table-wrap td {
   padding: 15px 18px;
@@ -1017,13 +1020,21 @@ img { max-width: 100%; display: block; }
 .admin-search-box {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(99, 102, 241, 0.15);
-  border-radius: 10px;
-  padding: 8px 16px;
-  width: 320px;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 18px;
+  width: 380px;
   max-width: 100%;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-search-box:focus-within {
+  background: rgba(99, 102, 241, 0.05);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .admin-search-input {
@@ -1031,12 +1042,14 @@ img { max-width: 100%; display: block; }
   border: none;
   outline: none;
   color: var(--clr-text-1);
-  font-size: 13.5px;
+  font-size: 14px;
   width: 100%;
+  font-family: var(--font-body);
 }
 
 .admin-search-input::placeholder {
   color: var(--clr-text-3);
+  font-weight: 500;
 }
 
 .admin-user-menu {
@@ -1062,13 +1075,46 @@ img { max-width: 100%; display: block; }
 .admin-scrollable-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 40px 32px;
+}
+
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
 }
 
 /* ═══════════════════════════════════════════════
    FULL-SCREEN DASHBOARD/ADMIN — MOBILE RESPONSIVE
    Applies to: /dashboard, /admin pages
 ═══════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .admin-stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-stat-grid {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .admin-stat-grid .glass-card {
+    padding: 16px !important;
+  }
+  .admin-stat-grid .glass-card .text-xs {
+    font-size: 10px !important;
+  }
+  .admin-stat-grid .glass-card .text-2xl {
+    font-size: 18px !important;
+  }
+  .admin-stat-grid .glass-card > div:last-child {
+    font-size: 24px !important;
+  }
+}
 
 @media (max-width: 900px) {
   /* Stack the layout vertically */
@@ -1080,50 +1126,37 @@ img { max-width: 100%; display: block; }
     margin-bottom: 0 !important;
   }
 
-  /* Sidebar becomes a top horizontal nav strip */
+  /* Off-canvas sidebar */
   .admin-sidebar-nav {
-    width: 100% !important;
-    height: auto !important;
-    flex-direction: column !important;
-    padding: 12px 14px !important;
-    border-right: none !important;
-    border-bottom: 1px solid rgba(99, 102, 241, 0.18) !important;
-    flex-shrink: 0 !important;
-    gap: 8px;
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 270px !important;
+    height: 100vh !important;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
   }
 
-  /* Hide the big brand header on mobile — navbar already shows logo */
+  .admin-sidebar-nav.mobile-open {
+    left: 0;
+  }
+
+  /* Show the big brand header on mobile sidebar */
   .admin-brand-header {
-    display: none !important;
+    display: flex !important;
   }
 
-  /* Nav menu becomes horizontal scrollable row */
+  /* Nav menu remains vertical */
   .admin-nav-menu {
-    flex-direction: row !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
-    gap: 6px !important;
-    padding-bottom: 4px;
+    flex-direction: column !important;
+    overflow-y: auto !important;
     flex-wrap: nowrap !important;
   }
-  .admin-nav-menu::-webkit-scrollbar { display: none; }
 
-  /* Sidebar footer hides on mobile */
+  /* Sidebar footer remains */
   .admin-sidebar-footer {
-    display: none !important;
-  }
-
-  /* Sidebar items become compact horizontal pills */
-  .sidebar-item {
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-    padding: 8px 14px !important;
-    font-size: 13px !important;
-    border-radius: 8px !important;
-    margin-bottom: 0 !important;
-    width: auto !important;
+    display: block !important;
   }
 
   /* Main content wrapper becomes scrollable */
@@ -1131,6 +1164,7 @@ img { max-width: 100%; display: block; }
     height: auto !important;
     overflow: visible !important;
     flex: 1;
+    width: 100%;
   }
 
   /* Scrollable content becomes natural flow */
@@ -1156,11 +1190,50 @@ img { max-width: 100%; display: block; }
   /* Search box shrinks on mobile */
   .admin-search-box {
     width: 100% !important;
+    order: 3;
+    margin-top: 8px;
   }
 
   /* Content inner takes full width */
   .admin-content-inner {
     max-width: 100% !important;
+  }
+
+  /* Overlay for when sidebar is open */
+  .admin-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+    display: none;
+  }
+
+  .admin-sidebar-overlay.mobile-open {
+    display: block;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 20px;
+    cursor: pointer;
+  }
+}
+
+@media (min-width: 901px) {
+  .mobile-menu-btn {
+    display: none;
+  }
+  .admin-sidebar-overlay {
+    display: none;
   }
 }
 
