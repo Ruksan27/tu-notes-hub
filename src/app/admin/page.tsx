@@ -1082,7 +1082,9 @@ function UsersTab() {
 
 /* ── Upload Tab ── */
 function UploadTab() {
-  const [contentType, setContentType] = useState<'NOTE' | 'PAST_PAPER' | 'CHEATSHEET'>('NOTE')
+  const [contentType, setContentType] = useState<'NOTE' | 'PAST_PAPER' | 'CHEATSHEET' | 'SOLUTION_BOOK'>('NOTE')
+  const [sourceType, setSourceType] = useState<'FILE' | 'DRIVE'>('FILE')
+  const [driveLink, setDriveLink] = useState('')
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [semesters, setSemesters] = useState<{ id: string; name: string; order: number }[]>([])
   const [subjects, setSubjects] = useState<{ id: string; name: string; code: string; title: string }[]>([])
@@ -1121,11 +1123,22 @@ function UploadTab() {
     fetch(`/api/admin/semesters?facultyId=${facultyId}`).then(r => r.json()).then(d => setSemesters(d.semesters || []))
   }, [facultyId])
 
+  // Helper: extract Google Drive file ID from share link
+  function parseDriveLink(link: string): string | null {
+    const match = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+    return match ? match[1] : null
+  }
+  function normalizeDriveUrl(link: string): string {
+    const fileId = parseDriveLink(link)
+    return fileId ? `https://drive.google.com/file/d/${fileId}/view` : link
+  }
+
   useEffect(() => {
     if (!semesterId) { setSubjects([]); setSubjectId(''); return }
     const sem = semesters.find(s => s.id === semesterId)
     if (sem) setSemesterOrder(sem.order || 0)
-    fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => setSubjects(d.subjects || []))
+    if (contentType !== 'SOLUTION_BOOK')
+      fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => setSubjects(d.subjects || []))
   }, [semesterId, semesters])
 
   // Check project restrictions whenever subjectId or noteType changes
@@ -1144,6 +1157,45 @@ function UploadTab() {
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
+
+    // ── SOLUTION BOOK path ──
+    if (contentType === 'SOLUTION_BOOK') {
+      if (!semesterId) { toast.error('Please select faculty and semester'); return }
+      if (!noteTitle) { toast.error('Please enter a title'); return }
+      setUploading(true)
+      let cloudinaryUrl = ''
+      let fileSize = ''
+      if (sourceType === 'DRIVE') {
+        if (!driveLink) { toast.error('Please enter a Google Drive link'); setUploading(false); return }
+        const fileId = parseDriveLink(driveLink)
+        if (!fileId) { toast.error('Invalid Drive link — use the share link from Google Drive'); setUploading(false); return }
+        cloudinaryUrl = normalizeDriveUrl(driveLink)
+        fileSize = 'Drive'
+      } else {
+        if (!noteFile) { toast.error('Please choose a file'); setUploading(false); return }
+        if (noteFile.size > 100 * 1024 * 1024) { toast.error('Max 100MB'); setUploading(false); return }
+        toast.loading('Uploading...', { id: 'upload-progress' })
+        try {
+          const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/solution-books' }) })
+          if (!sigRes.ok) { toast.error('Signature error', { id: 'upload-progress' }); setUploading(false); return }
+          const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
+          const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
+          const rt = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'raw'
+          const cf = new FormData(); cf.append('file', noteFile); cf.append('api_key', apiKey); cf.append('timestamp', String(timestamp)); cf.append('signature', signature); cf.append('folder', sf)
+          const cr = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${rt}/upload`, { method: 'POST', body: cf })
+          const cd = await cr.json()
+          if (!cr.ok || !cd.secure_url) { toast.error(cd.error?.message || 'Upload failed', { id: 'upload-progress' }); setUploading(false); return }
+          cloudinaryUrl = cd.secure_url; fileSize = `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
+        } catch { toast.error('Upload error'); setUploading(false); return }
+      }
+      toast.loading('Saving...', { id: 'upload-progress' })
+      const saveRes = await fetch('/api/upload/solution-book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ semesterId, title: noteTitle, description: noteDescription, cloudinaryUrl, fileSize, isPremium, author }) })
+      const sd = await saveRes.json()
+      if (saveRes.ok) { toast.success('Solution book published! 🎉', { id: 'upload-progress' }); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setDriveLink('') }
+      else { toast.error(sd.error || 'Failed to save', { id: 'upload-progress' }) }
+      setUploading(false); return
+    }
+
     if (!subjectId) { toast.error('Please select a subject'); return }
 
     // Block upload if project restriction is exceeded
@@ -1173,11 +1225,52 @@ function UploadTab() {
       return
     }
 
-    // For NOTE and PAST_PAPER — use direct Cloudinary upload
+    // ── CHEATSHEET path ──
+    if (contentType === 'CHEATSHEET') {
+      if (!sheetTitle || !sheetContent) { toast.error('Title and content are required'); return }
+      setUploading(true)
+      try {
+        const fd = new FormData()
+        fd.append('contentType', 'CHEATSHEET'); fd.append('subjectId', subjectId)
+        fd.append('title', sheetTitle); fd.append('content', sheetContent)
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        const data = await res.json()
+        if (res.ok) { toast.success(data.message || 'Cheatsheet created! 🎉'); setSheetTitle(''); setSheetContent('') }
+        else { toast.error(data.error || 'Failed') }
+      } catch { toast.error('Network error') }
+      finally { setUploading(false) }
+      return
+    }
+
+    // ── Google Drive link path ──
+    if (sourceType === 'DRIVE') {
+      if (!driveLink) { toast.error('Please enter a Google Drive link'); return }
+      const fileId = parseDriveLink(driveLink)
+      if (!fileId) { toast.error('Invalid Drive link — use the share link from Google Drive'); return }
+      setUploading(true)
+      toast.loading('Saving Drive link...', { id: 'upload-progress' })
+      const payload: any = { contentType, subjectId, cloudinaryUrl: normalizeDriveUrl(driveLink), fileSize: 'Drive Link' }
+      if (contentType === 'NOTE') {
+        if (!noteTitle) { toast.error('Title required', { id: 'upload-progress' }); setUploading(false); return }
+        payload.title = noteTitle; payload.description = noteDescription; payload.noteType = noteType; payload.isPremium = isPremium; payload.author = author
+      } else {
+        if (!paperYear) { toast.error('Year required', { id: 'upload-progress' }); setUploading(false); return }
+        payload.year = paperYear; payload.examType = examType
+      }
+      try {
+        const sr = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const sd = await sr.json()
+        if (sr.ok) { toast.success(sd.message || 'Saved! 🎉', { id: 'upload-progress' }); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setPaperFile(null); setDriveLink('') }
+        else { toast.error(sd.error || 'Failed', { id: 'upload-progress' }) }
+      } catch { toast.error('Network error', { id: 'upload-progress' }) }
+      finally { setUploading(false) }
+      return
+    }
+
+    // ── File upload path ──
     const fileToUpload = contentType === 'NOTE' ? noteFile : paperFile
     if (!fileToUpload) { toast.error('Please choose a file'); return }
 
-    // Validate file size — 100MB max
     const maxSizeMB = 100
     if (fileToUpload.size > maxSizeMB * 1024 * 1024) {
       toast.error(`File too large! Max size is ${maxSizeMB}MB.`)
@@ -1285,10 +1378,13 @@ function UploadTab() {
 
 
   const typeOptions = [
-    { type: 'NOTE',       icon: '📄', label: 'Study Note' },
-    { type: 'PAST_PAPER', icon: '📝', label: 'Past Paper' },
-    { type: 'CHEATSHEET', icon: '📋', label: 'Cheatsheet' },
+    { type: 'NOTE',          icon: '📄', label: 'Study Note' },
+    { type: 'PAST_PAPER',    icon: '📝', label: 'Past Paper' },
+    { type: 'CHEATSHEET',    icon: '📋', label: 'Cheatsheet' },
+    { type: 'SOLUTION_BOOK', icon: '📚', label: 'Solution Book' },
   ]
+
+  const isSolutionBook = contentType === 'SOLUTION_BOOK'
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -1301,7 +1397,12 @@ function UploadTab() {
             <label className="block text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--clr-text-3)' }}>
               Material Type
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            {isSolutionBook && (
+              <div style={{ marginTop: '8px', padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.25)', borderRadius: '10px', fontSize: '13px', color: '#67e8f9' }}>
+                📚 <strong>Solution Book</strong> — applies to all subjects in a semester. No subject selection needed.
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
               {typeOptions.map((item) => (
                 <button
                   key={item.type} type="button"
@@ -1322,6 +1423,30 @@ function UploadTab() {
             </div>
           </div>
 
+          {/* Source Type Toggle */}
+          {contentType !== 'CHEATSHEET' && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--clr-text-3)' }}>File Source</label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {[{ v: 'FILE', icon: '📁', label: 'Upload File (Max 100MB)' }, { v: 'DRIVE', icon: '🔗', label: 'Google Drive Link' }].map(s => (
+                  <button key={s.v} type="button" onClick={() => setSourceType(s.v as any)}
+                    style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', transition: 'all 0.2s',
+                      background: sourceType === s.v ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${sourceType === s.v ? 'rgba(99,102,241,0.5)' : 'var(--clr-border)'}`,
+                      color: sourceType === s.v ? 'var(--clr-primary-h)' : 'var(--clr-text-2)',
+                    }}>
+                    <span>{s.icon}</span> {s.label}
+                  </button>
+                ))}
+              </div>
+              {sourceType === 'DRIVE' && (
+                <div style={{ marginTop: '10px', padding: '10px 14px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', fontSize: '12px', color: '#fcd34d' }}>
+                  ⚠️ Make sure the file is shared as <strong>"Anyone with the link can view"</strong> in Google Drive.
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Faculty & Semester selects */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
@@ -1340,32 +1465,56 @@ function UploadTab() {
             </div>
           </div>
 
-          {/* Subject */}
-          <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Subject</label>
-            <select className="input-field" value={subjectId} onChange={e => setSubjectId(e.target.value)} required disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
-              <option value="">— Choose Subject —</option>
-              {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
-            </select>
-          </div>
+          {/* Subject — hidden for Solution Books */}
+          {contentType !== 'SOLUTION_BOOK' && (
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Subject</label>
+              <select className="input-field" value={subjectId} onChange={e => setSubjectId(e.target.value)} required disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
+                <option value="">— Choose Subject —</option>
+                {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
+              </select>
+            </div>
+          )}
+
+          {/* Google Drive Link Input */}
+          {sourceType === 'DRIVE' && contentType !== 'CHEATSHEET' && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>🔗 Google Drive Share Link</label>
+              <input
+                className="input-field"
+                type="url"
+                placeholder="https://drive.google.com/file/d/xxxxxxxxxx/view?usp=sharing"
+                value={driveLink}
+                onChange={e => setDriveLink(e.target.value)}
+                required
+              />
+              {driveLink && parseDriveLink(driveLink) && (
+                <p style={{ marginTop: '6px', fontSize: '12px', color: '#6ee7b7' }}>
+                  ✅ Valid Drive link — File ID: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>{parseDriveLink(driveLink)}</code>
+                </p>
+              )}
+              {driveLink && !parseDriveLink(driveLink) && (
+                <p style={{ marginTop: '6px', fontSize: '12px', color: '#fca5a5' }}>❌ Invalid link. Paste the full share link from Google Drive.</p>
+              )}
+            </motion.div>
+          )}
 
           {/* NOTE Fields */}
-          {contentType === 'NOTE' && (
+          {(contentType === 'NOTE' || contentType === 'SOLUTION_BOOK') && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
               <div>
                 <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
-                  {noteType === 'PROJECT' ? 'Project Title' : noteType === 'LAB_WORK' ? 'Lab Work Title' : 'Note Title'}
+                  {isSolutionBook ? 'Solution Book Title' : noteType === 'PROJECT' ? 'Project Title' : noteType === 'LAB_WORK' ? 'Lab Work Title' : 'Note Title'}
                 </label>
                 <input
                   className="input-field"
                   placeholder={
-                    noteType === 'PROJECT'
-                      ? 'e.g. E-Commerce System with Recommendation Engine'
-                      : noteType === 'LAB_WORK'
-                      ? 'e.g. Computer Graphics Lab Work 1-10'
-                      : 'e.g. OOP Full Notes — Chapter 1-8'
+                    isSolutionBook ? 'e.g. BCA Semester 4 Full Solution Book 2081'
+                    : noteType === 'PROJECT' ? 'e.g. E-Commerce System with Recommendation Engine'
+                    : noteType === 'LAB_WORK' ? 'e.g. Computer Graphics Lab Work 1-10'
+                    : 'e.g. OOP Full Notes — Chapter 1-8'
                   }
                   required
                   value={noteTitle}
@@ -1436,7 +1585,7 @@ function UploadTab() {
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
+                {!isSolutionBook && <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Format</label>
                   <select className="input-field" value={noteType} onChange={e => setNoteType(e.target.value)} style={{ cursor: 'pointer' }}>
                     <option value="PDF_BOOK">📚 PDF Book</option>
@@ -1461,7 +1610,7 @@ function UploadTab() {
                 <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author / Credit (optional)</label>
                 <input className="input-field" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} />
               </div>
-              <FileDropZone label="Document (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 10 MB" required />
+              {sourceType === 'FILE' && <FileDropZone label="Document (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 100 MB — uploads directly to Cloudinary" required />}
             </motion.div>
           )}
 
@@ -1484,7 +1633,7 @@ function UploadTab() {
                   </select>
                 </div>
               </div>
-              <FileDropZone label="Question Paper (PDF / Images)" accept=".pdf,.jpg,.jpeg,.png" file={paperFile} onFile={setPaperFile} hint="Max 10 MB" required />
+              {sourceType === 'FILE' && <FileDropZone label="Question Paper (PDF / Images)" accept=".pdf,.jpg,.jpeg,.png" file={paperFile} onFile={setPaperFile} hint="Max 100 MB — uploads directly to Cloudinary" required />}
             </motion.div>
           )}
 
@@ -1512,7 +1661,10 @@ function UploadTab() {
           )}
 
           <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '4px', padding: '14px' }} disabled={uploading}>
-            {uploading ? <><span className="spinner" /> Uploading to Cloudinary...</> : '📤 Upload & Publish Material'}
+            {uploading ? <><span className="spinner" /> Processing...</>
+              : isSolutionBook ? '📚 Publish Solution Book'
+              : sourceType === 'DRIVE' ? '🔗 Save Drive Link & Publish'
+              : '📤 Upload & Publish Material'}
           </button>
         </form>
       </div>

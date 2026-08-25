@@ -116,12 +116,13 @@ model Faculty {
 }
 
 model Semester {
-  id        String    @id @default(uuid())
-  name      String
-  order     Int       @default(1)
-  facultyId String
-  faculty   Faculty   @relation(fields: [facultyId], references: [id])
-  subjects  Subject[]
+  id            String         @id @default(uuid())
+  name          String
+  order         Int            @default(1)
+  facultyId     String
+  faculty       Faculty        @relation(fields: [facultyId], references: [id])
+  subjects      Subject[]
+  solutionBooks SolutionBook[]
 }
 
 model Subject {
@@ -168,6 +169,20 @@ model Cheatsheet {
   subjectId String
   subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model SolutionBook {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?  @db.Text
+  cloudinaryUrl String
+  fileSize      String?
+  isPremium     Boolean  @default(false)
+  author        String?
+  semesterId    String
+  semester      Semester @relation(fields: [semesterId], references: [id])
+  downloadCount Int      @default(0)
+  createdAt     DateTime @default(now())
 }
 
 model ProjectItem {
