@@ -1179,14 +1179,43 @@ function UploadTab() {
           const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/solution-books' }) })
           if (!sigRes.ok) { toast.error('Signature error', { id: 'upload-progress' }); setUploading(false); return }
           const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
+          
           const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
           const rt = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'raw'
-          const cf = new FormData(); cf.append('file', noteFile); cf.append('api_key', apiKey); cf.append('timestamp', String(timestamp)); cf.append('signature', signature); cf.append('folder', sf)
-          const cr = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${rt}/upload`, { method: 'POST', body: cf })
-          const cd = await cr.json()
-          if (!cr.ok || !cd.secure_url) { toast.error(cd.error?.message || 'Upload failed', { id: 'upload-progress' }); setUploading(false); return }
-          cloudinaryUrl = cd.secure_url; fileSize = `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
-        } catch { toast.error('Upload error'); setUploading(false); return }
+          
+          // Chunked upload implementation
+          const chunkSize = 5 * 1024 * 1024 // 5MB chunks
+          const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
+          let finalUrl = ''
+          
+          for (let start = 0; start < noteFile.size; start += chunkSize) {
+            const end = Math.min(start + chunkSize, noteFile.size)
+            const chunk = noteFile.slice(start, end)
+            
+            const cf = new FormData()
+            cf.append('file', chunk)
+            cf.append('api_key', apiKey)
+            cf.append('timestamp', String(timestamp))
+            cf.append('signature', signature)
+            cf.append('folder', sf)
+            
+            const cr = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${rt}/upload`, {
+              method: 'POST',
+              headers: {
+                'X-Unique-Upload-Id': uniqueUploadId,
+                'Content-Range': `bytes ${start}-${end - 1}/${noteFile.size}`
+              },
+              body: cf
+            })
+            
+            const cd = await cr.json()
+            if (!cr.ok) { toast.error(cd.error?.message || 'Upload failed', { id: 'upload-progress' }); setUploading(false); return }
+            if (cd.secure_url) finalUrl = cd.secure_url
+          }
+          
+          if (!finalUrl) throw new Error('Failed to get secure URL')
+          cloudinaryUrl = finalUrl; fileSize = `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
+        } catch (err: any) { toast.error(err.message || 'Upload error'); setUploading(false); return }
       }
       toast.loading('Saving...', { id: 'upload-progress' })
       const saveRes = await fetch('/api/upload/solution-book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ semesterId, title: noteTitle, description: noteDescription, cloudinaryUrl, fileSize, isPremium, author }) })
@@ -1309,27 +1338,52 @@ function UploadTab() {
       }
       const { timestamp, signature, cloudName, apiKey, folder: signedFolder } = await sigRes.json()
 
-      // Step 2: Upload directly to Cloudinary (bypasses Vercel size limit!)
+      // Step 2: Upload directly to Cloudinary using chunked upload (bypasses Vercel size limit!)
       toast.loading('Uploading file to cloud...', { id: 'upload-progress' })
-      const cloudForm = new FormData()
-      cloudForm.append('file', fileToUpload)
-      cloudForm.append('api_key', apiKey)
-      cloudForm.append('timestamp', String(timestamp))
-      cloudForm.append('signature', signature)
-      cloudForm.append('folder', signedFolder)
+      
+      const chunkSize = 5 * 1024 * 1024 // 5MB chunks
+      const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
+      let finalUrl = ''
+      
+      for (let start = 0; start < fileToUpload.size; start += chunkSize) {
+        const end = Math.min(start + chunkSize, fileToUpload.size)
+        const chunk = fileToUpload.slice(start, end)
+        
+        const cloudForm = new FormData()
+        cloudForm.append('file', chunk)
+        cloudForm.append('api_key', apiKey)
+        cloudForm.append('timestamp', String(timestamp))
+        cloudForm.append('signature', signature)
+        cloudForm.append('folder', signedFolder)
+        
+        const cloudRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+          { 
+            method: 'POST', 
+            headers: {
+              'X-Unique-Upload-Id': uniqueUploadId,
+              'Content-Range': `bytes ${start}-${end - 1}/${fileToUpload.size}`
+            },
+            body: cloudForm 
+          }
+        )
+        const cloudData = await cloudRes.json()
+        
+        if (!cloudRes.ok) {
+          toast.error(cloudData.error?.message || 'Cloudinary upload failed', { id: 'upload-progress' })
+          return
+        }
+        if (cloudData.secure_url) {
+          finalUrl = cloudData.secure_url
+        }
+      }
 
-      const cloudRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-        { method: 'POST', body: cloudForm }
-      )
-      const cloudData = await cloudRes.json()
-
-      if (!cloudRes.ok || !cloudData.secure_url) {
-        toast.error(cloudData.error?.message || 'Cloudinary upload failed', { id: 'upload-progress' })
+      if (!finalUrl) {
+        toast.error('Cloudinary upload failed to complete', { id: 'upload-progress' })
         return
       }
 
-      const cloudinaryUrl = cloudData.secure_url
+      const cloudinaryUrl = finalUrl
       const fileSize = `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
 
       // Step 3: Save metadata to our database
@@ -1428,7 +1482,7 @@ function UploadTab() {
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--clr-text-3)' }}>File Source</label>
               <div style={{ display: 'flex', gap: '10px' }}>
-                {[{ v: 'FILE', icon: '📁', label: 'Upload File (Max 100MB)' }, { v: 'DRIVE', icon: '🔗', label: 'Google Drive Link' }].map(s => (
+                {[{ v: 'FILE', icon: '📁', label: 'Upload File (Max 10MB)' }, { v: 'DRIVE', icon: '🔗', label: 'Google Drive Link' }].map(s => (
                   <button key={s.v} type="button" onClick={() => setSourceType(s.v as any)}
                     style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', transition: 'all 0.2s',
                       background: sourceType === s.v ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
@@ -1597,7 +1651,7 @@ function UploadTab() {
                     <option value="GUIDE">📘 Guide</option>
                     <option value="LAB_WORK">🧪 Lab Work</option>
                   </select>
-                </div>
+                </div>}
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Access Tier</label>
                   <select className="input-field" value={isPremium} onChange={e => setIsPremium(e.target.value)} style={{ cursor: 'pointer' }}>
