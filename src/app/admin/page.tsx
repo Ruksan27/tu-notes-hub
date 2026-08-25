@@ -865,17 +865,32 @@ function UsersTab() {
   const [users, setUsers] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [faculties, setFaculties] = useState<any[]>([])
+  const [semesters, setSemesters] = useState<any[]>([])
 
   // Edit User State
   const [editingUser, setEditingUser] = useState<any | null>(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
   const [editRole, setEditRole] = useState('')
+  const [editFacultyId, setEditFacultyId] = useState('')
+  const [editSemesterOrder, setEditSemesterOrder] = useState<string | number>('')
   const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
     fetchUsers()
+    fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
   }, [])
+
+  useEffect(() => {
+    if (!editFacultyId) {
+      setSemesters([])
+      return
+    }
+    fetch(`/api/admin/semesters?facultyId=${editFacultyId}`)
+      .then(r => r.json())
+      .then(d => setSemesters(d.semesters || []))
+  }, [editFacultyId])
 
   async function fetchUsers() {
     try {
@@ -924,6 +939,8 @@ function UsersTab() {
           name: editName,
           email: editEmail,
           role: editRole,
+          facultyId: editFacultyId || null,
+          semesterOrder: editSemesterOrder !== '' ? parseInt(String(editSemesterOrder)) : null,
         }),
       })
       const data = await res.json()
@@ -946,6 +963,8 @@ function UsersTab() {
     setEditName(u.name || '')
     setEditEmail(u.email || '')
     setEditRole(u.role || 'STUDENT')
+    setEditFacultyId(u.facultyId || '')
+    setEditSemesterOrder(u.semesterOrder !== null && u.semesterOrder !== undefined ? u.semesterOrder : '')
   }
 
   const filtered = users.filter(u =>
@@ -1065,6 +1084,24 @@ function UsersTab() {
                   <option value="ADMIN">ADMIN</option>
                 </select>
               </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Faculty</label>
+                <select className="input-field" value={editFacultyId} onChange={e => { setEditFacultyId(e.target.value); setEditSemesterOrder(''); }}>
+                  <option value="">None / Not Selected</option>
+                  {faculties.map(f => (
+                    <option key={f.id} value={f.id}>{f.icon} {f.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Semester / Year</label>
+                <select className="input-field" value={editSemesterOrder} onChange={e => setEditSemesterOrder(e.target.value)} disabled={!editFacultyId}>
+                  <option value="">None / Not Selected</option>
+                  {semesters.map(s => (
+                    <option key={s.id} value={s.order}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                 <button type="button" className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setEditingUser(null)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 2, justifyContent: 'center' }} disabled={updating}>
@@ -1173,7 +1210,7 @@ function UploadTab() {
         fileSize = 'Drive'
       } else {
         if (!noteFile) { toast.error('Please choose a file'); setUploading(false); return }
-        if (noteFile.size > 100 * 1024 * 1024) { toast.error('Max 100MB'); setUploading(false); return }
+        if (noteFile.size > 10 * 1024 * 1024) { toast.error('Max 10MB limit reached for Cloudinary Free Tier'); setUploading(false); return }
         toast.loading('Uploading...', { toastId: 'upload-progress' })
         try {
           const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/solution-books' }) })
@@ -1290,7 +1327,7 @@ function UploadTab() {
     const fileToUpload = contentType === 'NOTE' ? noteFile : paperFile
     if (!fileToUpload) { toast.error('Please choose a file'); return }
 
-    const maxSizeMB = 100
+    const maxSizeMB = 10
     if (fileToUpload.size > maxSizeMB * 1024 * 1024) {
       toast.error(`File too large! Max size is ${maxSizeMB}MB.`)
       return
@@ -1656,7 +1693,7 @@ function UploadTab() {
                 <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author / Credit (optional)</label>
                 <input className="input-field" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} />
               </div>
-              {sourceType === 'FILE' && <FileDropZone label="Document (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 100 MB — uploads directly to Cloudinary" required />}
+              {sourceType === 'FILE' && <FileDropZone label="Document (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
             </motion.div>
           )}
 
@@ -1679,7 +1716,7 @@ function UploadTab() {
                   </select>
                 </div>
               </div>
-              {sourceType === 'FILE' && <FileDropZone label="Question Paper (PDF / Images)" accept=".pdf,.jpg,.jpeg,.png" file={paperFile} onFile={setPaperFile} hint="Max 100 MB — uploads directly to Cloudinary" required />}
+              {sourceType === 'FILE' && <FileDropZone label="Question Paper (PDF / Images)" accept=".pdf,.jpg,.jpeg,.png" file={paperFile} onFile={setPaperFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
             </motion.div>
           )}
 

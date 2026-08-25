@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { analyzePastPapers } from '@/lib/gemini'
+import { analyzePastPapers, extractTextFromPdfUrl } from '@/lib/gemini'
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,18 +38,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please select at least 2 past papers to compare' }, { status: 400 })
     }
 
-    // Only papers with extracted text can be analyzed
-    const validPapers = papers.filter((p) => p.extractedText)
-    if (validPapers.length < 2) {
-      return NextResponse.json({
-        error: 'Papers need to be processed by admin first. Please contact admin.',
-      }, { status: 422 })
+    // Process and extract text on-the-fly if missing
+    const papersData: Array<{ year: number; text: string }> = []
+    
+    for (const paper of papers) {
+      let text = paper.extractedText
+      if (!text) {
+        if (!paper.cloudinaryUrl) {
+          return NextResponse.json({ error: `Paper for year ${paper.year} has no file attached` }, { status: 400 })
+        }
+        try {
+          text = await extractTextFromPdfUrl(paper.cloudinaryUrl)
+          // Cache the extracted text in the database
+          await prisma.pastPaper.update({
+            where: { id: paper.id },
+            data: { extractedText: text }
+          })
+        } catch (extractErr: any) {
+          console.error(`[AI_COMPARE_EXTRACT_FAILED] Year ${paper.year}:`, extractErr)
+          return NextResponse.json({ 
+            error: `Failed to process paper for year ${paper.year}: ${extractErr.message || 'Unknown error'}` 
+          }, { status: 500 })
+        }
+      }
+      papersData.push({ year: paper.year, text })
     }
-
-    const papersData = validPapers.map((p) => ({
-      year: p.year,
-      text: p.extractedText!,
-    }))
 
     const report = await analyzePastPapers(subject.title, papersData)
 

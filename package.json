@@ -18,6 +18,8 @@
     "unrs-resolver": true
   },
   "dependencies": {
+    "@google/genai": "^2.18.0",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",

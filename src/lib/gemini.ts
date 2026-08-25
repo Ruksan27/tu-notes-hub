@@ -1,4 +1,5 @@
 // src/lib/gemini.ts
+import { GoogleGenAI } from '@google/genai'
 
 const API_KEYS = [
   process.env.GEMINI_KEY_1,
@@ -14,11 +15,6 @@ function getNextApiKey(): string {
   return key
 }
 
-interface GeminiMessage {
-  role: 'user' | 'model'
-  parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>
-}
-
 export async function callGemini(
   prompt: string,
   systemInstruction?: string,
@@ -30,46 +26,30 @@ export async function callGemini(
   while (attempts < API_KEYS.length) {
     const apiKey = getNextApiKey()
     try {
-      const contents: GeminiMessage[] = []
+      const genAI = new GoogleGenAI({ apiKey })
 
-      const userParts: GeminiMessage['parts'] = []
+      const contents: any[] = []
       if (imageBase64 && mimeType) {
-        userParts.push({ inlineData: { mimeType, data: imageBase64 } })
+        contents.push({ inlineData: { mimeType, data: imageBase64 } })
       }
-      userParts.push({ text: prompt })
+      contents.push(prompt)
 
-      contents.push({ role: 'user', parts: userParts })
+      const response = await genAI.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents,
+        ...(systemInstruction ? { config: { systemInstruction } } : {}),
+      })
 
-      const body: Record<string, unknown> = { contents }
-      if (systemInstruction) {
-        body.systemInstruction = { parts: [{ text: systemInstruction }] }
-      }
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }
-      )
-
-      if (response.status === 429) {
+      return response.text ?? ''
+    } catch (error: any) {
+      const isRateLimited =
+        error?.status === 429 ||
+        error?.message?.includes('429') ||
+        error?.message?.includes('quota') ||
+        error?.message?.includes('RESOURCE_EXHAUSTED')
+      if (isRateLimited) {
         attempts++
         console.warn(`[Gemini] Key ${currentKeyIndex} rate limited. Rotating...`)
-        continue
-      }
-
-      if (!response.ok) {
-        const err = await response.json()
-        throw new Error(err.error?.message || 'Gemini API error')
-      }
-
-      const data = await response.json()
-      return data.candidates[0]?.content?.parts[0]?.text || ''
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message?.includes('429')) {
-        attempts++
         continue
       }
       throw error
@@ -77,6 +57,29 @@ export async function callGemini(
   }
 
   throw new Error('All Gemini API keys are rate-limited. Please try again in a minute.')
+}
+
+// Extract text from a document URL (PDF or Image) using Gemini
+export async function extractTextFromPdfUrl(url: string): Promise<string> {
+  let targetUrl = url
+  if (url.includes('drive.google.com')) {
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+    if (match) {
+      targetUrl = `https://lh3.googleusercontent.com/d/${match[1]}`
+    }
+  }
+
+  const res = await fetch(targetUrl)
+  if (!res.ok) throw new Error(`Failed to fetch file for text extraction: ${res.statusText}`)
+  const arrayBuffer = await res.arrayBuffer()
+  const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+  let mimeType = 'application/pdf'
+  if (url.toLowerCase().includes('.png')) mimeType = 'image/png'
+  else if (url.toLowerCase().includes('.jpg') || url.toLowerCase().includes('.jpeg')) mimeType = 'image/jpeg'
+
+  const prompt = 'Extract all the exam questions, options, headings, marks, and text from this paper exactly as written. Output only the extracted text of the exam paper.'
+  return callGemini(prompt, undefined, base64, mimeType)
 }
 
 // Analyze past papers and generate comparison report
@@ -131,7 +134,6 @@ Return STRICTLY valid JSON only (no markdown, no extra text):
 `
 
   const raw = await callGemini(prompt)
-  // Strip markdown code blocks if present
   const cleaned = raw.replace(/```json|```/g, '').trim()
   return JSON.parse(cleaned)
 }

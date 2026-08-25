@@ -45,7 +45,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json()
-    const { userId, name, email, role, packageType, months } = body
+    const { userId, name, email, role, packageType, months, facultyId, semesterOrder } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
@@ -55,6 +55,16 @@ export async function PUT(req: Request) {
     if (name) updateData.name = name
     if (email) updateData.email = email
     if (role) updateData.role = role as 'STUDENT' | 'ADMIN'
+    
+    // Allow clearing faculty or setting it
+    if (facultyId !== undefined) {
+      updateData.facultyId = facultyId === '' ? null : facultyId
+    }
+    
+    // Allow clearing semesterOrder or setting it
+    if (semesterOrder !== undefined) {
+      updateData.semesterOrder = semesterOrder === '' ? null : parseInt(semesterOrder)
+    }
     
     if (packageType) {
       updateData.packageType = packageType as 'FREE' | 'SEMESTER_PASS' | 'ELITE_AI'

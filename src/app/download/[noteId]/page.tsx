@@ -35,6 +35,16 @@ export default function DownloadPage() {
       .then(setNote)
   }, [params.noteId])
 
+  let fileUrl = note?.cloudinaryUrl || ''
+  if (fileUrl.startsWith('http://')) {
+    fileUrl = fileUrl.replace('http://', 'https://')
+  }
+
+  const isDriveLink = fileUrl.includes('drive.google.com')
+
+  // Route through our server-side proxy to avoid Cloudinary CORS/X-Frame-Options blocks on Vercel
+  const proxiedUrl = (fileUrl && !isDriveLink) ? `/api/file-proxy?url=${encodeURIComponent(fileUrl)}` : fileUrl
+
   // Initial page view ad countdown
   useEffect(() => {
     if (countdown <= 0) { setReady(true); return }
@@ -70,16 +80,6 @@ export default function DownloadPage() {
     const t = setTimeout(() => setDownloadAdCountdown((c) => c - 1), 1000)
     return () => clearTimeout(t)
   }, [downloadAdActive, downloadAdCountdown, note, proxiedUrl])
-
-  let fileUrl = note?.cloudinaryUrl || ''
-  if (fileUrl.startsWith('http://')) {
-    fileUrl = fileUrl.replace('http://', 'https://')
-  }
-
-  const isDriveLink = fileUrl.includes('drive.google.com')
-
-  // Route through our server-side proxy to avoid Cloudinary CORS/X-Frame-Options blocks on Vercel
-  const proxiedUrl = (fileUrl && !isDriveLink) ? `/api/file-proxy?url=${encodeURIComponent(fileUrl)}` : fileUrl
 
   const isImage = !isDriveLink && (
                   fileUrl.toLowerCase().includes('.png') ||
