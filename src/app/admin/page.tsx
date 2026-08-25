@@ -1184,7 +1184,7 @@ function UploadTab() {
           const rt = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'raw'
           
           // Chunked upload implementation
-          const chunkSize = 5 * 1024 * 1024 // 5MB chunks
+          const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
           const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
           let finalUrl = ''
           
@@ -1331,7 +1331,7 @@ function UploadTab() {
       // Step 2: Upload directly to Cloudinary using chunked upload (bypasses Vercel size limit!)
       toast.loading('Uploading file to cloud...', { toastId: 'upload-progress' })
       
-      const chunkSize = 5 * 1024 * 1024 // 5MB chunks
+      const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
       const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
       let finalUrl = ''
       

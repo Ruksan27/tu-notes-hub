@@ -49,8 +49,16 @@ export default function DownloadPage() {
       setDownloadAdActive(false)
       // Trigger actual download programmatically
       if (note?.cloudinaryUrl) {
+        const fileUrl = note.cloudinaryUrl
+        const isDrive = fileUrl.includes('drive.google.com')
+        let downloadHref = fileUrl
+        if (isDrive) {
+          const match = fileUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+          downloadHref = match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : fileUrl
+        }
+        
         const link = document.createElement('a')
-        link.href = note.cloudinaryUrl
+        link.href = isDrive ? downloadHref : proxiedUrl
         link.target = '_blank'
         link.download = note.title || 'download'
         document.body.appendChild(link)
@@ -61,7 +69,7 @@ export default function DownloadPage() {
     }
     const t = setTimeout(() => setDownloadAdCountdown((c) => c - 1), 1000)
     return () => clearTimeout(t)
-  }, [downloadAdActive, downloadAdCountdown, note])
+  }, [downloadAdActive, downloadAdCountdown, note, proxiedUrl])
 
   let fileUrl = note?.cloudinaryUrl || ''
   if (fileUrl.startsWith('http://')) {
@@ -92,9 +100,15 @@ export default function DownloadPage() {
   const handleStartDownload = () => {
     if (isPaid) {
       if (fileUrl) {
+        const isDrive = fileUrl.includes('drive.google.com')
+        let downloadHref = fileUrl
+        if (isDrive) {
+          const match = fileUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+          downloadHref = match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : fileUrl
+        }
+        
         const link = document.createElement('a')
-        // Use proxy URL so download works cross-origin on Vercel
-        link.href = proxiedUrl
+        link.href = isDrive ? downloadHref : proxiedUrl
         link.target = '_blank'
         link.download = note?.title || 'download'
         document.body.appendChild(link)
