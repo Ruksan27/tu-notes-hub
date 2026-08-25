@@ -30,12 +30,17 @@ function getDriveDownloadUrl(link: string): string {
   return fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : link
 }
 
+function getDriveProxyUrl(link: string): string {
+  return `/api/drive-proxy?url=${encodeURIComponent(link)}`
+}
+
 export default function DownloadPage() {
   const params = useParams()
   const [isPaid, setIsPaid] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [note, setNote] = useState<{ title: string; cloudinaryUrl: string } | null>(null)
   const [ready, setReady] = useState(false)
+  const [driveContentType, setDriveContentType] = useState('')
 
   // Download-trigger ad modal states
   const [downloadAdActive, setDownloadAdActive] = useState(false)
@@ -61,6 +66,19 @@ export default function DownloadPage() {
       .then(setNote)
   }, [params.noteId])
 
+  useEffect(() => {
+    const fileUrl = note?.cloudinaryUrl || ''
+    if (!fileUrl.includes('drive.google.com')) {
+      setDriveContentType('')
+      return
+    }
+
+    fetch(`/api/drive-proxy?mode=meta&url=${encodeURIComponent(fileUrl)}`)
+      .then((r) => r.json())
+      .then((data) => setDriveContentType((data?.contentType || '').toLowerCase()))
+      .catch(() => setDriveContentType(''))
+  }, [note?.cloudinaryUrl])
+
   let fileUrl = note?.cloudinaryUrl || ''
   if (fileUrl.startsWith('http://')) {
     fileUrl = fileUrl.replace('http://', 'https://')
@@ -69,6 +87,7 @@ export default function DownloadPage() {
   const isDriveLink = fileUrl.includes('drive.google.com')
   const drivePreviewUrl = isDriveLink ? getDrivePreviewUrl(fileUrl) : ''
   const driveDownloadUrl = isDriveLink ? getDriveDownloadUrl(fileUrl) : ''
+  const driveProxyUrl = isDriveLink ? getDriveProxyUrl(fileUrl) : ''
 
   // Route through our server-side proxy to avoid Cloudinary CORS/X-Frame-Options blocks on Vercel
   const proxiedUrl = (fileUrl && !isDriveLink) ? `/api/file-proxy?url=${encodeURIComponent(fileUrl)}` : fileUrl
@@ -121,24 +140,29 @@ export default function DownloadPage() {
     fileUrl.toLowerCase().includes('.gif')
   )
 
-  const isDriveDoc = isDriveLink && (
-    fileUrl.toLowerCase().includes('.pdf') ||
+  const isDrivePdf = driveContentType.includes('pdf') || fileUrl.toLowerCase().includes('.pdf')
+  const isDriveOfficeDoc = isDriveLink && (
+    driveContentType.includes('msword') ||
+    driveContentType.includes('officedocument.wordprocessingml') ||
+    driveContentType.includes('presentationml') ||
     fileUrl.toLowerCase().includes('.doc') ||
     fileUrl.toLowerCase().includes('.docx') ||
     fileUrl.toLowerCase().includes('.ppt') ||
     fileUrl.toLowerCase().includes('.pptx')
   )
 
-  // Always prefer a Google Drive preview URL for Drive content.
-  // If Drive refuses to embed, fall back to Google Docs viewer for docs/presentations.
+  // Drive files render from our own proxy. Images and PDFs can be shown directly,
+  // while Office docs/presentations use the Docs viewer with the proxied file URL.
   const previewUrl = isDriveLink
-    ? (isDriveImage ? `https://drive.google.com/uc?export=view&id=${extractDriveFileId(fileUrl) || ''}` : drivePreviewUrl)
+    ? (isDriveOfficeDoc
+      ? `https://docs.google.com/gview?url=${encodeURIComponent(driveProxyUrl)}&embedded=true`
+      : driveProxyUrl)
     : (isImage || isPdf)
       ? proxiedUrl
       : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
 
-  const fallbackPreviewUrl = isDriveDoc
-    ? `https://docs.google.com/gview?url=${encodeURIComponent(driveDownloadUrl)}&embedded=true`
+  const fallbackPreviewUrl = isDriveOfficeDoc
+    ? `https://docs.google.com/gview?url=${encodeURIComponent(driveProxyUrl)}&embedded=true`
     : ''
 
   const handleStartDownload = () => {
