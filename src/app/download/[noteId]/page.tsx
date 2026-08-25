@@ -120,7 +120,7 @@ export default function DownloadPage() {
         </div>
       )}
 
-      <div className="container" style={{ flex: 1, display: 'grid', gridTemplateColumns: isPaid ? '1fr' : '1fr 300px', gap: '24px', padding: '24px' }}>
+      <div className={`container flex-1 grid gap-6 p-4 md:p-6 ${isPaid ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-[1fr_300px]'}`}>
         
         {/* Main Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
