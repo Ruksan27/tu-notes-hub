@@ -1174,7 +1174,7 @@ function UploadTab() {
       } else {
         if (!noteFile) { toast.error('Please choose a file'); setUploading(false); return }
         if (noteFile.size > 100 * 1024 * 1024) { toast.error('Max 100MB'); setUploading(false); return }
-        toast.loading('Uploading...', { id: 'upload-progress' })
+        toast.loading('Uploading...', { toastId: 'upload-progress' })
         try {
           const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/solution-books' }) })
           if (!sigRes.ok) { toast.dismiss('upload-progress'); toast.error('Signature error'); setUploading(false); return }
@@ -1218,7 +1218,7 @@ function UploadTab() {
         } catch (err: any) { toast.dismiss('upload-progress'); toast.error(err.message || 'Upload error'); setUploading(false); return }
       }
       toast.dismiss('upload-progress')
-      toast.loading('Saving...', { id: 'upload-progress' })
+      toast.loading('Saving...', { toastId: 'upload-progress' })
       const saveRes = await fetch('/api/upload/solution-book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ semesterId, title: noteTitle, description: noteDescription, cloudinaryUrl, fileSize, isPremium, author }) })
       const sd = await saveRes.json()
       toast.dismiss('upload-progress')
@@ -1256,30 +1256,13 @@ function UploadTab() {
       return
     }
 
-    // ── CHEATSHEET path ──
-    if (contentType === 'CHEATSHEET') {
-      if (!sheetTitle || !sheetContent) { toast.error('Title and content are required'); return }
-      setUploading(true)
-      try {
-        const fd = new FormData()
-        fd.append('contentType', 'CHEATSHEET'); fd.append('subjectId', subjectId)
-        fd.append('title', sheetTitle); fd.append('content', sheetContent)
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        const data = await res.json()
-        if (res.ok) { toast.success(data.message || 'Cheatsheet created! 🎉'); setSheetTitle(''); setSheetContent('') }
-        else { toast.error(data.error || 'Failed') }
-      } catch { toast.error('Network error') }
-      finally { setUploading(false) }
-      return
-    }
-
     // ── Google Drive link path ──
     if (sourceType === 'DRIVE') {
       if (!driveLink) { toast.error('Please enter a Google Drive link'); return }
       const fileId = parseDriveLink(driveLink)
       if (!fileId) { toast.error('Invalid Drive link — use the share link from Google Drive'); return }
       setUploading(true)
-      toast.loading('Saving Drive link...', { id: 'upload-progress' })
+      toast.loading('Saving Drive link...', { toastId: 'upload-progress' })
       const payload: any = { contentType, subjectId, cloudinaryUrl: normalizeDriveUrl(driveLink), fileSize: 'Drive Link' }
       if (contentType === 'NOTE') {
         if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title required'); setUploading(false); return }
@@ -1332,7 +1315,7 @@ function UploadTab() {
       const folder = `tu-notes-hub/${typeFolder}`
 
       // Step 1: Get upload signature from our backend
-      toast.loading('Preparing upload...', { id: 'upload-progress' })
+      toast.loading('Preparing upload...', { toastId: 'upload-progress' })
       const sigRes = await fetch('/api/upload/signature', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1346,7 +1329,7 @@ function UploadTab() {
       const { timestamp, signature, cloudName, apiKey, folder: signedFolder } = await sigRes.json()
 
       // Step 2: Upload directly to Cloudinary using chunked upload (bypasses Vercel size limit!)
-      toast.loading('Uploading file to cloud...', { id: 'upload-progress' })
+      toast.loading('Uploading file to cloud...', { toastId: 'upload-progress' })
       
       const chunkSize = 5 * 1024 * 1024 // 5MB chunks
       const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
@@ -1394,7 +1377,7 @@ function UploadTab() {
       const fileSize = `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
 
       // Step 3: Save metadata to our database
-      toast.loading('Saving to database...', { id: 'upload-progress' })
+      toast.loading('Saving to database...', { toastId: 'upload-progress' })
       const payload: any = {
         contentType,
         subjectId,
