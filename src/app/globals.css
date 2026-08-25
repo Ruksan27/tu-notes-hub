@@ -382,19 +382,135 @@ img { max-width: 100%; display: block; }
 @media print { body { display: none !important; } }
 
 /* ── Responsive ──────────────────────────────── */
+
+/* Tablet (≤1024px) */
 @media (max-width: 1024px) {
   .ad-sidebar { display: none; }
   .hide-tablet { display: none !important; }
+  .semester-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  .ads-sidebar-column {
+    position: static;
+    margin-top: 20px;
+  }
 }
+
+/* Mobile (≤768px) — GLOBAL RULES */
 @media (max-width: 768px) {
-  .container { padding: 0 16px; }
-  .section    { padding: 48px 0; }
+  /* Layout */
+  .container { padding: 0 14px; }
+  .section { padding: 40px 0; }
+
+  /* Typography scaling */
+  h1 { font-size: clamp(22px, 6vw, 38px) !important; }
+  h2 { font-size: clamp(18px, 5vw, 28px) !important; }
+  h3 { font-size: clamp(16px, 4vw, 22px) !important; }
+
+  /* Grids → single column */
   .grid-auto  { grid-template-columns: 1fr 1fr; }
+  .stat-grid  { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Sidebar layout: stack vertically */
+  .sidebar-layout {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+  .sidebar {
+    position: static !important;
+    padding: 12px 10px;
+    border-radius: 12px;
+  }
+  /* Sidebar nav items: horizontal scrollable pill row on mobile */
+  .sidebar > div:first-child { /* profile header */
+    display: none;
+  }
+  .sidebar .sidebar-divider { display: none; }
+  .sidebar {
+    background: rgba(13,15,26,0.9) !important;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .sidebar > *:not(hr) {
+    display: inline-flex !important;
+    width: auto !important;
+    flex-shrink: 0;
+  }
+  .sidebar-item {
+    display: inline-flex !important;
+    width: auto !important;
+    padding: 9px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+    margin-bottom: 0;
+    margin-right: 4px;
+    white-space: nowrap;
+  }
+
+  /* Tables: horizontal scroll */
+  .table-wrap { overflow-x: auto; }
+  .table-wrap table { min-width: 560px; }
+  .table-wrap th,
+  .table-wrap td { padding: 10px 12px; font-size: 13px; }
+
+  /* Page header */
+  .page-header { padding: 24px 0 20px; margin-bottom: 20px; }
+
+  /* Buttons: full width on mobile where stacked */
+  .btn-lg { padding: 12px 20px; font-size: 14px; }
+
+  /* Hide mobile */
   .hide-mobile { display: none !important; }
+
+  /* Glass cards: reduce padding */
+  .glass-card { padding: 16px !important; }
+
+  /* Stat cards */
+  .stat-card { padding: 16px; }
+  .stat-value { font-size: 28px; }
 }
+
+/* Small Mobile (≤480px) */
 @media (max-width: 480px) {
+  .container { padding: 0 12px; }
   .grid-auto { grid-template-columns: 1fr; }
+  .stat-grid  { grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Dashboard sidebar becomes a compact horizontal scroll strip */
+  .sidebar {
+    padding: 10px 8px;
+    border-radius: 10px;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+  }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-item {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Section spacing */
+  .section { padding: 28px 0; }
+  .page-header { padding: 16px 0; margin-bottom: 16px; }
+
+  /* stat-grid 2-col stays on very small too */
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Buttons */
+  .btn { font-size: 13px; padding: 9px 16px; }
+  .btn-lg { padding: 11px 18px; font-size: 13px; }
+
+  /* Modals: full width */
+  .adblocker-modal { padding: 28px 20px; }
 }
+
 
 /* ═══════════════════════════════════════════════
    NAVBAR — Premium Redesign
@@ -799,15 +915,6 @@ img { max-width: 100%; display: block; }
   top: 84px;
 }
 
-@media (max-width: 1024px) {
-  .semester-layout-grid {
-    grid-template-columns: 1fr;
-  }
-  .ads-sidebar-column {
-    position: static;
-    margin-top: 20px;
-  }
-}
 
 /* ═══════════════════════════════════════════════
    FULL-HEIGHT SYSTEM ADMIN DASHBOARD (SLEEK FORMAT)
