@@ -146,9 +146,9 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
         </Link>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '40px', alignItems: 'start' }}>
+      <div className="flex flex-col lg:flex-row gap-10 items-start">
         {/* Left */}
-        <div>
+        <div className="flex-1 w-full min-w-0">
           <div style={{ marginBottom: '20px' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
               {project.category && (
@@ -211,7 +211,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
           {(project.features || project.modules) && (
             <div className="glass-card" style={{ padding: '28px', marginBottom: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
                 {project.features && (
                   <div>
                     <h4 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '12px', color: '#fff' }}>✅ Features</h4>
@@ -272,7 +272,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
         </div>
 
         {/* Right Sidebar */}
-        <div style={{ position: 'sticky', top: '100px' }}>
+        <div className="w-full lg:w-[360px] shrink-0 sticky top-[100px]">
           <div className="glass-card" style={{ padding: '24px' }}>
 
             {/* Price */}

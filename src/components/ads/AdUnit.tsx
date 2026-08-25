@@ -137,6 +137,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left' }}>
               <span style={{ fontSize: '28px' }}>🎓</span>
               <div>
+                <span style={{ fontSize: '10px', background: 'var(--clr-primary-h)', color: '#fff', padding: '2px 6px', borderRadius: '4px', marginBottom: '4px', display: 'inline-block' }}>[ Google AdSense Slot ]</span>
                 <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', margin: 0 }}>
                   Need a Study Boost? Upgrade to Premium!
                 </h4>
@@ -150,6 +151,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
           {type === 'sidebar' && (
             <div style={{ textAlign: 'center' }}>
               <span style={{ fontSize: '48px', display: 'block', marginBottom: '12px' }}>💡</span>
+              <span style={{ fontSize: '10px', background: 'var(--clr-primary-h)', color: '#fff', padding: '2px 6px', borderRadius: '4px', marginBottom: '8px', display: 'inline-block' }}>[ Google AdSense Slot ]</span>
               <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-accent)', marginBottom: '8px' }}>
                 TU Notes Hub
               </h4>
@@ -175,6 +177,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
           {type === 'inline' && (
             <div style={{ textAlign: 'center' }}>
               <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>📱</span>
+              <span style={{ fontSize: '10px', background: 'var(--clr-primary-h)', color: '#fff', padding: '2px 6px', borderRadius: '4px', marginBottom: '8px', display: 'inline-block' }}>[ Google AdSense Slot ]</span>
               <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '4px' }}>
                 Join our Telegram Group
               </h4>

@@ -76,10 +76,12 @@ export default function Navbar() {
   }
   const pkg = user ? (pkgBadge[user.packageType] ?? pkgBadge.FREE) : null
 
+  const isPaid = user?.packageType === 'SEMESTER_PASS' || user?.packageType === 'ELITE_AI'
+
   const navLinks = [
     { href: '/faculties', label: 'Faculties' },
     { href: '/projects',  label: 'Projects' },
-    { href: '/pricing',   label: 'Pricing' },
+    ...(!isPaid ? [{ href: '/pricing', label: 'Pricing' }] : []),
     { href: '/about',     label: 'About' },
   ]
 
@@ -157,9 +159,11 @@ export default function Navbar() {
                         <span>⚙️</span> Admin Panel
                       </Link>
                     )}
-                    <Link href="/pricing" className="nav-drop-item">
-                      <span>💎</span> Upgrade Plan
-                    </Link>
+                    {!isPaid && (
+                      <Link href="/pricing" className="nav-drop-item">
+                        <span>💎</span> Upgrade Plan
+                      </Link>
+                    )}
                     <div className="nav-drop-divider" />
                     <button className="nav-drop-item nav-drop-danger" onClick={handleLogout}>
                       <span>🚪</span> Logout

@@ -131,11 +131,19 @@ export default function PricingPlans() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
 
+  const [settings, setSettings] = useState<any>(null)
+
   useEffect(() => {
     const stored = localStorage.getItem('tu_user')
     if (stored) {
       try { setCurrentUser(JSON.parse(stored)) } catch {}
     }
+
+    // Fetch site settings for QR code
+    fetch('/api/admin/settings')
+      .then(r => r.json())
+      .then(setSettings)
+      .catch(console.error)
   }, [])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -526,10 +534,15 @@ export default function PricingPlans() {
                       alignItems: 'center',
                       gap: '8px',
                     }}>
-                      {/* Stylized QR mockup */}
-                      <div style={{ width: '180px', height: '180px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                        <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>[ QR SCAN MOCKUP ]</span>
-                        <div style={{ position: 'absolute', border: '4px solid #10b981', inset: '10px' }}></div>
+                      {/* Stylized QR or Mockup */}
+                      <div style={{ width: '180px', height: '180px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
+                        {settings?.paymentQrUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={settings.paymentQrUrl} alt="Payment QR" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>[ QR SCAN MOCKUP ]</span>
+                        )}
+                        <div style={{ position: 'absolute', border: '4px solid #10b981', inset: '0px', pointerEvents: 'none' }}></div>
                       </div>
                       <span style={{ color: '#000', fontSize: '14px', fontWeight: 800 }}>
                         {selectedPlan.price} {selectedPlan.priceNote}

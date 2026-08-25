@@ -7,7 +7,7 @@ import AdUnit from '@/components/ads/AdUnit'
 export default function DownloadPage() {
   const params = useParams()
   const [isPaid, setIsPaid] = useState(false)
-  const [countdown, setCountdown] = useState(10)
+  const [countdown, setCountdown] = useState(0)
   const [note, setNote] = useState<{ title: string; cloudinaryUrl: string } | null>(null)
   const [ready, setReady] = useState(false)
 
@@ -89,6 +89,23 @@ export default function DownloadPage() {
       }
       return
     }
+
+    // Free user Ad-Blocker check
+    const bait = document.createElement('div');
+    bait.className = 'adsbox ad-placement doubleclick ad-placeholder';
+    bait.style.position = 'absolute';
+    bait.style.top = '-999px';
+    bait.style.height = '10px';
+    document.body.appendChild(bait);
+    
+    const isBlocked = window.getComputedStyle(bait).display === 'none' || bait.offsetHeight === 0;
+    document.body.removeChild(bait);
+
+    if (isBlocked) {
+      alert('⚠️ Ad Blocker Detected!\n\nPlease disable your Ad Blocker to download free files. We rely on ads to keep this service free for students.');
+      return;
+    }
+
     setDownloadAdCountdown(15)
     setDownloadAdActive(true)
   }
@@ -97,11 +114,13 @@ export default function DownloadPage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', background: '#0b0f19', position: 'relative' }}>
       
       {/* Top Banner Ad */}
-      <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
-        <AdUnit type="banner" slot="download-top-banner" />
-      </div>
+      {!isPaid && (
+        <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
+          <AdUnit type="banner" slot="download-top-banner" />
+        </div>
+      )}
 
-      <div className="container" style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', padding: '24px' }}>
+      <div className="container" style={{ flex: 1, display: 'grid', gridTemplateColumns: isPaid ? '1fr' : '1fr 300px', gap: '24px', padding: '24px' }}>
         
         {/* Main Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -188,28 +207,32 @@ export default function DownloadPage() {
         </div>
 
         {/* Sidebar Ads Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
-          <div className="glass-card" style={{ padding: '20px', background: 'rgba(99,102,241,0.05)', borderColor: 'rgba(99,102,241,0.2)' }}>
-            <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '8px' }}>💎 Upgrade to Elite</h4>
-            <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5 }}>
-              Tired of waiting? Get instant direct downloads, access all AI prediction models, and unlock full solutions offline.
-            </p>
-            <a href="/pricing" className="btn btn-outline btn-sm" style={{ width: '100%', marginTop: '12px', justifyContent: 'center', border: '1px solid rgba(99,102,241,0.4)', color: '#fff' }}>
-              Unlock Now
-            </a>
-          </div>
+        {!isPaid && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            <div className="glass-card" style={{ padding: '20px', background: 'rgba(99,102,241,0.05)', borderColor: 'rgba(99,102,241,0.2)' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '8px' }}>💎 Upgrade to Elite</h4>
+              <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5 }}>
+                Tired of waiting? Get instant direct downloads, access all AI prediction models, and unlock full solutions offline.
+              </p>
+              <a href="/pricing" className="btn btn-outline btn-sm" style={{ width: '100%', marginTop: '12px', justifyContent: 'center', border: '1px solid rgba(99,102,241,0.4)', color: '#fff' }}>
+                Unlock Now
+              </a>
+            </div>
 
-          <AdUnit type="sidebar" slot="download-sidebar-banner-1" />
-          <AdUnit type="inline" slot="download-sidebar-banner-2" />
-        </div>
+            <AdUnit type="sidebar" slot="download-sidebar-banner-1" />
+            <AdUnit type="inline" slot="download-sidebar-banner-2" />
+          </div>
+        )}
 
       </div>
 
       {/* Bottom Ad */}
-      <div style={{ padding: '0 24px 24px', display: 'flex', justifyContent: 'center' }}>
-        <AdUnit type="banner" slot="download-bottom-banner" />
-      </div>
+      {!isPaid && (
+        <div style={{ padding: '0 24px 24px', display: 'flex', justifyContent: 'center' }}>
+          <AdUnit type="banner" slot="download-bottom-banner" />
+        </div>
+      )}
 
       {/* ── 15-Second Download Ad Lock Modal Overlay ── */}
       {downloadAdActive && (
