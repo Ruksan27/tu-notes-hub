@@ -133,6 +133,7 @@ export default function DownloadPage() {
 
   const isPdf = !isDriveLink && fileUrl.toLowerCase().includes('.pdf')
   const isDriveImage = isDriveLink && (
+    driveContentType.startsWith('image/') ||
     fileUrl.toLowerCase().includes('.png') ||
     fileUrl.toLowerCase().includes('.jpg') ||
     fileUrl.toLowerCase().includes('.jpeg') ||
