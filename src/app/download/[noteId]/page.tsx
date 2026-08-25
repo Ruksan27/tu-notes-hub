@@ -67,23 +67,28 @@ export default function DownloadPage() {
   if (fileUrl.startsWith('http://')) {
     fileUrl = fileUrl.replace('http://', 'https://')
   }
-  const isImage = fileUrl.toLowerCase().endsWith('.png') ||
-                  fileUrl.toLowerCase().endsWith('.jpg') ||
-                  fileUrl.toLowerCase().endsWith('.jpeg') ||
-                  fileUrl.toLowerCase().endsWith('.webp') ||
-                  fileUrl.toLowerCase().endsWith('.gif')
 
-  // Generate secure preview URL: Browsers support PDF viewing natively. Use Google Docs Viewer for Word/PPTX.
-  const isPdf = fileUrl.toLowerCase().endsWith('.pdf')
+  // Route through our server-side proxy to avoid Cloudinary CORS/X-Frame-Options blocks on Vercel
+  const proxiedUrl = fileUrl ? `/api/file-proxy?url=${encodeURIComponent(fileUrl)}` : ''
+
+  const isImage = fileUrl.toLowerCase().includes('.png') ||
+                  fileUrl.toLowerCase().includes('.jpg') ||
+                  fileUrl.toLowerCase().includes('.jpeg') ||
+                  fileUrl.toLowerCase().includes('.webp') ||
+                  fileUrl.toLowerCase().includes('.gif')
+
+  const isPdf = fileUrl.toLowerCase().includes('.pdf')
+  // Always use proxied URL for display; for non-image non-pdf use Google Docs Viewer
   const previewUrl = (isImage || isPdf)
-    ? fileUrl 
+    ? proxiedUrl
     : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
 
   const handleStartDownload = () => {
     if (isPaid) {
       if (fileUrl) {
         const link = document.createElement('a')
-        link.href = fileUrl
+        // Use proxy URL so download works cross-origin on Vercel
+        link.href = proxiedUrl
         link.target = '_blank'
         link.download = note?.title || 'download'
         document.body.appendChild(link)
@@ -189,7 +194,7 @@ export default function DownloadPage() {
                 isImage ? (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={fileUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                    <img src={proxiedUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
                   </div>
                 ) : (
                   <iframe

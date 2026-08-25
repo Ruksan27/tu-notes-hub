@@ -538,7 +538,11 @@ export default function PricingPlans() {
                       <div style={{ width: '180px', height: '180px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
                         {settings?.paymentQrUrl ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
-                          <img src={settings.paymentQrUrl} alt="Payment QR" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          <img
+                            src={`/api/file-proxy?url=${encodeURIComponent(settings.paymentQrUrl.replace('http://', 'https://'))}`}
+                            alt="Payment QR"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                          />
                         ) : (
                           <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>[ QR SCAN MOCKUP ]</span>
                         )}
