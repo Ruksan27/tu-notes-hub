@@ -195,7 +195,7 @@ export default function DownloadPage() {
                   <iframe
                     src={previewUrl}
                     style={{ width: '100%', height: '100%', border: 'none' }}
-                    title={note.title}
+                    title={note?.title || 'Document'}
                   />
                 )
               ) : (

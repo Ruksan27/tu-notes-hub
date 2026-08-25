@@ -9,6 +9,14 @@
     "lint": "eslint",
     "postinstall": "prisma generate"
   },
+  "allowScripts": {
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "esbuild": true,
+    "prisma": true,
+    "sharp": true,
+    "unrs-resolver": true
+  },
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@types/bcryptjs": "^2.4.6",
