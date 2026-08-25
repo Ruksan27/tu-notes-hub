@@ -1291,11 +1291,15 @@ function UploadTab() {
       try {
         const sr = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         const sd = await sr.json()
-        toast.dismiss('upload-progress')
         if (sr.ok) { toast.success(sd.message || 'Saved! 🎉'); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setPaperFile(null); setDriveLink('') }
         else { toast.error(sd.error || 'Failed') }
-      } catch { toast.dismiss('upload-progress'); toast.error('Network error') }
-      finally { setUploading(false) }
+      } catch (error) {
+        console.error(error)
+        toast.error('A network error occurred. Please try again.')
+      } finally {
+        toast.dismiss('upload-progress')
+        setUploading(false)
+      }
       return
     }
 
