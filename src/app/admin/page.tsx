@@ -1177,7 +1177,7 @@ function UploadTab() {
         toast.loading('Uploading...', { id: 'upload-progress' })
         try {
           const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/solution-books' }) })
-          if (!sigRes.ok) { toast.error('Signature error', { id: 'upload-progress' }); setUploading(false); return }
+          if (!sigRes.ok) { toast.dismiss('upload-progress'); toast.error('Signature error'); setUploading(false); return }
           const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
           
           const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
@@ -1209,19 +1209,21 @@ function UploadTab() {
             })
             
             const cd = await cr.json()
-            if (!cr.ok) { toast.error(cd.error?.message || 'Upload failed', { id: 'upload-progress' }); setUploading(false); return }
+            if (!cr.ok) { toast.dismiss('upload-progress'); toast.error(cd.error?.message || 'Upload failed'); setUploading(false); return }
             if (cd.secure_url) finalUrl = cd.secure_url
           }
           
           if (!finalUrl) throw new Error('Failed to get secure URL')
           cloudinaryUrl = finalUrl; fileSize = `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
-        } catch (err: any) { toast.error(err.message || 'Upload error'); setUploading(false); return }
+        } catch (err: any) { toast.dismiss('upload-progress'); toast.error(err.message || 'Upload error'); setUploading(false); return }
       }
+      toast.dismiss('upload-progress')
       toast.loading('Saving...', { id: 'upload-progress' })
       const saveRes = await fetch('/api/upload/solution-book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ semesterId, title: noteTitle, description: noteDescription, cloudinaryUrl, fileSize, isPremium, author }) })
       const sd = await saveRes.json()
-      if (saveRes.ok) { toast.success('Solution book published! 🎉', { id: 'upload-progress' }); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setDriveLink('') }
-      else { toast.error(sd.error || 'Failed to save', { id: 'upload-progress' }) }
+      toast.dismiss('upload-progress')
+      if (saveRes.ok) { toast.success('Solution book published! 🎉'); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setDriveLink('') }
+      else { toast.error(sd.error || 'Failed to save') }
       setUploading(false); return
     }
 
@@ -1280,18 +1282,19 @@ function UploadTab() {
       toast.loading('Saving Drive link...', { id: 'upload-progress' })
       const payload: any = { contentType, subjectId, cloudinaryUrl: normalizeDriveUrl(driveLink), fileSize: 'Drive Link' }
       if (contentType === 'NOTE') {
-        if (!noteTitle) { toast.error('Title required', { id: 'upload-progress' }); setUploading(false); return }
+        if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title required'); setUploading(false); return }
         payload.title = noteTitle; payload.description = noteDescription; payload.noteType = noteType; payload.isPremium = isPremium; payload.author = author
       } else {
-        if (!paperYear) { toast.error('Year required', { id: 'upload-progress' }); setUploading(false); return }
+        if (!paperYear) { toast.dismiss('upload-progress'); toast.error('Year required'); setUploading(false); return }
         payload.year = paperYear; payload.examType = examType
       }
       try {
         const sr = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         const sd = await sr.json()
-        if (sr.ok) { toast.success(sd.message || 'Saved! 🎉', { id: 'upload-progress' }); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setPaperFile(null); setDriveLink('') }
-        else { toast.error(sd.error || 'Failed', { id: 'upload-progress' }) }
-      } catch { toast.error('Network error', { id: 'upload-progress' }) }
+        toast.dismiss('upload-progress')
+        if (sr.ok) { toast.success(sd.message || 'Saved! 🎉'); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setPaperFile(null); setDriveLink('') }
+        else { toast.error(sd.error || 'Failed') }
+      } catch { toast.dismiss('upload-progress'); toast.error('Network error') }
       finally { setUploading(false) }
       return
     }
@@ -1333,7 +1336,7 @@ function UploadTab() {
       })
       if (!sigRes.ok) {
         const err = await sigRes.json()
-        toast.error(err.error || 'Failed to get upload signature', { id: 'upload-progress' })
+        toast.dismiss('upload-progress'); toast.error(err.error || 'Failed to get upload signature')
         return
       }
       const { timestamp, signature, cloudName, apiKey, folder: signedFolder } = await sigRes.json()
@@ -1370,7 +1373,7 @@ function UploadTab() {
         const cloudData = await cloudRes.json()
         
         if (!cloudRes.ok) {
-          toast.error(cloudData.error?.message || 'Cloudinary upload failed', { id: 'upload-progress' })
+          toast.dismiss('upload-progress'); toast.error(cloudData.error?.message || 'Cloudinary upload failed')
           return
         }
         if (cloudData.secure_url) {
@@ -1379,7 +1382,7 @@ function UploadTab() {
       }
 
       if (!finalUrl) {
-        toast.error('Cloudinary upload failed to complete', { id: 'upload-progress' })
+        toast.dismiss('upload-progress'); toast.error('Cloudinary upload failed to complete')
         return
       }
 
@@ -1396,14 +1399,14 @@ function UploadTab() {
       }
 
       if (contentType === 'NOTE') {
-        if (!noteTitle) { toast.error('Title is required', { id: 'upload-progress' }); return }
+        if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title is required'); return }
         payload.title = noteTitle
         payload.description = noteDescription
         payload.noteType = noteType
         payload.isPremium = isPremium
         payload.author = author
       } else if (contentType === 'PAST_PAPER') {
-        if (!paperYear) { toast.error('Year is required', { id: 'upload-progress' }); return }
+        if (!paperYear) { toast.dismiss('upload-progress'); toast.error('Year is required'); return }
         payload.year = paperYear
         payload.examType = examType
       }
@@ -1416,11 +1419,11 @@ function UploadTab() {
       const saveData = await saveRes.json()
 
       if (saveRes.ok) {
-        toast.success(saveData.message || 'Uploaded successfully! 🎉', { id: 'upload-progress' })
+        toast.dismiss('upload-progress'); toast.success(saveData.message || 'Uploaded successfully! 🎉')
         setNoteTitle(''); setNoteDescription(''); setAuthor('')
         setNoteFile(null); setPaperFile(null)
       } else {
-        toast.error(saveData.error || 'Failed to save to database', { id: 'upload-progress' })
+        toast.dismiss('upload-progress'); toast.error(saveData.error || 'Failed to save to database')
       }
     } catch (err) {
       console.error('[UPLOAD ERROR]', err)
