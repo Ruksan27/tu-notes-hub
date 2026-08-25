@@ -1065,6 +1065,117 @@ img { max-width: 100%; display: block; }
   padding: 40px 32px;
 }
 
-.admin-content-inner {
-  max-width: 1200px;
+/* ═══════════════════════════════════════════════
+   FULL-SCREEN DASHBOARD/ADMIN — MOBILE RESPONSIVE
+   Applies to: /dashboard, /admin pages
+═══════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  /* Stack the layout vertically */
+  .admin-page-container {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: calc(100vh - 64px) !important;
+    overflow: visible !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Sidebar becomes a top horizontal nav strip */
+  .admin-sidebar-nav {
+    width: 100% !important;
+    height: auto !important;
+    flex-direction: column !important;
+    padding: 12px 14px !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.18) !important;
+    flex-shrink: 0 !important;
+    gap: 8px;
+  }
+
+  /* Hide the big brand header on mobile — navbar already shows logo */
+  .admin-brand-header {
+    display: none !important;
+  }
+
+  /* Nav menu becomes horizontal scrollable row */
+  .admin-nav-menu {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 6px !important;
+    padding-bottom: 4px;
+    flex-wrap: nowrap !important;
+  }
+  .admin-nav-menu::-webkit-scrollbar { display: none; }
+
+  /* Sidebar footer hides on mobile */
+  .admin-sidebar-footer {
+    display: none !important;
+  }
+
+  /* Sidebar items become compact horizontal pills */
+  .sidebar-item {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    margin-bottom: 0 !important;
+    width: auto !important;
+  }
+
+  /* Main content wrapper becomes scrollable */
+  .admin-content-wrapper {
+    height: auto !important;
+    overflow: visible !important;
+    flex: 1;
+  }
+
+  /* Scrollable content becomes natural flow */
+  .admin-scrollable-content {
+    overflow: visible !important;
+    padding: 16px 14px !important;
+    flex: 1;
+  }
+
+  /* Top bar becomes compact */
+  .admin-top-bar {
+    height: auto !important;
+    padding: 12px 16px !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  /* Top bar title */
+  .admin-top-bar h1 {
+    font-size: 16px !important;
+  }
+
+  /* Search box shrinks on mobile */
+  .admin-search-box {
+    width: 100% !important;
+  }
+
+  /* Content inner takes full width */
+  .admin-content-inner {
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-sidebar-nav {
+    padding: 10px 10px !important;
+  }
+  .sidebar-item {
+    padding: 7px 11px !important;
+    font-size: 12px !important;
+  }
+  .admin-top-bar {
+    padding: 10px 12px !important;
+  }
+  .admin-scrollable-content {
+    padding: 12px 10px !important;
+  }
 }
