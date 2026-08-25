@@ -1431,8 +1431,10 @@ function UploadTab() {
       }
     } catch (err) {
       console.error('[UPLOAD ERROR]', err)
-      toast.error('Upload failed — please try again', { id: 'upload-progress' })
+      toast.dismiss('upload-progress')
+      toast.error('Upload failed — please try again')
     } finally {
+      toast.dismiss('upload-progress')
       setUploading(false)
     }
   }
