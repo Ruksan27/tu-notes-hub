@@ -68,20 +68,26 @@ export default function DownloadPage() {
     fileUrl = fileUrl.replace('http://', 'https://')
   }
 
-  // Route through our server-side proxy to avoid Cloudinary CORS/X-Frame-Options blocks on Vercel
-  const proxiedUrl = fileUrl ? `/api/file-proxy?url=${encodeURIComponent(fileUrl)}` : ''
+  const isDriveLink = fileUrl.includes('drive.google.com')
 
-  const isImage = fileUrl.toLowerCase().includes('.png') ||
+  // Route through our server-side proxy to avoid Cloudinary CORS/X-Frame-Options blocks on Vercel
+  const proxiedUrl = (fileUrl && !isDriveLink) ? `/api/file-proxy?url=${encodeURIComponent(fileUrl)}` : fileUrl
+
+  const isImage = !isDriveLink && (
+                  fileUrl.toLowerCase().includes('.png') ||
                   fileUrl.toLowerCase().includes('.jpg') ||
                   fileUrl.toLowerCase().includes('.jpeg') ||
                   fileUrl.toLowerCase().includes('.webp') ||
-                  fileUrl.toLowerCase().includes('.gif')
+                  fileUrl.toLowerCase().includes('.gif'))
 
-  const isPdf = fileUrl.toLowerCase().includes('.pdf')
+  const isPdf = !isDriveLink && fileUrl.toLowerCase().includes('.pdf')
+
   // Always use proxied URL for display; for non-image non-pdf use Google Docs Viewer
-  const previewUrl = (isImage || isPdf)
-    ? proxiedUrl
-    : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
+  const previewUrl = isDriveLink
+    ? fileUrl.replace('/view', '/preview') // Force /preview so Google Drive allows embedding in iframe
+    : (isImage || isPdf)
+      ? proxiedUrl
+      : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
 
   const handleStartDownload = () => {
     if (isPaid) {

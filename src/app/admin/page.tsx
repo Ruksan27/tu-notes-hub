@@ -1130,7 +1130,7 @@ function UploadTab() {
   }
   function normalizeDriveUrl(link: string): string {
     const fileId = parseDriveLink(link)
-    return fileId ? `https://drive.google.com/file/d/${fileId}/view` : link
+    return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : link
   }
 
   useEffect(() => {
