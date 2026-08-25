@@ -4,8 +4,23 @@
   "description": "Free notes, past papers & AI exam predictions for Tribhuvan University students.",
   "start_url": "/",
   "display": "standalone",
+  "scope": "/",
   "background_color": "#080a12",
   "theme_color": "#6366f1",
   "orientation": "portrait-primary",
-  "categories": ["education", "productivity"]
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
