@@ -4,6 +4,32 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import AdUnit from '@/components/ads/AdUnit'
 
+function extractDriveFileId(link: string): string | null {
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/uc\?(?:.*&)?id=([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+  ]
+
+  for (const pattern of patterns) {
+    const match = link.match(pattern)
+    if (match?.[1]) return match[1]
+  }
+
+  return null
+}
+
+function getDrivePreviewUrl(link: string): string {
+  const fileId = extractDriveFileId(link)
+  return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : link
+}
+
+function getDriveDownloadUrl(link: string): string {
+  const fileId = extractDriveFileId(link)
+  return fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : link
+}
+
 export default function DownloadPage() {
   const params = useParams()
   const [isPaid, setIsPaid] = useState(false)
@@ -41,6 +67,8 @@ export default function DownloadPage() {
   }
 
   const isDriveLink = fileUrl.includes('drive.google.com')
+  const drivePreviewUrl = isDriveLink ? getDrivePreviewUrl(fileUrl) : ''
+  const driveDownloadUrl = isDriveLink ? getDriveDownloadUrl(fileUrl) : ''
 
   // Route through our server-side proxy to avoid Cloudinary CORS/X-Frame-Options blocks on Vercel
   const proxiedUrl = (fileUrl && !isDriveLink) ? `/api/file-proxy?url=${encodeURIComponent(fileUrl)}` : fileUrl
@@ -61,14 +89,10 @@ export default function DownloadPage() {
       if (note?.cloudinaryUrl) {
         const fileUrl = note.cloudinaryUrl
         const isDrive = fileUrl.includes('drive.google.com')
-        let downloadHref = fileUrl
-        if (isDrive) {
-          const match = fileUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
-          downloadHref = match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : fileUrl
-        }
+        const downloadHref = isDrive ? getDriveDownloadUrl(fileUrl) : proxiedUrl
         
         const link = document.createElement('a')
-        link.href = isDrive ? downloadHref : proxiedUrl
+        link.href = downloadHref
         link.target = '_blank'
         link.download = note.title || 'download'
         document.body.appendChild(link)
@@ -89,13 +113,33 @@ export default function DownloadPage() {
                   fileUrl.toLowerCase().includes('.gif'))
 
   const isPdf = !isDriveLink && fileUrl.toLowerCase().includes('.pdf')
+  const isDriveImage = isDriveLink && (
+    fileUrl.toLowerCase().includes('.png') ||
+    fileUrl.toLowerCase().includes('.jpg') ||
+    fileUrl.toLowerCase().includes('.jpeg') ||
+    fileUrl.toLowerCase().includes('.webp') ||
+    fileUrl.toLowerCase().includes('.gif')
+  )
 
-  // Always use proxied URL for display; for non-image non-pdf use Google Docs Viewer
+  const isDriveDoc = isDriveLink && (
+    fileUrl.toLowerCase().includes('.pdf') ||
+    fileUrl.toLowerCase().includes('.doc') ||
+    fileUrl.toLowerCase().includes('.docx') ||
+    fileUrl.toLowerCase().includes('.ppt') ||
+    fileUrl.toLowerCase().includes('.pptx')
+  )
+
+  // Always prefer a Google Drive preview URL for Drive content.
+  // If Drive refuses to embed, fall back to Google Docs viewer for docs/presentations.
   const previewUrl = isDriveLink
-    ? fileUrl.replace('/view', '/preview') // Force /preview so Google Drive allows embedding in iframe
+    ? (isDriveImage ? `https://drive.google.com/uc?export=view&id=${extractDriveFileId(fileUrl) || ''}` : drivePreviewUrl)
     : (isImage || isPdf)
       ? proxiedUrl
       : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
+
+  const fallbackPreviewUrl = isDriveDoc
+    ? `https://docs.google.com/gview?url=${encodeURIComponent(driveDownloadUrl)}&embedded=true`
+    : ''
 
   const handleStartDownload = () => {
     if (isPaid) {
@@ -216,11 +260,24 @@ export default function DownloadPage() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={proxiedUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
                   </div>
+                ) : isDriveImage ? (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={previewUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                  </div>
                 ) : (
                   <iframe
                     src={previewUrl}
                     style={{ width: '100%', height: '100%', border: 'none' }}
                     title={note?.title || 'Document'}
+                    referrerPolicy="no-referrer"
+                    allow="fullscreen"
+                    onError={(event) => {
+                      const target = event.currentTarget
+                      if (fallbackPreviewUrl && target.src !== fallbackPreviewUrl) {
+                        target.src = fallbackPreviewUrl
+                      }
+                    }}
                   />
                 )
               ) : (
