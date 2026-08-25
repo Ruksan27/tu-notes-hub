@@ -226,6 +226,7 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
+          </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <span
