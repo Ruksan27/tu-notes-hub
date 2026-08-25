@@ -142,7 +142,7 @@ export default function PricingPlans() {
     // Fetch site settings for QR code
     fetch('/api/admin/settings')
       .then(r => r.json())
-      .then(setSettings)
+      .then(data => setSettings(data.settings))
       .catch(console.error)
   }, [])
 

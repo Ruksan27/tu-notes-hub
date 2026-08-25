@@ -63,7 +63,10 @@ export default function DownloadPage() {
     return () => clearTimeout(t)
   }, [downloadAdActive, downloadAdCountdown, note])
 
-  const fileUrl = note?.cloudinaryUrl || ''
+  let fileUrl = note?.cloudinaryUrl || ''
+  if (fileUrl.startsWith('http://')) {
+    fileUrl = fileUrl.replace('http://', 'https://')
+  }
   const isImage = fileUrl.toLowerCase().endsWith('.png') ||
                   fileUrl.toLowerCase().endsWith('.jpg') ||
                   fileUrl.toLowerCase().endsWith('.jpeg') ||
@@ -78,11 +81,11 @@ export default function DownloadPage() {
 
   const handleStartDownload = () => {
     if (isPaid) {
-      if (note?.cloudinaryUrl) {
+      if (fileUrl) {
         const link = document.createElement('a')
-        link.href = note.cloudinaryUrl
+        link.href = fileUrl
         link.target = '_blank'
-        link.download = note.title || 'download'
+        link.download = note?.title || 'download'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -133,7 +136,7 @@ export default function DownloadPage() {
             
             {/* Download Button (Triggers 15s Ad Lock Modal) */}
             <div>
-              {ready && note?.cloudinaryUrl ? (
+              {ready && fileUrl ? (
                 <button onClick={handleStartDownload}
                   className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', cursor: 'pointer' }}>
                   ⬇️ Save Offline File
@@ -182,11 +185,11 @@ export default function DownloadPage() {
           ) : (
             /* Document Preview (Only displayed after 10s countdown) */
             <div style={{ flex: 1, minHeight: '680px', borderRadius: '16px', border: '1px solid var(--clr-border)', overflow: 'hidden', background: '#121824', position: 'relative' }}>
-              {note?.cloudinaryUrl ? (
+              {fileUrl ? (
                 isImage ? (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={note.cloudinaryUrl} alt={note.title} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                    <img src={fileUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
                   </div>
                 ) : (
                   <iframe
