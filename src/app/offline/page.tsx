@@ -1,10 +1,5 @@
-import type { Metadata } from 'next'
+'use client'
 import Link from 'next/link'
-
-export const metadata: Metadata = {
-  title: 'Offline | TU Notes Hub',
-  description: 'You are offline. Cached TU Notes Hub pages and resources will still load where available.',
-}
 
 export default function OfflinePage() {
   return (
