@@ -303,3 +303,25 @@ model SiteSettings {
   paymentQrUrl   String?
   updatedAt      DateTime @updatedAt
 }
+
+model PricingPlan {
+  id                 String    @id @default(uuid())
+  packageType        Package   @unique
+  emoji              String
+  name               String
+  tagline            String
+  price              String
+  originalPrice      String?
+  priceNote          String
+  validity           String?
+  color              String
+  gradient           String
+  glow               String
+  popular            Boolean   @default(false)
+  audience           String
+  features           Json
+  cta                String
+  ctaStyle           String
+  discountEndsAt     DateTime?
+  updatedAt          DateTime  @updatedAt
+}
