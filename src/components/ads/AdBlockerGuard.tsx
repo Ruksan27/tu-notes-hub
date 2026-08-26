@@ -63,7 +63,7 @@ export default function AdBlockerGuard() {
           </ol>
         </div>
         <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={() => window.location.reload()}>
-          ✅ I've Disabled AdBlocker — Reload
+          ✅ I&apos;ve Disabled AdBlocker — Reload
         </button>
         <p style={{ color: 'var(--clr-text-3)', fontSize: '12px', marginTop: '16px' }}>
           Or upgrade to <strong style={{ color: 'var(--clr-primary-h)' }}>Premium</strong> for an ad-free experience.
