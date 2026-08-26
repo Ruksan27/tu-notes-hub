@@ -112,7 +112,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
         <ins
           className="adsbygoogle"
           style={{ display: 'block', width: '100%', height: '100%' }}
-          data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+          data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "ca-pub-YOUR_PUBLISHER_ID"}
           data-ad-slot={slot}
           data-ad-format="auto"
           data-full-width-responsive="true"

@@ -208,33 +208,23 @@ export default function DashboardPage() {
         
         {/* ── Top App Bar ── */}
         <header className="admin-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
-              ☰
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>☰</button>
             <div>
-              <h1 style={{ fontSize: '20px', margin: 0, fontWeight: 700 }}>
-                Welcome back, <span className="text-gradient">{user.name.split(' ')[0]}</span> 👋
+              <h1 style={{ fontSize: '18px', margin: 0, fontWeight: 700 }}>
+                {tab === 'overview' ? '📚 My Dashboard' : tab === 'compare' ? '🤖 AI Exam Predictor' : tab === 'payment' ? '💎 Upgrade Plan' : tab === 'become-seller' ? '🛍️ Become a Seller' : '🏬 Seller Center'}
               </h1>
-              {faculty ? (
-                <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, marginTop: '4px' }}>
-                {faculty.icon} {faculty.name} • <span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{semesterName}</span>
-              </p>
-            ) : (
-              <p style={{ color: 'var(--clr-warning)', fontSize: '12px', margin: 0, marginTop: '4px' }}>
-                ⚠️ No faculty selected. Update your settings.
-              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {user.role === 'ADMIN' && (
+              <button className="btn btn-outline" style={{ fontSize: '12px', padding: '6px 14px' }} onClick={() => router.push('/admin')}>
+                ⚙️ Admin
+              </button>
             )}
-          </div>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span
-              className="badge"
-              style={{ background: pkg.gradient, padding: '8px 16px', fontSize: '12px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px' }}
-            >
-              {pkg.label}
-            </span>
+            <button className="btn btn-outline" style={{ fontSize: '12px', padding: '6px 14px' }} onClick={() => router.push('/settings')}>
+              ⚙️ Settings
+            </button>
           </div>
         </header>
 
@@ -244,154 +234,179 @@ export default function DashboardPage() {
           {/* ── Overview Tab ── */}
           {tab === 'overview' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
-              {/* Stats */}
-              <div className="stat-grid" style={{ marginBottom: '28px' }}>
-                {[
-                  { label: 'Notes Available', value: totalNotes, icon: '📄', color: 'var(--clr-primary-h)' },
-                  { label: 'Past Papers', value: totalPapers, icon: '📝', color: 'var(--clr-accent-h)' },
-                  { label: 'AI Cheatsheets', value: totalSheets, icon: '📋', color: '#c084fc' },
-                ].map((s, i) => (
-                  <motion.div
-                    key={s.label}
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    className="stat-card glass-card"
-                    style={{ borderLeft: `3px solid ${s.color}` }}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--clr-text-3)' }}>{s.label}</span>
-                      <span className="text-2xl">{s.icon}</span>
-                    </div>
-                    <div className="stat-value" style={{ fontSize: '36px', color: s.color }}>{s.value}</div>
-                  </motion.div>
-                ))}
-              </div>
 
-              {/* Upgrade Banner */}
-              {!isPremium && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.01 }}
-                  className="glass-card"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.06))',
-                    padding: '24px 28px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    flexWrap: 'wrap', gap: '20px', marginBottom: '28px',
-                    boxShadow: '0 0 30px rgba(99,102,241,0.12)',
-                    borderColor: 'rgba(99,102,241,0.3)',
-                  }}
-                >
+              {/* ── Hero Welcome Banner ── */}
+              <motion.div
+                initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+                style={{
+                  position: 'relative', overflow: 'hidden', borderRadius: '20px',
+                  background: 'linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(6,182,212,0.12) 50%, rgba(192,132,252,0.1) 100%)',
+                  border: '1px solid rgba(99,102,241,0.25)',
+                  padding: '28px 32px', marginBottom: '28px',
+                  boxShadow: '0 8px 40px rgba(99,102,241,0.15)',
+                }}
+              >
+                {/* Glowing orbs */}
+                <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.25), transparent 70%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: '-30px', left: '30%', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.2), transparent 70%)', pointerEvents: 'none' }} />
+
+                <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
                   <div>
-                    <h3 className="text-lg font-bold mb-1">🚀 Unlock Premium Access</h3>
-                    <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', maxWidth: '520px' }}>
-                      Get ad-free downloads, AI Exam Predictor, printable cheatsheets and priority access to all resources.
-                    </p>
-                  </div>
-                  <button className="btn btn-primary" onClick={() => setTab('payment')}>
-                    💎 Upgrade Now
-                  </button>
-                </motion.div>
-              )}
-
-              {/* Subjects */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <h3 className="section-title" style={{ margin: 0 }}>📚 Course Materials</h3>
-                  {subjects.length > 0 && (
-                    <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', background: 'rgba(99,102,241,0.1)', padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(99,102,241,0.2)' }}>
-                      {subjects.length} subjects
-                    </span>
-                  )}
-                </div>
-                {subjects.length === 0 ? (
-                  <div className="glass-card" style={{ padding: '64px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '52px', marginBottom: '16px' }}>📭</div>
-                    <h3 className="text-xl font-semibold mb-2">No materials yet</h3>
-                    <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '8px' }}>
-                      {faculty
-                        ? `No study materials uploaded for ${semesterName} yet. Check back soon!`
-                        : 'Select your faculty and semester in Settings to see your materials.'}
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '32px' }}>{faculty?.icon ?? '🎓'}</span>
+                      <div>
+                        <h2 style={{ fontSize: '22px', fontWeight: 800, margin: 0 }}>
+                          Welcome back, <span className="text-gradient">{user.name.split(' ')[0]}</span> 👋
+                        </h2>
+                        <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0 }}>
+                          {faculty ? `${faculty.name} · ` : ''}<span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{semesterName || 'No semester set'}</span>
+                        </p>
+                      </div>
+                    </div>
                     {!faculty && (
-                      <Link href="/settings" className="btn btn-primary" style={{ marginTop: '16px', display: 'inline-flex' }}>
+                      <Link href="/settings" className="btn btn-outline" style={{ marginTop: '8px', fontSize: '12px', padding: '6px 16px', display: 'inline-flex', gap: '6px' }}>
                         ⚙️ Setup Profile
                       </Link>
                     )}
                   </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <span style={{ background: isPremium ? 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(6,182,212,0.2))' : 'rgba(100,116,139,0.2)', border: `1px solid ${isPremium ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700, color: isPremium ? '#a5b4fc' : 'var(--clr-text-3)' }}>
+                      {pkg.label}
+                    </span>
+                    {!isPremium && (
+                      <button className="btn btn-primary" style={{ fontSize: '12px', padding: '7px 16px' }} onClick={() => setTab('payment')}>
+                        💎 Upgrade
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* ── Stats Grid ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+                {[
+                  { label: 'Notes Available', value: totalNotes, icon: '📄', color: '#6366f1', glow: 'rgba(99,102,241,0.25)' },
+                  { label: 'Past Papers', value: totalPapers, icon: '📝', color: '#06b6d4', glow: 'rgba(6,182,212,0.25)' },
+                  { label: 'AI Cheatsheets', value: totalSheets, icon: '📋', color: '#c084fc', glow: 'rgba(192,132,252,0.25)' },
+                ].map((s, i) => (
+                  <motion.div
+                    key={s.label}
+                    initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + i * 0.08 }}
+                    whileHover={{ y: -3, boxShadow: `0 12px 32px ${s.glow}` }}
+                    style={{
+                      background: `linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))`,
+                      border: `1px solid ${s.color}30`,
+                      borderRadius: '16px', padding: '20px 22px',
+                      boxShadow: `0 4px 20px ${s.glow}`,
+                      transition: 'all 0.25s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--clr-text-3)' }}>{s.label}</span>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>{s.icon}</div>
+                    </div>
+                    <div style={{ fontSize: '40px', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* ── Course Materials ── */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--clr-text-1)' }}>📚 Course Materials</h3>
+                  {subjects.length > 0 && (
+                    <span style={{ fontSize: '12px', color: 'var(--clr-accent-h)', background: 'rgba(6,182,212,0.1)', padding: '4px 14px', borderRadius: '20px', border: '1px solid rgba(6,182,212,0.2)', fontWeight: 600 }}>
+                      {subjects.length} subjects
+                    </span>
+                  )}
+                </div>
+
+                {subjects.length === 0 ? (
+                  <div style={{ padding: '64px', textAlign: 'center', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--clr-border)' }}>
+                    <div style={{ fontSize: '52px', marginBottom: '16px' }}>📭</div>
+                    <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>No materials yet</h3>
+                    <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '8px' }}>
+                      {faculty ? `No study materials uploaded for ${semesterName} yet.` : 'Select your faculty and semester in Settings to see your materials.'}
+                    </p>
+                    {!faculty && <Link href="/settings" className="btn btn-primary" style={{ marginTop: '16px', display: 'inline-flex' }}>⚙️ Setup Profile</Link>}
+                  </div>
                 ) : (
-                  <div className="space-y-5" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {subjects.map((sub, idx) => {
                       const total = sub.notes.length + sub.pastPapers.length + sub.cheatsheets.length
+                      const accentColors = ['#6366f1', '#06b6d4', '#c084fc', '#f59e0b', '#10b981', '#ef4444']
+                      const accentColor = accentColors[idx % accentColors.length]
+
                       return (
                         <motion.div
                           key={sub.id}
-                          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.06 }}
-                          className="glass-card"
-                          style={{ padding: 0, overflow: 'hidden' }}
+                          style={{
+                            borderRadius: '18px', overflow: 'hidden',
+                            border: `1px solid ${accentColor}20`,
+                            boxShadow: `0 4px 20px ${accentColor}10`,
+                            background: 'rgba(255,255,255,0.025)',
+                          }}
                         >
-                          {/* Subject header */}
-                          <div
-                            className="flex items-center justify-between flex-wrap gap-3 px-6 py-4"
-                            style={{
-                              borderBottom: '1px solid var(--clr-border)',
-                              background: 'rgba(255,255,255,0.015)',
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span
-                                className="text-xs font-bold px-3 py-1 rounded-md"
-                                style={{ background: 'rgba(6,182,212,0.12)', color: 'var(--clr-accent-h)' }}
-                              >
+                          {/* Subject Header Strip */}
+                          <div style={{
+                            padding: '14px 22px',
+                            background: `linear-gradient(90deg, ${accentColor}18, transparent)`,
+                            borderBottom: `1px solid ${accentColor}20`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px',
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '6px', background: `${accentColor}22`, color: accentColor, border: `1px solid ${accentColor}40`, letterSpacing: '0.05em' }}>
                                 {sub.code}
                               </span>
-                              <span className="font-bold text-base" style={{ color: 'var(--clr-text-1)' }}>
-                                {sub.title}
-                              </span>
+                              <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--clr-text-1)' }}>{sub.title}</span>
                             </div>
-                            <span className="text-xs" style={{ color: 'var(--clr-text-3)' }}>
-                              {total} resource{total !== 1 ? 's' : ''}
+                            <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600 }}>
+                              {total === 0 ? 'No resources yet' : `${total} resource${total !== 1 ? 's' : ''}`}
                             </span>
                           </div>
 
                           {total === 0 ? (
-                            <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(99,102,241,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>📂</div>
+                            <div style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: `${accentColor}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📂</div>
                               <div>
                                 <p style={{ color: 'var(--clr-text-3)', fontSize: '13px', margin: 0 }}>No files uploaded yet</p>
                                 <p style={{ color: 'var(--clr-text-3)', fontSize: '11px', margin: '2px 0 0', opacity: 0.6 }}>Admin will add materials soon</p>
                               </div>
                             </div>
                           ) : (
-                            <div className="p-5" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                              {/* Notes */}
+                            <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+
+                              {/* Study Notes */}
                               {sub.notes.length > 0 && (
                                 <div>
-                                  <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--clr-text-3)' }}>
+                                  <p style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--clr-text-3)', marginBottom: '12px' }}>
                                     📄 Study Notes
                                   </p>
-                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '10px' }}>
+                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
                                     {sub.notes.map((note) => (
                                       <Link key={note.id} href={`/download/${note.id}`} style={{ textDecoration: 'none' }}>
                                         <motion.div
-                                          whileHover={{ scale: 1.02, y: -2 }}
-                                          className="rounded-xl p-4 cursor-pointer transition-all"
+                                          whileHover={{ scale: 1.025, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.15)' }}
                                           style={{
-                                            background: 'rgba(255,255,255,0.03)',
-                                            border: '1px solid rgba(255,255,255,0.07)',
+                                            background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)',
+                                            borderRadius: '12px', padding: '14px 16px', cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
                                           }}
                                         >
-                                          <p className="font-semibold text-sm mb-2" style={{ color: 'var(--clr-text-1)', lineHeight: 1.4 }}>
+                                          <p style={{ fontWeight: 600, fontSize: '13px', color: 'var(--clr-text-1)', lineHeight: 1.45, marginBottom: '10px' }}>
                                             {note.title}
                                           </p>
-                                          <div className="flex items-center justify-between">
-                                            <span className="badge badge-free" style={{ fontSize: '10px' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', textTransform: 'uppercase' }}>
                                               {note.noteType.replace(/_/g, ' ')}
                                             </span>
-                                            {note.isPremium && (
-                                              <span className="text-xs font-semibold" style={{ color: 'var(--clr-accent-h)' }}>💎 Premium</span>
-                                            )}
+                                            {note.isPremium
+                                              ? <span style={{ fontSize: '11px', fontWeight: 700, color: '#f59e0b' }}>💎 Premium</span>
+                                              : <span style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>View →</span>
+                                            }
                                           </div>
                                         </motion.div>
                                       </Link>
@@ -403,26 +418,28 @@ export default function DashboardPage() {
                               {/* Past Papers */}
                               {sub.pastPapers.length > 0 && (
                                 <div>
-                                  <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--clr-text-3)' }}>
+                                  <p style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--clr-text-3)', marginBottom: '12px' }}>
                                     📝 Question Papers
                                   </p>
-                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                     {sub.pastPapers.map((paper) => (
                                       <Link key={paper.id} href={`/download/${paper.id}`} style={{ textDecoration: 'none' }}>
                                         <motion.div
-                                          whileHover={{ scale: 1.02, y: -2 }}
-                                          className="rounded-xl p-4 cursor-pointer"
+                                          whileHover={{ scale: 1.05, y: -2 }}
                                           style={{
-                                            background: 'rgba(6,182,212,0.04)',
-                                            border: '1px solid rgba(6,182,212,0.15)',
+                                            background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.2)',
+                                            borderRadius: '10px', padding: '10px 16px', cursor: 'pointer',
+                                            display: 'flex', flexDirection: 'column', gap: '4px',
+                                            transition: 'all 0.2s ease',
                                           }}
                                         >
-                                          <p className="font-semibold text-sm" style={{ color: 'var(--clr-text-1)', marginBottom: '6px' }}>
-                                            📅 {paper.year} — {paper.examType.replace(/_/g, ' ')}
-                                          </p>
-                                          <span className="text-xs font-medium" style={{ color: 'var(--clr-accent-h)' }}>
-                                            Download Paper →
+                                          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)' }}>
+                                            📅 {paper.year}
                                           </span>
+                                          <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--clr-accent-h)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                            {paper.examType.replace(/_/g, ' ')}
+                                          </span>
+                                          <span style={{ fontSize: '10px', color: 'var(--clr-accent-h)', marginTop: '2px' }}>Download →</span>
                                         </motion.div>
                                       </Link>
                                     ))}
@@ -433,7 +450,7 @@ export default function DashboardPage() {
                               {/* Cheatsheets */}
                               {sub.cheatsheets.length > 0 && (
                                 <div>
-                                  <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--clr-text-3)' }}>
+                                  <p style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--clr-text-3)', marginBottom: '12px' }}>
                                     📋 AI Cheatsheets
                                   </p>
                                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
@@ -441,21 +458,18 @@ export default function DashboardPage() {
                                       <motion.div
                                         key={sheet.id}
                                         whileHover={{ scale: 1.02, y: -2 }}
-                                        className="rounded-xl p-4"
                                         style={{
-                                          background: 'rgba(99,102,241,0.06)',
-                                          border: '1px solid rgba(99,102,241,0.2)',
+                                          background: 'rgba(192,132,252,0.07)', border: '1px solid rgba(192,132,252,0.2)',
+                                          borderRadius: '12px', padding: '14px 16px',
                                           cursor: isElite ? 'pointer' : 'default',
-                                          position: 'relative',
-                                          overflow: 'hidden',
+                                          position: 'relative', overflow: 'hidden',
                                         }}
                                       >
                                         {!isElite && (
                                           <div
-                                            className="absolute inset-0 flex items-center justify-center"
-                                            style={{ background: 'rgba(8,10,18,0.7)', backdropFilter: 'blur(3px)', zIndex: 2 }}
+                                            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(8,10,18,0.7)', backdropFilter: 'blur(3px)', zIndex: 2, borderRadius: '12px' }}
                                           >
-                                            <span className="text-xs font-bold" style={{ color: '#a5b4fc' }}>🔒 Elite Only</span>
+                                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#c084fc' }}>🔒 Elite Only</span>
                                           </div>
                                         )}
                                         <p className="font-semibold text-sm mb-2" style={{ color: 'var(--clr-text-1)' }}>

@@ -10,7 +10,15 @@ export async function GET() {
   try {
     const settings = await prisma.siteSettings.upsert({
       where: { id: 'singleton' },
-      create: { id: 'singleton', whatsappLink: 'https://wa.me/9800000000' },
+      create: { 
+        id: 'singleton', 
+        whatsappLink: 'https://wa.me/9800000000',
+        facebookLink: 'https://facebook.com',
+        tiktokLink: 'https://tiktok.com',
+        instagramLink: 'https://instagram.com',
+        contactPhone: '9767776999',
+        contactEmail: 'tunoteshub@gmail.com'
+      },
       update: {},
     })
     return NextResponse.json({ settings })
@@ -30,6 +38,11 @@ export async function PUT(req: NextRequest) {
 
     const fd = await req.formData()
     const whatsappLink = fd.get('whatsappLink') as string
+    const facebookLink = fd.get('facebookLink') as string
+    const tiktokLink = fd.get('tiktokLink') as string
+    const instagramLink = fd.get('instagramLink') as string
+    const contactPhone = fd.get('contactPhone') as string
+    const contactEmail = fd.get('contactEmail') as string
     const paymentQrFile = fd.get('paymentQr') as File | null
 
     if (!whatsappLink) {
@@ -44,14 +57,31 @@ export async function PUT(req: NextRequest) {
       paymentQrUrl = uploadRes.url
     }
 
-    const updateData: any = { whatsappLink }
+    const updateData: any = { 
+      whatsappLink,
+      facebookLink: facebookLink || 'https://facebook.com',
+      tiktokLink: tiktokLink || 'https://tiktok.com',
+      instagramLink: instagramLink || 'https://instagram.com',
+      contactPhone: contactPhone || '9767776999',
+      contactEmail: contactEmail || 'tunoteshub@gmail.com'
+    }
+    
     if (paymentQrUrl !== undefined) {
       updateData.paymentQrUrl = paymentQrUrl
     }
 
     const settings = await prisma.siteSettings.upsert({
       where: { id: 'singleton' },
-      create: { id: 'singleton', whatsappLink, ...(paymentQrUrl && { paymentQrUrl }) },
+      create: { 
+        id: 'singleton', 
+        whatsappLink, 
+        facebookLink: facebookLink || 'https://facebook.com',
+        tiktokLink: tiktokLink || 'https://tiktok.com',
+        instagramLink: instagramLink || 'https://instagram.com',
+        contactPhone: contactPhone || '9767776999',
+        contactEmail: contactEmail || 'tunoteshub@gmail.com',
+        ...(paymentQrUrl && { paymentQrUrl }) 
+      },
       update: updateData,
     })
 

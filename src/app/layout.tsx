@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar'
 import AdBannerBottom from '@/components/ads/AdBannerBottom'
 import AdBlockerGuard from '@/components/ads/AdBlockerGuard'
 import PWARegister from '@/components/PWARegister'
+import Script from 'next/script'
 
 export const metadata: Metadata = {
   title: {
@@ -24,6 +25,16 @@ export const metadata: Metadata = {
     siteName: 'TU Notes Hub',
   },
   robots: { index: true, follow: true },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/icon-192.svg',
+  },
+  // Apple PWA meta
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'TU Notes Hub',
+  },
 }
 
 export const viewport: Viewport = {
@@ -36,7 +47,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        {/* Google AdSense — only loaded when publisher ID is configured */}
+        {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
       </head>
       <body>
         <AdBlockerGuard />

@@ -2038,6 +2038,11 @@ function StatsTab() {
 /* ── Site Settings Tab ── */
 function SiteSettingsTab() {
   const [whatsappLink, setWhatsappLink] = useState('')
+  const [facebookLink, setFacebookLink] = useState('')
+  const [tiktokLink, setTiktokLink] = useState('')
+  const [instagramLink, setInstagramLink] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
   const [paymentQrUrl, setPaymentQrUrl] = useState<string | null>(null)
   const [paymentQrFile, setPaymentQrFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(true)
@@ -2048,7 +2053,12 @@ function SiteSettingsTab() {
       .then(r => r.json())
       .then(d => { 
         if (d.settings) {
-          setWhatsappLink(d.settings.whatsappLink)
+          setWhatsappLink(d.settings.whatsappLink || '')
+          setFacebookLink(d.settings.facebookLink || '')
+          setTiktokLink(d.settings.tiktokLink || '')
+          setInstagramLink(d.settings.instagramLink || '')
+          setContactPhone(d.settings.contactPhone || '')
+          setContactEmail(d.settings.contactEmail || '')
           if (d.settings.paymentQrUrl) setPaymentQrUrl(d.settings.paymentQrUrl)
         }
       })
@@ -2073,6 +2083,11 @@ function SiteSettingsTab() {
     try {
       const fd = new FormData()
       fd.append('whatsappLink', whatsappLink)
+      fd.append('facebookLink', facebookLink)
+      fd.append('tiktokLink', tiktokLink)
+      fd.append('instagramLink', instagramLink)
+      fd.append('contactPhone', contactPhone)
+      fd.append('contactEmail', contactEmail)
       if (paymentQrFile) fd.append('paymentQr', paymentQrFile)
 
       const res = await fetch('/api/admin/settings', {
@@ -2108,7 +2123,7 @@ function SiteSettingsTab() {
                 💬 WhatsApp Contact Link
               </label>
               <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '10px', lineHeight: 1.5 }}>
-                This link is shown to verified sellers in their Seller Center for direct admin contact. Use format: <code style={{ color: '#a5b4fc' }}>https://wa.me/977XXXXXXXXXX</code>
+                Direct admin contact link for WhatsApp chat. Use format: <code style={{ color: '#a5b4fc' }}>https://wa.me/977XXXXXXXXXX</code>
               </p>
               <input
                 type="url"
@@ -2128,6 +2143,73 @@ function SiteSettingsTab() {
                   ↗ Test Link
                 </a>
               )}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
+                📞 Contact Phone Number
+              </label>
+              <input
+                type="text"
+                required
+                className="input-field"
+                placeholder="9767776999"
+                value={contactPhone}
+                onChange={e => setContactPhone(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
+                ✉️ Contact Email
+              </label>
+              <input
+                type="email"
+                required
+                className="input-field"
+                placeholder="tunoteshub@gmail.com"
+                value={contactEmail}
+                onChange={e => setContactEmail(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
+                📘 Facebook Profile Link
+              </label>
+              <input
+                type="url"
+                className="input-field"
+                placeholder="https://facebook.com/yourpage"
+                value={facebookLink}
+                onChange={e => setFacebookLink(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
+                🎵 TikTok Profile Link
+              </label>
+              <input
+                type="url"
+                className="input-field"
+                placeholder="https://tiktok.com/@yourusername"
+                value={tiktokLink}
+                onChange={e => setTiktokLink(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
+                📸 Instagram Profile Link
+              </label>
+              <input
+                type="url"
+                className="input-field"
+                placeholder="https://instagram.com/yourusername"
+                value={instagramLink}
+                onChange={e => setInstagramLink(e.target.value)}
+              />
             </div>
 
             <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>

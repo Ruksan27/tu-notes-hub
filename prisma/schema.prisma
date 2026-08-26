@@ -295,6 +295,11 @@ model ProjectReview {
 model SiteSettings {
   id             String   @id @default("singleton")
   whatsappLink   String   @default("https://wa.me/9800000000")
+  facebookLink   String   @default("https://facebook.com")
+  tiktokLink     String   @default("https://tiktok.com")
+  instagramLink  String   @default("https://instagram.com")
+  contactPhone   String   @default("9767776999")
+  contactEmail   String   @default("tunoteshub@gmail.com")
   paymentQrUrl   String?
   updatedAt      DateTime @updatedAt
 }

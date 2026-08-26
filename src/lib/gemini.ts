@@ -35,7 +35,7 @@ export async function callGemini(
       contents.push(prompt)
 
       const response = await genAI.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3.6-flash',
         contents,
         ...(systemInstruction ? { config: { systemInstruction } } : {}),
       })
