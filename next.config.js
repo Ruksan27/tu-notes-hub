@@ -7,10 +7,6 @@ const nextConfig = {
   // Security: hide "X-Powered-By: Next.js" header
   poweredByHeader: false,
 
-  // Skip ESLint during production builds (run separately in CI)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
 
   images: {
     remotePatterns: [
