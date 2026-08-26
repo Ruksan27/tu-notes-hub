@@ -4,6 +4,45 @@ import Link from 'next/link'
 import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'motion/react'
 
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState<{ d: number, h: number, m: number, s: number } | null>(null)
+
+  useEffect(() => {
+    const end = new Date(targetDate).getTime()
+    const timer = setInterval(() => {
+      const now = new Date().getTime()
+      const distance = end - now
+      if (distance < 0) {
+        clearInterval(timer)
+        setTimeLeft(null)
+      } else {
+        setTimeLeft({
+          d: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          h: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          m: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          s: Math.floor((distance % (1000 * 60)) / 1000)
+        })
+      }
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [targetDate])
+
+  if (!timeLeft) return null
+  return (
+    <div style={{ marginTop: '12px', background: 'linear-gradient(90deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.05) 100%)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '8px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
+      <span style={{ fontSize: '13px', fontWeight: 600, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '15px' }}>⏳</span> Discount Ends In:
+      </span>
+      <div style={{ display: 'flex', gap: '6px', color: '#fcd34d', fontWeight: 800, fontSize: '13px' }}>
+        <div style={{ background: 'rgba(245,158,11,0.2)', padding: '2px 6px', borderRadius: '4px' }}>{timeLeft.d}d</div>
+        <div style={{ background: 'rgba(245,158,11,0.2)', padding: '2px 6px', borderRadius: '4px' }}>{timeLeft.h}h</div>
+        <div style={{ background: 'rgba(245,158,11,0.2)', padding: '2px 6px', borderRadius: '4px' }}>{timeLeft.m}m</div>
+        <div style={{ background: 'rgba(245,158,11,0.2)', padding: '2px 6px', borderRadius: '4px', width: '32px', textAlign: 'center' }}>{timeLeft.s}s</div>
+      </div>
+    </div>
+  )
+}
+
 interface Plan {
   id: string
   emoji: string
@@ -22,7 +61,9 @@ interface Plan {
   ctaStyle: string
 }
 
-const plans: Plan[] = [
+// Plans are now fetched from the database via API.
+// A fallback plan array is still used to prevent flashing on first load.
+const fallbackPlans: Plan[] = [
   {
     id: 'FREE',
     emoji: '🌱',
@@ -39,64 +80,9 @@ const plans: Plan[] = [
     features: [
       { icon: '📚', text: 'Browse all notes & past papers', avail: true },
       { icon: '⏱️', text: '10-second countdown before download', avail: true },
-      { icon: '📢', text: 'Ad-supported (sidebars + banners)', avail: true },
-      { icon: '🤖', text: 'AI Exam Predictions', avail: false },
-      { icon: '⚡', text: 'Instant 1-click download', avail: false },
-      { icon: '📋', text: 'Handwritten Notes & Cheatsheets', avail: false },
-      { icon: '💬', text: 'AI Tutor Chat', avail: false },
     ],
     cta: 'Get Started Free',
     ctaStyle: 'outline',
-  },
-  {
-    id: 'SEMESTER_PASS',
-    emoji: '⚡',
-    name: 'Semester Pass',
-    tagline: 'Perfect for exam season',
-    price: 'Rs. 99',
-    priceNote: 'per semester',
-    validity: 'Valid for 6 Months',
-    color: '#06b6d4',
-    gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
-    glow: 'rgba(6,182,212,0.2)',
-    popular: false,
-    audience: 'Dedicated exam readers',
-    features: [
-      { icon: '📚', text: 'All notes & past papers access', avail: true },
-      { icon: '🚫', text: 'Zero Ads — complete clean experience', avail: true },
-      { icon: '⚡', text: 'Instant 1-click download (no wait)', avail: true },
-      { icon: '📝', text: 'Handwritten notes access', avail: true },
-      { icon: '🤖', text: 'AI Exam Predictions', avail: false },
-      { icon: '📋', text: 'Cheatsheets access', avail: false },
-      { icon: '💬', text: 'AI Tutor Chat', avail: false },
-    ],
-    cta: 'Get Semester Pass',
-    ctaStyle: 'accent',
-  },
-  {
-    id: 'ELITE_AI',
-    emoji: '🤖',
-    name: 'Elite AI Pass',
-    tagline: 'Predict. Prepare. Score.',
-    price: 'Rs. 199',
-    priceNote: 'per year',
-    validity: 'Valid for 1 Year',
-    color: '#6366f1',
-    gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-    glow: 'rgba(99,102,241,0.25)',
-    popular: true,
-    audience: 'Top scorers & exam prediction seekers',
-    features: [
-      { icon: '✅', text: 'Everything in Semester Pass', avail: true },
-      { icon: '🤖', text: 'Full AI Dashboard (Exam Predictions)', avail: true },
-      { icon: '💬', text: 'AI Tutor Chat powered by Gemini', avail: true },
-      { icon: '📊', text: 'Pre-computed past paper analysis reports', avail: true },
-      { icon: '📋', text: 'Expert Cheatsheets per subject', avail: true },
-      { icon: '📄', text: 'PDF export of AI prediction reports', avail: true },
-      { icon: '📝', text: 'AI Note Summarizer', avail: true },
-    ],
-    cta: 'Get Elite AI Pass',
-    ctaStyle: 'primary',
   },
 ]
 
@@ -131,6 +117,7 @@ export default function PricingPlans() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
 
+  const [plans, setPlans] = useState<any[]>(fallbackPlans)
   const [settings, setSettings] = useState<any>(null)
 
   useEffect(() => {
@@ -138,6 +125,19 @@ export default function PricingPlans() {
     if (stored) {
       try { setCurrentUser(JSON.parse(stored)) } catch {}
     }
+
+    // Fetch dynamic pricing plans
+    fetch('/api/admin/pricing')
+      .then(r => r.json())
+      .then(data => {
+        if (data.plans) {
+          setPlans(data.plans.map((p: any) => ({
+            ...p,
+            id: p.packageType // Map packageType to id to maintain existing logic
+          })))
+        }
+      })
+      .catch(console.error)
 
     // Fetch site settings for QR code
     fetch('/api/admin/settings')
@@ -299,6 +299,7 @@ export default function PricingPlans() {
                   <p style={{ color: 'var(--clr-text-3)', fontSize: '14px' }}>{plan.tagline}</p>
                 </div>
 
+
                 {/* Price */}
                 <div style={{
                   background: plan.popular ? `${plan.color}15` : 'rgba(255,255,255,0.03)',
@@ -307,16 +308,37 @@ export default function PricingPlans() {
                   padding: '16px 20px',
                   marginBottom: '24px',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                    <span style={{ fontSize: '44px', fontWeight: 900, color: plan.color, fontFamily: 'var(--font-display)' }}>
-                      {plan.price}
-                    </span>
-                    <span style={{ color: 'var(--clr-text-3)', fontSize: '14px' }}>/ {plan.priceNote}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    
+                    {/* Original Price (if discount exists) */}
+                    {plan.originalPrice && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="badge badge-elite" style={{ fontSize: '10px', padding: '2px 6px', background: '#f59e0b', color: '#000', border: 'none' }}>
+                          SAVE {Math.round((1 - parseInt(plan.price.replace(/\D/g, '')) / parseInt(plan.originalPrice.replace(/\D/g, ''))) * 100)}%
+                        </span>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-3)', textDecoration: 'line-through' }}>
+                          {plan.originalPrice}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Current Price & Note */}
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '40px', fontWeight: 900, color: plan.color, fontFamily: 'var(--font-display)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+                        {plan.price}
+                      </span>
+                      <span style={{ color: 'var(--clr-text-3)', fontSize: '14px', whiteSpace: 'nowrap' }}>/ {plan.priceNote}</span>
+                    </div>
+
                   </div>
+                  
                   {plan.validity && (
-                    <p style={{ color: plan.color, fontSize: '12px', fontWeight: 600, marginTop: '4px' }}>
+                    <p style={{ color: plan.color, fontSize: '13px', fontWeight: 600, marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       📅 {plan.validity}
                     </p>
+                  )}
+                  {plan.discountEndsAt && new Date(plan.discountEndsAt) > new Date() && (
+                    <CountdownTimer targetDate={plan.discountEndsAt} />
                   )}
                 </div>
 

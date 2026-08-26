@@ -119,8 +119,8 @@ export default function DashboardPage() {
     )
   }
 
-  const isPremium = user.packageType !== 'FREE'
-  const isElite = user.packageType === 'ELITE_AI'
+  const isPremium = user.packageType !== 'FREE' || user.role === 'ADMIN'
+  const isElite = user.packageType === 'ELITE_AI' || user.role === 'ADMIN'
   const totalNotes = subjects.reduce((a, s) => a + s.notes.length, 0)
   const totalPapers = subjects.reduce((a, s) => a + s.pastPapers.length, 0)
   const totalSheets = subjects.reduce((a, s) => a + s.cheatsheets.length, 0)
@@ -130,13 +130,13 @@ export default function DashboardPage() {
     SEMESTER_PASS: { label: '⚡ Semester Pass', cls: 'badge-semester', gradient: 'rgba(6,182,212,0.15)' },
     ELITE_AI: { label: '🤖 Elite AI Pass', cls: 'badge-elite', gradient: 'rgba(99,102,241,0.2)' },
   }
-  const pkg = pkgConfig[user.packageType] ?? pkgConfig.FREE
+  const pkg = user.role === 'ADMIN' ? { label: '👑 Admin (Full Access)', cls: 'badge-elite', gradient: 'rgba(99,102,241,0.2)' } : (pkgConfig[user.packageType] ?? pkgConfig.FREE)
 
   const navItems = [
     { id: 'overview', icon: '📚', label: 'My Subjects' },
     { id: 'compare', icon: '🤖', label: 'AI Exam Predictor' },
-    // Only show Upgrade Plan if user is on FREE tier
-    ...(!isPremium ? [{ id: 'payment', icon: '💎', label: 'Upgrade Plan' }] : []),
+    // Show Upgrade Plan for everyone except Elite
+    ...(user.packageType !== 'ELITE_AI' && user.role !== 'ADMIN' ? [{ id: 'payment', icon: '💎', label: 'Upgrade Plan' }] : []),
   ]
   
   // Add Seller Tab
@@ -175,7 +175,14 @@ export default function DashboardPage() {
               <button
                 key={item.id}
                 className={`sidebar-item${tab === item.id ? ' active' : ''}`}
-                onClick={() => { setTab(item.id as Tab); setSidebarOpen(false); }}
+                onClick={() => { 
+                  if (item.id === 'payment') {
+                    window.location.href = '/pricing'
+                  } else {
+                    setTab(item.id as Tab); 
+                    setSidebarOpen(false); 
+                  }
+                }}
               >
                 <span className="text-lg">{item.icon}</span>
                 <span>{item.label}</span>
@@ -270,11 +277,11 @@ export default function DashboardPage() {
                     )}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                    <span style={{ background: isPremium ? 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(6,182,212,0.2))' : 'rgba(100,116,139,0.2)', border: `1px solid ${isPremium ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700, color: isPremium ? '#a5b4fc' : 'var(--clr-text-3)' }}>
+                    <span style={{ background: pkg.gradient, border: `1px solid ${isPremium ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700, color: isPremium ? '#a5b4fc' : 'var(--clr-text-3)' }}>
                       {pkg.label}
                     </span>
-                    {!isPremium && (
-                      <button className="btn btn-primary" style={{ fontSize: '12px', padding: '7px 16px' }} onClick={() => setTab('payment')}>
+                    {user.packageType !== 'ELITE_AI' && user.role !== 'ADMIN' && (
+                      <button className="btn btn-primary" style={{ fontSize: '12px', padding: '7px 16px' }} onClick={() => window.location.href = '/pricing'}>
                         💎 Upgrade
                       </button>
                     )}
@@ -513,12 +520,7 @@ export default function DashboardPage() {
             </motion.div>
           )}
 
-          {/* ── Payment Tab ── */}
-          {tab === 'payment' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <PaymentTab currentPlan={user.packageType} />
-            </motion.div>
-          )}
+
 
           {/* ── Become a Seller Tab ── */}
           {tab === 'become-seller' && (
@@ -687,211 +689,6 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
               </div>
             </div>
           )}
-        </motion.div>
-      )}
-    </div>
-  )
-}
-
-/* ── Payment Tab ── */
-function PaymentTab({ currentPlan }: { currentPlan: string }) {
-  const [showQR, setShowQR] = useState<string | null>(null)
-  const [txnId, setTxnId] = useState('')
-  const [screenshot, setScreenshot] = useState<File | null>(null)
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(false)
-
-  const plans = [
-    {
-      id: 'SEMESTER_PASS', name: 'Semester Pass', price: 'Rs. 99', period: '/semester',
-      desc: 'Full access for one semester', color: 'var(--clr-accent)',
-      features: ['All notes & PPTX files', 'Past papers download', '1-click downloads', 'Valid 6 months'],
-    },
-    {
-      id: 'ELITE_AI', name: 'Elite AI Pass', price: 'Rs. 199', period: '/year',
-      desc: 'AI predictions & unlimited tools', color: 'var(--clr-primary)',
-      features: ['Everything in Semester Pass', 'Unlimited AI Exam Predictor', 'Detailed topic analysis', 'Printable reports & cheatsheets', 'Valid 1 year'],
-    },
-  ]
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (file) {
-      setScreenshot(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setScreenshotPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!txnId.trim() || !showQR) return
-    setSubmitting(true)
-    try {
-      const formData = new FormData()
-      formData.append('transactionId', txnId)
-      formData.append('packageType', showQR)
-      if (screenshot) {
-        formData.append('screenshot', screenshot)
-      }
-
-      const res = await fetch('/api/payment/submit', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const data = await res.json()
-
-      if (res.ok) {
-        setDone(true)
-        toast.success('Reference submitted! Verification pending. 🎉')
-      } else {
-        toast.error(data.error || 'Submission failed. Try again.')
-      }
-    } catch { 
-      toast.error('Network error. Try again.') 
-    } finally { 
-      setSubmitting(false) 
-    }
-  }
-
-  if (done) {
-    return (
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-        className="glass-card" style={{ padding: '64px', textAlign: 'center' }}
-      >
-        <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
-        <h2 className="text-3xl font-bold mb-3">Verification Pending</h2>
-        <p style={{ color: 'var(--clr-text-2)', fontSize: '16px', maxWidth: '480px', margin: '0 auto' }}>
-          Your payment Reference <strong>({txnId})</strong> has been successfully submitted. Our admins will verify the screenshot proof and activate your premium status within 1–2 hours.
-        </p>
-      </motion.div>
-    )
-  }
-
-  return (
-    <div>
-      <h3 className="section-title">💎 Choose Your Plan</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-        {plans.map((plan, idx) => (
-          <motion.div key={plan.id}
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
-            className="glass-card"
-            style={{
-              padding: '32px', position: 'relative', overflow: 'hidden',
-              border: currentPlan === plan.id ? `2px solid ${plan.color}` : '1px solid var(--clr-border)',
-              boxShadow: currentPlan === plan.id ? `0 0 24px ${plan.color}30` : 'none',
-            }}
-          >
-            {currentPlan === plan.id && (
-              <span style={{
-                position: 'absolute', top: '14px', right: '14px',
-                background: plan.color, color: '#fff', padding: '3px 12px',
-                borderRadius: '999px', fontSize: '11px', fontWeight: 700,
-              }}>ACTIVE</span>
-            )}
-            <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>{plan.desc}</p>
-            <h3 className="text-2xl font-bold mb-1">{plan.name}</h3>
-            <div className="flex items-baseline gap-1 mb-6">
-              <span style={{ fontSize: '40px', fontWeight: 800, color: plan.color }}>{plan.price}</span>
-              <span style={{ color: 'var(--clr-text-3)', fontSize: '14px' }}>{plan.period}</span>
-            </div>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
-              {plan.features.map((f) => (
-                <li key={f} className="flex items-center gap-3 text-sm" style={{ color: 'var(--clr-text-1)' }}>
-                  <span style={{ color: 'var(--clr-success)', fontSize: '16px' }}>✓</span> {f}
-                </li>
-              ))}
-            </ul>
-            {currentPlan !== plan.id && (
-              <button className="btn btn-primary btn-lg" style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => { setShowQR(plan.id); setTxnId(''); setScreenshot(null); setScreenshotPreview(null) }}
-              >
-                Pay & Upgrade
-              </button>
-            )}
-          </motion.div>
-        ))}
-      </div>
-
-      {showQR && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="glass-card" style={{ padding: '36px', maxWidth: '480px', margin: '0 auto' }}
-        >
-          <form onSubmit={handleSubmit}>
-            <h3 className="text-2xl font-bold text-center mb-6">📱 Scan to Pay</h3>
-            <div style={{
-              background: '#fff', borderRadius: '12px', padding: '24px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: '20px', minHeight: '200px',
-            }}>
-              <p style={{ color: '#000', fontWeight: 700, textAlign: 'center', fontSize: '15px' }}>
-                [QR Payment — Transfer Rs. {showQR === 'ELITE_AI' ? '199' : '99'}]
-              </p>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-              <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
-                  1. Transaction Reference ID <span style={{ color: 'red' }}>*</span>
-                </label>
-                <input required className="input-field" placeholder="e.g. REF-8374928"
-                  value={txnId} onChange={(e) => setTxnId(e.target.value)} style={{ padding: '14px', fontSize: '15px' }}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
-                  2. Upload Payment Screenshot
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      opacity: 0,
-                      cursor: 'pointer',
-                      zIndex: 2,
-                    }}
-                  />
-                  <div 
-                    style={{
-                      border: '2px dashed var(--clr-border)',
-                      borderRadius: '12px',
-                      padding: '20px',
-                      textAlign: 'center',
-                      background: 'rgba(255,255,255,0.02)',
-                    }}
-                  >
-                    <span style={{ fontSize: '24px', display: 'block', marginBottom: '4px' }}>📸</span>
-                    <span style={{ fontSize: '13px', color: 'var(--clr-text-2)', fontWeight: 600 }}>
-                      {screenshot ? screenshot.name : 'Click to Upload screenshot'}
-                    </span>
-                  </div>
-                </div>
-
-                {screenshotPreview && (
-                  <div style={{ marginTop: '12px', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--clr-border)' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={screenshotPreview} alt="Screenshot Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', justifyContent: 'center' }}
-              disabled={submitting || !txnId.trim()}
-            >
-              {submitting ? <><span className="spinner" /> Processing...</> : '✅ I Have Paid — Submit'}
-            </button>
-          </form>
         </motion.div>
       )}
     </div>

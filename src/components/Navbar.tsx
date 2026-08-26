@@ -81,7 +81,7 @@ export default function Navbar() {
   const navLinks = [
     { href: '/faculties', label: 'Faculties' },
     { href: '/projects',  label: 'Projects' },
-    ...(!isPaid ? [{ href: '/pricing', label: 'Pricing' }] : []),
+    { href: '/pricing',   label: 'Pricing' },
     { href: '/about',     label: 'About' },
   ]
 
