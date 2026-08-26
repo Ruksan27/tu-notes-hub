@@ -59,6 +59,8 @@ interface Plan {
   features: { icon: string; text: string; avail: boolean }[]
   cta: string
   ctaStyle: string
+  originalPrice?: string
+  discountEndsAt?: string
 }
 
 // Plans are now fetched from the database via API.
@@ -117,7 +119,7 @@ export default function PricingPlans() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
 
-  const [plans, setPlans] = useState<any[]>(fallbackPlans)
+  const [plans, setPlans] = useState<Plan[]>(fallbackPlans)
   const [settings, setSettings] = useState<any>(null)
 
   useEffect(() => {
