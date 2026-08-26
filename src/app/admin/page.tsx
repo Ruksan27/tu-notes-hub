@@ -6,8 +6,9 @@ import { motion } from 'motion/react'
 import { AdminSkeleton } from '@/components/SkeletonLoader'
 import AdminProjectsTab from '@/components/admin/AdminProjectsTab'
 import AdminSellersTab from '@/components/admin/AdminSellersTab'
+import AdminPricingTab from '@/components/admin/AdminPricingTab'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing'
 
 interface Payment {
   id: string
@@ -115,6 +116,7 @@ export default function AdminPage() {
     { id: 'materials', icon: '🛠️', label: 'Manage Materials' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
+    { id: 'pricing',   icon: '💰', label: 'Pricing Plans' },
     { id: 'settings',  icon: '⚙️', label: 'Site Settings' },
   ]
 
@@ -472,6 +474,13 @@ export default function AdminPage() {
 
             {/* ── Upload Tab ── */}
             {tab === 'upload' && <UploadTab />}
+
+            {/* ── Pricing Plans Tab ── */}
+            {tab === 'pricing' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <AdminPricingTab />
+              </motion.div>
+            )}
           </main>
         </div>
       </div>
