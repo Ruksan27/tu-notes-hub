@@ -193,6 +193,129 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Dynamic FAQ Accordion Section (Rich Snippets SEO) ────────────────── */}
+      <section className="section" style={{ borderTop: '1px solid var(--clr-border)', paddingBottom: '80px' }}>
+        <div className="container" style={{ maxWidth: '800px' }}>
+          <div className="text-center" style={{ marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '32px', marginBottom: '10px' }}>
+              Frequently Asked <span className="text-gradient">Questions</span>
+            </h2>
+            <p style={{ color: 'var(--clr-text-2)' }}>Clear your doubts about TU notes, syllabus & exam models</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[
+              {
+                q: "How can I access TU exam notes and syllabus?",
+                a: "You can browse notes by choosing your Faculty (such as BCA, CSIT, BE, BBS, etc.) directly from the homepage. Select your Semester or Year to view specific subject materials."
+              },
+              {
+                q: "Are the notes and past papers on this website free?",
+                a: "Yes! All standard notes, past question papers, and official syllabus copies are 100% free to view and download for all TU students."
+              },
+              {
+                q: "What is the AI Exam Prediction feature?",
+                a: "The AI Exam Predictor analyzes past 5 years of exam questions, syllabus models, and weightages. Using Gemini 3.6 Flash, it calculates probability patterns to highlight topics highly likely to appear in upcoming exams."
+              },
+              {
+                q: "How does the Elite Pass membership work?",
+                a: "The Elite Pass gives you access to premium cheatsheets, instant download links (skipping ad screens/timers), dynamic PDF exports of AI forecasts, and offline preview options."
+              },
+              {
+                q: "Can I request notes that are missing on the platform?",
+                a: "Absolutely! You can use the 'Request a Note' feature or submit your own handwritten notes to help fellow university students."
+              }
+            ].map((faq, index) => (
+              <details
+                key={index}
+                className="glass-card"
+                style={{
+                  padding: '18px 24px',
+                  cursor: 'pointer',
+                  borderRadius: '12px',
+                  border: '1px solid var(--clr-border)'
+                }}
+              >
+                <summary style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: 'var(--clr-text-1)',
+                  listStyle: 'none',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span>{faq.q}</span>
+                  <span style={{ color: 'var(--clr-primary-h)', fontSize: '20px' }}>+</span>
+                </summary>
+                <p style={{
+                  marginTop: '12px',
+                  fontSize: '14px',
+                  color: 'var(--clr-text-2)',
+                  lineHeight: '1.6',
+                  cursor: 'default'
+                }}>
+                  {faq.a}
+                </p>
+              </details>
+            ))}
+          </div>
+
+          {/* FAQ Schema Markup JSON-LD for Google Rich Snippets */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": [
+                  {
+                    "@type": "Question",
+                    "name": "How can I access TU exam notes and syllabus?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "You can browse notes by choosing your Faculty (such as BCA, CSIT, BE, BBS, etc.) directly from the homepage. Select your Semester or Year to view specific subject materials."
+                    }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Are the notes and past papers on this website free?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "Yes! All standard notes, past question papers, and official syllabus copies are 100% free to view and download for all TU students."
+                    }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "What is the AI Exam Prediction feature?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "The AI Exam Predictor analyzes past 5 years of exam questions, syllabus models, and weightages. Using Gemini 3.6 Flash, it calculates probability patterns to highlight topics highly likely to appear in upcoming exams."
+                    }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "How does the Elite Pass membership work?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "The Elite Pass gives you access to premium cheatsheets, instant download links (skipping ad screens/timers), dynamic PDF exports of AI forecasts, and offline preview options."
+                    }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Can I request notes that are missing on the platform?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "Absolutely! You can use the 'Request a Note' feature or submit your own handwritten notes to help fellow university students."
+                    }
+                  }
+                ]
+              })
+            }}
+          />
+        </div>
+      </section>
     </>
   )
 }

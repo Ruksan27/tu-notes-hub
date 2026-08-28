@@ -222,25 +222,85 @@ export default function DownloadPage() {
         {/* Main Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
-            <div>
-              <span className="badge badge-semester" style={{ marginBottom: '6px' }}>📄 TU Official Resource</span>
-              <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--clr-text-1)', margin: 0 }}>{note?.title || 'Loading document...'}</h2>
+          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <span className="badge badge-semester" style={{ marginBottom: '6px' }}>📄 TU Official Resource</span>
+                <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--clr-text-1)', margin: 0 }}>{note?.title || 'Loading document...'}</h2>
+              </div>
+              
+              {/* Download Button (Triggers 15s Ad Lock Modal) */}
+              <div>
+                {ready && fileUrl ? (
+                  <button onClick={handleStartDownload}
+                    className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', cursor: 'pointer' }}>
+                    ⬇️ Save Offline File
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)' }}>
+                    <span className="spinner" style={{ width: '16px', height: '16px' }} />
+                    <span>Preparing offline download link...</span>
+                  </div>
+                )}
+              </div>
             </div>
-            
-            {/* Download Button (Triggers 15s Ad Lock Modal) */}
-            <div>
-              {ready && fileUrl ? (
-                <button onClick={handleStartDownload}
-                  className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', cursor: 'pointer' }}>
-                  ⬇️ Save Offline File
-                </button>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)' }}>
-                  <span className="spinner" style={{ width: '16px', height: '16px' }} />
-                  <span>Preparing offline download link...</span>
-                </div>
-              )}
+
+            {/* One-Click Social Share Widgets */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '14px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600 }}>Share Resource:</span>
+              
+              {/* WhatsApp Share */}
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hey, check out this TU exam note on TU Notes Hub: ${note?.title || ''}\n${window.location.href}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px',
+                  background: 'rgba(37,211,102,0.12)', color: '#25D366', fontSize: '12px', fontWeight: 700, textDecoration: 'none'
+                }}
+              >
+                💬 WhatsApp
+              </a>
+
+              {/* Viber Share */}
+              <a
+                href={`viber://forward?text=${encodeURIComponent(`Download TU Notes: ${note?.title || ''} on ${window.location.href}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px',
+                  background: 'rgba(115,114,242,0.12)', color: '#7372F2', fontSize: '12px', fontWeight: 700, textDecoration: 'none'
+                }}
+              >
+                📱 Viber
+              </a>
+
+              {/* Facebook Share */}
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px',
+                  background: 'rgba(24,119,242,0.12)', color: '#1877F2', fontSize: '12px', fontWeight: 700, textDecoration: 'none'
+                }}
+              >
+                🔵 Facebook
+              </a>
+
+              {/* Copy Link button */}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href)
+                  alert('Link copied to clipboard! Share it with your friends.')
+                }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px',
+                  background: 'rgba(255,255,255,0.05)', color: 'var(--clr-text-2)', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer'
+                }}
+              >
+                🔗 Copy Link
+              </button>
             </div>
           </div>
 
