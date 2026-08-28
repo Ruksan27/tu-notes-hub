@@ -38,7 +38,7 @@ export default function DownloadPage() {
   const params = useParams()
   const [isPaid, setIsPaid] = useState(false)
   const [countdown, setCountdown] = useState(0)
-  const [note, setNote] = useState<{ title: string; cloudinaryUrl: string } | null>(null)
+  const [note, setNote] = useState<{ title: string; cloudinaryUrl: string; extractedText?: string | null } | null>(null)
   const [ready, setReady] = useState(false)
   const [driveContentType, setDriveContentType] = useState('')
 
@@ -123,6 +123,16 @@ export default function DownloadPage() {
     const t = setTimeout(() => setDownloadAdCountdown((c) => c - 1), 1000)
     return () => clearTimeout(t)
   }, [downloadAdActive, downloadAdCountdown, note, proxiedUrl])
+
+  // Active view tab state: 'text' or 'original'
+  const [activeTab, setActiveTab] = useState<'text' | 'original'>('text')
+
+  // Auto-switch to original tab if no extractedText is available
+  useEffect(() => {
+    if (note && !note.extractedText) {
+      setActiveTab('original')
+    }
+  }, [note])
 
   const isImage = !isDriveLink && (
                   fileUrl.toLowerCase().includes('.png') ||
@@ -337,41 +347,98 @@ export default function DownloadPage() {
 
             </div>
           ) : (
-            /* Document Preview (Only displayed after 10s countdown) */
-            <div style={{ flex: 1, minHeight: '680px', borderRadius: '16px', border: '1px solid var(--clr-border)', overflow: 'hidden', background: '#121824', position: 'relative' }}>
-              {fileUrl ? (
-                isImage ? (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={proxiedUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
-                  </div>
-                ) : isDriveImage ? (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={previewUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
-                  </div>
-                ) : (
-                  <iframe
-                    src={previewUrl}
-                    style={{ width: '100%', height: '100%', border: 'none' }}
-                    title={note?.title || 'Document'}
-                    referrerPolicy="no-referrer"
-                    allow="fullscreen"
-                    onError={(event) => {
-                      const target = event.currentTarget
-                      if (fallbackPreviewUrl && target.src !== fallbackPreviewUrl) {
-                        target.src = fallbackPreviewUrl
-                      }
+            <>
+              {/* Tab Controls (Only shown if extractedText exists) */}
+              {note?.extractedText && (
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                  <button
+                    onClick={() => setActiveTab('text')}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: activeTab === 'text' ? 'var(--grad-brand)' : 'rgba(255,255,255,0.05)',
+                      color: '#fff',
+                      boxShadow: activeTab === 'text' ? '0 4px 12px rgba(99,102,241,0.3)' : 'none',
+                      transition: 'all 0.2s'
                     }}
-                  />
-                )
-              ) : (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', color: 'var(--clr-text-3)' }}>
-                  <span className="spinner" />
-                  <p>Configuring secure document previewer...</p>
+                  >
+                    📄 Read Text (SEO View)
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('original')}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: activeTab === 'original' ? 'var(--grad-brand)' : 'rgba(255,255,255,0.05)',
+                      color: '#fff',
+                      boxShadow: activeTab === 'original' ? '0 4px 12px rgba(99,102,241,0.3)' : 'none',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    🖼️ Original File (View Figures)
+                  </button>
                 </div>
               )}
-            </div>
+
+              {/* Document Preview (Only displayed after countdown) */}
+              <div style={{ flex: 1, minHeight: '680px', borderRadius: '16px', border: '1px solid var(--clr-border)', overflow: 'hidden', background: '#121824', position: 'relative' }}>
+                {fileUrl ? (
+                  activeTab === 'text' && note?.extractedText ? (
+                    <div 
+                      className="extracted-text-container" 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        overflowY: 'auto', 
+                        padding: '30px', 
+                        background: '#ffffff', 
+                        color: '#1e293b', 
+                        fontFamily: 'Inter, sans-serif',
+                        lineHeight: '1.6'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: note.extractedText }}
+                    />
+                  ) : isImage ? (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={proxiedUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                    </div>
+                  ) : isDriveImage ? (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={previewUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                    </div>
+                  ) : (
+                    <iframe
+                      src={previewUrl}
+                      style={{ width: '100%', height: '100%', border: 'none' }}
+                      title={note?.title || 'Document'}
+                      referrerPolicy="no-referrer"
+                      allow="fullscreen"
+                      onError={(event) => {
+                        const target = event.currentTarget
+                        if (fallbackPreviewUrl && target.src !== fallbackPreviewUrl) {
+                          target.src = fallbackPreviewUrl
+                        }
+                      }}
+                    />
+                  )
+                ) : (
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', color: 'var(--clr-text-3)' }}>
+                    <span className="spinner" />
+                    <p>Configuring secure document previewer...</p>
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
         </div>

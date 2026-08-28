@@ -20,7 +20,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
   if (paper) {
     return NextResponse.json({
       title: `${paper.year} ${paper.examType.replace('_', ' ')} — ${paper.subject.title}`,
-      cloudinaryUrl: paper.cloudinaryUrl
+      cloudinaryUrl: paper.cloudinaryUrl,
+      extractedText: paper.extractedText || null
     })
   }
 
