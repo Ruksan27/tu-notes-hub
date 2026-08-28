@@ -3,7 +3,20 @@ import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
 import ProjectDetailClient from './ProjectDetailClient'
 
-export const dynamic = 'force-dynamic'
+// We revalidate this page every 1 hour (ISR)
+export const revalidate = 3600
+
+// Dynamically generate static paths for the projects to make them load instantly
+export async function generateStaticParams() {
+  const activeProjects = await prisma.projectItem.findMany({
+    where: { status: 'APPROVED' },
+    select: { id: true },
+    take: 20 // Pre-render top 20 projects to save build time, rest will be lazy-rendered on-demand
+  })
+  return activeProjects.map((project) => ({
+    id: project.id,
+  }))
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
