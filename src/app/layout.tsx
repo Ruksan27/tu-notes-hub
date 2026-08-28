@@ -10,6 +10,7 @@ import PWARegister from '@/components/PWARegister'
 import Script from 'next/script'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'),
   title: {
     default: 'TU Notes Hub – Free Notes, Past Papers & AI Exam Predictions',
     template: '%s | TU Notes Hub',
