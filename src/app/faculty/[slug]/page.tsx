@@ -4,6 +4,19 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
+// We revalidate this page every 1 hour (ISR)
+export const revalidate = 3600
+
+// Pre-render all faculty index paths to make them load instantly
+export async function generateStaticParams() {
+  const faculties = await prisma.faculty.findMany({
+    select: { id: true }
+  })
+  return faculties.map((f) => ({
+    slug: f.id,
+  }))
+}
+
 interface Props { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

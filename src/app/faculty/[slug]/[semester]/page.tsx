@@ -6,6 +6,21 @@ import type { Metadata } from 'next'
 import SubjectRow from '@/components/SubjectRow'
 import AdUnit from '@/components/ads/AdUnit'
 
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const semesters = await prisma.semester.findMany({
+    select: {
+      order: true,
+      facultyId: true,
+    },
+  })
+  return semesters.map((sem) => ({
+    slug: sem.facultyId,
+    semester: sem.order.toString(),
+  }))
+}
+
 interface Props { params: Promise<{ slug: string; semester: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -23,6 +23,14 @@ export const metadata: Metadata = {
     title: 'TU Notes Hub – Free Notes & AI Exam Predictions',
     description: 'Notes, past papers, and AI predictions for TU students.',
     siteName: 'TU Notes Hub',
+    images: [
+      {
+        url: '/og-image.png', // Main sharing banner
+        width: 1200,
+        height: 630,
+        alt: 'TU Notes Hub Academic Platform',
+      }
+    ]
   },
   robots: { index: true, follow: true },
   icons: {
