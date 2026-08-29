@@ -1,6 +1,6 @@
 'use client'
 // src/app/dashboard/page.tsx — Premium student dashboard with Tailwind CSS
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
@@ -560,179 +560,382 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
         body: JSON.stringify({ subjectId: selectedSubjectId, paperIds: selectedPaperIds }),
       })
       const data = await res.json()
-      if (res.ok) { setReport(data.report); toast.success('AI Report Generated! 🎉') }
-      else toast.error(data.error || 'Failed to generate report')
+      if (res.ok) {
+        setReport({ ...data.report, fromCache: data.fromCache })
+        if (data.fromCache) toast.info('⚡ Loaded from cache instantly!')
+        else toast.success('AI Report Generated! 🎉')
+      } else toast.error(data.error || 'Failed to generate report')
     } catch { toast.error('AI request failed') }
     finally { setLoading(false) }
   }
 
   async function downloadPDF() {
-    const element = document.getElementById('ai-report-container')
-    if (!element) return
-
-    toast.info('Loading PDF generator...')
-
-    const loadScript = () => new Promise((resolve, reject) => {
-      if ((window as any).html2pdf) return resolve(true)
-      const script = document.createElement('script')
-      // Using unpkg which is more reliable
-      script.src = 'https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js'
-      script.crossOrigin = 'anonymous'
-      script.onload = resolve
-      script.onerror = (e) => {
-        console.error('Script load error:', e)
-        reject(new Error('Failed to load script'))
-      }
-      document.head.appendChild(script)
-    })
-
-    try {
-      await loadScript()
-      
-      const opt = {
-        margin:       10,
-        filename:     `${report.subject.replace(/[^a-zA-Z0-9]/g, '_')}_AI_Report.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#080a12' },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }
-      
-      // Hide button temporarily before generating PDF
-      const btn = element.querySelector('.hide-on-print') as HTMLElement
-      if (btn) btn.style.display = 'none'
-
-      ;(window as any).html2pdf().from(element).set(opt).save().then(() => {
-         if (btn) btn.style.display = ''
-         toast.success('PDF Saved Successfully! 🎉')
-      })
-    } catch (e: any) {
-      toast.error('Failed to generate PDF: ' + (e.message || 'Unknown error'))
-    }
+    document.body.classList.add('allow-print')
+    setTimeout(() => {
+      window.print()
+      setTimeout(() => document.body.classList.remove('allow-print'), 1000)
+    }, 100)
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="glass-card" style={{ padding: '32px' }}>
-        <h3 className="font-bold text-xl mb-2">Predict Exam Pattern</h3>
-        <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '24px' }}>
-          Choose a subject and at least 2 past papers to generate an AI prediction report.
-        </p>
+      {/* Form card — hidden once report is generated */}
+      {!report && (
+        <div className="glass-card" style={{ padding: '32px' }}>
+          <h3 className="font-bold text-xl mb-2">Predict Exam Pattern</h3>
+          <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '24px' }}>
+            Choose a subject and at least 2 past papers to generate an AI prediction report.
+          </p>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label className="text-sm font-semibold block mb-2" style={{ color: 'var(--clr-text-2)' }}>Select Subject</label>
-          <select className="input-field" value={selectedSubjectId} onChange={(e) => setSelectedSubjectId(e.target.value)} style={{ cursor: 'pointer' }}>
-            <option value="">— Choose a subject —</option>
-            {subjects.map((s) => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
-          </select>
+          <div style={{ marginBottom: '20px' }}>
+            <label className="text-sm font-semibold block mb-2" style={{ color: 'var(--clr-text-2)' }}>Select Subject</label>
+            <select className="input-field" value={selectedSubjectId} onChange={(e) => setSelectedSubjectId(e.target.value)} style={{ cursor: 'pointer' }}>
+              <option value="">— Choose a subject —</option>
+              {subjects.map((s) => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
+            </select>
+          </div>
+
+          {currentSubject && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ marginBottom: '24px' }}>
+              <label className="text-sm font-semibold block mb-3" style={{ color: 'var(--clr-text-2)' }}>
+                Select Papers to Compare (min. 2)
+              </label>
+              {currentSubject.pastPapers.length === 0 ? (
+                <p className="text-sm px-4 py-3 rounded-lg" style={{ background: 'rgba(245,158,11,0.08)', color: 'var(--clr-warning)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  ⚠️ No past papers uploaded for this subject yet.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  {currentSubject.pastPapers.map((paper) => {
+                    const checked = selectedPaperIds.includes(paper.id)
+                    return (
+                      <button key={paper.id} type="button"
+                        onClick={() => setSelectedPaperIds(p => p.includes(paper.id) ? p.filter(id => id !== paper.id) : [...p, paper.id])}
+                        style={{
+                          padding: '10px 18px', borderRadius: '10px', fontWeight: 600, fontSize: '14px',
+                          border: `2px solid ${checked ? 'var(--clr-primary)' : 'rgba(255,255,255,0.1)'}`,
+                          background: checked ? 'rgba(99,102,241,0.15)' : 'transparent',
+                          color: checked ? '#fff' : 'var(--clr-text-2)',
+                          cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: checked ? '0 0 12px rgba(99,102,241,0.3)' : 'none',
+                        }}
+                      >
+                        📅 {paper.year}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          <button className="btn btn-primary btn-lg" onClick={runAIAnalysis}
+            disabled={loading || selectedPaperIds.length < 2}
+            style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+          >
+            {loading ? <><span className="spinner" /> Analyzing with AI...</> : `🤖 Run AI Analysis (${selectedPaperIds.length} selected)`}
+          </button>
         </div>
+      )}
 
-        {currentSubject && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ marginBottom: '24px' }}>
-            <label className="text-sm font-semibold block mb-3" style={{ color: 'var(--clr-text-2)' }}>
-              Select Papers to Compare (min. 2)
-            </label>
-            {currentSubject.pastPapers.length === 0 ? (
-              <p className="text-sm px-4 py-3 rounded-lg" style={{ background: 'rgba(245,158,11,0.08)', color: 'var(--clr-warning)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                ⚠️ No past papers uploaded for this subject yet.
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                {currentSubject.pastPapers.map((paper) => {
-                  const checked = selectedPaperIds.includes(paper.id)
-                  return (
-                    <button key={paper.id} type="button"
-                      onClick={() => setSelectedPaperIds(p => p.includes(paper.id) ? p.filter(id => id !== paper.id) : [...p, paper.id])}
-                      style={{
-                        padding: '10px 18px', borderRadius: '10px', fontWeight: 600, fontSize: '14px',
-                        border: `2px solid ${checked ? 'var(--clr-primary)' : 'rgba(255,255,255,0.1)'}`,
-                        background: checked ? 'rgba(99,102,241,0.15)' : 'transparent',
-                        color: checked ? '#fff' : 'var(--clr-text-2)',
-                        cursor: 'pointer', transition: 'all 0.2s',
-                        boxShadow: checked ? '0 0 12px rgba(99,102,241,0.3)' : 'none',
-                      }}
+      {/* ── Split Layout: Report (left) + Chat (right) ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: report && isElite ? 'minmax(0,1fr) 360px' : '1fr',
+        gap: '20px',
+        alignItems: 'start',
+      }}>
+
+        {/* Left: Report */}
+        {report && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" id="ai-report-container" style={{ padding: '32px' }}>
+            <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <h3 className="text-xl font-bold">📊 {report.subject} — AI Report</h3>
+                {report.fromCache && (
+                  <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '999px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)' }}>⚡ Cached</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }} className="hide-on-print">
+                <button className="btn btn-outline" onClick={() => { setReport(null); setSelectedPaperIds([]) }} style={{ fontSize: '12px', padding: '6px 14px' }}>← New Analysis</button>
+                {isElite && <button className="btn btn-outline" onClick={downloadPDF} style={{ fontSize: '12px', padding: '6px 14px' }}>💾 Save PDF</button>}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
+              {report.topicAnalysis?.map((topic: any, idx: number) => {
+                const level = topic.classification.toLowerCase()
+                return (
+                  <motion.div key={topic.topic} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.08 }}
+                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '18px', borderRadius: '12px' }}
+                  >
+                    <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                      <span className="font-bold text-sm">{topic.topic}</span>
+                      <span className={`badge badge-${level}`} style={{ fontSize: '11px', padding: '3px 8px' }}>
+                        {topic.probability}% — {topic.classification}
+                      </span>
+                    </div>
+                    <div className="prob-bar-track mb-3">
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${topic.probability}%` }} transition={{ duration: 1, delay: 0.5 }}
+                        className={`prob-bar-fill ${level}`} />
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.6, margin: 0 }}>
+                      <strong>Reasoning:</strong> {topic.reasoning}
+                    </p>
+                    {topic.cheatsheetPoints?.length > 0 && (
+                      <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
+                        <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '6px' }}>💡 Quick Study Points:</p>
+                        <ul style={{ paddingLeft: '18px', margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {topic.cheatsheetPoints.map((pt: string, i: number) => (
+                            <li key={i} style={{ fontSize: '12px', color: 'var(--clr-text-1)' }}>{pt}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </motion.div>
+                )
+              })}
+            </div>
+
+            {report.topPredictions?.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '24px' }}>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>🔮 Predicted Questions</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {report.topPredictions.map((pred: any, idx: number) => (
+                    <motion.div key={idx} whileHover={{ scale: 1.01 }}
+                      style={{ padding: '14px 16px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: '10px' }}
                     >
-                      📅 {paper.year}
-                    </button>
-                  )
-                })}
+                      <p style={{ fontWeight: 600, fontSize: '13px', color: 'var(--clr-text-1)', marginBottom: '8px' }}>{pred.predictedQuestion}</p>
+                      <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: 'var(--clr-text-3)' }}>
+                        <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 7px', borderRadius: '4px' }}>
+                          Chance: <strong style={{ color: '#fff' }}>{pred.probability}%</strong>
+                        </span>
+                        <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 7px', borderRadius: '4px' }}>
+                          Weight: <strong style={{ color: '#fff' }}>{pred.marks} Marks</strong>
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
         )}
 
-        <button className="btn btn-primary btn-lg" onClick={runAIAnalysis}
-          disabled={loading || selectedPaperIds.length < 2}
-          style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
-        >
-          {loading ? <><span className="spinner" /> Analyzing with AI...</> : `🤖 Run AI Analysis (${selectedPaperIds.length} selected)`}
-        </button>
+        {/* Right: AI Chat Panel (Elite only) */}
+        {isElite && <AIChatPanel report={report} />}
+      </div>
+    </div>
+  )
+}
+
+/* ── AI Chat Panel ── */
+function AIChatPanel({ report }: { report: any }) {
+  const [sessionId] = useState(() => `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
+  const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([])
+  const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sessions, setSessions] = useState<{ session_id: string; last_message: string; created_at: string }[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, sending])
+
+  async function loadSessions() {
+    setLoadingHistory(true)
+    try {
+      const res = await fetch('/api/ai/chat-history')
+      const data = await res.json()
+      setSessions(data.sessions || [])
+      setShowHistory(true)
+    } catch { toast.error('Failed to load history') }
+    finally { setLoadingHistory(false) }
+  }
+
+  async function loadSession(sid: string) {
+    try {
+      const res = await fetch(`/api/ai/chat-history?sessionId=${sid}`)
+      const data = await res.json()
+      setMessages((data.messages || []).map((m: any) => ({ role: m.role, text: m.message })))
+      setShowHistory(false)
+    } catch { toast.error('Failed to load session') }
+  }
+
+  async function deleteSession(sid: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    await fetch(`/api/ai/chat-history?sessionId=${sid}`, { method: 'DELETE' })
+    setSessions(s => s.filter(x => x.session_id !== sid))
+    toast.success('Session deleted')
+  }
+
+  async function sendMessage() {
+    if (!input.trim() || sending) return
+    const userMsg = input.trim()
+    setInput('')
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
+    setSending(true)
+    try {
+      const reportContext = report
+        ? `Subject: ${report.subject}\nTop Topics: ${report.topicAnalysis?.slice(0, 5).map((t: any) => `${t.topic} (${t.probability}%)`).join(', ')}`
+        : undefined
+
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg, sessionId, reportContext }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setMessages(prev => [...prev, { role: 'model', text: data.reply }])
+      } else {
+        toast.error(data.error || 'Chat failed')
+        setMessages(prev => [...prev, { role: 'model', text: '❌ ' + (data.error || 'Something went wrong.') }])
+      }
+    } catch {
+      toast.error('Chat request failed')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+      className="hide-on-print"
+      style={{
+        display: 'flex', flexDirection: 'column',
+        height: '620px',
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid rgba(99,102,241,0.2)',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        position: 'sticky', top: '80px',
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        padding: '14px 18px',
+        background: 'linear-gradient(90deg, rgba(99,102,241,0.15), rgba(6,182,212,0.08))',
+        borderBottom: '1px solid rgba(99,102,241,0.2)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🤖</div>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: '13px', margin: 0 }}>AI Assistant</p>
+            <p style={{ fontSize: '10px', color: 'var(--clr-accent-h)', margin: 0 }}>
+              {report ? `📊 ${report.subject}` : 'General TU Chat'} • 15-day history
+            </p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button onClick={loadSessions} title="History" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '5px 9px', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+            {loadingHistory ? '…' : '🕐'}
+          </button>
+          <button onClick={() => { setMessages([]); setShowHistory(false) }} title="New chat" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '5px 9px', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+            ✏️
+          </button>
+        </div>
       </div>
 
-      {report && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" id="ai-report-container" style={{ padding: '40px' }}>
-          <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
-            <h3 className="text-2xl font-bold">📊 {report.subject} — AI Report</h3>
-            {isElite && <button className="btn btn-outline hide-on-print" onClick={downloadPDF}>💾 Save as PDF</button>}
+      {/* History Panel */}
+      {showHistory && (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-text-3)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Past Sessions</p>
+            <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text-3)', fontSize: '16px' }}>×</button>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '36px' }}>
-            {report.topicAnalysis?.map((topic: any, idx: number) => {
-              const level = topic.classification.toLowerCase()
-              return (
-                <motion.div key={topic.topic} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.08 }}
-                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '20px', borderRadius: '12px' }}
-                >
-                  <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-                    <span className="font-bold text-base">{topic.topic}</span>
-                    <span className={`badge badge-${level}`} style={{ fontSize: '12px', padding: '4px 10px' }}>
-                      {topic.probability}% — {topic.classification}
-                    </span>
-                  </div>
-                  <div className="prob-bar-track mb-4">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${topic.probability}%` }} transition={{ duration: 1, delay: 0.5 }}
-                      className={`prob-bar-fill ${level}`}
-                    />
-                  </div>
-                  <p className="text-sm" style={{ color: 'var(--clr-text-2)', lineHeight: 1.6 }}>
-                    <strong>Reasoning:</strong> {topic.reasoning}
-                  </p>
-                  {topic.cheatsheetPoints?.length > 0 && (
-                    <div style={{ marginTop: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px' }}>
-                      <p className="text-xs font-bold mb-2" style={{ color: 'var(--clr-primary-h)' }}>💡 Quick Study Points:</p>
-                      <ul style={{ paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {topic.cheatsheetPoints.map((pt: string, i: number) => (
-                          <li key={i} style={{ fontSize: '13px', color: 'var(--clr-text-1)' }}>{pt}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </motion.div>
-              )
-            })}
-          </div>
-          {report.topPredictions?.length > 0 && (
-            <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '28px' }}>
-              <h4 className="text-lg font-bold mb-5">🔮 Predicted Questions</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {report.topPredictions.map((pred: any, idx: number) => (
-                  <motion.div key={idx} whileHover={{ scale: 1.01 }}
-                    style={{ padding: '18px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: '12px' }}
-                  >
-                    <p className="font-semibold text-sm mb-2" style={{ color: 'var(--clr-text-1)' }}>{pred.predictedQuestion}</p>
-                    <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--clr-text-3)' }}>
-                      <span style={{ background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '4px' }}>
-                        Chance: <strong style={{ color: '#fff' }}>{pred.probability}%</strong>
-                      </span>
-                      <span style={{ background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '4px' }}>
-                        Weight: <strong style={{ color: '#fff' }}>{pred.marks} Marks</strong>
-                      </span>
-                    </div>
-                  </motion.div>
+          {sessions.length === 0 ? (
+            <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', textAlign: 'center', padding: '24px 16px' }}>No chat history yet</p>
+          ) : sessions.map(s => (
+            <div key={s.session_id} onClick={() => loadSession(s.session_id)}
+              style={{ padding: '9px 12px', borderRadius: '10px', marginBottom: '5px', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', transition: 'background 0.15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.08)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--clr-text-1)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.last_message || 'Chat session'}</p>
+                <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', margin: '2px 0 0' }}>{new Date(s.created_at).toLocaleDateString()}</p>
+              </div>
+              <button onClick={e => deleteSession(s.session_id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text-3)', fontSize: '12px', padding: '2px 4px' }}>🗑️</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Messages */}
+      {!showHistory && (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {messages.length === 0 && (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '10px', opacity: 0.55, padding: '20px' }}>
+              <span style={{ fontSize: '36px' }}>🤖</span>
+              <p style={{ fontSize: '13px', color: 'var(--clr-text-2)', margin: 0 }}>
+                {report ? `Ask me anything about the ${report.subject} report!` : 'Ask me any TU exam question!'}
+              </p>
+              <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', margin: 0 }}>Enter to send • Shift+Enter for new line</p>
+            </div>
+          )}
+          {messages.map((msg, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+              <div style={{
+                maxWidth: '88%',
+                padding: '9px 13px',
+                borderRadius: msg.role === 'user' ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
+                background: msg.role === 'user' ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'rgba(255,255,255,0.05)',
+                border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                fontSize: '13px', lineHeight: 1.55, color: 'var(--clr-text-1)',
+                whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              }}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+          {sending && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{ padding: '9px 14px', borderRadius: '14px 14px 14px 3px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1', display: 'inline-block', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />
                 ))}
               </div>
             </div>
           )}
-        </motion.div>
+          <div ref={messagesEndRef} />
+        </div>
       )}
-    </div>
+
+      {/* Input */}
+      {!showHistory && (
+        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.15)', flexShrink: 0 }}>
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
+            placeholder={report ? `Ask about ${report.subject}...` : 'Ask any TU question...'}
+            rows={2}
+            style={{
+              flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '10px', padding: '8px 12px', color: 'var(--clr-text-1)',
+              fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4,
+            }}
+          />
+          <button onClick={sendMessage} disabled={sending || !input.trim()}
+            style={{
+              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              border: 'none', borderRadius: '10px', width: '38px',
+              cursor: sending || !input.trim() ? 'not-allowed' : 'pointer',
+              opacity: sending || !input.trim() ? 0.5 : 1,
+              flexShrink: 0, fontSize: '15px', alignSelf: 'flex-end', height: '38px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            {sending ? '⏳' : '➤'}
+          </button>
+        </div>
+      )}
+    </motion.div>
   )
 }
+

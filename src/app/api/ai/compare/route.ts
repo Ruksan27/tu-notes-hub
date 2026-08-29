@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { analyzePastPapers, extractTextFromPdfUrl } from '@/lib/gemini'
+import {
+  buildComparisonKey,
+  getCachedComparison,
+  saveComparisonReport,
+} from '@/lib/cacheDb'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Login required' }, { status: 401 })
     }
 
-    if (user.packageType !== 'ELITE_AI') {
+    if (user.packageType !== 'ELITE_AI' && user.role !== 'ADMIN') {
       return NextResponse.json({
         error: 'This feature is exclusive to Elite AI Pass holders. Upgrade to unlock.',
         upgradeRequired: true,
@@ -24,6 +29,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Subject and papers are required' }, { status: 400 })
     }
 
+    // ── Cache Check ──────────────────────────────────────────────
+    const cacheKey = buildComparisonKey(subjectId, paperIds)
+    const cached = await getCachedComparison(cacheKey)
+    if (cached) {
+      return NextResponse.json({ report: cached, fromCache: true })
+    }
+
+    // ── DB Lookup ────────────────────────────────────────────────
     const subject = await prisma.subject.findUnique({ where: { id: subjectId } })
     if (!subject) {
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
@@ -38,7 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please select at least 2 past papers to compare' }, { status: 400 })
     }
 
-    // Process and extract text on-the-fly if missing
+    // ── Extract Text ─────────────────────────────────────────────
     const papersData: Array<{ year: number; text: string }> = []
     
     for (const paper of papers) {
@@ -49,7 +62,6 @@ export async function POST(req: NextRequest) {
         }
         try {
           text = await extractTextFromPdfUrl(paper.cloudinaryUrl)
-          // Cache the extracted text in the database
           await prisma.pastPaper.update({
             where: { id: paper.id },
             data: { extractedText: text }
@@ -64,9 +76,13 @@ export async function POST(req: NextRequest) {
       papersData.push({ year: paper.year, text })
     }
 
+    // ── AI Analysis ──────────────────────────────────────────────
     const report = await analyzePastPapers(subject.title, papersData)
 
-    return NextResponse.json({ report, subjectTitle: subject.title })
+    // ── Save to Cache (fire-and-forget) ──────────────────────────
+    saveComparisonReport(cacheKey, subject.title, report).catch(console.error)
+
+    return NextResponse.json({ report, fromCache: false })
   } catch (error) {
     console.error('[AI_COMPARE]', error)
     return NextResponse.json({ error: 'AI analysis failed. Please try again.' }, { status: 500 })
