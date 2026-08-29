@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
+import AiAnswerModal from './AiAnswerModal';
 
 export interface ExamPaperData {
   university: string;
@@ -36,79 +37,156 @@ interface Props {
 }
 
 export default function ExamPaperViewer({ data }: Props) {
+  const [hoveredQ, setHoveredQ] = useState<string | null>(null)
+  const [aiModalOpen, setAiModalOpen] = useState(false)
+  const [aiQuestion, setAiQuestion] = useState('')
+
+  const openAiModal = (questionText: string) => {
+    setAiQuestion(questionText)
+    setAiModalOpen(true)
+  }
+
   return (
-    <div
-      className="bg-white text-black"
-      style={{
-        fontFamily: '"Times New Roman", Times, serif',
-        fontSize: '13.5pt',
-        lineHeight: 1.6,
-        width: '100%',
-        maxWidth: '800px',
-        margin: '0 auto',
-        padding: 'clamp(28px, 6vw, 64px) clamp(24px, 6vw, 72px)',
-        boxShadow: '0 4px 40px rgba(0,0,0,0.22), 0 1px 6px rgba(0,0,0,0.10)',
-        borderRadius: '3px',
-      }}
-    >
-      {/* Header */}
-      <div className="text-center mb-5 leading-snug">
-        <h1 className="text-[17pt] font-bold uppercase tracking-wide mb-1">{data.university || 'TRIBHUVAN UNIVERSITY'}</h1>
-        <h2 className="text-[14pt] font-bold mb-1">{data.faculty || 'Faculty of Humanities & Social Sciences'}</h2>
-        <h3 className="text-[13pt] font-bold uppercase mb-1">{data.office || 'OFFICE OF THE DEAN'}</h3>
-        <div className="text-[14pt] font-bold">{data.year || new Date().getFullYear()}</div>
-      </div>
+    <>
+      <div
+        className="bg-white text-black"
+        style={{
+          fontFamily: '"Times New Roman", Times, serif',
+          fontSize: '13.5pt',
+          lineHeight: 1.6,
+          width: '100%',
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: 'clamp(28px, 6vw, 64px) clamp(24px, 6vw, 72px)',
+          boxShadow: '0 4px 40px rgba(0,0,0,0.22), 0 1px 6px rgba(0,0,0,0.10)',
+          borderRadius: '3px',
+        }}
+      >
+        {/* Header */}
+        <div className="text-center mb-5 leading-snug">
+          <h1 className="text-[17pt] font-bold uppercase tracking-wide mb-1">{data.university || 'TRIBHUVAN UNIVERSITY'}</h1>
+          <h2 className="text-[14pt] font-bold mb-1">{data.faculty || 'Faculty of Humanities & Social Sciences'}</h2>
+          <h3 className="text-[13pt] font-bold uppercase mb-1">{data.office || 'OFFICE OF THE DEAN'}</h3>
+          <div className="text-[14pt] font-bold">{data.year || new Date().getFullYear()}</div>
+        </div>
 
-      {/* Course Details */}
-      <div className="text-[13pt] leading-relaxed">
-        <div className="flex justify-between">
-          <span><span className="font-bold">{data.program || 'Bachelor in Computer Application'}</span></span>
-          <span className="font-bold">Full Marks: {data.fullMarks || '60'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span><span className="font-bold">Course Title:</span> {data.courseTitle || ''}</span>
-          <span className="font-bold">Pass Marks: {data.passMarks || '24'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span><span className="font-bold">Code No:</span> {data.codeNo || ''}</span>
-          <span className="font-bold">Time: {data.time || '3 hours'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span><span className="font-bold">Semester:</span> {data.semester || ''}</span>
-          <span></span>
-        </div>
-      </div>
-
-      <div className="italic text-[13pt] mt-2 mb-3 pb-1 border-b-[1.5px] border-black">
-        {data.instruction || 'Candidates are required to answer the questions in their own words as far as possible.'}
-      </div>
-
-      {/* Questions */}
-      {data.groups && data.groups.map((group, gIndex) => (
-        <div key={gIndex} className="mb-6">
-          <div className="text-center font-bold text-[13pt] mt-3 mb-2 relative flex justify-center items-center">
-            <span>{group.groupName}</span>
-            {group.marks && <span className="absolute right-0 font-bold">{group.marks}</span>}
+        {/* Course Details */}
+        <div className="text-[13pt] leading-relaxed">
+          <div className="flex justify-between">
+            <span><span className="font-bold">{data.program || 'Bachelor in Computer Application'}</span></span>
+            <span className="font-bold">Full Marks: {data.fullMarks || '60'}</span>
           </div>
-          {group.instruction && (
-            <p className="font-bold mb-2 text-[13pt]">{group.instruction}</p>
-          )}
-
-          <ol className="pl-6 mb-3 list-decimal text-[13.5pt]" start={group.questions[0]?.number || 1}>
-            {group.questions.map((q, qIndex) => (
-              <li key={qIndex} className="mb-[10px] text-justify pl-2">
-                <ReactMarkdown
-                  remarkPlugins={[remarkMath, remarkGfm]}
-                  rehypePlugins={[rehypeKatex]}
-                  components={{ p: React.Fragment }}
-                >
-                  {q.text}
-                </ReactMarkdown>
-              </li>
-            ))}
-          </ol>
+          <div className="flex justify-between">
+            <span><span className="font-bold">Course Title:</span> {data.courseTitle || ''}</span>
+            <span className="font-bold">Pass Marks: {data.passMarks || '24'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span><span className="font-bold">Code No:</span> {data.codeNo || ''}</span>
+            <span className="font-bold">Time: {data.time || '3 hours'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span><span className="font-bold">Semester:</span> {data.semester || ''}</span>
+            <span></span>
+          </div>
         </div>
-      ))}
-    </div>
+
+        <div className="italic text-[13pt] mt-2 mb-3 pb-1 border-b-[1.5px] border-black">
+          {data.instruction || 'Candidates are required to answer the questions in their own words as far as possible.'}
+        </div>
+
+        {/* Questions */}
+        {data.groups && data.groups.map((group, gIndex) => (
+          <div key={gIndex} className="mb-6">
+            <div className="text-center font-bold text-[13pt] mt-3 mb-2 relative flex justify-center items-center">
+              <span>{group.groupName}</span>
+              {group.marks && <span className="absolute right-0 font-bold">{group.marks}</span>}
+            </div>
+            {group.instruction && (
+              <p className="font-bold mb-2 text-[13pt]">{group.instruction}</p>
+            )}
+
+            <ol className="pl-6 mb-3 list-decimal text-[13.5pt]" start={group.questions[0]?.number || 1}>
+              {group.questions.map((q, qIndex) => {
+                const qKey = `${gIndex}-${qIndex}`
+                const isHovered = hoveredQ === qKey
+                return (
+                  <li
+                    key={qIndex}
+                    className="mb-[10px] text-justify pl-2"
+                    style={{ position: 'relative' }}
+                    onMouseEnter={() => setHoveredQ(qKey)}
+                    onMouseLeave={() => setHoveredQ(null)}
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkMath, remarkGfm]}
+                      rehypePlugins={[rehypeKatex]}
+                      components={{ p: React.Fragment }}
+                    >
+                      {q.text}
+                    </ReactMarkdown>
+
+                    {/* Gemini AI Button — appears on hover */}
+                    {isHovered && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
+                        <button
+                          onClick={() => openAiModal(q.text)}
+                          title="Ask Gemini AI for answer"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '2px 8px 2px 5px',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(66,133,244,0.4)',
+                            background: 'linear-gradient(135deg, rgba(66,133,244,0.12), rgba(52,168,83,0.08))',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#4285F4',
+                            fontFamily: 'Inter, sans-serif',
+                            boxShadow: '0 2px 8px rgba(66,133,244,0.15)',
+                            transition: 'all 0.15s',
+                            verticalAlign: 'middle',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(66,133,244,0.25), rgba(52,168,83,0.15))'
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(66,133,244,0.3)'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(66,133,244,0.12), rgba(52,168,83,0.08))'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(66,133,244,0.15)'
+                          }}
+                        >
+                          {/* Gemini-style 4-color star */}
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L13.5 9.5L21 12L13.5 14.5L12 22L10.5 14.5L3 12L10.5 9.5L12 2Z"
+                              fill="url(#gemGrad)" />
+                            <defs>
+                              <linearGradient id="gemGrad" x1="0" y1="0" x2="24" y2="24">
+                                <stop offset="0%" stopColor="#4285F4"/>
+                                <stop offset="50%" stopColor="#EA4335"/>
+                                <stop offset="100%" stopColor="#34A853"/>
+                              </linearGradient>
+                            </defs>
+                          </svg>
+                          Gemini
+                        </button>
+                      </span>
+                    )}
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+        ))}
+      </div>
+
+      {/* AI Answer Modal */}
+      <AiAnswerModal
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        questionText={aiQuestion}
+      />
+    </>
   );
 }

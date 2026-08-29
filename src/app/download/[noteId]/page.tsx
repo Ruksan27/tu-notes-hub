@@ -49,6 +49,11 @@ export default function DownloadPage() {
   const [downloadAdActive, setDownloadAdActive] = useState(false)
   const [downloadAdCountdown, setDownloadAdCountdown] = useState(15)
   const [currentUrl, setCurrentUrl] = useState('')
+  const [activeTab, setActiveTab] = useState<'pdf' | 'text'>('pdf')
+
+  // AI Answer Modal state
+  const [aiModalOpen, setAiModalOpen] = useState(false)
+  const [aiQuestion, setAiQuestion] = useState('')
 
   useEffect(() => {
     setCurrentUrl(window.location.href)

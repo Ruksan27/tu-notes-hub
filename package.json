@@ -23,6 +23,7 @@
     "@google/genai": "^2.19.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.3",
+    "@tidbcloud/serverless": "^0.3.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/nodemailer": "^8.0.1",
