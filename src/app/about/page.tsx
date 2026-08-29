@@ -53,7 +53,7 @@ export default async function AboutPage() {
   }
 
   // Dynamic Platform Rules loading
-  let platformRules = { buyerRules: [], sellerRules: [] }
+  let platformRules: { buyerRules: string[]; sellerRules: string[] } = { buyerRules: [], sellerRules: [] }
   try {
     const filePath = path.join(process.cwd(), 'data', 'platform-rules.json')
     const fileContent = await fs.readFile(filePath, 'utf-8')
