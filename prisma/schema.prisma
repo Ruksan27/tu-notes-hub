@@ -57,6 +57,7 @@ model User {
   sellerProfile         SellerProfile?
   projectsListed        ProjectItem[]
   projectReviews        ProjectReview[]
+  cart                  Cart?
   createdAt             DateTime  @default(now())
 }
 
@@ -261,6 +262,7 @@ model ProjectItem {
   
   orders             ProjectOrder[]
   reviews            ProjectReview[]
+  cartItems          CartItem[]
 }
 
 model ProjectOrder {
@@ -325,4 +327,24 @@ model PricingPlan {
   ctaStyle           String
   discountEndsAt     DateTime?
   updatedAt          DateTime  @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id            String      @id @default(uuid())
+  cartId        String
+  cart          Cart        @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  projectItemId String
+  projectItem   ProjectItem @relation(fields: [projectItemId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@unique([cartId, projectItemId])
 }

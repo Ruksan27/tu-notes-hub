@@ -75,6 +75,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     screenshot4: project.screenshot4 ?? null,
     demoUrl: project.demoUrl ?? null,
     youtubeUrl: project.youtubeUrl ?? null,
+    tiktokUrl: project.tiktokUrl ?? null,
     githubUrl: project.githubUrl ?? null,
     status: project.status,
     rating: project.rating,

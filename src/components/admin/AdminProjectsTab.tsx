@@ -35,7 +35,7 @@ interface ProjectOrder {
 }
 
 interface Props {
-  externalSubTab?: 'ITEMS' | 'ORDERS'
+  externalSubTab?: 'ITEMS' | 'ORDERS' | 'CARTS'
 }
 
 const EMPTY_FORM = {
@@ -52,9 +52,11 @@ const EMPTY_FORM = {
 }
 
 export default function AdminProjectsTab({ externalSubTab }: Props) {
-  const [activeSubTab, setActiveSubTab] = useState<'ITEMS' | 'ORDERS'>(externalSubTab ?? 'ITEMS')
+  const [activeSubTab, setActiveSubTab] = useState<'ITEMS' | 'ORDERS' | 'CARTS'>(externalSubTab ?? 'ITEMS')
   const [projects, setProjects] = useState<ProjectItem[]>([])
   const [orders, setOrders] = useState<ProjectOrder[]>([])
+  const [carts, setCarts] = useState<any[]>([])
+  const [cartsLoading, setCartsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null)
@@ -76,6 +78,15 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
   }, [externalSubTab])
 
   useEffect(() => { fetchData() }, [])
+
+  useEffect(() => {
+    if (activeSubTab === 'CARTS') {
+      setCartsLoading(true)
+      fetch('/api/admin/carts').then(r => r.json()).then(d => {
+        setCarts(d.carts || [])
+      }).catch(() => {}).finally(() => setCartsLoading(false))
+    }
+  }, [activeSubTab])
 
   async function fetchData() {
     setLoading(true)
@@ -325,7 +336,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
 
       {/* ── Sub-tab switcher ── */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0' }}>
-        {(['ITEMS', 'ORDERS'] as const).map(t => (
+        {(['ITEMS', 'ORDERS', 'CARTS'] as const).map(t => (
           <button
             key={t}
             onClick={() => setActiveSubTab(t)}
@@ -341,7 +352,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
               display: 'flex', alignItems: 'center', gap: '8px',
             }}
           >
-            {t === 'ITEMS' ? '📦 Manage Projects' : '🛒 Orders & Inquiries'}
+            {t === 'ITEMS' ? '📦 Manage Projects' : t === 'ORDERS' ? '🛒 Orders & Inquiries' : '🛍️ Cart Analytics'}
             {t === 'ORDERS' && pendingOrders > 0 && (
               <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '999px', fontSize: '11px', fontWeight: 700, padding: '2px 7px' }}>
                 {pendingOrders}
@@ -666,6 +677,69 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                 </tbody>
               </table>
             </div>
+          </motion.div>
+        )}
+        {/* ── CARTS TAB ── */}
+        {activeSubTab === 'CARTS' && (
+          <motion.div key="carts" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>🛍️ Cart Analytics</h3>
+              <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Users who have items in their cart but haven't purchased yet (abandoned carts).</p>
+            </div>
+            {cartsLoading ? (
+              <div style={{ textAlign: 'center', padding: '60px' }}><div className="spinner" style={{ width: '32px', height: '32px', margin: '0 auto' }} /></div>
+            ) : carts.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px', color: 'var(--clr-text-3)' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🛒</div>
+                <p>No active carts found.</p>
+              </div>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Items in Cart</th>
+                      <th>Total Value</th>
+                      <th>Added</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {carts.map((cart: any) => {
+                      const totalValue = cart.items.reduce((sum: number, item: any) => {
+                        const price = Math.floor(item.projectItem.originalPrice * (1 - item.projectItem.discountPercentage / 100))
+                        return sum + price
+                      }, 0)
+                      return (
+                        <tr key={cart.id}>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{cart.user.name}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>{cart.user.email}</div>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              {cart.items.map((item: any) => (
+                                <div key={item.id} style={{ fontSize: '12px', color: 'var(--clr-text-2)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ color: '#a5b4fc' }}>•</span>
+                                  {item.projectItem.title}
+                                  <span style={{ color: '#6ee7b7', fontWeight: 600, fontSize: '11px' }}>
+                                    Rs. {Math.floor(item.projectItem.originalPrice * (1 - item.projectItem.discountPercentage / 100))}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#6ee7b7', fontSize: '16px' }}>Rs. {totalValue}</td>
+                          <td style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
+                            {new Date(cart.updatedAt).toLocaleDateString('en-NP', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
