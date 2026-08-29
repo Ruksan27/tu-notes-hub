@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
 import { toast } from 'react-toastify'
-import { motion } from 'motion/react'
+import { motion, useDragControls } from 'motion/react'
 import { DashboardSkeleton } from '@/components/SkeletonLoader'
 import BecomeSellerTab from '@/components/dashboard/BecomeSellerTab'
 import SellerCenterTab from '@/components/dashboard/SellerCenterTab'
@@ -740,10 +740,9 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
         </div>
       )}
 
-      {/* ── Split Layout: Report (left) + Chat (right) ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: report && isElite ? 'minmax(0,1fr) 360px' : '1fr',
+        gridTemplateColumns: report && isElite ? 'minmax(0,1fr) auto' : '1fr',
         gap: '20px',
         alignItems: 'start',
       }}>
@@ -854,7 +853,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 
 /* ── AI Chat Panel ── */
 function AIChatPanel({ report }: { report: any }) {
-  const [sessionId] = useState(() => `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
+  const [sessionId, setSessionId] = useState(() => `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -862,6 +861,54 @@ function AIChatPanel({ report }: { report: any }) {
   const [showHistory, setShowHistory] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  const dragControls = useDragControls()
+
+  // Chat bot visibility state
+  const [isOpen, setIsOpen] = useState(false)
+
+  // Custom resizing state
+  const [panelSize, setPanelSize] = useState({ width: report ? 380 : 800, height: 680 })
+
+  useEffect(() => {
+    setPanelSize({ width: report ? 380 : 800, height: 680 })
+  }, [!!report])
+
+  const handleResizeDrag = (e: React.MouseEvent, edges: string[]) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const startX = e.clientX
+    const startY = e.clientY
+    const startWidth = panelSize.width
+    const startHeight = panelSize.height
+
+    const onMouseMove = (ev: MouseEvent) => {
+      let newW = startWidth
+      let newH = startHeight
+      
+      if (edges.includes('right')) newW = startWidth + (ev.clientX - startX)
+      if (edges.includes('left')) newW = startWidth - (ev.clientX - startX)
+      if (edges.includes('bottom')) newH = startHeight + (ev.clientY - startY)
+      if (edges.includes('top')) newH = startHeight - (ev.clientY - startY)
+
+      setPanelSize({
+        width: Math.max(320, Math.min(newW, window.innerWidth - 40)),
+        height: Math.max(400, Math.min(newH, window.innerHeight - 40))
+      })
+    }
+
+    const onMouseUp = () => {
+      document.body.style.cursor = 'default'
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+
+    document.body.style.cursor = edges.includes('left') || edges.includes('right') ? 'ew-resize' : 'ns-resize'
+    if (edges.length > 1) document.body.style.cursor = edges.includes('left') === edges.includes('top') ? 'nwse-resize' : 'nesw-resize'
+    
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -883,6 +930,7 @@ function AIChatPanel({ report }: { report: any }) {
       const res = await fetch(`/api/ai/chat-history?sessionId=${sid}`)
       const data = await res.json()
       setMessages((data.messages || []).map((m: any) => ({ role: m.role, text: m.message })))
+      setSessionId(sid)
       setShowHistory(false)
     } catch { toast.error('Failed to load session') }
   }
@@ -892,6 +940,12 @@ function AIChatPanel({ report }: { report: any }) {
     await fetch(`/api/ai/chat-history?sessionId=${sid}`, { method: 'DELETE' })
     setSessions(s => s.filter(x => x.session_id !== sid))
     toast.success('Session deleted')
+  }
+
+  function startNewChat() {
+    setMessages([])
+    setShowHistory(false)
+    setSessionId(`s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
   }
 
   async function sendMessage() {
@@ -924,66 +978,121 @@ function AIChatPanel({ report }: { report: any }) {
     }
   }
 
+  if (!isOpen) {
+    return (
+      <motion.div
+        initial={{ scale: 0 }} animate={{ scale: 1 }}
+        className="hide-on-print"
+        onClick={() => setIsOpen(true)}
+        style={{
+          position: 'fixed', bottom: '30px', right: '30px', width: '64px', height: '64px',
+          borderRadius: '50%', background: 'linear-gradient(135deg, #a855f7, #6366f1)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', boxShadow: '0 8px 32px rgba(168,85,247,0.4)', zIndex: 100,
+        }}
+        whileHover={{ scale: 1.1 }}
+      >
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
       className="hide-on-print"
+      drag
+      dragListener={false}
+      dragControls={dragControls}
+      dragMomentum={false}
       style={{
         display: 'flex', flexDirection: 'column',
-        height: '620px',
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(99,102,241,0.2)',
-        borderRadius: '20px',
+        height: `${panelSize.height}px`,
+        width: `${panelSize.width}px`,
+        minWidth: '320px',
+        maxWidth: '1000px',
+        minHeight: '400px',
+        maxHeight: '90vh',
+        background: '#0f111a',
+        border: '1px solid rgba(255,255,255,0.05)',
+        borderRadius: '16px',
         overflow: 'hidden',
-        position: 'sticky', top: '80px',
+        position: 'fixed', top: '80px', right: '30px', zIndex: 100,
+        boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
       }}
     >
+      {/* ── Custom Resize Handles ── */}
+      <div onMouseDown={(e) => handleResizeDrag(e, ['left'])} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
+      <div onMouseDown={(e) => handleResizeDrag(e, ['right'])} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
+      <div onMouseDown={(e) => handleResizeDrag(e, ['top'])} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
+      <div onMouseDown={(e) => handleResizeDrag(e, ['bottom'])} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
+      
+      {/* Corners for simultaneous width/height resize */}
+      <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'right'])} style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
+      <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'left'])} style={{ position: 'absolute', bottom: 0, left: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
+      <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'left'])} style={{ position: 'absolute', top: 0, left: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
+      <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'right'])} style={{ position: 'absolute', top: 0, right: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
+
       {/* Header */}
-      <div style={{
-        padding: '14px 18px',
-        background: 'linear-gradient(90deg, rgba(99,102,241,0.15), rgba(6,182,212,0.08))',
-        borderBottom: '1px solid rgba(99,102,241,0.2)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🤖</div>
+      <div 
+        onPointerDown={(e) => dragControls.start(e)}
+        style={{
+          padding: '16px 20px',
+          background: '#151822',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+          cursor: 'grab', touchAction: 'none'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'linear-gradient(135deg, #a855f7, #6366f1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 15px rgba(168,85,247,0.4)',
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
           <div>
-            <p style={{ fontWeight: 700, fontSize: '13px', margin: 0 }}>AI Assistant</p>
-            <p style={{ fontSize: '10px', color: 'var(--clr-accent-h)', margin: 0 }}>
-              {report ? `📊 ${report.subject}` : 'General TU Chat'} • 15-day history
+            <p style={{ fontWeight: 700, fontSize: '15px', margin: 0, color: '#fff', letterSpacing: '0.3px' }}>TU Smart AI</p>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>
+              {report ? `Analyzing: ${report.subject}` : 'Ask me anything'}
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button onClick={loadSessions} title="History" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '5px 9px', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
-            {loadingHistory ? '…' : '🕐'}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={loadSessions} title="History" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'rgba(255,255,255,0.5)', transition: 'color 0.2s' }} onMouseEnter={e=>(e.currentTarget.style.color='#fff')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}>
+            🕒
           </button>
-          <button onClick={() => { setMessages([]); setShowHistory(false) }} title="New chat" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '5px 9px', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
-            ✏️
+          <button onClick={startNewChat} title="New chat" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'rgba(255,255,255,0.5)', transition: 'color 0.2s' }} onMouseEnter={e=>(e.currentTarget.style.color='#fff')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}>
+            ➕
+          </button>
+          <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
+          <button onClick={() => setIsOpen(false)} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'rgba(255,255,255,0.5)', transition: 'color 0.2s' }} onMouseEnter={e=>(e.currentTarget.style.color='#fff')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}>
+            ✕
           </button>
         </div>
       </div>
 
       {/* History Panel */}
       {showHistory && (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-text-3)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Past Sessions</p>
-            <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text-3)', fontSize: '16px' }}>×</button>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Past Sessions</p>
           </div>
           {sessions.length === 0 ? (
-            <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', textAlign: 'center', padding: '24px 16px' }}>No chat history yet</p>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '40px 0' }}>No chat history yet</p>
           ) : sessions.map(s => (
             <div key={s.session_id} onClick={() => loadSession(s.session_id)}
-              style={{ padding: '9px 12px', borderRadius: '10px', marginBottom: '5px', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', transition: 'background 0.15s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.08)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+              style={{ padding: '14px 16px', borderRadius: '12px', marginBottom: '8px', cursor: 'pointer', background: '#151822', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#1a1e2b'; e.currentTarget.style.borderColor = 'rgba(168,85,247,0.3)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#151822'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.03)'; }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '12px', color: 'var(--clr-text-1)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.last_message || 'Chat session'}</p>
-                <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', margin: '2px 0 0' }}>{new Date(s.created_at).toLocaleDateString()}</p>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.last_message || 'Chat session'}</p>
+                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{new Date(s.created_at).toLocaleDateString()}</p>
               </div>
-              <button onClick={e => deleteSession(s.session_id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text-3)', fontSize: '12px', padding: '2px 4px' }}>🗑️</button>
+              <button onClick={e => deleteSession(s.session_id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: '14px', padding: '4px' }}>🗑️</button>
             </div>
           ))}
         </div>
@@ -991,39 +1100,73 @@ function AIChatPanel({ report }: { report: any }) {
 
       {/* Messages */}
       {!showHistory && (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {messages.length === 0 && (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '10px', opacity: 0.55, padding: '20px' }}>
-              <span style={{ fontSize: '36px' }}>🤖</span>
-              <p style={{ fontSize: '13px', color: 'var(--clr-text-2)', margin: 0 }}>
-                {report ? `Ask me anything about the ${report.subject} report!` : 'Ask me any TU exam question!'}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {messages.length === 0 && !sending && (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '16px', padding: '20px' }}>
+               <div style={{
+                  width: '80px', height: '80px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 0 40px rgba(168,85,247,0.3)',
+                  filter: 'blur(2px)', opacity: 0.8
+                }}></div>
+              <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 500 }}>
+                {report ? `How can I help you with ${report.subject}?` : 'Ask me any TU question...'}
               </p>
-              <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', margin: 0 }}>Enter to send • Shift+Enter for new line</p>
             </div>
           )}
+          
           {messages.map((msg, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+            <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: '12px' }}>
+              {msg.role === 'model' && (
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                  background: 'linear-gradient(135deg, #a855f7, #6366f1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                </div>
+              )}
               <div style={{
-                maxWidth: '88%',
-                padding: '9px 13px',
-                borderRadius: msg.role === 'user' ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
-                background: msg.role === 'user' ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'rgba(255,255,255,0.05)',
-                border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                fontSize: '13px', lineHeight: 1.55, color: 'var(--clr-text-1)',
+                maxWidth: '85%',
+                padding: '14px 18px',
+                borderRadius: '16px',
+                background: msg.role === 'user' ? '#171e2e' : 'transparent',
+                border: msg.role === 'user' ? '1px solid rgba(139, 92, 246, 0.2)' : 'none',
+                color: 'rgba(255,255,255,0.9)',
+                fontSize: '14px', lineHeight: 1.6,
                 whiteSpace: 'pre-wrap', wordBreak: 'break-word',
               }}>
                 {msg.text}
               </div>
             </div>
           ))}
+          
           {sending && (
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <div style={{ padding: '9px 14px', borderRadius: '14px 14px 14px 3px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                {[0, 1, 2].map(i => (
-                  <span key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1', display: 'inline-block', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />
-                ))}
-              </div>
-            </div>
+             <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '12px' }}>
+               <div style={{
+                  width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                  background: 'linear-gradient(135deg, #a855f7, #6366f1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                </div>
+               <div style={{
+                 padding: '16px',
+                 borderRadius: '16px',
+                 background: '#151822',
+                 border: '1px solid rgba(255,255,255,0.05)',
+                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                 width: '80px', height: '80px'
+               }}>
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
+                    animation: 'pulse 1.5s infinite ease-in-out',
+                    filter: 'blur(8px)', opacity: 0.7
+                  }} />
+               </div>
+             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -1031,31 +1174,41 @@ function AIChatPanel({ report }: { report: any }) {
 
       {/* Input */}
       {!showHistory && (
-        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.15)', flexShrink: 0 }}>
-          <textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-            placeholder={report ? `Ask about ${report.subject}...` : 'Ask any TU question...'}
-            rows={2}
-            style={{
-              flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '10px', padding: '8px 12px', color: 'var(--clr-text-1)',
-              fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4,
-            }}
-          />
-          <button onClick={sendMessage} disabled={sending || !input.trim()}
-            style={{
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              border: 'none', borderRadius: '10px', width: '38px',
-              cursor: sending || !input.trim() ? 'not-allowed' : 'pointer',
-              opacity: sending || !input.trim() ? 0.5 : 1,
-              flexShrink: 0, fontSize: '15px', alignSelf: 'flex-end', height: '38px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            {sending ? '⏳' : '➤'}
-          </button>
+        <div style={{ padding: '0 20px 20px', background: 'transparent' }}>
+          <div style={{
+            display: 'flex', gap: '10px', background: '#191d2b',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '24px', padding: '6px 6px 6px 16px', alignItems: 'center'
+          }}>
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
+              placeholder="Ask a follow-up question..."
+              rows={1}
+              style={{
+                flex: 1, background: 'transparent', border: 'none',
+                color: 'rgba(255,255,255,0.9)',
+                fontSize: '14px', resize: 'none', outline: 'none', fontFamily: 'inherit',
+                padding: '8px 0', maxHeight: '100px'
+              }}
+            />
+            <button onClick={sendMessage} disabled={sending || !input.trim()}
+              style={{
+                background: sending ? 'transparent' : 'rgba(255,255,255,0.05)',
+                border: 'none', borderRadius: '50%', width: '36px', height: '36px',
+                cursor: sending || !input.trim() ? 'not-allowed' : 'pointer',
+                opacity: sending || !input.trim() ? 0.5 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'rgba(255,255,255,0.7)'
+              }}
+            >
+              {sending ? '⏳' : '➤'}
+            </button>
+          </div>
+          <p style={{ textAlign: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '8px', marginBottom: 0 }}>
+            Powered by TU Smart AI
+          </p>
         </div>
       )}
     </motion.div>
