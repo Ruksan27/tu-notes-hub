@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Script from 'next/script'
 import { toast } from 'react-toastify'
 import { motion } from 'motion/react'
 import { DashboardSkeleton } from '@/components/SkeletonLoader'
@@ -565,8 +566,30 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
     finally { setLoading(false) }
   }
 
+  async function downloadPDF() {
+    const element = document.getElementById('ai-report-container')
+    if (!element) return
+
+    if (!(window as any).html2pdf) {
+      toast.error('PDF library is loading, please try again in a moment.')
+      return
+    }
+    toast.info('Generating PDF...')
+    const opt = {
+      margin:       10,
+      filename:     `${report.subject.replace(/[^a-zA-Z0-9]/g, '_')}_AI_Report.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#080a12' },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }
+    ;(window as any).html2pdf().from(element).set(opt).save().then(() => {
+       toast.success('PDF Saved Successfully! 🎉')
+    })
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <Script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" strategy="lazyOnload" />
       <div className="glass-card" style={{ padding: '32px' }}>
         <h3 className="font-bold text-xl mb-2">Predict Exam Pattern</h3>
         <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '24px' }}>
@@ -624,10 +647,10 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
       </div>
 
       {report && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '40px' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" id="ai-report-container" style={{ padding: '40px' }}>
           <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
             <h3 className="text-2xl font-bold">📊 {report.subject} — AI Report</h3>
-            {isElite && <button className="btn btn-outline" onClick={() => window.print()}>🖨️ Print</button>}
+            {isElite && <button className="btn btn-outline" onClick={downloadPDF} data-html2canvas-ignore="true">💾 Save as PDF</button>}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '36px' }}>
             {report.topicAnalysis?.map((topic: any, idx: number) => {
