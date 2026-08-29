@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'react-toastify'
+import ShoppingCartDrawerDemo from '@/components/shadcn-space/drawer/drawer-02'
 
 interface NavUser { name: string; role: string; packageType: string; email: string }
 
@@ -129,31 +130,22 @@ export default function Navbar() {
           <div className="nav-auth">
             {/* Cart icon — only when logged in */}
             {user && (
-              <Link
-                href="/cart"
-                title="My Cart"
-                style={{
-                  position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: '40px', height: '40px', borderRadius: '12px',
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(99,102,241,0.2)',
-                  color: 'var(--clr-text-2)', fontSize: '18px', textDecoration: 'none',
-                  transition: 'background 0.2s, border-color 0.2s'
-                }}
-              >
-                🛒
-                {cartCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: '-4px', right: '-4px',
-                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                    color: '#fff', fontSize: '9px', fontWeight: 800,
-                    width: '18px', height: '18px', borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: '2px solid var(--clr-bg-900)'
-                  }}>
-                    {cartCount > 9 ? '9+' : cartCount}
-                  </span>
-                )}
-              </Link>
+              <ShoppingCartDrawerDemo>
+                <button
+                  title="My Cart"
+                  className="relative p-2 cursor-pointer"
+                  style={{ color: 'var(--clr-text-2)', background: 'transparent', border: 'none' }}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  {cartCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </span>
+                  )}
+                </button>
+              </ShoppingCartDrawerDemo>
             )}
             {user ? (
               <div className="nav-user-wrap" ref={dropRef}>
@@ -289,7 +281,13 @@ export default function Navbar() {
               {user ? (
                 <>
                   <Link href="/dashboard" className="nav-mobile-link">📊 My Dashboard</Link>
-                  <Link href="/cart" className="nav-mobile-link">🛒 My Cart {cartCount > 0 && `(${cartCount})`}</Link>
+                  {user && (
+                    <ShoppingCartDrawerDemo>
+                      <button className="nav-mobile-link" style={{ textAlign: 'left', background: 'none', border: 'none', padding: '10px 0', width: '100%', cursor: 'pointer' }}>
+                        🛒 My Cart {cartCount > 0 && `(${cartCount})`}
+                      </button>
+                    </ShoppingCartDrawerDemo>
+                  )}
                   {user.role === 'ADMIN' && (
                     <Link href="/admin" className="nav-mobile-link">⚙️ Admin Panel</Link>
                   )}
