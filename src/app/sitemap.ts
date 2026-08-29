@@ -17,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 2. Dynamic Faculty Routes
   const faculties = await prisma.faculty.findMany({
+    where: { visible: true },
     select: { id: true }
   })
   const facultyRoutes = faculties.map((fac) => ({
@@ -28,6 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 3. Dynamic Semester Routes
   const semesters = await prisma.semester.findMany({
+    where: { faculty: { visible: true } },
     select: { order: true, facultyId: true }
   })
   const semesterRoutes = semesters.map((sem) => ({

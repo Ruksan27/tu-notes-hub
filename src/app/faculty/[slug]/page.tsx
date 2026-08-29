@@ -22,7 +22,7 @@ interface Props { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const faculty = await prisma.faculty.findUnique({ where: { id: slug } })
+  const faculty = await prisma.faculty.findUnique({ where: { id: slug, visible: true } })
   if (!faculty) return {}
   return {
     title: `${faculty.id.toUpperCase()} Notes & Past Papers — TU Notes Hub`,
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function FacultyPage({ params }: Props) {
   const { slug } = await params
   const faculty = await prisma.faculty.findUnique({
-    where: { id: slug },
+    where: { id: slug, visible: true },
     include: {
       semesters: {
         orderBy: { order: 'asc' },
