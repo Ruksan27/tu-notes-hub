@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
     
     const filename = url.searchParams.get('filename') || 'TUNotes_Document'
 
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(pdfBytes as any, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}.pdf"`,
