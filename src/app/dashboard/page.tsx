@@ -648,17 +648,35 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
     `)
     printWindow.document.close()
 
-    // Wait for QR image to load then print
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print()
-        printWindow.close()
-      }, 800)
+    // Explicitly wait for images to load, then print
+    const images = printWindow.document.getElementsByTagName('img')
+    let loadedCount = 0
+    const totalImages = images.length
+    
+    if (totalImages === 0) {
+      setTimeout(() => { printWindow.print(); printWindow.close() }, 500)
+    } else {
+      const onLoadOrError = () => {
+        loadedCount++
+        if (loadedCount === totalImages) {
+          setTimeout(() => { printWindow.print(); printWindow.close() }, 300)
+        }
+      }
+      for (let i = 0; i < totalImages; i++) {
+        const img = images[i]
+        if (img.complete) {
+          onLoadOrError()
+        } else {
+          img.onload = onLoadOrError
+          img.onerror = onLoadOrError
+        }
+      }
     }
-    // Fallback
+
+    // Ultimate fallback if things hang
     setTimeout(() => {
       try { printWindow.print(); printWindow.close() } catch {}
-    }, 2000)
+    }, 3000)
   }
 
   return (

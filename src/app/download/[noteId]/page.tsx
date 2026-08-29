@@ -46,6 +46,22 @@ export default function DownloadPage() {
   const [ready, setReady] = useState(false)
   const [driveContentType, setDriveContentType] = useState('')
 
+  const getFinalDownloadUrl = (url: string, proxyUrl: string) => {
+    if (!url) return ''
+    if (url.includes('drive.google.com')) {
+      const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+      return match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : url
+    }
+    // If it's a Cloudinary image, inject watermark and force download
+    if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
+      const parts = url.split('/upload/')
+      if (parts.length === 2) {
+        return `${parts[0]}/upload/fl_attachment/l_text:Arial_120_bold_opacity_25_angle_45:TU%20Notes%20Hub,g_center/${parts[1]}`
+      }
+    }
+    return proxyUrl
+  }
+
   // Download-trigger ad modal states
   const [downloadAdActive, setDownloadAdActive] = useState(false)
   const [downloadAdCountdown, setDownloadAdCountdown] = useState(15)
@@ -126,10 +142,7 @@ export default function DownloadPage() {
       setDownloadAdActive(false)
       // Trigger actual download programmatically
       if (note?.cloudinaryUrl) {
-        const fileUrl = note.cloudinaryUrl
-        const isDrive = fileUrl.includes('drive.google.com')
-        const downloadHref = isDrive ? getDriveDownloadUrl(fileUrl) : proxiedUrl
-        
+        const downloadHref = getFinalDownloadUrl(note.cloudinaryUrl, proxiedUrl)
         const link = document.createElement('a')
         link.href = downloadHref
         link.target = '_blank'
@@ -199,15 +212,9 @@ export default function DownloadPage() {
   const handleStartDownload = () => {
     if (isPaid) {
       if (fileUrl) {
-        const isDrive = fileUrl.includes('drive.google.com')
-        let downloadHref = fileUrl
-        if (isDrive) {
-          const match = fileUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
-          downloadHref = match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : fileUrl
-        }
-        
+        const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl)
         const link = document.createElement('a')
-        link.href = isDrive ? downloadHref : proxiedUrl
+        link.href = downloadHref
         link.target = '_blank'
         link.download = note?.title || 'download'
         document.body.appendChild(link)
