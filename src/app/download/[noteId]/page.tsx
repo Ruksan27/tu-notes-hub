@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import AdUnit from '@/components/ads/AdUnit'
+import MarkdownPaperViewer from '@/components/MarkdownPaperViewer'
+import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
+import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
 
 function extractDriveFileId(link: string): string | null {
   const patterns = [
@@ -45,6 +48,11 @@ export default function DownloadPage() {
   // Download-trigger ad modal states
   const [downloadAdActive, setDownloadAdActive] = useState(false)
   const [downloadAdCountdown, setDownloadAdCountdown] = useState(15)
+  const [currentUrl, setCurrentUrl] = useState('')
+
+  useEffect(() => {
+    setCurrentUrl(window.location.href)
+  }, [])
 
   useEffect(() => {
     // Check if user is a paid subscriber
@@ -261,7 +269,7 @@ export default function DownloadPage() {
               
               {/* WhatsApp Share */}
               <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hey, check out this TU exam note on TU Notes Hub: ${note?.title || ''}\n${window.location.href}`)}`}
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hey, check out this TU exam note on TU Notes Hub: ${note?.title || ''}\n${currentUrl}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -274,7 +282,7 @@ export default function DownloadPage() {
 
               {/* Viber Share */}
               <a
-                href={`viber://forward?text=${encodeURIComponent(`Download TU Notes: ${note?.title || ''} on ${window.location.href}`)}`}
+                href={`viber://forward?text=${encodeURIComponent(`Download TU Notes: ${note?.title || ''} on ${currentUrl}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -287,7 +295,7 @@ export default function DownloadPage() {
 
               {/* Facebook Share */}
               <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -301,7 +309,7 @@ export default function DownloadPage() {
               {/* Copy Link button */}
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(window.location.href)
+                  navigator.clipboard.writeText(currentUrl)
                   alert('Link copied to clipboard! Share it with your friends.')
                 }}
                 style={{
@@ -392,20 +400,32 @@ export default function DownloadPage() {
               <div style={{ flex: 1, minHeight: '680px', borderRadius: '16px', border: '1px solid var(--clr-border)', overflow: 'hidden', background: '#121824', position: 'relative' }}>
                 {fileUrl ? (
                   activeTab === 'text' && note?.extractedText ? (
-                    <div 
-                      className="extracted-text-container" 
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        overflowY: 'auto', 
-                        padding: '30px', 
-                        background: '#ffffff', 
-                        color: '#1e293b', 
-                        fontFamily: 'Inter, sans-serif',
-                        lineHeight: '1.6'
+                    <div
+                      className="extracted-text-container"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        overflowY: 'auto',
+                        padding: '24px 16px',
+                        background: '#dde1e7',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
                       }}
-                      dangerouslySetInnerHTML={{ __html: note.extractedText }}
-                    />
+                    >
+                      {(() => {
+                        try {
+                          const parsed = JSON.parse(note.extractedText) as ExamPaperData;
+                          if (parsed.groups) return <ExamPaperViewer data={parsed} />
+                        } catch (e) {
+                          const legacyParsed = parseLegacyMarkdownToExamData(note.extractedText);
+                          if (legacyParsed && legacyParsed.groups && legacyParsed.groups.length > 0) {
+                            return <ExamPaperViewer data={legacyParsed} />
+                          }
+                        }
+                        return <MarkdownPaperViewer content={note.extractedText} />
+                      })()}
+                    </div>
                   ) : isImage ? (
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
