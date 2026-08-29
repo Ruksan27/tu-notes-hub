@@ -13,10 +13,10 @@ export async function GET(req: NextRequest) {
     const sessionId = req.nextUrl.searchParams.get('sessionId')
 
     if (sessionId) {
-      const messages = await getChatHistory(user.id, sessionId)
+      const messages = await getChatHistory(user.userId, sessionId)
       return NextResponse.json({ messages })
     } else {
-      const sessions = await getUserChatSessions(user.id)
+      const sessions = await getUserChatSessions(user.userId)
       return NextResponse.json({ sessions })
     }
   } catch (error) {
@@ -34,7 +34,7 @@ export async function DELETE(req: NextRequest) {
     const sessionId = req.nextUrl.searchParams.get('sessionId')
     if (!sessionId) return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
 
-    await deleteChatSession(user.id, sessionId)
+    await deleteChatSession(user.userId, sessionId)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[CHAT_HISTORY_DELETE]', error)

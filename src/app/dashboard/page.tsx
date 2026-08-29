@@ -570,11 +570,95 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
   }
 
   async function downloadPDF() {
-    document.body.classList.add('allow-print')
+    const reportEl = document.getElementById('ai-report-container')
+    if (!reportEl) { toast.error('Report not found'); return }
+
+    const clone = reportEl.cloneNode(true) as HTMLElement
+    clone.querySelectorAll('.hide-on-print').forEach(el => (el as HTMLElement).style.display = 'none')
+    clone.querySelectorAll('.print-watermark').forEach(el => (el as HTMLElement).style.display = 'block')
+    clone.querySelectorAll('.print-qr-footer').forEach(el => (el as HTMLElement).style.display = 'block')
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700')
+    if (!printWindow) { toast.error('Popup blocked. Allow popups and try again.'); return }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>TU Notes Hub — AI Exam Report</title>
+        <meta charset="utf-8"/>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { background: #080a12 !important; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; }
+          
+          /* Watermark on every page */
+          .print-watermark {
+            display: block !important;
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-40deg);
+            font-size: 72px; font-weight: 900;
+            color: rgba(99,102,241,0.06);
+            white-space: nowrap; pointer-events: none; z-index: 9999;
+            letter-spacing: 0.05em;
+          }
+
+          /* Layout */
+          h3 { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 20px; }
+          .topic-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 16px; border-radius: 10px; margin-bottom: 12px; page-break-inside: avoid; }
+          .topic-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+          .topic-name { font-weight: 700; font-size: 14px; color: #fff; flex: 1; }
+          .badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+          .badge-strong, .badge-high { background: rgba(16,185,129,0.2); color: #10b981; }
+          .badge-medium { background: rgba(245,158,11,0.2); color: #f59e0b; }
+          .badge-low { background: rgba(239,68,68,0.2); color: #ef4444; }
+          .prob-bar-track { background: rgba(255,255,255,0.06); height: 6px; border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
+          .prob-bar-fill { height: 100%; border-radius: 999px; }
+          .prob-bar-fill.strong, .prob-bar-fill.high { background: linear-gradient(90deg, #10b981, #34d399); }
+          .prob-bar-fill.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+          .prob-bar-fill.low { background: linear-gradient(90deg, #ef4444, #f87171); }
+          .reasoning { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.6; }
+          .study-points { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
+          .study-points p { font-size: 11px; font-weight: 700; color: #818cf8; margin-bottom: 6px; }
+          .study-points ul { padding-left: 16px; }
+          .study-points li { font-size: 12px; color: #e2e8f0; margin-bottom: 3px; }
+          .predictions-section { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: 16px; }
+          .predictions-section h4 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+          .pred-card { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; padding: 14px; margin-bottom: 10px; page-break-inside: avoid; }
+          .pred-q { font-weight: 600; font-size: 13px; color: #fff; margin-bottom: 8px; }
+          .pred-meta { display: flex; gap: 10px; font-size: 11px; }
+          .pred-tag { background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 4px; color: rgba(255,255,255,0.5); }
+          .pred-tag strong { color: #fff; }
+
+          /* QR Footer */
+          .print-qr-footer { display: flex !important; margin-top: 24px; border-top: 2px solid rgba(99,102,241,0.4); padding-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+          .qr-brand p { color: #fff; font-weight: 800; font-size: 16px; margin-bottom: 4px; }
+          .qr-brand .sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 2px; }
+          .qr-brand .hint { font-size: 11px; color: rgba(255,255,255,0.3); }
+          .qr-img { text-align: center; }
+          .qr-img img { width: 90px; height: 90px; border-radius: 8px; border: 2px solid rgba(99,102,241,0.4); }
+          .qr-img p { font-size: 9px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+          
+          @page { size: A4; margin: 12mm; }
+        </style>
+      </head>
+      <body>
+        ${clone.outerHTML}
+      </body>
+      </html>
+    `)
+    printWindow.document.close()
+
+    // Wait for QR image to load then print
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print()
+        printWindow.close()
+      }, 800)
+    }
+    // Fallback
     setTimeout(() => {
-      window.print()
-      setTimeout(() => document.body.classList.remove('allow-print'), 1000)
-    }, 100)
+      try { printWindow.print(); printWindow.close() } catch {}
+    }, 2000)
   }
 
   return (
@@ -719,6 +803,27 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
                 </div>
               </div>
             )}
+
+            {/* ── Print-only: Watermark + QR Footer ── */}
+            <div className="print-watermark" aria-hidden="true">TU Notes Hub</div>
+            <div className="print-qr-footer">
+              <div style={{ borderTop: '2px solid rgba(99,102,241,0.4)', paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
+                <div>
+                  <p style={{ fontWeight: 800, fontSize: '16px', marginBottom: '4px', color: '#fff' }}>📚 TU Notes Hub</p>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '2px' }}>AI-Powered Exam Prediction</p>
+                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Scan QR to visit our website</p>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  {/* QR Code via free API - points to website */}
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&bgcolor=080a12&color=ffffff&data=${encodeURIComponent('https://tunoteshub.vercel.app')}`}
+                    alt="QR Code"
+                    style={{ width: '90px', height: '90px', borderRadius: '8px', border: '2px solid rgba(99,102,241,0.4)' }}
+                  />
+                  <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>tunoteshub.vercel.app</p>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
 

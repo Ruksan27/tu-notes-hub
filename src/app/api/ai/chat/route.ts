@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     // Load history from DB (non-blocking — if fails, continue without history)
     let history: { role: 'user' | 'model'; message: string }[] = []
     try {
-      history = await getChatHistory(user.id, sessionId)
+      history = await getChatHistory(user.userId, sessionId)
     } catch (histErr) {
       console.warn('[AI_CHAT] Could not load history (non-fatal):', histErr)
     }
@@ -94,8 +94,8 @@ Professor:`
 
     // Save both messages to DB (fire-and-forget — don't block response)
     Promise.all([
-      saveChatMessage(user.id, sessionId, 'user', message),
-      saveChatMessage(user.id, sessionId, 'model', reply),
+      saveChatMessage(user.userId, sessionId, 'user', message),
+      saveChatMessage(user.userId, sessionId, 'model', reply),
     ]).catch(e => console.warn('[AI_CHAT] Failed to save messages (non-fatal):', e))
 
     return NextResponse.json({ reply, messagesLeft: MAX_MESSAGES_PER_SESSION - history.length - 2 })

@@ -385,57 +385,51 @@ img { max-width: 100%; display: block; }
 }
 
 /* ── Print block (Anti-screenshot) ───────────── */
+/* ── Print-only elements (hidden on screen) ───── */
+.print-watermark { display: none; }
+.print-qr-footer { display: none; }
+
 @media print { 
   /* Block printing by default */
   body:not(.allow-print) { display: none !important; }
 
-  /* When allow-print is active: show the report properly */
+  /* When allow-print is active */
   body.allow-print {
     background: #080a12 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* Hide all dashboard chrome + chat panel */
-  .allow-print .admin-sidebar-nav,
-  .allow-print .admin-sidebar-overlay,
-  .allow-print .admin-top-bar,
-  .allow-print .hide-on-print,
-  .allow-print header,
-  .allow-print nav {
-    display: none !important;
-  }
+  /* Hide EVERYTHING except the report */
+  .allow-print > * { display: none !important; }
+  .allow-print .admin-content-wrapper { display: block !important; }
+  .allow-print .admin-content-wrapper > * { display: none !important; }
+  .allow-print .admin-scrollable-content { display: block !important; overflow: visible !important; height: auto !important; }
+  .allow-print .admin-scrollable-content > * { display: none !important; }
+  .allow-print .admin-content-inner { display: block !important; padding: 0 !important; }
+  .allow-print .admin-content-inner > * { display: none !important; }
 
-  /* Collapse 2-col grid to 1 col — report takes full width */
-  .allow-print [style*="grid-template-columns"] {
-    display: block !important;
-  }
+  /* Show only the tab content area containing the report */
+  .allow-print [id="ai-report-container"],
+  .allow-print [id="ai-report-container"] ~ * { display: block !important; }
 
-  /* Report card fills the page */
-  .allow-print #ai-report-container {
+  /* Show the grid wrapper + report card */
+  .allow-print [style*="grid-template-columns"] { display: block !important; }
+  .allow-print .glass-card { display: block !important; }
+
+  /* Report card: full width, no border/shadow */
+  .allow-print .glass-card {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 16px !important;
     border: none !important;
     box-shadow: none !important;
-    page-break-inside: avoid;
-  }
-
-  /* Make content wrapper fill full width */
-  .allow-print .admin-content-wrapper {
-    margin-left: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-  }
-  .allow-print .admin-scrollable-content {
-    overflow: visible !important;
-    height: auto !important;
-  }
-  .allow-print .admin-content-inner {
-    padding: 0 !important;
+    background: #080a12 !important;
   }
 
   /* Force all backgrounds and colors to print */
@@ -444,10 +438,32 @@ img { max-width: 100%; display: block; }
     print-color-adjust: exact !important;
   }
 
+  /* ── Watermark: fixed position = repeats on every page ── */
+  .allow-print .print-watermark {
+    display: block !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) rotate(-40deg) !important;
+    font-size: 72px !important;
+    font-weight: 900 !important;
+    color: rgba(99, 102, 241, 0.07) !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+    z-index: 9999 !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  /* ── QR Footer: shown at bottom of last page ── */
+  .allow-print .print-qr-footer {
+    display: block !important;
+    margin-top: 24px !important;
+  }
+
   /* Page settings */
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 10mm;
   }
 }
 
