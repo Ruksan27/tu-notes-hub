@@ -1,0 +1,12 @@
+{
+  "buyerRules": [
+    "Verified Code: Every listed project is verified by admins to ensure it matches description screenshots and documentation.",
+    "Non-Refundable: Project downloads are digital goods and are non-refundable once the delivery link is shared. Please review demo links and credentials carefully before purchase.",
+    "Usage License: Projects are sold for academic learning and personal reference. Commercial redistribution or uploading to public repositories is strictly prohibited."
+  ],
+  "sellerRules": [
+    "Verification Uploads: Sellers must upload complete project zip files (including database export .sql and reports) to Google Drive. The sharing link must grant view access to admins.",
+    "No Plagiarism: Uploaded projects must be your own work or properly licensed. Any stolen, broken, or copied projects will result in an immediate seller ban and balance forfeit.",
+    "Revenue Share: Sellers receive 85% of each successful sale. Payouts are computed weekly and transferred directly via eSewa/Khalti after validation."
+  ]
+}

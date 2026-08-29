@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { uploadToCloudinary } from '@/lib/cloudinary'
+import fs from 'fs/promises'
+import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +23,14 @@ export async function GET() {
       },
       update: {},
     })
-    return NextResponse.json({ settings })
+    let githubLink = 'https://github.com'
+    try {
+      const extraContent = await fs.readFile(path.join(process.cwd(), 'data', 'extra-settings.json'), 'utf-8')
+      const extra = JSON.parse(extraContent)
+      githubLink = extra.githubLink || 'https://github.com'
+    } catch {}
+
+    return NextResponse.json({ settings: { ...settings, githubLink } })
   } catch (error) {
     console.error('[SITE_SETTINGS_GET]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -85,7 +94,18 @@ export async function PUT(req: NextRequest) {
       update: updateData,
     })
 
-    return NextResponse.json({ success: true, settings })
+    const githubLink = fd.get('githubLink') as string
+    if (githubLink !== null) {
+      try {
+        await fs.writeFile(
+          path.join(process.cwd(), 'data', 'extra-settings.json'),
+          JSON.stringify({ githubLink: githubLink || 'https://github.com' }, null, 2),
+          'utf-8'
+        )
+      } catch {}
+    }
+
+    return NextResponse.json({ success: true, settings: { ...settings, githubLink: githubLink || 'https://github.com' } })
   } catch (error) {
     console.error('[SITE_SETTINGS_PUT]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -2,6 +2,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import fs from 'fs/promises'
+import path from 'path'
 
 export const metadata: Metadata = {
   title: 'About & Support — TU Notes Hub',
@@ -26,9 +28,71 @@ export default async function AboutPage() {
   const phone = settings?.contactPhone || '9767776999'
   const email = settings?.contactEmail || 'tunoteshub@gmail.com'
 
+  let github = 'https://github.com'
+  try {
+    const extraContent = await fs.readFile(path.join(process.cwd(), 'data', 'extra-settings.json'), 'utf-8')
+    const extra = JSON.parse(extraContent)
+    github = extra.githubLink || 'https://github.com'
+  } catch {}
+
+  // Dynamic About Items loading
+  let aboutItems = []
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'about-items.json')
+    const fileContent = await fs.readFile(filePath, 'utf-8')
+    aboutItems = JSON.parse(fileContent)
+  } catch (err) {
+    console.error('Failed to load dynamic about items:', err)
+    // Fallback defaults
+    aboutItems = [
+      { id: "1", emoji: "🎯", title: "Our Mission", description: "To make quality academic resources accessible to every Tribhuvan University student in Nepal — regardless of their financial situation. We believe education should be free and fair." },
+      { id: "2", emoji: "🤖", title: "AI-Powered Learning", description: "We use Google's Gemini AI to analyze past year question papers and predict what topics are most likely to appear in upcoming exams, giving you a strategic edge in your preparation." },
+      { id: "3", emoji: "🔒", title: "Security First", description: "All accounts are protected with secure HTTP-only cookies and email OTP verification. Premium content is protected against unauthorized screenshots and downloads." },
+      { id: "4", emoji: "📱", title: "Works Offline", description: "TU Notes Hub is a Progressive Web App (PWA) — install it on your phone, tablet, or laptop and access your cached notes and papers even when you have no internet." }
+    ]
+  }
+
+  // Dynamic Platform Rules loading
+  let platformRules = { buyerRules: [], sellerRules: [] }
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'platform-rules.json')
+    const fileContent = await fs.readFile(filePath, 'utf-8')
+    platformRules = JSON.parse(fileContent)
+  } catch (err) {
+    console.error('Failed to load platform rules:', err)
+    // Fallback defaults
+    platformRules = {
+      buyerRules: [
+        "Verified Code: Every listed project is verified by admins to ensure it matches description screenshots and documentation.",
+        "Non-Refundable: Project downloads are digital goods and are non-refundable once the delivery link is shared. Please review demo links and credentials carefully before purchase.",
+        "Usage License: Projects are sold for academic learning and personal reference. Commercial redistribution or uploading to public repositories is strictly prohibited."
+      ],
+      sellerRules: [
+        "Verification Uploads: Sellers must upload complete project zip files (including database export .sql and reports) to Google Drive. The sharing link must grant view access to admins.",
+        "No Plagiarism: Uploaded projects must be your own work or properly licensed. Any stolen, broken, or copied projects will result in an immediate seller ban and balance forfeit.",
+        "Revenue Share: Sellers receive 85% of each successful sale. Payouts are computed weekly and transferred directly via eSewa/Khalti after validation."
+      ]
+    }
+  }
+
   return (
     <div className="container" style={{ padding: '60px 20px', maxWidth: '1000px', margin: '0 auto' }}>
       
+      {/* CSS injection for clean responsive 2x2 layout */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .about-grid-custom {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+          margin-bottom: 56px;
+        }
+        @media (min-width: 768px) {
+          .about-grid-custom {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+      `}} />
+
       {/* ── Header Section ── */}
       <div className="text-center" style={{ marginBottom: '56px' }}>
         <div className="badge badge-elite" style={{ marginBottom: '16px', display: 'inline-flex' }}>
@@ -43,47 +107,19 @@ export default async function AboutPage() {
         </p>
       </div>
 
-      {/* ── Core Mission / AI Section ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '56px' }}>
-        <div className="glass-card" style={{ padding: '28px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-          <div style={{ fontSize: '36px', flexShrink: 0 }}>🎯</div>
-          <div>
-            <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: 600 }}>Our Mission</h3>
-            <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.7 }}>
-              To make quality academic resources accessible to every Tribhuvan University student in Nepal — regardless of their financial situation. We believe education should be free and fair.
-            </p>
+      {/* ── Core Mission / AI Section (Responsive 2x2 Grid) ── */}
+      <div className="about-grid-custom">
+        {aboutItems.map((item: any) => (
+          <div key={item.id} className="glass-card" style={{ padding: '28px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+            <div style={{ fontSize: '36px', flexShrink: 0 }}>{item.emoji}</div>
+            <div>
+              <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: 600 }}>{item.title}</h3>
+              <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.7 }}>
+                {item.description}
+              </p>
+            </div>
           </div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '28px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-          <div style={{ fontSize: '36px', flexShrink: 0 }}>🤖</div>
-          <div>
-            <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: 600 }}>AI-Powered Learning</h3>
-            <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.7 }}>
-              We use Google's Gemini AI to analyze past year question papers and predict what topics are most likely to appear in upcoming exams, giving you a strategic edge in your preparation.
-            </p>
-          </div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '28px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-          <div style={{ fontSize: '36px', flexShrink: 0 }}>🔒</div>
-          <div>
-            <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: 600 }}>Security First</h3>
-            <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.7 }}>
-              All accounts are protected with secure HTTP-only cookies and email OTP verification. Premium content is protected against unauthorized screenshots and downloads.
-            </p>
-          </div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '28px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-          <div style={{ fontSize: '36px', flexShrink: 0 }}>📱</div>
-          <div>
-            <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: 600 }}>Works Offline</h3>
-            <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.7 }}>
-              TU Notes Hub is a Progressive Web App (PWA) — install it on your phone, tablet, or laptop and access your cached notes and papers even when you have no internet.
-            </p>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* ── Rules and Regulations Section ── */}
@@ -103,18 +139,12 @@ export default async function AboutPage() {
               📥 For Project Buyers
             </h3>
             <ul style={{ display: 'grid', gap: '14px', listStyleType: 'none', paddingLeft: 0 }}>
-              <li style={{ display: 'flex', gap: '10px', fontSize: '14px', color: 'var(--clr-text-2)' }}>
-                <span>✅</span>
-                <span><strong>Verified Code:</strong> Every listed project is verified by admins to ensure it matches description screenshots and documentation.</span>
-              </li>
-              <li style={{ display: 'flex', gap: '10px', fontSize: '14px', color: 'var(--clr-text-2)' }}>
-                <span>✅</span>
-                <span><strong>Non-Refundable:</strong> Project downloads are digital goods and are non-refundable once the delivery link is shared. Please review demo links and credentials carefully before purchase.</span>
-              </li>
-              <li style={{ display: 'flex', gap: '10px', fontSize: '14px', color: 'var(--clr-text-2)' }}>
-                <span>✅</span>
-                <span><strong>Usage License:</strong> Projects are sold for academic learning and personal reference. Commercial redistribution or uploading to public repositories is strictly prohibited.</span>
-              </li>
+              {platformRules.buyerRules.map((rule: string, i: number) => (
+                <li key={i} style={{ display: 'flex', gap: '10px', fontSize: '14px', color: 'var(--clr-text-2)' }}>
+                  <span>✅</span>
+                  <span>{rule}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -124,18 +154,12 @@ export default async function AboutPage() {
               📤 For Project Sellers
             </h3>
             <ul style={{ display: 'grid', gap: '14px', listStyleType: 'none', paddingLeft: 0 }}>
-              <li style={{ display: 'flex', gap: '10px', fontSize: '14px', color: 'var(--clr-text-2)' }}>
-                <span>✅</span>
-                <span><strong>Verification Uploads:</strong> Sellers must upload complete project zip files (including database export `.sql` and reports) to Google Drive. The sharing link must grant view access to admins.</span>
-              </li>
-              <li style={{ display: 'flex', gap: '10px', fontSize: '14px', color: 'var(--clr-text-2)' }}>
-                <span>✅</span>
-                <span><strong>No Plagiarism:</strong> Uploaded projects must be your own work or properly licensed. Any stolen, broken, or copied projects will result in an immediate seller ban and balance forfeit.</span>
-              </li>
-              <li style={{ display: 'flex', gap: '10px', fontSize: '14px', color: 'var(--clr-text-2)' }}>
-                <span>✅</span>
-                <span><strong>Revenue Share:</strong> Sellers receive 85% of each successful sale. Payouts are computed weekly and transferred directly via eSewa/Khalti after validation.</span>
-              </li>
+              {platformRules.sellerRules.map((rule: string, i: number) => (
+                <li key={i} style={{ display: 'flex', gap: '10px', fontSize: '14px', color: 'var(--clr-text-2)' }}>
+                  <span>✅</span>
+                  <span>{rule}</span>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -181,22 +205,55 @@ export default async function AboutPage() {
             {/* Social Media Links */}
             <div style={{ borderTop: '1px solid var(--clr-border)', width: '100%', paddingTop: '16px', marginTop: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600 }}>FOLLOW US</span>
-              <div style={{ display: 'flex', gap: '16px', fontSize: '22px' }}>
-                {facebook && (
-                  <a href={facebook} target="_blank" rel="noreferrer" title="Facebook" className="hover:scale-125 transition-transform duration-200" style={{ display: 'inline-block' }}>
-                    🔵
-                  </a>
-                )}
-                {tiktok && (
-                  <a href={tiktok} target="_blank" rel="noreferrer" title="TikTok" className="hover:scale-125 transition-transform duration-200" style={{ display: 'inline-block' }}>
-                    🎵
-                  </a>
-                )}
-                {instagram && (
-                  <a href={instagram} target="_blank" rel="noreferrer" title="Instagram" className="hover:scale-125 transition-transform duration-200" style={{ display: 'inline-block' }}>
-                    📸
-                  </a>
-                )}
+              <div className="card">
+                <a href={instagram || 'https://instagram.com'} target="_blank" rel="noreferrer" title="Instagram">
+                  <svg className="socialSvg" viewBox="0 0 16 16">
+                    <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+                  </svg>
+                  <svg className="socialSvg" viewBox="0 0 16 16">
+                    <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+                  </svg>
+                </a>
+                <a href={facebook || 'https://twitter.com'} target="_blank" rel="noreferrer" title="Twitter">
+                  <svg className="socialSvg" viewBox="0 0 16 16">
+                    <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z" />
+                  </svg>
+                  <svg className="socialSvg" viewBox="0 0 16 16">
+                    <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z" />
+                  </svg>
+                </a>
+                <a href="https://linkedin.com" target="_blank" rel="noreferrer" title="LinkedIn">
+                  <svg className="socialSvg" viewBox="0 0 448 512">
+                    <path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z" />
+                  </svg>
+                  <svg className="socialSvg" viewBox="0 0 448 512">
+                    <path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z" />
+                  </svg>
+                </a>
+                <a href={whatsapp || 'https://whatsapp.com'} target="_blank" rel="noreferrer" title="WhatsApp">
+                  <svg className="socialSvg" viewBox="0 0 16 16">
+                    <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
+                  </svg>
+                  <svg className="socialSvg" viewBox="0 0 16 16">
+                    <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
+                  </svg>
+                </a>
+                <a href={tiktok || 'https://tiktok.com'} target="_blank" rel="noreferrer" title="TikTok">
+                  <svg className="socialSvg" viewBox="0 0 24 24">
+                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.86-.6-4.08-1.4-1.18-.78-2.02-1.9-2.44-3.17-.04 1.25-.01 2.5-.02 3.75-.01 2.9-.01 5.8-.02 8.7 0 1.42-.39 2.82-1.15 4-1.07 1.67-2.9 2.81-4.88 3.07-2.07.28-4.29-.29-5.83-1.74-1.74-1.63-2.58-4.14-2.1-6.52.39-1.96 1.6-3.76 3.39-4.61 1.48-.71 3.23-.8 4.79-.31v4.21c-.87-.31-1.87-.27-2.71.18-.94.5-1.61 1.47-1.73 2.54-.18 1.63.85 3.25 2.48 3.58 1.34.28 2.85-.31 3.42-1.57.26-.58.33-1.22.32-1.85V.02z" />
+                  </svg>
+                  <svg className="socialSvg" viewBox="0 0 24 24">
+                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.86-.6-4.08-1.4-1.18-.78-2.02-1.9-2.44-3.17-.04 1.25-.01 2.5-.02 3.75-.01 2.9-.01 5.8-.02 8.7 0 1.42-.39 2.82-1.15 4-1.07 1.67-2.9 2.81-4.88 3.07-2.07.28-4.29-.29-5.83-1.74-1.74-1.63-2.58-4.14-2.1-6.52.39-1.96 1.6-3.76 3.39-4.61 1.48-.71 3.23-.8 4.79-.31v4.21c-.87-.31-1.87-.27-2.71.18-.94.5-1.61 1.47-1.73 2.54-.18 1.63.85 3.25 2.48 3.58 1.34.28 2.85-.31 3.42-1.57.26-.58.33-1.22.32-1.85V.02z" />
+                  </svg>
+                </a>
+                <a href={github || 'https://github.com'} target="_blank" rel="noreferrer" title="GitHub">
+                  <svg className="socialSvg" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                  </svg>
+                  <svg className="socialSvg" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                  </svg>
+                </a>
               </div>
             </div>
           </div>

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "emoji": "🎯",
+    "title": "Our Mission",
+    "description": "To make quality academic resources accessible to every Tribhuvan University student in Nepal — regardless of their financial situation. We believe education should be free and fair."
+  },
+  {
+    "id": "2",
+    "emoji": "🤖",
+    "title": "AI-Powered Learning",
+    "description": "We use Google's Gemini AI to analyze past year question papers and predict what topics are most likely to appear in upcoming exams, giving you a strategic edge in your preparation."
+  },
+  {
+    "id": "3",
+    "emoji": "🔒",
+    "title": "Security First",
+    "description": "All accounts are protected with secure HTTP-only cookies and email OTP verification. Premium content is protected against unauthorized screenshots and downloads."
+  },
+  {
+    "id": "4",
+    "emoji": "📱",
+    "title": "Works Offline",
+    "description": "TU Notes Hub is a Progressive Web App (PWA) — install it on your phone, tablet, or laptop and access your cached notes and papers even when you have no internet."
+  }
+]

@@ -2095,13 +2095,25 @@ function StatsTab() {
 
 /* ── Site Settings Tab ── */
 function SiteSettingsTab() {
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'TESTIMONIALS'>('GENERAL')
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'TESTIMONIALS' | 'ABOUT' | 'RULES'>('GENERAL')
   const [whatsappLink, setWhatsappLink] = useState('')
   const [facebookLink, setFacebookLink] = useState('')
   const [tiktokLink, setTiktokLink] = useState('')
   const [instagramLink, setInstagramLink] = useState('')
   const [contactPhone, setContactPhone] = useState('')
   const [contactEmail, setContactEmail] = useState('')
+  const [githubLink, setGithubLink] = useState('')
+
+  // About items state
+  const [aboutItems, setAboutItems] = useState<any[]>([])
+  const [aboutLoading, setAboutLoading] = useState(false)
+  const [aboutSaving, setAboutSaving] = useState(false)
+
+  // Rules state
+  const [buyerRules, setBuyerRules] = useState<string[]>([])
+  const [sellerRules, setSellerRules] = useState<string[]>([])
+  const [rulesLoading, setRulesLoading] = useState(false)
+  const [rulesSaving, setRulesSaving] = useState(false)
   const [paymentQrUrl, setPaymentQrUrl] = useState<string | null>(null)
   const [paymentQrFile, setPaymentQrFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(true)
@@ -2117,7 +2129,70 @@ function SiteSettingsTab() {
         setTestimonials(d.testimonials || [])
       }).catch(() => {}).finally(() => setTestsLoading(false))
     }
+    if (activeTab === 'ABOUT') {
+      setAboutLoading(true)
+      fetch('/api/admin/about')
+        .then(r => r.json())
+        .then(d => setAboutItems(d.items || []))
+        .catch(() => {})
+        .finally(() => setAboutLoading(false))
+    }
+    if (activeTab === 'RULES') {
+      setRulesLoading(true)
+      fetch('/api/admin/rules')
+        .then(r => r.json())
+        .then(d => {
+          if (d.rules) {
+            setBuyerRules(d.rules.buyerRules || [])
+            setSellerRules(d.rules.sellerRules || [])
+          }
+        })
+        .catch(() => {})
+        .finally(() => setRulesLoading(false))
+    }
   }, [activeTab])
+
+  async function handleSaveAbout(e: React.FormEvent) {
+    e.preventDefault()
+    setAboutSaving(true)
+    try {
+      const res = await fetch('/api/admin/about', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: aboutItems })
+      })
+      if (res.ok) {
+        toast.success('About items updated! ✅')
+      } else {
+        toast.error('Failed to update about items')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setAboutSaving(false)
+    }
+  }
+
+  async function handleSaveRules(e: React.FormEvent) {
+    e.preventDefault()
+    setRulesSaving(true)
+    try {
+      const res = await fetch('/api/admin/rules', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rules: { buyerRules, sellerRules } })
+      })
+      if (res.ok) {
+        toast.success('Platform rules updated! ✅')
+      } else {
+        toast.error('Failed to update platform rules')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setRulesSaving(false)
+    }
+  }
 
   async function updateTestimonialStatus(id: string, status: string) {
     try {
@@ -2157,6 +2232,7 @@ function SiteSettingsTab() {
           setInstagramLink(d.settings.instagramLink || '')
           setContactPhone(d.settings.contactPhone || '')
           setContactEmail(d.settings.contactEmail || '')
+          setGithubLink(d.settings.githubLink || '')
           if (d.settings.paymentQrUrl) setPaymentQrUrl(d.settings.paymentQrUrl)
         }
       })
@@ -2186,6 +2262,7 @@ function SiteSettingsTab() {
       fd.append('instagramLink', instagramLink)
       fd.append('contactPhone', contactPhone)
       fd.append('contactEmail', contactEmail)
+      fd.append('githubLink', githubLink)
       if (paymentQrFile) fd.append('paymentQr', paymentQrFile)
 
       const res = await fetch('/api/admin/settings', {
@@ -2209,15 +2286,15 @@ function SiteSettingsTab() {
       <h2 className="text-3xl font-bold mb-2">⚙️ Site Settings</h2>
       <p style={{ color: 'var(--clr-text-2)', marginBottom: '32px' }}>Manage platform-wide settings and content.</p>
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0' }}>
-        {(['GENERAL', 'TESTIMONIALS'] as const).map(t => (
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0', flexWrap: 'wrap' }}>
+        {(['GENERAL', 'TESTIMONIALS', 'ABOUT', 'RULES'] as const).map(t => (
           <button
             key={t}
             onClick={() => setActiveTab(t)}
             className={`btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
-            style={{ borderRadius: '8px', padding: '10px 20px', fontSize: '13px', minWidth: '160px' }}
+            style={{ borderRadius: '8px', padding: '10px 20px', fontSize: '13px', minWidth: '160px', marginBottom: '8px' }}
           >
-            {t === 'GENERAL' ? '⚙️ General Settings' : '💬 Testimonials'}
+            {t === 'GENERAL' ? '⚙️ General Settings' : t === 'TESTIMONIALS' ? '💬 Testimonials' : t === 'ABOUT' ? '📖 About Info' : '⚖️ Platform Rules'}
           </button>
         ))}
       </div>
@@ -2324,6 +2401,19 @@ function SiteSettingsTab() {
               />
             </div>
 
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
+                🐱 GitHub Profile Link
+              </label>
+              <input
+                type="url"
+                className="input-field"
+                placeholder="https://github.com/yourusername"
+                value={githubLink}
+                onChange={e => setGithubLink(e.target.value)}
+              />
+            </div>
+
             <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
                 📷 Payment QR Code
@@ -2423,6 +2513,200 @@ function SiteSettingsTab() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'ABOUT' && (
+        <div className="glass-card" style={{ padding: '36px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>📖 About Section Cards</h3>
+              <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Customize the mission and feature cards displayed on the About page.</p>
+            </div>
+            <button
+              onClick={() => setAboutItems(prev => [...prev, { id: String(Date.now()), emoji: '🎯', title: 'New Feature', description: 'Feature description' }])}
+              className="btn btn-primary btn-sm"
+            >
+              ➕ Add New Card
+            </button>
+          </div>
+
+          {aboutLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><div className="spinner" /></div>
+          ) : (
+            <form onSubmit={handleSaveAbout}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
+                {aboutItems.map((item, index) => (
+                  <div key={item.id} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
+                      <label style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Emoji</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        style={{ width: '60px', textAlign: 'center', fontSize: '20px' }}
+                        value={item.emoji}
+                        onChange={e => {
+                          const updated = [...aboutItems]
+                          updated[index].emoji = e.target.value
+                          setAboutItems(updated)
+                        }}
+                        required
+                      />
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '4px' }}>Card Title</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={item.title}
+                          onChange={e => {
+                            const updated = [...aboutItems]
+                            updated[index].title = e.target.value
+                            setAboutItems(updated)
+                          }}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '4px' }}>Description</label>
+                        <textarea
+                          className="input-field"
+                          style={{ height: '80px', resize: 'vertical' }}
+                          value={item.description}
+                          onChange={e => {
+                            const updated = [...aboutItems]
+                            updated[index].description = e.target.value
+                            setAboutItems(updated)
+                          }}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAboutItems(prev => prev.filter(a => a.id !== item.id))}
+                      className="btn btn-danger btn-sm"
+                      style={{ marginTop: '24px' }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
+                <button type="submit" disabled={aboutSaving} className="btn btn-primary">
+                  {aboutSaving ? 'Saving…' : '💾 Save About Cards'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'RULES' && (
+        <div className="glass-card" style={{ padding: '36px' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>⚖️ Platform Rules & Regulations</h3>
+            <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Customize guidelines for Buyers and Sellers shown on the About page.</p>
+          </div>
+
+          {rulesLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><div className="spinner" /></div>
+          ) : (
+            <form onSubmit={handleSaveRules}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '24px' }}>
+                
+                {/* Buyer Rules Section */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px' }}>
+                    <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-accent)' }}>📥 For Project Buyers</h4>
+                    <button
+                      type="button"
+                      onClick={() => setBuyerRules(prev => [...prev, ''])}
+                      className="btn btn-outline btn-sm"
+                    >
+                      ➕ Add Rule
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {buyerRules.map((rule, index) => (
+                      <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={rule}
+                          onChange={e => {
+                            const updated = [...buyerRules]
+                            updated[index] = e.target.value
+                            setBuyerRules(updated)
+                          }}
+                          placeholder="Enter buyer rule..."
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setBuyerRules(prev => prev.filter((_, i) => i !== index))}
+                          className="btn btn-danger btn-sm"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Seller Rules Section */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px' }}>
+                    <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-primary-h)' }}>📤 For Project Sellers</h4>
+                    <button
+                      type="button"
+                      onClick={() => setSellerRules(prev => [...prev, ''])}
+                      className="btn btn-outline btn-sm"
+                    >
+                      ➕ Add Rule
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {sellerRules.map((rule, index) => (
+                      <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={rule}
+                          onChange={e => {
+                            const updated = [...sellerRules]
+                            updated[index] = e.target.value
+                            setSellerRules(updated)
+                          }}
+                          placeholder="Enter seller rule..."
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSellerRules(prev => prev.filter((_, i) => i !== index))}
+                          className="btn btn-danger btn-sm"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
+                <button type="submit" disabled={rulesSaving} className="btn btn-primary">
+                  {rulesSaving ? 'Saving…' : '💾 Save Platform Rules'}
+                </button>
+              </div>
+            </form>
           )}
         </div>
       )}
