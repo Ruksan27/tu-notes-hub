@@ -39,6 +39,7 @@ function getDriveProxyUrl(link: string): string {
 
 export default function DownloadPage() {
   const params = useParams()
+  const [mounted, setMounted] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [note, setNote] = useState<{ title: string; cloudinaryUrl: string; extractedText?: string | null } | null>(null)
@@ -60,18 +61,24 @@ export default function DownloadPage() {
 
   useEffect(() => {
     // Check if user is a paid subscriber
+    let paid = false
     try {
       const stored = localStorage.getItem('tu_user')
       if (stored) {
         const user = JSON.parse(stored)
         const pkg = user?.packageType ?? 'FREE'
         if (pkg === 'SEMESTER_PASS' || pkg === 'ELITE_AI') {
-          setIsPaid(true)
-          setReady(true)
-          setCountdown(0)
+          paid = true
         }
       }
     } catch {}
+
+    if (paid) {
+      setIsPaid(true)
+      setReady(true)
+      setCountdown(0)
+    }
+    setMounted(true)
 
     fetch(`/api/notes/${params.noteId}`)
       .then((r) => r.json())
@@ -106,10 +113,11 @@ export default function DownloadPage() {
 
   // Initial page view ad countdown
   useEffect(() => {
+    if (!mounted) return
     if (countdown <= 0) { setReady(true); return }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000)
     return () => clearTimeout(t)
-  }, [countdown])
+  }, [countdown, mounted])
 
   // Download file ad countdown
   useEffect(() => {
@@ -253,7 +261,11 @@ export default function DownloadPage() {
               
               {/* Download Button (Triggers 15s Ad Lock Modal) */}
               <div>
-                {ready && fileUrl ? (
+                  {!mounted ? (
+                    <div style={{ padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', textAlign: 'center', color: '#fff' }}>
+                      ⏳ Loading...
+                    </div>
+                  ) : ready && fileUrl ? (
                   <button onClick={handleStartDownload}
                     className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', cursor: 'pointer' }}>
                     ⬇️ Save Offline File
@@ -261,7 +273,7 @@ export default function DownloadPage() {
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)' }}>
                     <span className="spinner" style={{ width: '16px', height: '16px' }} />
-                    <span>Preparing offline download link...</span>
+                    <span>Preparing offline download link... {countdown > 0 && `(${countdown}s)`}</span>
                   </div>
                 )}
               </div>
