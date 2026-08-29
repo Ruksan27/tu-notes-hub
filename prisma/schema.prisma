@@ -33,6 +33,7 @@ enum NoteType {
   PROJECT
   GUIDE
   LAB_WORK
+  SYLLABUS
 }
 
 enum ExamType {

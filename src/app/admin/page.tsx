@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [projectSubTab, setProjectSubTab] = useState<'ITEMS' | 'ORDERS'>('ITEMS')
   const [dropOpen, setDropOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sysInfo, setSysInfo] = useState({ cpu: 0, mem: 0 })
   const dropRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -59,6 +60,22 @@ export default function AdminPage() {
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Fetch system info only once on load to avoid server strain
+  useEffect(() => {
+    const fetchSysInfo = async () => {
+      try {
+        const res = await fetch('/api/admin/sysinfo')
+        if (res.ok) {
+          const data = await res.json()
+          setSysInfo({ cpu: data.cpu.loadAverage, mem: data.memory.percent })
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    fetchSysInfo()
   }, [])
 
   async function handleLogout() {
@@ -222,10 +239,10 @@ export default function AdminPage() {
             <div className="admin-param-label">CPU Usage</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--clr-text-2)', marginBottom: '4px' }}>
               <span>Load Average</span>
-              <span>24%</span>
+              <span>{sysInfo.cpu}%</span>
             </div>
             <div className="admin-param-bar-bg">
-              <div className="admin-param-bar-fill" style={{ width: '24%' }}></div>
+              <div className="admin-param-bar-fill" style={{ width: `${sysInfo.cpu}%`, background: sysInfo.cpu > 80 ? '#ef4444' : sysInfo.cpu > 50 ? '#f59e0b' : 'var(--clr-primary)' }}></div>
             </div>
           </div>
         </div>
@@ -808,6 +825,7 @@ function ManageMaterialsTab() {
                         <option value="PROJECT">💻 Project</option>
                         <option value="GUIDE">📘 Guide</option>
                         <option value="LAB_WORK">🧪 Lab Work</option>
+                        <option value="SYLLABUS">📋 Syllabus</option>
                       </select>
                     </div>
                     <div>
@@ -1721,6 +1739,7 @@ function UploadTab() {
                     <option value="PROJECT">💻 Project</option>
                     <option value="GUIDE">📘 Guide</option>
                     <option value="LAB_WORK">🧪 Lab Work</option>
+                    <option value="SYLLABUS">📋 Syllabus</option>
                   </select>
                 </div>}
                 <div>

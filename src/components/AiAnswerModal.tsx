@@ -220,11 +220,11 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             fontSize: '16px', flexShrink: 0,
             boxShadow: '0 2px 8px rgba(99,102,241,0.4)',
           }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>
-              TU Smart AI
+              TU Scholar AI
             </div>
             <div style={{
               fontSize: '11px', color: 'rgba(255,255,255,0.45)',
@@ -353,7 +353,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '14px', marginTop: '2px',
                 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
                 </div>
               )}
               <div style={{
@@ -482,7 +482,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             textAlign: 'center', marginTop: '8px',
             fontSize: '10px', color: 'rgba(255,255,255,0.2)',
           }}>
-            Powered by TU Smart AI
+            Powered by TU Scholar AI
           </div>
         </div>
       </motion.div>

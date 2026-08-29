@@ -130,7 +130,7 @@ export default function ExamPaperViewer({ data }: Props) {
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
                         <button
                           onClick={() => openAiModal(q.text)}
-                          title="Ask TU Smart AI for answer"
+                          title="Ask TU Scholar AI for answer"
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -157,17 +157,7 @@ export default function ExamPaperViewer({ data }: Props) {
                             e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,0.1)'
                           }}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="url(#tuGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                            <defs>
-                              <linearGradient id="tuGrad" x1="0" y1="0" x2="24" y2="24">
-                                <stop offset="0%" stopColor="#4f46e5"/>
-                                <stop offset="100%" stopColor="#db2777"/>
-                              </linearGradient>
-                            </defs>
-                          </svg>
+                          <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'scale(1.2)' }} />
                           Smart Answer
                         </button>
                       </span>

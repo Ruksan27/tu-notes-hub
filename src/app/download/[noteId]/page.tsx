@@ -46,19 +46,36 @@ export default function DownloadPage() {
   const [ready, setReady] = useState(false)
   const [driveContentType, setDriveContentType] = useState('')
 
-  const getFinalDownloadUrl = (url: string, proxyUrl: string) => {
+  const getFinalDownloadUrl = (url: string, proxyUrl: string, title: string) => {
     if (!url) return ''
     if (url.includes('drive.google.com')) {
       const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
       return match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : url
     }
-    // If it's a Cloudinary image, inject watermark and force download
+
+    // Create a clean filename: "TUNotes_2021_BOARD_EXAM_Computer_Graphics"
+    const safeTitle = (title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
+    const fileName = `TUNotes_${safeTitle}`
+
+    // If it's a Cloudinary image, inject watermark and force download with specific filename
     if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
       const parts = url.split('/upload/')
       if (parts.length === 2) {
-        return `${parts[0]}/upload/fl_attachment/l_text:Arial_120_bold_opacity_25_angle_45:TU%20Notes%20Hub,g_center/${parts[1]}`
+        // Layer 1: Diagonal faint watermark in the center (Copy Protection)
+        const diagonalWatermark = `l_text:Arial_100_bold:TU%20Notes%20Hub/co_black,o_12,a_-45/fl_layer_apply,g_center`
+        // Layer 2: Small website link at the bottom right (Subtle Branding)
+        const footerLink = `l_text:Arial_22:tunoteshub.com/co_black,o_50/fl_layer_apply,g_south_east,x_15,y_15`
+        
+        // Pass filename to fl_attachment so the browser saves it with this name
+        return `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${footerLink}/${parts[1]}`
       }
     }
+    
+    // If it's a PDF, route it through our custom watermarking API
+    if (url.toLowerCase().endsWith('.pdf') && !url.includes('drive.google.com')) {
+      return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${params.noteId as string}&filename=${fileName}`
+    }
+
     return proxyUrl
   }
 
@@ -142,11 +159,13 @@ export default function DownloadPage() {
       setDownloadAdActive(false)
       // Trigger actual download programmatically
       if (note?.cloudinaryUrl) {
-        const downloadHref = getFinalDownloadUrl(note.cloudinaryUrl, proxiedUrl)
+        const downloadHref = getFinalDownloadUrl(note.cloudinaryUrl, proxiedUrl, note.title)
+        const safeTitle = (note.title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
+        
         const link = document.createElement('a')
         link.href = downloadHref
         link.target = '_blank'
-        link.download = note.title || 'download'
+        link.download = `TUNotes_${safeTitle}`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -212,11 +231,13 @@ export default function DownloadPage() {
   const handleStartDownload = () => {
     if (isPaid) {
       if (fileUrl) {
-        const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl)
+        const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl, note?.title || '')
+        const safeTitle = (note?.title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
+        
         const link = document.createElement('a')
         link.href = downloadHref
         link.target = '_blank'
-        link.download = note?.title || 'download'
+        link.download = `TUNotes_${safeTitle}`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -275,7 +296,7 @@ export default function DownloadPage() {
                   ) : ready && fileUrl ? (
                   <button onClick={handleStartDownload}
                     className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', cursor: 'pointer' }}>
-                    ⬇️ Save Offline File
+                    ⬇️ Download Files
                   </button>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)' }}>

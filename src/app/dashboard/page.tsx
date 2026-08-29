@@ -1049,12 +1049,12 @@ function AIChatPanel({ report }: { report: any }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 15px rgba(168,85,247,0.4)',
           }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
           </div>
           <div>
-            <p style={{ fontWeight: 700, fontSize: '15px', margin: 0, color: '#fff', letterSpacing: '0.3px' }}>TU Smart AI</p>
+            <p style={{ fontWeight: 700, fontSize: '15px', margin: 0, color: '#fff', letterSpacing: '0.3px' }}>TU Scholar AI</p>
             <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>
-              {report ? `Analyzing: ${report.subject}` : 'Ask me anything'}
+              {report ? `Analyzing: ${report.subject}` : 'Your Academic Assistant'}
             </p>
           </div>
         </div>
@@ -1102,14 +1102,13 @@ function AIChatPanel({ report }: { report: any }) {
           {messages.length === 0 && !sending && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '16px', padding: '20px' }}>
                <div style={{
-                  width: '80px', height: '80px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
+                  width: '120px', height: '120px', borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 0 40px rgba(168,85,247,0.3)',
-                  filter: 'blur(2px)', opacity: 0.8
-                }}></div>
+                }}>
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+                </div>
               <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 500 }}>
-                {report ? `How can I help you with ${report.subject}?` : 'Ask me any TU question...'}
+                {report ? `How can I help you with ${report.subject}?` : 'How can I help with your studies today?'}
               </p>
             </div>
           )}
@@ -1122,7 +1121,7 @@ function AIChatPanel({ report }: { report: any }) {
                   background: 'linear-gradient(135deg, #a855f7, #6366f1)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
                 </div>
               )}
               <div style={{
@@ -1147,7 +1146,7 @@ function AIChatPanel({ report }: { report: any }) {
                   background: 'linear-gradient(135deg, #a855f7, #6366f1)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
                 </div>
                <div style={{
                  padding: '16px',
@@ -1182,7 +1181,7 @@ function AIChatPanel({ report }: { report: any }) {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-              placeholder="Ask a follow-up question..."
+              placeholder="Ask about your syllabus, notes, or past papers..."
               rows={1}
               style={{
                 flex: 1, background: 'transparent', border: 'none',
@@ -1205,11 +1204,10 @@ function AIChatPanel({ report }: { report: any }) {
             </button>
           </div>
           <p style={{ textAlign: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '8px', marginBottom: 0 }}>
-            Powered by TU Smart AI
+            Powered by TU Scholar AI
           </p>
         </div>
       )}
     </motion.div>
   )
 }
-
