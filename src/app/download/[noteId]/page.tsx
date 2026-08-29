@@ -49,7 +49,6 @@ export default function DownloadPage() {
   const [downloadAdActive, setDownloadAdActive] = useState(false)
   const [downloadAdCountdown, setDownloadAdCountdown] = useState(15)
   const [currentUrl, setCurrentUrl] = useState('')
-  const [activeTab, setActiveTab] = useState<'pdf' | 'text'>('pdf')
 
   // AI Answer Modal state
   const [aiModalOpen, setAiModalOpen] = useState(false)
@@ -379,7 +378,7 @@ export default function DownloadPage() {
                       transition: 'all 0.2s'
                     }}
                   >
-                    📄 Read Text (SEO View)
+                    📄 Interactive Text (Smart AI)
                   </button>
                   <button
                     onClick={() => setActiveTab('original')}
@@ -396,7 +395,7 @@ export default function DownloadPage() {
                       transition: 'all 0.2s'
                     }}
                   >
-                    🖼️ Original File (View Figures)
+                    🖼️ Original File
                   </button>
                 </div>
               )}

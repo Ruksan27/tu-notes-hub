@@ -130,46 +130,45 @@ export default function ExamPaperViewer({ data }: Props) {
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
                         <button
                           onClick={() => openAiModal(q.text)}
-                          title="Ask Gemini AI for answer"
+                          title="Ask TU Smart AI for answer"
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '4px',
-                            padding: '2px 8px 2px 5px',
+                            gap: '5px',
+                            padding: '3px 10px 3px 6px',
                             borderRadius: '20px',
-                            border: '1px solid rgba(66,133,244,0.4)',
-                            background: 'linear-gradient(135deg, rgba(66,133,244,0.12), rgba(52,168,83,0.08))',
+                            border: '1px solid rgba(99,102,241,0.3)',
+                            background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(236,72,153,0.05))',
                             cursor: 'pointer',
                             fontSize: '11px',
                             fontWeight: 600,
-                            color: '#4285F4',
+                            color: '#4f46e5',
                             fontFamily: 'Inter, sans-serif',
-                            boxShadow: '0 2px 8px rgba(66,133,244,0.15)',
+                            boxShadow: '0 2px 8px rgba(99,102,241,0.1)',
                             transition: 'all 0.15s',
                             verticalAlign: 'middle',
                           }}
                           onMouseEnter={e => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(66,133,244,0.25), rgba(52,168,83,0.15))'
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(66,133,244,0.3)'
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1))'
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.25)'
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(66,133,244,0.12), rgba(52,168,83,0.08))'
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(66,133,244,0.15)'
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(236,72,153,0.05))'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,0.1)'
                           }}
                         >
-                          {/* Gemini-style 4-color star */}
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2L13.5 9.5L21 12L13.5 14.5L12 22L10.5 14.5L3 12L10.5 9.5L12 2Z"
-                              fill="url(#gemGrad)" />
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="url(#tuGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
                             <defs>
-                              <linearGradient id="gemGrad" x1="0" y1="0" x2="24" y2="24">
-                                <stop offset="0%" stopColor="#4285F4"/>
-                                <stop offset="50%" stopColor="#EA4335"/>
-                                <stop offset="100%" stopColor="#34A853"/>
+                              <linearGradient id="tuGrad" x1="0" y1="0" x2="24" y2="24">
+                                <stop offset="0%" stopColor="#4f46e5"/>
+                                <stop offset="100%" stopColor="#db2777"/>
                               </linearGradient>
                             </defs>
                           </svg>
-                          Gemini
+                          Smart Answer
                         </button>
                       </span>
                     )}

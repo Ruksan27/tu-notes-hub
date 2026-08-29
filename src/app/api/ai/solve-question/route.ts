@@ -100,7 +100,7 @@ Please answer the student's latest follow-up question in a helpful, concise mann
     }
 
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.6-flash',
       contents: prompt,
       config: {
         systemInstruction: 'You are a helpful TU Nepal university professor. Always respond in English unless the student explicitly asks for Nepali.',
@@ -111,7 +111,7 @@ Please answer the student's latest follow-up question in a helpful, concise mann
 
     // --- Save to cache (only initial answers) ---
     if (isInitialQuestion && answer) {
-      await ensureCacheTable().catch(() => {})
+      await ensureCacheTable().catch(e => console.error('[ensureCacheTable]', e))
       await saveCachedAnswer(questionHash, questionText, answer)
     }
 

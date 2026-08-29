@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
+import CustomLoader from './CustomLoader'
 
 interface ChatMessage {
   role: 'user' | 'model'
@@ -29,8 +30,23 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
   const [loading, setLoading] = useState(false)
   const [fromCache, setFromCache] = useState(false)
   const [error, setError] = useState('')
+  const [isPaidUser, setIsPaidUser] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Check subscription status
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('tu_user')
+      if (stored) {
+        const user = JSON.parse(stored)
+        const pkg = user?.packageType ?? 'FREE'
+        if (pkg === 'SEMESTER_PASS' || pkg === 'ELITE_AI') {
+          setIsPaidUser(true)
+        }
+      }
+    } catch {}
+  }, [])
 
   // Fetch initial answer when modal opens
   useEffect(() => {
@@ -154,19 +170,23 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
           background: 'rgba(255,255,255,0.02)',
           flexShrink: 0,
         }}>
-          {/* Gemini Logo */}
+          {/* TU AI Logo */}
           <div style={{
             width: '32px', height: '32px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853)',
+            background: 'linear-gradient(135deg, #6366f1, #ec4899)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '16px', flexShrink: 0,
-            boxShadow: '0 2px 8px rgba(66,133,244,0.4)',
+            boxShadow: '0 2px 8px rgba(99,102,241,0.4)',
           }}>
-            ✦
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>
-              Gemini AI
+              TU Smart AI
             </div>
             <div style={{
               fontSize: '11px', color: 'rgba(255,255,255,0.45)',
@@ -177,11 +197,13 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
           </div>
           {fromCache && (
             <span style={{
-              fontSize: '10px', padding: '3px 8px', borderRadius: '20px',
-              background: 'rgba(52,168,83,0.12)', color: '#34A853',
-              border: '1px solid rgba(52,168,83,0.2)', fontWeight: 600,
-            }}>
-              ⚡ Cached
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '24px', height: '24px', borderRadius: '50%',
+              background: 'rgba(251,191,36,0.15)', color: '#FBBF24',
+              border: '1px solid rgba(251,191,36,0.3)',
+              fontSize: '14px',
+            }} title="Loaded from Cache">
+              ⚡
             </span>
           )}
           <button
@@ -222,29 +244,38 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853)',
+                background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px', marginTop: '2px',
-              }}>✦</div>
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+              </div>
               <div style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '2px 12px 12px 12px', padding: '14px 16px',
+                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
+                borderRadius: '2px 12px 12px 12px', padding: '8px',
                 display: 'flex', gap: '8px', alignItems: 'center',
               }}>
-                <div className="ai-thinking-dots">
-                  <span/><span/><span/>
-                </div>
-                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>AI is thinking...</span>
+                <CustomLoader />
               </div>
             </div>
           ) : initialAnswer ? (
             <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853)',
+                background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px', marginTop: '2px',
-              }}>✦</div>
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+              </div>
               <div style={{
                 background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '2px 12px 12px 12px', padding: '16px 18px',
@@ -280,10 +311,16 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
               {msg.role === 'model' && (
                 <div style={{
                   width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853)',
+                  background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '14px', marginTop: '2px',
-                }}>✦</div>
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                  </svg>
+                </div>
               )}
               <div style={{
                 maxWidth: '85%',
@@ -320,16 +357,23 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '14px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853)',
+                background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px',
-              }}>✦</div>
-              <div style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '2px 12px 12px 12px', padding: '14px 16px',
-                display: 'flex', gap: '8px', alignItems: 'center',
               }}>
-                <div className="ai-thinking-dots"><span/><span/><span/></div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+              </div>
+              <div style={{
+                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
+                borderRadius: '2px 12px 12px 12px', padding: '0px 8px',
+                display: 'flex', gap: '8px', alignItems: 'center',
+                transform: 'scale(0.8)', transformOrigin: 'left center'
+              }}>
+                <CustomLoader />
               </div>
             </div>
           )}
@@ -344,49 +388,67 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
           background: 'rgba(255,255,255,0.02)',
           flexShrink: 0,
         }}>
+          {isPaidUser ? (
+            <div style={{
+              display: 'flex', gap: '8px', alignItems: 'center',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '24px', padding: '8px 8px 8px 16px',
+              transition: 'border-color 0.2s',
+            }}>
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Ask a follow-up question..."
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={loading}
+                style={{
+                  flex: 1, background: 'none', border: 'none', outline: 'none',
+                  color: '#fff', fontSize: '13px',
+                } as any}
+              />
+              <button
+                onClick={sendChatMessage}
+                disabled={loading || !chatInput.trim()}
+                style={{
+                  width: '34px', height: '34px', borderRadius: '50%',
+                  background: loading || !chatInput.trim()
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'linear-gradient(135deg, #6366f1, #ec4899)',
+                  border: 'none', cursor: loading || !chatInput.trim() ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '14px', transition: 'all 0.2s',
+                  color: '#fff', flexShrink: 0,
+                }}
+              >
+                {loading ? '⏳' : '➤'}
+              </button>
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between',
+              background: 'rgba(236, 72, 153, 0.05)',
+              border: '1px solid rgba(236, 72, 153, 0.2)',
+              borderRadius: '24px', padding: '8px 16px',
+            }}>
+              <span style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.6)' }}>
+                Follow-up chat is available for Elite users.
+              </span>
+              <a href="/pricing" style={{
+                fontSize: '12px', fontWeight: 600, color: '#ec4899',
+                textDecoration: 'none', borderBottom: '1px solid #ec4899'
+              }}>
+                Upgrade to Elite
+              </a>
+            </div>
+          )}
           <div style={{
-            display: 'flex', gap: '8px', alignItems: 'center',
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '24px', padding: '8px 8px 8px 16px',
-            transition: 'border-color 0.2s',
-          }}>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Ask a follow-up question..."
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={loading}
-              style={{
-                flex: 1, background: 'none', border: 'none', outline: 'none',
-                color: '#fff', fontSize: '13px',
-                '::placeholder': { color: 'rgba(255,255,255,0.3)' },
-              } as any}
-            />
-            <button
-              onClick={sendChatMessage}
-              disabled={loading || !chatInput.trim()}
-              style={{
-                width: '34px', height: '34px', borderRadius: '50%',
-                background: loading || !chatInput.trim()
-                  ? 'rgba(255,255,255,0.08)'
-                  : 'linear-gradient(135deg, #4285F4, #34A853)',
-                border: 'none', cursor: loading || !chatInput.trim() ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '14px', transition: 'all 0.2s',
-                color: '#fff', flexShrink: 0,
-              }}
-            >
-              {loading ? '⏳' : '➤'}
-            </button>
-          </div>
-          <div style={{
-            textAlign: 'center', marginTop: '6px',
+            textAlign: 'center', marginTop: '8px',
             fontSize: '10px', color: 'rgba(255,255,255,0.2)',
           }}>
-            Powered by Gemini AI · TU Notes Hub
+            Powered by TU Smart AI
           </div>
         </div>
       </div>
