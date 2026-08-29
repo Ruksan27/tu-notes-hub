@@ -83,10 +83,15 @@ function CountdownTimer({ endsAt }: { endsAt: Date }) {
 }
 
 export default function ProjectDetailClient({ project }: { project: Project }) {
+  const youtubeId = project.youtubeUrl ? getYoutubeId(project.youtubeUrl) : null
+  const screenshots = [project.screenshot1, project.screenshot2, project.screenshot3, project.screenshot4].filter(Boolean) as string[]
+  const allImages = project.thumbnailUrl ? [project.thumbnailUrl, ...screenshots] : screenshots
+
   const [whatsapp, setWhatsapp] = useState<string | null>(null)
-  const [activeImg, setActiveImg] = useState<string | null>(project.thumbnailUrl)
-  const [showVideo, setShowVideo] = useState(false)
+  const [activeImg, setActiveImg] = useState(allImages[0] || null)
+  const [showVideo, setShowVideo] = useState(!!youtubeId)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
   const [emailInput, setEmailInput] = useState('')
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null)
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
@@ -122,14 +127,12 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
   }, [project.id, project.youtubeUrl, project.discountPercentage])
 
   const finalPrice = Math.floor(project.originalPrice * (1 - project.discountPercentage / 100))
-  const screenshots = [project.screenshot1, project.screenshot2, project.screenshot3, project.screenshot4].filter(Boolean) as string[]
-  const allImages = project.thumbnailUrl ? [project.thumbnailUrl, ...screenshots] : screenshots
 
   const isVerified = !!project.user?.sellerProfile?.isVerified
   const developerName = project.sellerId ? (project.user?.name || 'Seller') : 'TU Notes Hub'
   const isAdmin = !project.sellerId
 
-  const youtubeId = project.youtubeUrl ? getYoutubeId(project.youtubeUrl) : null
+
 
   const handleAddToCart = useCallback(async () => {
     setCartLoading(true)
@@ -267,9 +270,9 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
                 </a>
               )}
               {project.youtubeUrl && (
-                <a href={project.youtubeUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)', color: '#fca5a5', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+                <button onClick={() => setIsVideoModalOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)', color: '#fca5a5', textDecoration: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                   📺 Watch Video
-                </a>
+                </button>
               )}
             </div>
           )}
@@ -493,6 +496,48 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
         </div>
 
       </div>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {isVideoModalOpen && project.youtubeUrl && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+            onClick={() => setIsVideoModalOpen(false)}
+          >
+            <div style={{ position: 'absolute', top: '20px', right: '30px', color: '#fff', fontSize: '30px', cursor: 'pointer', fontWeight: 300 }}>&times;</div>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              style={{ width: '100%', maxWidth: '900px', aspectRatio: '16/9', background: '#000', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <iframe
+                width="100%"
+                height="100%"
+                src={(() => {
+                  const url = project.youtubeUrl;
+                  if (url.includes('youtube.com/watch?v=')) {
+                    const videoId = url.split('v=')[1]?.split('&')[0];
+                    return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                  }
+                  if (url.includes('youtu.be/')) {
+                    const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+                    return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                  }
+                  if (url.includes('tiktok.com')) {
+                    const match = url.match(/video\/(\d+)/);
+                    if (match) return `https://www.tiktok.com/embed/v2/${match[1]}`;
+                  }
+                  return url;
+                })()}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Checkout Modal */}
       <AnimatePresence>

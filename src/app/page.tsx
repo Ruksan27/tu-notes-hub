@@ -1,7 +1,7 @@
-// src/app/page.tsx
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
+import { AnimatedText } from '@/components/AnimatedText'
 
 export const dynamic = 'force-dynamic'
 
@@ -99,7 +99,7 @@ export default async function HomePage() {
             marginBottom: '24px',
           }}>
             Ace Your TU Exams with<br />
-            <span className="text-gradient">AI-Powered Study Tools</span>
+            <AnimatedText text="AI-Powered Study Tools" className="text-gradient" />
           </h1>
           <p className="animate-fade-in" style={{
             color: 'var(--clr-text-2)',
