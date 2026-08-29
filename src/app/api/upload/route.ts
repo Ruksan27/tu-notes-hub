@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { extractTextFromPdfUrl } from '@/lib/gemini'
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,10 +38,20 @@ export async function POST(req: NextRequest) {
 
     // ── Handle NOTE / PAST_PAPER (JSON — after direct Cloudinary upload) ──
     const body = await req.json()
-    const { contentType: type, subjectId, cloudinaryUrl, fileSize } = body
+    const { contentType: type, subjectId, cloudinaryUrl, fileSize, extractText } = body
 
     if (!subjectId) return NextResponse.json({ error: 'Subject is required' }, { status: 400 })
     if (!cloudinaryUrl) return NextResponse.json({ error: 'cloudinaryUrl is required' }, { status: 400 })
+
+    let extractedText = null
+    if (extractText && ['NOTE', 'PAST_PAPER'].includes(type)) {
+      try {
+        extractedText = await extractTextFromPdfUrl(cloudinaryUrl)
+      } catch (ocrError) {
+        console.error('[OCR ERROR]', ocrError)
+        // If OCR fails, we still proceed with saving the note/paper but without text
+      }
+    }
 
     if (type === 'NOTE') {
       const { title, description = '', noteType = 'PDF_BOOK', isPremium, author = '' } = body
@@ -56,6 +67,7 @@ export async function POST(req: NextRequest) {
           isPremium: isPremium === 'true' || isPremium === true,
           author,
           subjectId,
+          extractedText,
         }
       })
       return NextResponse.json({ note, message: 'Study Note uploaded successfully' })
@@ -71,6 +83,7 @@ export async function POST(req: NextRequest) {
           examType,
           cloudinaryUrl,
           subjectId,
+          extractedText,
         }
       })
       return NextResponse.json({ pastPaper, message: 'Past Paper uploaded successfully' })

@@ -12,3 +12,20 @@ export async function GET(req: NextRequest) {
   })
   return NextResponse.json({ subjects })
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const { title, code, semesterId } = await req.json()
+    if (!title || !code || !semesterId) {
+      return NextResponse.json({ error: 'Title, code, and semester are required' }, { status: 400 })
+    }
+
+    const subject = await prisma.subject.create({
+      data: { title, code, semesterId }
+    })
+    return NextResponse.json({ subject, message: 'Subject created successfully' })
+  } catch (error) {
+    console.error('[ADD_SUBJECT]', error)
+    return NextResponse.json({ error: 'Failed to create subject' }, { status: 500 })
+  }
+}

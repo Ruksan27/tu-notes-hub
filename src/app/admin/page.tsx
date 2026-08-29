@@ -1159,6 +1159,7 @@ function UploadTab() {
   const [paperFile, setPaperFile] = useState<File | null>(null)
   const [sheetTitle, setSheetTitle] = useState('')
   const [sheetContent, setSheetContent] = useState('')
+  const [extractText, setExtractText] = useState(true)
 
   useEffect(() => {
     fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
@@ -1309,7 +1310,7 @@ function UploadTab() {
       if (!fileId) { toast.error('Invalid Drive link — use the share link from Google Drive'); return }
       setUploading(true)
       toast.loading('Saving Drive link...', { toastId: 'upload-progress' })
-      const payload: any = { contentType, subjectId, cloudinaryUrl: normalizeDriveUrl(driveLink), fileSize: 'Drive Link' }
+      const payload: any = { contentType, subjectId, cloudinaryUrl: normalizeDriveUrl(driveLink), fileSize: 'Drive Link', extractText }
       if (contentType === 'NOTE') {
         if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title required'); setUploading(false); return }
         payload.title = noteTitle; payload.description = noteDescription; payload.noteType = noteType; payload.isPremium = isPremium; payload.author = author
@@ -1429,6 +1430,7 @@ function UploadTab() {
         subjectId,
         cloudinaryUrl,
         fileSize,
+        extractText,
       }
 
       if (contentType === 'NOTE') {
@@ -1560,7 +1562,38 @@ function UploadTab() {
           {/* Subject — hidden for Solution Books */}
           {contentType !== 'SOLUTION_BOOK' && (
             <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Subject</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
+                <label className="block text-sm font-semibold" style={{ color: 'var(--clr-text-2)' }}>Subject</label>
+                {semesterId && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const title = prompt('Enter Subject Title (e.g. Computer Graphics):')
+                      if (!title) return
+                      const code = prompt('Enter Subject Code (e.g. CACS305):')
+                      if (!code) return
+                      
+                      try {
+                        const res = await fetch('/api/admin/subjects', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ title, code, semesterId })
+                        })
+                        if (res.ok) {
+                          toast.success('Subject added!')
+                          fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => { setSubjects(d.subjects || []); setSubjectId(d.subjects[d.subjects.length - 1]?.id || '') })
+                        } else {
+                          const err = await res.json()
+                          toast.error(err.error || 'Failed to add subject')
+                        }
+                      } catch (e) { toast.error('Network error') }
+                    }}
+                    style={{ fontSize: '12px', background: 'var(--grad-brand)', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}
+                  >
+                    + Add Subject
+                  </button>
+                )}
+              </div>
               <select className="input-field" value={subjectId} onChange={e => setSubjectId(e.target.value)} required disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
                 <option value="">— Choose Subject —</option>
                 {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
@@ -1703,6 +1736,14 @@ function UploadTab() {
                 <input className="input-field" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} />
               </div>
               {sourceType === 'FILE' && <FileDropZone label="Document (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
+              {sourceType === 'FILE' && noteFile && ['jpg', 'jpeg', 'png'].includes(noteFile.name.split('.').pop()?.toLowerCase() || '') && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <input type="checkbox" id="extractTextNote" checked={extractText} onChange={e => setExtractText(e.target.checked)} style={{ cursor: 'pointer', width: '18px', height: '18px' }} />
+                  <label htmlFor="extractTextNote" style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+                    <strong>Convert to Text (OCR)</strong> - Extract text for SEO and readability. Uncheck if the image is mostly diagrams/figures.
+                  </label>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -1726,6 +1767,14 @@ function UploadTab() {
                 </div>
               </div>
               {sourceType === 'FILE' && <FileDropZone label="Question Paper (PDF / Images)" accept=".pdf,.jpg,.jpeg,.png" file={paperFile} onFile={setPaperFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
+              {sourceType === 'FILE' && paperFile && ['jpg', 'jpeg', 'png'].includes(paperFile.name.split('.').pop()?.toLowerCase() || '') && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <input type="checkbox" id="extractTextPaper" checked={extractText} onChange={e => setExtractText(e.target.checked)} style={{ cursor: 'pointer', width: '18px', height: '18px' }} />
+                  <label htmlFor="extractTextPaper" style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+                    <strong>Convert to Text (OCR)</strong> - Extract text for SEO and readability. Uncheck if the image is mostly diagrams/figures.
+                  </label>
+                </div>
+              )}
             </motion.div>
           )}
 

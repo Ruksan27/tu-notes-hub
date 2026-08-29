@@ -10,6 +10,7 @@ export const revalidate = 3600
 // Pre-render all faculty index paths to make them load instantly
 export async function generateStaticParams() {
   const faculties = await prisma.faculty.findMany({
+    where: { visible: true },
     select: { id: true }
   })
   return faculties.map((f) => ({

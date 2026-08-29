@@ -142,6 +142,7 @@ model Note {
   description   String?
   cloudinaryUrl String
   fileSize      String?
+  extractedText String?  @db.LongText
   noteType      NoteType @default(PDF_BOOK)
   isPremium     Boolean  @default(false)
   author        String?

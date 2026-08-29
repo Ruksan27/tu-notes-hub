@@ -19,11 +19,12 @@ export default async function HomePage() {
   try {
     const [allFacs, notesCount, usersCount, facCount, papersCount] = await Promise.all([
       prisma.faculty.findMany({
+        where: { visible: true },
         select: { id: true, name: true, slug: true, icon: true },
       }),
       prisma.note.count(),
       prisma.user.count(),
-      prisma.faculty.count(),
+      prisma.faculty.count({ where: { visible: true } }),
       prisma.pastPaper.count()
     ])
 
