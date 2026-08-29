@@ -2,10 +2,10 @@
 // src/components/AiAnswerModal.tsx
 // Beautiful AI Answer Modal with Chat functionality
 // - Shows initial AI answer for an exam question
-// - Allows follow-up chat messages
 // - Gemini-style UI
 
 import React, { useState, useEffect, useRef } from 'react'
+import { motion, useDragControls } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -33,6 +33,40 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
   const [isPaidUser, setIsPaidUser] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  
+  const dragControls = useDragControls()
+  const [panelSize, setPanelSize] = useState({ width: 750, height: 500 })
+
+  const handleResizeDrag = (e: React.MouseEvent, edges: string[]) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const startX = e.clientX
+    const startY = e.clientY
+    const startWidth = panelSize.width
+    const startHeight = panelSize.height
+
+    const onMouseMove = (ev: MouseEvent) => {
+      let newW = startWidth
+      let newH = startHeight
+      if (edges.includes('right')) newW = startWidth + (ev.clientX - startX)
+      if (edges.includes('left')) newW = startWidth - (ev.clientX - startX)
+      if (edges.includes('bottom')) newH = startHeight + (ev.clientY - startY)
+      if (edges.includes('top')) newH = startHeight - (ev.clientY - startY)
+      setPanelSize({
+        width: Math.max(320, Math.min(newW, window.innerWidth - 40)),
+        height: Math.max(400, Math.min(newH, window.innerHeight - 40))
+      })
+    }
+    const onMouseUp = () => {
+      document.body.style.cursor = 'default'
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+    document.body.style.cursor = edges.includes('left') || edges.includes('right') ? 'ew-resize' : 'ns-resize'
+    if (edges.length > 1) document.body.style.cursor = edges.includes('left') === edges.includes('top') ? 'nwse-resize' : 'nesw-resize'
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+  }
 
   // Check subscription status
   useEffect(() => {
@@ -134,42 +168,50 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(4px)', zIndex: 9998, animation: 'fadeIn 0.2s ease'
-        }}
-      />
-
-      {/* Modal */}
-      <div
+      {/* Modal - now a draggable floating widget */}
+      <motion.div
+        drag
+        dragListener={false}
+        dragControls={dragControls}
+        dragMomentum={false}
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
         style={{
           position: 'fixed',
-          top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
+          bottom: '30px', right: '30px',
           zIndex: 9999,
-          width: 'min(720px, 95vw)',
-          maxHeight: '88vh',
+          width: `${panelSize.width}px`,
+          height: `${panelSize.height}px`,
           background: '#0f1117',
           borderRadius: '16px',
           border: '1px solid rgba(99,102,241,0.25)',
           boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05)',
           display: 'flex',
           flexDirection: 'column',
-          animation: 'slideUp 0.25s ease',
           overflow: 'hidden',
         }}
       >
+        {/* ── Custom Resize Handles ── */}
+        <div onMouseDown={(e) => handleResizeDrag(e, ['left'])} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
+        <div onMouseDown={(e) => handleResizeDrag(e, ['right'])} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
+        <div onMouseDown={(e) => handleResizeDrag(e, ['top'])} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
+        <div onMouseDown={(e) => handleResizeDrag(e, ['bottom'])} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
+        <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'left'])} style={{ position: 'absolute', top: 0, left: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
+        <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'right'])} style={{ position: 'absolute', top: 0, right: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
+        <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'left'])} style={{ position: 'absolute', bottom: 0, left: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
+        <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'right'])} style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '12px',
-          padding: '16px 20px',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(255,255,255,0.02)',
-          flexShrink: 0,
-        }}>
+        <div 
+          onPointerDown={(e) => dragControls.start(e)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '12px',
+            padding: '16px 20px',
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
+            background: 'rgba(255,255,255,0.02)',
+            flexShrink: 0,
+            cursor: 'grab',
+          }}
+        >
           {/* TU AI Logo */}
           <div style={{
             width: '32px', height: '32px', borderRadius: '50%',
@@ -178,11 +220,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             fontSize: '16px', flexShrink: 0,
             boxShadow: '0 2px 8px rgba(99,102,241,0.4)',
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-              <line x1="12" y1="22.08" x2="12" y2="12"></line>
-            </svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>
@@ -315,11 +353,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '14px', marginTop: '2px',
                 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                 </div>
               )}
               <div style={{
@@ -451,7 +485,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             Powered by TU Smart AI
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Animations */}
       <style>{`

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
 import { toast } from 'react-toastify'
-import { motion, useDragControls } from 'motion/react'
+import { motion, useDragControls } from 'framer-motion'
 import { DashboardSkeleton } from '@/components/SkeletonLoader'
 import BecomeSellerTab from '@/components/dashboard/BecomeSellerTab'
 import SellerCenterTab from '@/components/dashboard/SellerCenterTab'
@@ -235,7 +235,7 @@ export default function DashboardPage() {
 
         {/* ── Content Scroll Area ── */}
         <div className="admin-scrollable-content">
-          <main className="admin-content-inner">
+          <main className="admin-content-inner" style={{ paddingBottom: '800px' }}>
           {/* ── Overview Tab ── */}
           {tab === 'overview' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
@@ -500,7 +500,6 @@ export default function DashboardPage() {
           {/* ── AI Compare Tab ── */}
           {tab === 'compare' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <h3 className="section-title">🤖 AI Exam Predictor</h3>
               {!isPremium ? (
                 <div className="glass-card" style={{ padding: '64px', textAlign: 'center' }}>
                   <div style={{ fontSize: '56px', marginBottom: '16px' }}>🔒</div>
@@ -868,10 +867,10 @@ function AIChatPanel({ report }: { report: any }) {
   const [isOpen, setIsOpen] = useState(false)
 
   // Custom resizing state
-  const [panelSize, setPanelSize] = useState({ width: report ? 380 : 800, height: 680 })
+  const [panelSize, setPanelSize] = useState({ width: 750, height: 500 })
 
   useEffect(() => {
-    setPanelSize({ width: report ? 380 : 800, height: 680 })
+    setPanelSize({ width: 750, height: 500 })
   }, [!!report])
 
   const handleResizeDrag = (e: React.MouseEvent, edges: string[]) => {
@@ -985,14 +984,13 @@ function AIChatPanel({ report }: { report: any }) {
         className="hide-on-print"
         onClick={() => setIsOpen(true)}
         style={{
-          position: 'fixed', bottom: '30px', right: '30px', width: '64px', height: '64px',
-          borderRadius: '50%', background: 'linear-gradient(135deg, #a855f7, #6366f1)',
+          position: 'fixed', bottom: '10px', right: '20px', width: '140px', height: '140px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', boxShadow: '0 8px 32px rgba(168,85,247,0.4)', zIndex: 100,
+          cursor: 'pointer', zIndex: 100,
         }}
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.05 }}
       >
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.6)' }} />
       </motion.div>
     )
   }
@@ -1017,7 +1015,7 @@ function AIChatPanel({ report }: { report: any }) {
         border: '1px solid rgba(255,255,255,0.05)',
         borderRadius: '16px',
         overflow: 'hidden',
-        position: 'fixed', top: '80px', right: '30px', zIndex: 100,
+        position: 'relative', margin: '0 0 0 auto', zIndex: 10,
         boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
       }}
     >
