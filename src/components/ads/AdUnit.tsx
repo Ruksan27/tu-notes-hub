@@ -56,6 +56,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
       case 'sidebar':
         return {
           width: '100%',
+          minWidth: '300px',
           minHeight: '420px',
           height: '100%',
           background: 'rgba(255, 255, 255, 0.02)',
