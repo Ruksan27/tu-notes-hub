@@ -12,6 +12,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [dropOpen, setDropOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
   const dropRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const pathname = usePathname()
@@ -46,6 +47,15 @@ export default function Navbar() {
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  // Fetch cart count when user is logged in
+  useEffect(() => {
+    if (!user) { setCartCount(0); return }
+    fetch('/api/cart')
+      .then(r => r.json())
+      .then(d => setCartCount((d.items || []).length))
+      .catch(() => {})
+  }, [user])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -117,6 +127,34 @@ export default function Navbar() {
 
           {/* ── Desktop Auth ── */}
           <div className="nav-auth">
+            {/* Cart icon — only when logged in */}
+            {user && (
+              <Link
+                href="/cart"
+                title="My Cart"
+                style={{
+                  position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '40px', height: '40px', borderRadius: '12px',
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(99,102,241,0.2)',
+                  color: 'var(--clr-text-2)', fontSize: '18px', textDecoration: 'none',
+                  transition: 'background 0.2s, border-color 0.2s'
+                }}
+              >
+                🛒
+                {cartCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '-4px', right: '-4px',
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    color: '#fff', fontSize: '9px', fontWeight: 800,
+                    width: '18px', height: '18px', borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '2px solid var(--clr-bg-900)'
+                  }}>
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
             {user ? (
               <div className="nav-user-wrap" ref={dropRef}>
                 <button className="nav-user-btn" onClick={() => setDropOpen(!dropOpen)} aria-expanded={dropOpen}>
@@ -251,6 +289,7 @@ export default function Navbar() {
               {user ? (
                 <>
                   <Link href="/dashboard" className="nav-mobile-link">📊 My Dashboard</Link>
+                  <Link href="/cart" className="nav-mobile-link">🛒 My Cart {cartCount > 0 && `(${cartCount})`}</Link>
                   {user.role === 'ADMIN' && (
                     <Link href="/admin" className="nav-mobile-link">⚙️ Admin Panel</Link>
                   )}

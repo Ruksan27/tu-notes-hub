@@ -200,172 +200,190 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
   ].filter(x => x.val)
 
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 20px' }}>
-      {/* Back */}
-      <Link href="/projects" style={{ color: 'var(--clr-text-3)', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '24px' }}>
-        ← Back to Projects
-      </Link>
+    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 28px' }}>
 
-      {/* Main 3-column layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr 340px', gap: '24px', alignItems: 'start' }}>
+      {/* ── Back link + Page header (full width above the grid) ── */}
+      <div style={{ marginBottom: '20px' }}>
+        <Link href="/projects" style={{ color: 'var(--clr-text-3)', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '14px', display: 'block' }}>
+          ← Back to Projects
+        </Link>
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+          {project.category && <span style={{ fontSize: '10px', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, background: 'rgba(165,180,252,0.1)', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(165,180,252,0.2)' }}>{project.category}</span>}
+          {project.subcategory && <span style={{ fontSize: '10px', color: 'var(--clr-text-3)', background: 'rgba(255,255,255,0.06)', padding: '3px 10px', borderRadius: '20px' }}>{project.subcategory}</span>}
+          {project.projectType && <span style={{ fontSize: '10px', color: '#6ee7b7', background: 'rgba(110,231,183,0.1)', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(110,231,183,0.2)' }}>{project.projectType}</span>}
+        </div>
+        <h1 style={{ fontSize: 'clamp(22px, 2.8vw, 34px)', fontWeight: 800, margin: '0 0 6px', lineHeight: 1.2 }}>{project.title}</h1>
+        <p style={{ fontSize: '15px', color: 'var(--clr-text-3)', margin: 0, lineHeight: 1.6 }}>{project.shortDescription}</p>
+      </div>
 
-        {/* ===== LEFT COLUMN: Image gallery + action links ===== */}
-        <div style={{ position: 'sticky', top: '90px' }}>
-          {/* Main preview: show video if available, else image */}
-          <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: '#0d0e1a', marginBottom: '10px' }}>
-            {showVideo && youtubeId ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&loop=1&playlist=${youtubeId}&rel=0&modestbranding=1`}
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-              />
-            ) : activeImg ? (
-              <Image src={activeImg} alt={project.title} fill style={{ objectFit: 'cover' }} />
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--clr-text-3)' }}>No preview</div>
-            )}
+      {/* ── Main 2-Column Layout ── */}
+      <div className="project-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '28px', alignItems: 'start' }}>
+
+        {/* ═══════════════════════════════════════════
+            LEFT COLUMN (70%) — Preview + All Content
+            ═══════════════════════════════════════════ */}
+        <div className="project-left-col" style={{ minWidth: 0 }}>
+
+          {/* ── Main Image / Video Preview ── */}
+          <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0d0e1a', marginBottom: '12px', boxShadow: '0 16px 40px rgba(0,0,0,0.4)' }}>
+            <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative' }}>
+              {showVideo && youtubeId ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&loop=1&playlist=${youtubeId}&rel=0&modestbranding=1`}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              ) : activeImg ? (
+                <Image src={activeImg} alt={project.title} fill style={{ objectFit: 'cover' }} />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--clr-text-3)', fontSize: '14px' }}>No preview available</div>
+              )}
+            </div>
           </div>
 
-          {/* Thumbnail strip */}
+          {/* ── Thumbnail strip ── */}
           {allImages.length > 0 && (
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', overflowX: 'auto', paddingBottom: '4px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
               {youtubeId && (
-                <div
-                  onClick={() => setShowVideo(true)}
-                  style={{ width: '56px', height: '40px', flexShrink: 0, borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: showVideo ? '2px solid #ef4444' : '2px solid rgba(255,255,255,0.1)', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', transition: 'border 0.2s' }}
-                >
+                <div onClick={() => setShowVideo(true)} style={{ width: '80px', height: '50px', flexShrink: 0, borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: showVideo ? '2px solid #ef4444' : '2px solid rgba(255,255,255,0.1)', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', transition: 'border 0.2s' }}>
                   ▶️
                 </div>
               )}
               {allImages.map((src, i) => (
-                <div
-                  key={i}
-                  onClick={() => { setActiveImg(src); setShowVideo(false) }}
-                  style={{ width: '56px', height: '40px', flexShrink: 0, position: 'relative', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: (!showVideo && activeImg === src) ? '2px solid #6366f1' : '2px solid rgba(255,255,255,0.1)', transition: 'border 0.2s' }}
-                >
+                <div key={i} onClick={() => { setActiveImg(src); setShowVideo(false) }} style={{ width: '80px', height: '50px', flexShrink: 0, position: 'relative', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: (!showVideo && activeImg === src) ? '2px solid #6366f1' : '2px solid rgba(255,255,255,0.1)', transition: 'border 0.2s' }}>
                   <Image src={src} alt={`img-${i}`} fill style={{ objectFit: 'cover' }} />
                 </div>
               ))}
             </div>
           )}
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {project.demoUrl && (
-              <a href={project.demoUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', color: '#a5b4fc', textDecoration: 'none', fontSize: '13px', fontWeight: 600, transition: 'background 0.2s' }}>
-                🌐 Live Demo
-              </a>
-            )}
-            {project.youtubeUrl && (
-              <a href={project.youtubeUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', borderRadius: '10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5', textDecoration: 'none', fontSize: '13px', fontWeight: 600, transition: 'background 0.2s' }}>
-                📺 Watch Video
-              </a>
-            )}
-            {project.githubUrl && (
-              <a href={project.githubUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, transition: 'background 0.2s' }}>
-                🐙 GitHub (Request Access)
-              </a>
-            )}
-          </div>
-
-          {/* Rating */}
-          {project.reviewCount > 0 && (
-            <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '6px', color: '#fbbf24', fontSize: '13px' }}>
-              {'★'.repeat(Math.round(project.rating))}{'☆'.repeat(5 - Math.round(project.rating))}
-              <span style={{ color: 'var(--clr-text-3)' }}>({project.reviewCount})</span>
-            </div>
-          )}
-        </div>
-
-        {/* ===== MIDDLE COLUMN: Description, Features, Tech ===== */}
-        <div>
-          {/* Badges + Title */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
-            {project.category && <span style={{ fontSize: '11px', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, background: 'rgba(165,180,252,0.1)', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(165,180,252,0.2)' }}>{project.category}</span>}
-            {project.subcategory && <span style={{ fontSize: '11px', color: 'var(--clr-text-3)', background: 'rgba(255,255,255,0.06)', padding: '3px 10px', borderRadius: '20px' }}>{project.subcategory}</span>}
-            {project.projectType && <span style={{ fontSize: '11px', color: '#6ee7b7', background: 'rgba(110,231,183,0.1)', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(110,231,183,0.2)' }}>{project.projectType}</span>}
-          </div>
-          <h1 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 800, margin: '0 0 10px', lineHeight: 1.2 }}>{project.title}</h1>
-          <p style={{ fontSize: '15px', color: 'var(--clr-text-2)', lineHeight: 1.7, margin: '0 0 28px' }}>{project.shortDescription}</p>
-
-          {/* Main Description */}
-          <div className="glass-card" style={{ padding: '24px', marginBottom: '18px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px', color: 'var(--clr-primary-h)', display: 'flex', alignItems: 'center', gap: '8px' }}>📋 Main Description</h3>
-            <div style={{ color: 'var(--clr-text-2)', whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: '14px' }}>{project.description}</div>
-          </div>
-
-          {/* Features + Modules */}
-          {(project.features || project.modules) && (
-            <div className="glass-card" style={{ padding: '24px', marginBottom: '18px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px', color: 'var(--clr-primary-h)' }}>✨ Key Features & Modules</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                {project.features && (
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                    {project.features.split('\n').map((f, i) => f.trim() && (
-                      <li key={i} style={{ display: 'flex', gap: '8px', color: 'var(--clr-text-2)', fontSize: '13px' }}>
-                        <span style={{ color: '#6ee7b7', flexShrink: 0 }}>•</span> {f.replace(/^[•✓-]\s*/, '')}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {project.modules && (
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                    {project.modules.split('\n').map((m, i) => m.trim() && (
-                      <li key={i} style={{ display: 'flex', gap: '8px', color: 'var(--clr-text-2)', fontSize: '13px' }}>
-                        <span style={{ color: '#a5b4fc' }}>●</span> {m}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+          {/* ── Quick links ── */}
+          {(project.demoUrl || project.youtubeUrl) && (
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '28px', flexWrap: 'wrap' }}>
+              {project.demoUrl && (
+                <a href={project.demoUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.22)', color: '#a5b4fc', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+                  🔗 Live Demo
+                </a>
+              )}
+              {project.youtubeUrl && (
+                <a href={project.youtubeUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)', color: '#fca5a5', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+                  📺 Watch Video
+                </a>
+              )}
             </div>
           )}
 
-          {/* Technology Stack */}
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px', color: 'var(--clr-primary-h)' }}>🛠️ Technology Stack</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: techDetails.length ? '16px' : 0 }}>
-              {techBadges.map(t => (
-                <span key={t} style={{ padding: '5px 14px', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '999px', fontSize: '12px', color: '#c7d2fe', fontWeight: 600 }}>{t}</span>
-              ))}
-            </div>
-            {techDetails.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
-                {techDetails.map(x => (
-                  <div key={x.label}>
-                    <div style={{ fontSize: '10px', color: 'var(--clr-text-3)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{x.label}</div>
-                    <div style={{ fontWeight: 600, fontSize: '13px' }}>{x.val}</div>
-                  </div>
+          {/* ── Project Overview ── */}
+          <div style={{ marginBottom: '24px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--clr-text-1)', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>📄 Project Overview</h2>
+            <div style={{ color: 'var(--clr-text-2)', whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: '14px' }}>{project.description || project.shortDescription}</div>
+          </div>
+
+          {/* ── Technology Stack ── */}
+          {techBadges.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--clr-text-1)', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>🛠️ Technology Stack</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: techDetails.length ? '16px' : 0 }}>
+                {techBadges.map(t => (
+                  <span key={t} style={{ padding: '5px 14px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.22)', borderRadius: '999px', fontSize: '12px', color: '#c7d2fe', fontWeight: 600 }}>{t}</span>
                 ))}
               </div>
-            )}
-          </div>
+              {techDetails.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  {techDetails.map(x => (
+                    <div key={x.label}>
+                      <div style={{ fontSize: '10px', color: 'var(--clr-text-3)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>{x.label}</div>
+                      <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--clr-text-1)' }}>{x.val}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Core Features & Modules ── */}
+          {(project.features || project.modules) && (
+            <div style={{ marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--clr-text-1)', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>✨ Core Features & Modules</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: project.features && project.modules ? '1fr 1fr' : '1fr', gap: '20px' }}>
+                {project.features && (
+                  <div>
+                    {project.modules && <div style={{ fontSize: '11px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, marginBottom: '10px' }}>Features</div>}
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {project.features.split('\n').map((f, i) => f.trim() && (
+                        <li key={i} style={{ display: 'flex', gap: '8px', color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.5 }}>
+                          <span style={{ color: '#6ee7b7', flexShrink: 0, fontWeight: 700 }}>✓</span>
+                          {f.replace(/^[•✓✔\-]\s*/, '')}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {project.modules && (
+                  <div>
+                    {project.features && <div style={{ fontSize: '11px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, marginBottom: '10px' }}>Modules</div>}
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {project.modules.split('\n').map((m, i) => m.trim() && (
+                        <li key={i} style={{ display: 'flex', gap: '8px', color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.5 }}>
+                          <span style={{ color: '#a5b4fc', flexShrink: 0, fontWeight: 700 }}>◆</span>
+                          {m}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* ===== RIGHT COLUMN: Pricing & Action Card ===== */}
-        <div style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* ═══════════════════════════════════════════════
+            RIGHT COLUMN (30%) — Sticky Pricing Sidebar
+            ═══════════════════════════════════════════════ */}
+        <div className="project-right-col" style={{ position: 'sticky', top: '88px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ background: 'linear-gradient(160deg, rgba(14,12,32,0.98), rgba(8,6,20,0.98))', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '14px', padding: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+            {/* Price section */}
 
-          {/* Pricing Card */}
-          <div className="glass-card" style={{ padding: '24px', background: 'linear-gradient(135deg, rgba(10,10,26,0.95), rgba(14,12,32,0.95))', border: '1px solid rgba(99,102,241,0.25)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 700 }}>Pricing & Action Card</div>
+            <div style={{ marginBottom: '4px' }}>
+              {project.discountPercentage > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--clr-text-3)', textDecoration: 'line-through' }}>Rs. {project.originalPrice}</span>
+                  <span style={{ fontSize: '11px', background: 'rgba(110,231,183,0.15)', color: '#6ee7b7', padding: '1px 8px', borderRadius: '20px', fontWeight: 700 }}>{project.discountPercentage}% OFF</span>
+                </div>
+              )}
+              <div style={{ fontSize: '38px', fontWeight: 900, color: '#6ee7b7', lineHeight: 1, letterSpacing: '-1px' }}>Rs. {finalPrice}</div>
+            </div>
 
-            {/* Price */}
-            {project.discountPercentage > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--clr-text-3)', textDecoration: 'line-through' }}>Rs. {project.originalPrice}</span>
-                <span style={{ fontSize: '11px', background: 'rgba(110,231,183,0.15)', color: '#6ee7b7', padding: '2px 8px', borderRadius: '20px', fontWeight: 700 }}>-{project.discountPercentage}%</span>
+
+            {/* Countdown timer */}
+            {discountEndsAt && (
+              <div style={{ margin: '8px 0' }}>
+                <CountdownTimer endsAt={discountEndsAt} />
               </div>
             )}
-            <div style={{ fontSize: '42px', fontWeight: 900, color: '#6ee7b7', lineHeight: 1.1, marginBottom: '4px' }}>Rs. {finalPrice}</div>
 
-            {/* Countdown Timer */}
-            {discountEndsAt && <CountdownTimer endsAt={discountEndsAt} />}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '14px' }}>
+            {/* Checkout Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
               <button
                 onClick={() => setIsCheckoutOpen(true)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', width: '100%', transition: 'opacity 0.2s' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '11px',
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  width: '100%',
+                  transition: 'opacity 0.2s'
+                }}
               >
                 🛒 Buy Now
               </button>
@@ -373,94 +391,108 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
               <button
                 onClick={cartAdded ? undefined : handleAddToCart}
                 disabled={cartLoading}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '13px', background: cartAdded ? 'rgba(110,231,183,0.1)' : 'rgba(99,102,241,0.08)', border: `1px solid ${cartAdded ? 'rgba(110,231,183,0.3)' : 'rgba(99,102,241,0.25)'}`, borderRadius: '12px', color: cartAdded ? '#6ee7b7' : '#a5b4fc', fontSize: '14px', fontWeight: 600, cursor: cartAdded ? 'default' : 'pointer', width: '100%', transition: 'all 0.2s' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '10px',
+                  background: cartAdded ? 'rgba(110,231,183,0.08)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${cartAdded ? 'rgba(110,231,183,0.3)' : 'rgba(255,255,255,0.12)'}`,
+                  borderRadius: '8px',
+                  color: cartAdded ? '#6ee7b7' : 'var(--clr-text-2)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: cartAdded ? 'default' : 'pointer',
+                  width: '100%',
+                  transition: 'all 0.2s'
+                }}
               >
                 {cartLoading ? '⏳ Adding...' : cartAdded ? '✓ Added to Cart' : '🛍️ Add to Cart'}
               </button>
 
-              {buyUrl ? (
-                <a href={buyUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '11px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '12px', color: '#86efac', fontSize: '13px', fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s' }}>
+              {buyUrl && (
+                <a href={buyUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', color: '#86efac', fontSize: '13px', fontWeight: 600, textDecoration: 'none', transition: 'background 0.2s' }}>
                   💬 Chat with Seller
                 </a>
-              ) : null}
+              )}
             </div>
 
-            <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', textAlign: 'center', marginTop: '12px', lineHeight: 1.5 }}>
-              Secure direct checkout with payment verification.
+            <p style={{ fontSize: '10.5px', color: 'var(--clr-text-3)', textAlign: 'center', marginTop: '10px', lineHeight: 1.3 }}>
+              Secure checkout with payment verification.
             </p>
 
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '16px 0' }} />
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '16px 0' }} />
 
-            {/* Developer */}
-            <div style={{ marginBottom: '14px' }}>
-              <div style={{ fontSize: '10px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Developer</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: isAdmin ? 'rgba(6,182,212,0.2)' : 'rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
+            {/* Package Includes */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, marginBottom: '10px' }}>📦 Package Includes</div>
+              {[
+                { icon: '💻', label: 'Full Source Code' },
+                { icon: '🗄️', label: 'Database (.sql)' },
+                { icon: '📑', label: 'Project Report / Docs' },
+                { icon: '📧', label: 'Email Delivery' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '7px', fontSize: '12.5px', color: 'var(--clr-text-2)' }}>
+                  <span style={{ color: '#6ee7b7', fontWeight: 700, fontSize: '11px' }}>✓</span>
+                  {item.icon} {item.label}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '14px 0' }} />
+
+            {/* Developer Details */}
+
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>Developer</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: isAdmin ? 'rgba(6,182,212,0.2)' : 'rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
                   {isAdmin ? '🛡️' : '👨‍💻'}
                 </div>
                 <div>
                   {project.sellerId ? (
-                    <Link href={`/projects/developer/${project.user?.id}`} style={{ textDecoration: 'none', fontWeight: 700, fontSize: '13px', color: '#fff' }}>{developerName}</Link>
+                    <Link href={`/projects/developer/${project.user?.id}`} style={{ textDecoration: 'none', fontWeight: 700, fontSize: '12px', color: '#fff' }}>{developerName}</Link>
                   ) : (
-                    <div style={{ fontWeight: 700, fontSize: '13px' }}>{developerName}</div>
+                    <div style={{ fontWeight: 700, fontSize: '12px' }}>{developerName}</div>
                   )}
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, background: isAdmin ? 'linear-gradient(90deg, rgba(6,182,212,0.25), rgba(99,102,241,0.25))' : isVerified ? 'linear-gradient(90deg, rgba(110,231,183,0.2), rgba(99,102,241,0.2))' : 'rgba(255,255,255,0.06)', color: isAdmin ? '#67e8f9' : isVerified ? '#6ee7b7' : 'var(--clr-text-3)', padding: '2px 8px', borderRadius: '20px', marginTop: '3px', border: `1px solid ${isAdmin ? 'rgba(6,182,212,0.3)' : isVerified ? 'rgba(110,231,183,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
-                    {isAdmin ? '🛡️ Platform Publisher' : isVerified ? '✓ Verified Seller' : 'Dev Seller'}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 700, background: isAdmin ? 'linear-gradient(90deg, rgba(6,182,212,0.25), rgba(99,102,241,0.25))' : isVerified ? 'linear-gradient(90deg, rgba(110,231,183,0.2), rgba(99,102,241,0.2))' : 'rgba(255,255,255,0.06)', color: isAdmin ? '#67e8f9' : isVerified ? '#6ee7b7' : 'var(--clr-text-3)', padding: '1px 5px', borderRadius: '3px', marginTop: '1px', border: `1px solid ${isAdmin ? 'rgba(6,182,212,0.3)' : isVerified ? 'rgba(110,231,183,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
+                    {isAdmin ? '🛡️ Publisher' : isVerified ? '✓ Verified' : 'Seller'}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* License / Sales Type */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+            {/* License details */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '11.5px' }}>
               {[{ l: 'License', v: project.license || 'Standard' }, { l: 'Sales Type', v: project.salesType || 'Non-Exclusive' }].map(row => (
                 <div key={row.l} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: 'var(--clr-text-3)' }}>{row.l}</span>
-                  <span style={{ fontWeight: 600 }}>{row.v}</span>
+                  <span style={{ fontWeight: 600, color: 'var(--clr-text-2)' }}>{row.v}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Sponsored Ad area */}
-          <div className="glass-card" style={{ padding: '20px', textAlign: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
-              <span style={{ fontSize: '10px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Sponsored Advertisement</span>
-              <span style={{ fontSize: '11px', color: 'var(--clr-text-3)', cursor: 'default' }}>ⓘ</span>
+          {/* Sponsored Ad */}
+          <div className="glass-card" style={{ padding: '12px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center' }}>
+              <span style={{ fontSize: '8.5px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Sponsored Advertisement</span>
+              <span style={{ fontSize: '10px', color: 'var(--clr-text-3)', cursor: 'default' }}>ⓘ</span>
             </div>
             <Link href="/pricing" style={{ textDecoration: 'none', display: 'block' }}>
-              <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(6,182,212,0.08))', border: '1px dashed rgba(99,102,241,0.2)', borderRadius: '10px', padding: '20px 10px', marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>300 × 250 Ad Area</div>
+              <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(6,182,212,0.08))', border: '1px dashed rgba(99,102,241,0.2)', borderRadius: '6px', padding: '18px 10px', marginBottom: '8px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--clr-text-3)' }}>300 × 250 Ad Area</div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #6366f1, #06b6d4)', borderRadius: '8px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 700, fontSize: '13px', color: '#fff' }}>TU Notes Hub Premium</span>
-                <span style={{ background: '#fff', color: '#6366f1', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700 }}>Upgrade Now</span>
+              <div style={{ background: 'linear-gradient(135deg, #6366f1, #06b6d4)', borderRadius: '6px', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, fontSize: '11px', color: '#fff' }}>TU Notes Hub Premium</span>
+                <span style={{ background: '#fff', color: '#6366f1', borderRadius: '4px', padding: '2px 6px', fontSize: '9.5px', fontWeight: 700 }}>Upgrade Now</span>
               </div>
             </Link>
           </div>
-
-          {/* Trust badge */}
-          <div style={{ display: 'flex', gap: '8px', padding: '12px', background: 'rgba(110,231,183,0.05)', borderRadius: '10px', border: '1px solid rgba(110,231,183,0.15)', fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5 }}>
-            🔒 <span>All projects are <strong>admin-verified</strong> before listing. Source code delivered after confirmed payment.</span>
-          </div>
         </div>
-      </div>
 
-      {/* ===== MOBILE LAYOUT: show action card below on small screens ===== */}
-      <style>{`
-        @media (max-width: 1024px) {
-          .project-detail-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .project-left-col { order: 1; }
-          .project-mid-col { order: 3; }
-          .project-right-col { position: static !important; order: 2; }
-        }
-        @media (max-width: 768px) {
-          .project-features-grid { grid-template-columns: 1fr !important; }
-          .project-tech-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-      `}</style>
+      </div>
 
       {/* Checkout Modal */}
       <AnimatePresence>
