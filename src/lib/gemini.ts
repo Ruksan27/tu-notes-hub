@@ -78,8 +78,38 @@ export async function extractTextFromPdfUrl(url: string): Promise<string> {
   if (url.toLowerCase().includes('.png')) mimeType = 'image/png'
   else if (url.toLowerCase().includes('.jpg') || url.toLowerCase().includes('.jpeg')) mimeType = 'image/jpeg'
 
-  const prompt = 'Extract all the exam questions, options, headings, marks, and text from this paper exactly as written. Output only the extracted text of the exam paper.'
-  return callGemini(prompt, undefined, base64, mimeType)
+  const prompt = `
+Extract the exam paper content exactly as written and return it STRICTLY as a valid JSON object with the following structure (no markdown blocks, no extra text):
+{
+  "university": "TRIBHUVAN UNIVERSITY",
+  "faculty": "Faculty of Humanities & Social Sciences",
+  "office": "OFFICE OF THE DEAN",
+  "year": "2020",
+  "program": "Bachelor in Computer Application",
+  "courseTitle": "Computer Graphics and Animation",
+  "codeNo": "CACS 305",
+  "semester": "V",
+  "fullMarks": "60",
+  "passMarks": "24",
+  "time": "3 hours",
+  "instruction": "Candidates are required to answer the questions in their own words as far as possible.",
+  "groups": [
+    {
+      "groupName": "Group B",
+      "marks": "[6 x 5 = 30]",
+      "instruction": "Attempt any SIX questions.",
+      "questions": [
+        { "number": 2, "text": "What is computer graphics? Explain different application areas of computer graphics." }
+      ]
+    }
+  ]
+}
+If any field is missing, use an empty string or omit it, but keep the structure intact. Ensure math symbols remain intact (e.g. $A(2,3)$ or $$x^2$$).
+`;
+  const rawResponse = await callGemini(prompt, undefined, base64, mimeType)
+  
+  // Clean up if gemini returned markdown code blocks
+  return rawResponse.replace(/```json|```/g, '').trim()
 }
 
 // Analyze past papers and generate comparison report
