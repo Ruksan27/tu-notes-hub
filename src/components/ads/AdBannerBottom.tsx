@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 export default function AdBannerBottom() {
   const [visible, setVisible] = useState(false)
+  const [priceText, setPriceText] = useState('Rs. 99')
 
   useEffect(() => {
     // Check if user is a paid member — hide the ad for SEMESTER_PASS or ELITE_AI users
@@ -21,6 +22,19 @@ export default function AdBannerBottom() {
     } catch {}
     // Free user — show the ad
     setVisible(true)
+
+    // Fetch dynamic pricing
+    fetch('/api/admin/pricing')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.plans) {
+          const semPlan = data.plans.find((p: any) => p.packageType === 'SEMESTER_PASS')
+          if (semPlan && semPlan.price) {
+            setPriceText(semPlan.price.trim())
+          }
+        }
+      })
+      .catch(() => {})
   }, [])
 
   if (!visible) return null
@@ -56,7 +70,7 @@ export default function AdBannerBottom() {
             transition: 'background 0.2s',
           }}>
             <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0 }}>
-              🎯 <strong style={{ color: 'var(--clr-primary-h)' }}>TU Notes Hub Premium</strong> — Ad‑free + AI Exam Predictions. Upgrade from Rs. 99 only!
+              🎯 <strong style={{ color: 'var(--clr-primary-h)' }}>TU Notes Hub Premium</strong> — Ad‑free + AI Exam Predictions. Upgrade from {priceText} only!
             </p>
           </div>
         </Link>

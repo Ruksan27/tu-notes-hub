@@ -16,6 +16,9 @@ export default async function HomePage() {
   let faculties: Array<{ id: string; name: string; slug: string; icon: string | null }> = []
   let stats = { notes: 0, students: 0, faculties: 0, papers: 0 }
 
+  let semesterPlanPrice = "Rs. 99"
+  let isOffer = false
+
   try {
     const [allFacs, notesCount, usersCount, facCount, papersCount] = await Promise.all([
       prisma.faculty.findMany({
@@ -37,17 +40,32 @@ export default async function HomePage() {
     }
 
     faculties = allFacs
+      .map(f => ({ ...f, icon: f.icon || '🎓' }))
       .sort((a, b) => {
         const pa = PRIORITY_GROUPS[a.id.toLowerCase()] ?? 99
         const pb = PRIORITY_GROUPS[b.id.toLowerCase()] ?? 99
         if (pa !== pb) return pa - pb
-        return a.id.localeCompare(b.id)
+        return a.name.localeCompare(b.name)
       })
       .slice(0, 8)
 
     stats = { notes: notesCount, students: usersCount, faculties: facCount, papers: papersCount }
-  } catch {
+  } catch (error) {
     faculties = []
+  }
+
+  try {
+    const semPlan = await prisma.pricingPlan.findFirst({ where: { packageType: 'SEMESTER_PASS' } })
+    if (semPlan && semPlan.price) {
+      semesterPlanPrice = semPlan.price
+      if (semPlan.originalPrice && semPlan.discountEndsAt && new Date(semPlan.discountEndsAt) > new Date()) {
+        isOffer = true
+      } else if (semPlan.originalPrice && !semPlan.discountEndsAt) {
+        isOffer = true
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load pricing for homepage:", err)
   }
 
   const dynamicStats = [
@@ -189,7 +207,7 @@ export default async function HomePage() {
           </div>
           <div className="text-center" style={{ marginTop: '48px' }}>
             <Link href="/pricing" className="btn btn-primary btn-lg">
-              🚀 Upgrade Now — Starting Rs. 99 only
+              🚀 Upgrade Now — {isOffer ? 'Offer:' : 'Starting'} {semesterPlanPrice} only
             </Link>
           </div>
         </div>

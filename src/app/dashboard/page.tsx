@@ -229,9 +229,6 @@ export default function DashboardPage() {
                 ⚙️ Admin
               </button>
             )}
-            <button className="btn btn-outline" style={{ fontSize: '12px', padding: '6px 14px' }} onClick={() => router.push('/settings')}>
-              ⚙️ Settings
-            </button>
           </div>
         </header>
 
