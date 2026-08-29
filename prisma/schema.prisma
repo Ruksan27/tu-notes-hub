@@ -348,3 +348,14 @@ model CartItem {
 
   @@unique([cartId, projectItemId])
 }
+
+model Testimonial {
+  id        String   @id @default(uuid())
+  name      String
+  role      String?
+  avatar    String?
+  content   String   @db.Text
+  rating    Int      @default(5)
+  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt DateTime @default(now())
+}

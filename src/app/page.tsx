@@ -2,6 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import { AnimatedText } from '@/components/AnimatedText'
+import { Marquee } from '@/components/Marquee'
+import { TestimonialForm } from '@/components/TestimonialForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,9 +20,10 @@ export default async function HomePage() {
 
   let semesterPlanPrice = "Rs. 99"
   let isOffer = false
+  let testimonials: any[] = []
 
   try {
-    const [allFacs, notesCount, usersCount, facCount, papersCount] = await Promise.all([
+    const [allFacs, notesCount, usersCount, facCount, papersCount, approvedTestimonials] = await Promise.all([
       prisma.faculty.findMany({
         where: { visible: true },
         select: { id: true, name: true, slug: true, icon: true },
@@ -28,7 +31,8 @@ export default async function HomePage() {
       prisma.note.count(),
       prisma.user.count(),
       prisma.faculty.count({ where: { visible: true } }),
-      prisma.pastPaper.count()
+      prisma.pastPaper.count(),
+      prisma.testimonial.findMany({ where: { status: 'APPROVED' }, take: 15, orderBy: { createdAt: 'desc' } })
     ])
 
     const PRIORITY_GROUPS: Record<string, number> = {
@@ -50,6 +54,7 @@ export default async function HomePage() {
       .slice(0, 8)
 
     stats = { notes: notesCount, students: usersCount, faculties: facCount, papers: papersCount }
+    testimonials = approvedTestimonials
   } catch (error) {
     faculties = []
   }
@@ -121,6 +126,7 @@ export default async function HomePage() {
         </div>
       </section>
  
+
       {/* ── Stats ─────────────────────────────────── */}
       <section style={{ padding: '40px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '40px' }}>
@@ -210,6 +216,54 @@ export default async function HomePage() {
               🚀 Upgrade Now — {isOffer ? 'Offer:' : 'Starting'} {semesterPlanPrice} only
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials (Marquee) ────────────────── */}
+      <section className="section" style={{ overflow: 'hidden' }}>
+        <div className="container" style={{ marginBottom: '40px' }}>
+          <div className="text-center">
+            <h2 style={{ fontSize: 'clamp(28px,4vw,42px)', marginBottom: '12px' }}>
+              Loved by <span className="text-gradient">Students</span>
+            </h2>
+            <p style={{ color: 'var(--clr-text-2)' }}>See what our users are saying about TU Notes Hub.</p>
+          </div>
+        </div>
+
+        {/* First Marquee Row */}
+        {testimonials.length > 0 ? (
+          <div style={{ paddingBottom: '60px' }}>
+            <Marquee speed="normal" pauseOnHover={true} className="mb-4">
+              {testimonials.map((t) => (
+                <div key={t.id} className="glass-card" style={{ width: '320px', padding: '24px', flexShrink: 0, borderRadius: '16px', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '16px' }}>
+                      {t.name[0]?.toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '15px' }}>{t.name}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>{t.role || 'TU Student'}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#fbbf24', marginBottom: '12px' }}>
+                    {'★'.repeat(t.rating)}
+                  </div>
+                  <p style={{ fontSize: '14px', color: 'var(--clr-text-2)', lineHeight: 1.6, fontStyle: 'italic' }}>
+                    "{t.content}"
+                  </p>
+                </div>
+              ))}
+            </Marquee>
+          </div>
+        ) : (
+          <div className="text-center" style={{ color: 'var(--clr-text-3)', padding: '40px' }}>
+            Be the first to share your experience!
+          </div>
+        )}
+
+        {/* Submit Review Button */}
+        <div style={{ textAlign: 'center' }}>
+          <TestimonialForm />
         </div>
       </section>
 
