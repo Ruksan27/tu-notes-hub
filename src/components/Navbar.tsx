@@ -127,8 +127,8 @@ export default function Navbar() {
 
           {/* ── Desktop Auth ── */}
           <div className="nav-auth">
-            {/* Cart icon — only when logged in */}
-            {user && (
+            {/* Cart icon — only when logged in, has items, and on projects or cart page */}
+            {user && cartCount > 0 && (pathname.startsWith('/projects') || pathname === '/cart') && (
               <Link
                 href="/cart"
                 title="My Cart"
@@ -141,18 +141,16 @@ export default function Navbar() {
                 }}
               >
                 🛒
-                {cartCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: '-4px', right: '-4px',
-                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                    color: '#fff', fontSize: '9px', fontWeight: 800,
-                    width: '18px', height: '18px', borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: '2px solid var(--clr-bg-900)'
-                  }}>
-                    {cartCount > 9 ? '9+' : cartCount}
-                  </span>
-                )}
+                <span style={{
+                  position: 'absolute', top: '-4px', right: '-4px',
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  color: '#fff', fontSize: '9px', fontWeight: 800,
+                  width: '18px', height: '18px', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '2px solid var(--clr-bg-900)'
+                }}>
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
               </Link>
             )}
             {user ? (
@@ -289,7 +287,9 @@ export default function Navbar() {
               {user ? (
                 <>
                   <Link href="/dashboard" className="nav-mobile-link">📊 My Dashboard</Link>
-                  <Link href="/cart" className="nav-mobile-link">🛒 My Cart {cartCount > 0 && `(${cartCount})`}</Link>
+                  {user && cartCount > 0 && (pathname.startsWith('/projects') || pathname === '/cart') && (
+                    <Link href="/cart" className="nav-mobile-link">🛒 My Cart ({cartCount})</Link>
+                  )}
                   {user.role === 'ADMIN' && (
                     <Link href="/admin" className="nav-mobile-link">⚙️ Admin Panel</Link>
                   )}
