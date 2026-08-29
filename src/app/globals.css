@@ -379,7 +379,10 @@ img { max-width: 100%; display: block; }
 }
 
 /* ── Print block (Anti-screenshot) ───────────── */
-@media print { body { display: none !important; } }
+@media print { 
+  body:not(.allow-print) { display: none !important; } 
+  .allow-print .admin-sidebar-nav, .allow-print .admin-top-bar, .allow-print .hide-on-print { display: none !important; }
+}
 
 /* ── Responsive ──────────────────────────────── */
 

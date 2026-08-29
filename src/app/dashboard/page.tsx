@@ -570,26 +570,48 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
     const element = document.getElementById('ai-report-container')
     if (!element) return
 
-    if (!(window as any).html2pdf) {
-      toast.error('PDF library is loading, please try again in a moment.')
-      return
-    }
-    toast.info('Generating PDF...')
-    const opt = {
-      margin:       10,
-      filename:     `${report.subject.replace(/[^a-zA-Z0-9]/g, '_')}_AI_Report.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#080a12' },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }
-    ;(window as any).html2pdf().from(element).set(opt).save().then(() => {
-       toast.success('PDF Saved Successfully! 🎉')
+    toast.info('Loading PDF generator...')
+
+    const loadScript = () => new Promise((resolve, reject) => {
+      if ((window as any).html2pdf) return resolve(true)
+      const script = document.createElement('script')
+      // Using unpkg which is more reliable
+      script.src = 'https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js'
+      script.crossOrigin = 'anonymous'
+      script.onload = resolve
+      script.onerror = (e) => {
+        console.error('Script load error:', e)
+        reject(new Error('Failed to load script'))
+      }
+      document.head.appendChild(script)
     })
+
+    try {
+      await loadScript()
+      
+      const opt = {
+        margin:       10,
+        filename:     `${report.subject.replace(/[^a-zA-Z0-9]/g, '_')}_AI_Report.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#080a12' },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }
+      
+      // Hide button temporarily before generating PDF
+      const btn = element.querySelector('.hide-on-print') as HTMLElement
+      if (btn) btn.style.display = 'none'
+
+      ;(window as any).html2pdf().from(element).set(opt).save().then(() => {
+         if (btn) btn.style.display = ''
+         toast.success('PDF Saved Successfully! 🎉')
+      })
+    } catch (e: any) {
+      toast.error('Failed to generate PDF: ' + (e.message || 'Unknown error'))
+    }
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <Script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" strategy="lazyOnload" />
       <div className="glass-card" style={{ padding: '32px' }}>
         <h3 className="font-bold text-xl mb-2">Predict Exam Pattern</h3>
         <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '24px' }}>
@@ -650,7 +672,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" id="ai-report-container" style={{ padding: '40px' }}>
           <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
             <h3 className="text-2xl font-bold">📊 {report.subject} — AI Report</h3>
-            {isElite && <button className="btn btn-outline" onClick={downloadPDF} data-html2canvas-ignore="true">💾 Save as PDF</button>}
+            {isElite && <button className="btn btn-outline hide-on-print" onClick={downloadPDF}>💾 Save as PDF</button>}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '36px' }}>
             {report.topicAnalysis?.map((topic: any, idx: number) => {
