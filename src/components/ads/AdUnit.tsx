@@ -39,8 +39,8 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
       case 'banner':
         return {
           width: '100%',
-          minHeight: '90px',
-          maxHeight: '120px',
+          minHeight: '120px',
+          maxHeight: '160px',
           background: 'rgba(255, 255, 255, 0.02)',
           border: '1px dashed rgba(6, 182, 212, 0.25)',
           borderRadius: '12px',
@@ -56,7 +56,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
       case 'sidebar':
         return {
           width: '100%',
-          minHeight: '300px',
+          minHeight: '420px',
           height: '100%',
           background: 'rgba(255, 255, 255, 0.02)',
           border: '1px dashed rgba(99, 102, 241, 0.25)',
@@ -74,7 +74,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
       default:
         return {
           width: '100%',
-          minHeight: '250px',
+          minHeight: '320px',
           background: 'rgba(255, 255, 255, 0.02)',
           border: '1px dashed rgba(6, 182, 212, 0.25)',
           borderRadius: '12px',
@@ -149,24 +149,25 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
           )}
 
           {type === 'sidebar' && (
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '48px', display: 'block', marginBottom: '12px' }}>💡</span>
-              <span style={{ fontSize: '10px', background: 'var(--clr-primary-h)', color: '#fff', padding: '2px 6px', borderRadius: '4px', marginBottom: '8px', display: 'inline-block' }}>[ Google AdSense Slot ]</span>
-              <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-accent)', marginBottom: '8px' }}>
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <span style={{ fontSize: '60px', display: 'block', marginBottom: '14px' }}>💡</span>
+              <span style={{ fontSize: '10px', background: 'var(--clr-primary-h)', color: '#fff', padding: '2px 8px', borderRadius: '4px', marginBottom: '10px', display: 'inline-block' }}>[ Google AdSense Slot ]</span>
+              <h4 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--clr-accent)', marginBottom: '10px' }}>
                 TU Notes Hub
               </h4>
-              <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+              <p style={{ fontSize: '13px', color: 'var(--clr-text-2)', lineHeight: 1.6, margin: '0 0 20px 0' }}>
                 Access the best lecture notes, cheatsheets, and question banks for BCA, CSIT, and BBS.
               </p>
               <div
                 style={{
                   display: 'inline-block',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
                   background: 'var(--grad-brand)',
                   color: '#fff',
-                  fontSize: '11px',
+                  fontSize: '13px',
                   fontWeight: 700,
+                  boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
                 }}
               >
                 Learn More
@@ -175,16 +176,16 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
           )}
 
           {type === 'inline' && (
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>📱</span>
-              <span style={{ fontSize: '10px', background: 'var(--clr-primary-h)', color: '#fff', padding: '2px 6px', borderRadius: '4px', marginBottom: '8px', display: 'inline-block' }}>[ Google AdSense Slot ]</span>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '4px' }}>
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <span style={{ fontSize: '44px', display: 'block', marginBottom: '12px' }}>📱</span>
+              <span style={{ fontSize: '10px', background: 'var(--clr-primary-h)', color: '#fff', padding: '2px 8px', borderRadius: '4px', marginBottom: '10px', display: 'inline-block' }}>[ Google AdSense Slot ]</span>
+              <h4 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
                 Join our Telegram Group
               </h4>
-              <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', margin: '0 0 12px 0' }}>
+              <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', margin: '0 0 16px 0', lineHeight: 1.5 }}>
                 Get instant notifications on TU results, schedules, and exam updates.
               </p>
-              <span style={{ fontSize: '11px', color: 'var(--clr-primary-h)', fontWeight: 600 }}>
+              <span style={{ fontSize: '13px', color: 'var(--clr-primary-h)', fontWeight: 700, border: '1px solid var(--clr-primary-h)', padding: '8px 18px', borderRadius: '6px' }}>
                 Join Group →
               </span>
             </div>
