@@ -13,7 +13,11 @@ export default function AdminPricingTab() {
     try {
       const res = await fetch('/api/admin/pricing')
       const data = await res.json()
-      setPlans(data.plans || [])
+      const sortedPlans = (data.plans || []).map((p: any) => ({
+        ...p,
+        features: p.features ? [...p.features].sort((a: any, b: any) => Number(b.avail) - Number(a.avail)) : []
+      }))
+      setPlans(sortedPlans)
     } catch (e) {
       toast.error('Failed to load pricing plans')
     } finally {
@@ -29,10 +33,14 @@ export default function AdminPricingTab() {
     e.preventDefault()
     setSaving(true)
     try {
+      const planToSave = {
+        ...editPlan,
+        features: [...editPlan.features].sort((a: any, b: any) => Number(b.avail) - Number(a.avail))
+      }
       const res = await fetch('/api/admin/pricing', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editPlan)
+        body: JSON.stringify(planToSave)
       })
       if (res.ok) {
         toast.success('Pricing plan updated!')

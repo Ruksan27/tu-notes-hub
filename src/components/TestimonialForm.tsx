@@ -26,7 +26,7 @@ export function TestimonialForm() {
       
       if (!res.ok) throw new Error('Submission failed')
       
-      toast.success('Thank you! Your review has been submitted for approval.')
+      toast.success('Thank you! Your review has been received. It may take some time to appear on the site.')
       setIsOpen(false)
       setName('')
       setRole('')

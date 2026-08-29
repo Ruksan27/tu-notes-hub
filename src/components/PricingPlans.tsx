@@ -135,7 +135,8 @@ export default function PricingPlans() {
         if (data.plans) {
           setPlans(data.plans.map((p: any) => ({
             ...p,
-            id: p.packageType // Map packageType to id to maintain existing logic
+            id: p.packageType, // Map packageType to id to maintain existing logic
+            features: p.features ? [...p.features].sort((a: any, b: any) => Number(b.avail) - Number(a.avail)) : []
           })))
         }
       })

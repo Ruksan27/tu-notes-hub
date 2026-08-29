@@ -35,7 +35,7 @@ interface ProjectOrder {
 }
 
 interface Props {
-  externalSubTab?: 'ITEMS' | 'ORDERS' | 'CARTS' | 'TESTIMONIALS'
+  externalSubTab?: 'ITEMS' | 'ORDERS' | 'CARTS'
 }
 
 const EMPTY_FORM = {
@@ -52,13 +52,11 @@ const EMPTY_FORM = {
 }
 
 export default function AdminProjectsTab({ externalSubTab }: Props) {
-  const [activeSubTab, setActiveSubTab] = useState<'ITEMS' | 'ORDERS' | 'CARTS' | 'TESTIMONIALS'>(externalSubTab ?? 'ITEMS')
+  const [activeSubTab, setActiveSubTab] = useState<'ITEMS' | 'ORDERS' | 'CARTS'>(externalSubTab ?? 'ITEMS')
   const [projects, setProjects] = useState<ProjectItem[]>([])
   const [orders, setOrders] = useState<ProjectOrder[]>([])
   const [carts, setCarts] = useState<any[]>([])
-  const [testimonials, setTestimonials] = useState<any[]>([])
   const [cartsLoading, setCartsLoading] = useState(false)
-  const [testsLoading, setTestsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null)
@@ -87,12 +85,6 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
       fetch('/api/admin/carts').then(r => r.json()).then(d => {
         setCarts(d.carts || [])
       }).catch(() => {}).finally(() => setCartsLoading(false))
-    }
-    if (activeSubTab === 'TESTIMONIALS') {
-      setTestsLoading(true)
-      fetch('/api/admin/testimonials').then(r => r.json()).then(d => {
-        setTestimonials(d.testimonials || [])
-      }).catch(() => {}).finally(() => setTestsLoading(false))
     }
   }, [activeSubTab])
 
@@ -295,35 +287,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
     pct > 0 ? Math.round(orig * (1 - pct / 100)) : orig
   const saved = (orig: number, pct: number) => Math.round(orig * pct / 100)
 
-  async function updateTestimonialStatus(id: string, status: string) {
-    try {
-      const res = await fetch('/api/admin/testimonials', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status })
-      })
-      if (!res.ok) throw new Error('Update failed')
-      setTestimonials(prev => prev.map(t => t.id === id ? { ...t, status } : t))
-      toast.success(`Testimonial ${status}`)
-    } catch {
-      toast.error('Failed to update testimonial')
-    }
-  }
-
-  async function deleteTestimonial(id: string) {
-    if (!confirm('Are you sure you want to delete this testimonial?')) return
-    try {
-      const res = await fetch(`/api/admin/testimonials?id=${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Delete failed')
-      setTestimonials(prev => prev.filter(t => t.id !== id))
-      toast.success('Testimonial deleted')
-    } catch {
-      toast.error('Failed to delete testimonial')
-    }
-  }
-
   const pendingOrders = orders.filter(o => o.status === 'PENDING').length
-  const pendingTests = testimonials.filter(t => t.status === 'PENDING').length
 
   if (loading) {
     return (
@@ -372,7 +336,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
 
       {/* ── Sub-tab switcher ── */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0' }}>
-        {(['ITEMS', 'ORDERS', 'CARTS', 'TESTIMONIALS'] as const).map(t => (
+        {(['ITEMS', 'ORDERS', 'CARTS'] as const).map(t => (
           <button
             key={t}
             onClick={() => setActiveSubTab(t)}
@@ -386,15 +350,10 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
               position: 'relative'
             }}
           >
-            {t === 'ITEMS' ? '📦 Manage Projects' : t === 'ORDERS' ? '🛒 Orders & Inquiries' : t === 'CARTS' ? '🛍️ Cart Analytics' : '💬 Testimonials'}
+            {t === 'ITEMS' ? '📦 Manage Projects' : t === 'ORDERS' ? '🛒 Orders & Inquiries' : '🛍️ Cart Analytics'}
             {t === 'ORDERS' && pendingOrders > 0 && (
               <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#ef4444', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', fontWeight: 800 }}>
                 {pendingOrders}
-              </span>
-            )}
-            {t === 'TESTIMONIALS' && pendingTests > 0 && (
-              <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#ef4444', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', fontWeight: 800 }}>
-                {pendingTests}
               </span>
             )}
           </button>
@@ -781,68 +740,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
             )}
           </motion.div>
         )}
-        {/* ── TESTIMONIALS TAB ── */}
-        {activeSubTab === 'TESTIMONIALS' && (
-          <motion.div key="testimonials" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>💬 Testimonials</h3>
-                <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Approve testimonials to show them on the homepage marquee.</p>
-              </div>
-            </div>
 
-            {testsLoading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><div className="spinner" /></div>
-            ) : testimonials.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: '32px', marginBottom: '12px' }}>💬</div>
-                <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No Testimonials Found</h3>
-                <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Users haven't submitted any testimonials yet.</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {testimonials.map((t: any) => (
-                  <div key={t.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '16px' }}>
-                          {t.name[0]?.toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{t.name}</div>
-                          <div style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>{t.role || 'Student'} • {'⭐'.repeat(t.rating)}</div>
-                        </div>
-                      </div>
-                      <span className={`badge ${t.status === 'APPROVED' ? 'badge-success' : t.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'}`}>
-                        {t.status}
-                      </span>
-                    </div>
-                    
-                    <p style={{ fontSize: '14px', color: 'var(--clr-text-2)', lineHeight: 1.6, marginBottom: '16px', fontStyle: 'italic' }}>
-                      "{t.content}"
-                    </p>
-                    
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
-                      {t.status !== 'APPROVED' && (
-                        <button onClick={() => updateTestimonialStatus(t.id, 'APPROVED')} className="btn btn-sm" style={{ background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>
-                          ✅ Approve
-                        </button>
-                      )}
-                      {t.status !== 'REJECTED' && (
-                        <button onClick={() => updateTestimonialStatus(t.id, 'REJECTED')} className="btn btn-sm" style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}>
-                          ❌ Reject
-                        </button>
-                      )}
-                      <button onClick={() => deleteTestimonial(t.id)} className="btn btn-sm btn-danger">
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
       </AnimatePresence>
 
       {/* ──────────────────────────────

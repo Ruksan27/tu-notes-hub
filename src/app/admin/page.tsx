@@ -2095,6 +2095,7 @@ function StatsTab() {
 
 /* ── Site Settings Tab ── */
 function SiteSettingsTab() {
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'TESTIMONIALS'>('GENERAL')
   const [whatsappLink, setWhatsappLink] = useState('')
   const [facebookLink, setFacebookLink] = useState('')
   const [tiktokLink, setTiktokLink] = useState('')
@@ -2105,6 +2106,45 @@ function SiteSettingsTab() {
   const [paymentQrFile, setPaymentQrFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  const [testimonials, setTestimonials] = useState<any[]>([])
+  const [testsLoading, setTestsLoading] = useState(false)
+
+  useEffect(() => {
+    if (activeTab === 'TESTIMONIALS') {
+      setTestsLoading(true)
+      fetch('/api/admin/testimonials').then(r => r.json()).then(d => {
+        setTestimonials(d.testimonials || [])
+      }).catch(() => {}).finally(() => setTestsLoading(false))
+    }
+  }, [activeTab])
+
+  async function updateTestimonialStatus(id: string, status: string) {
+    try {
+      const res = await fetch('/api/admin/testimonials', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      })
+      if (!res.ok) throw new Error('Update failed')
+      setTestimonials(prev => prev.map(t => t.id === id ? { ...t, status } : t))
+      toast.success(`Testimonial ${status}`)
+    } catch {
+      toast.error('Failed to update testimonial')
+    }
+  }
+
+  async function deleteTestimonial(id: string) {
+    if (!confirm('Are you sure you want to delete this testimonial?')) return
+    try {
+      const res = await fetch(`/api/admin/testimonials?id=${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      setTestimonials(prev => prev.filter(t => t.id !== id))
+      toast.success('Testimonial deleted')
+    } catch {
+      toast.error('Failed to delete testimonial')
+    }
+  }
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -2167,9 +2207,23 @@ function SiteSettingsTab() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <h2 className="text-3xl font-bold mb-2">⚙️ Site Settings</h2>
-      <p style={{ color: 'var(--clr-text-2)', marginBottom: '32px' }}>Manage platform-wide settings.</p>
+      <p style={{ color: 'var(--clr-text-2)', marginBottom: '32px' }}>Manage platform-wide settings and content.</p>
 
-      <div className="glass-card" style={{ padding: '36px', maxWidth: '600px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0' }}>
+        {(['GENERAL', 'TESTIMONIALS'] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => setActiveTab(t)}
+            className={`btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
+            style={{ borderRadius: '8px', padding: '10px 20px', fontSize: '13px', minWidth: '160px' }}
+          >
+            {t === 'GENERAL' ? '⚙️ General Settings' : '💬 Testimonials'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'GENERAL' && (
+        <div className="glass-card" style={{ padding: '36px', maxWidth: '600px' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
             <div className="spinner" style={{ width: '32px', height: '32px' }} />
@@ -2308,7 +2362,70 @@ function SiteSettingsTab() {
             </div>
           </form>
         )}
-      </div>
+        </div>
+      )}
+
+      {activeTab === 'TESTIMONIALS' && (
+        <div className="glass-card" style={{ padding: '36px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>💬 Testimonials Management</h3>
+              <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Approve testimonials to show them on the homepage marquee.</p>
+            </div>
+          </div>
+
+          {testsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><div className="spinner" /></div>
+          ) : testimonials.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>💬</div>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No Testimonials Found</h3>
+              <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Users haven't submitted any testimonials yet.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {testimonials.map((t: any) => (
+                <div key={t.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '16px' }}>
+                        {t.name[0]?.toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{t.name}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>{t.role || 'Student'} • {'⭐'.repeat(t.rating)}</div>
+                      </div>
+                    </div>
+                    <span className={`badge ${t.status === 'APPROVED' ? 'badge-success' : t.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'}`}>
+                      {t.status}
+                    </span>
+                  </div>
+                  
+                  <p style={{ fontSize: '14px', color: 'var(--clr-text-2)', lineHeight: 1.6, marginBottom: '16px', fontStyle: 'italic' }}>
+                    "{t.content}"
+                  </p>
+                  
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                    {t.status !== 'APPROVED' && (
+                      <button onClick={() => updateTestimonialStatus(t.id, 'APPROVED')} className="btn btn-sm" style={{ background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>
+                        ✅ Approve
+                      </button>
+                    )}
+                    {t.status !== 'REJECTED' && (
+                      <button onClick={() => updateTestimonialStatus(t.id, 'REJECTED')} className="btn btn-sm" style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}>
+                        ❌ Reject
+                      </button>
+                    )}
+                    <button onClick={() => deleteTestimonial(t.id)} className="btn btn-sm btn-danger">
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </motion.div>
   )
 }
