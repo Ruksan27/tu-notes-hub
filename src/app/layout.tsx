@@ -43,6 +43,7 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
     'apple-mobile-web-app-title': 'TU Notes Hub',
+    'google-adsense-account': 'ca-pub-8555533919324648',
   },
 }
 
