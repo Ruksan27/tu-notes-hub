@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TrendingSection } from '@/components/TrendingSection'
+import { toast } from 'react-toastify'
 
 interface SeoData {
   stats: {
@@ -56,7 +57,11 @@ interface ScanData {
   recommendations: string[]
 }
 
-export default function AdminSeoTab() {
+interface Props {
+  onNavigateTab?: (tabName: 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo') => void
+}
+
+export default function AdminSeoTab({ onNavigateTab }: Props) {
   const [data, setData] = useState<SeoData | null>(null)
   const [scanData, setScanData] = useState<ScanData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -501,7 +506,21 @@ export default function AdminSeoTab() {
                 <span style={{ fontSize: '13px', color: 'var(--clr-text-1)', fontWeight: 500 }}>{iss.message}</span>
               </div>
 
-              <button className="btn btn-outline btn-sm no-print" style={{ fontSize: '11px', padding: '4px 10px' }}>
+              <button
+                onClick={() => {
+                  if (iss.action === 'Add Links' || iss.action === 'Tag Papers' || iss.action === 'Update Description' || iss.action === 'Add Thumbnails' || iss.action === 'Publish') {
+                    toast.info(`Redirecting to Manage Materials tab to resolve: "${iss.action}"... 🔧`)
+                    onNavigateTab?.('materials')
+                  } else if (iss.action === 'Verify Canonical') {
+                    toast.info(`Redirecting to Site Settings to check canonical structures... 🔧`)
+                    onNavigateTab?.('settings')
+                  } else {
+                    toast.info(`Processing: "${iss.action}"... 🔧`)
+                  }
+                }}
+                className="btn btn-outline btn-sm no-print"
+                style={{ fontSize: '11px', padding: '4px 10px' }}
+              >
                 🔧 {iss.action}
               </button>
             </div>
