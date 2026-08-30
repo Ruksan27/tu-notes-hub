@@ -82,7 +82,16 @@ export default function SubjectRow({
     if (semPath) {
       const subSlug = slugify(subject.title)
       const itemSlug = slugify(itemTitle) || 'resource'
-      return `${semPath}/${subSlug}/${category}/${itemSlug}`
+      
+      // SEO Mappings for URL category segment
+      let seoCategory = category
+      if (category === 'papers') {
+        seoCategory = 'question-paper'
+      } else if (category === 'guides') {
+        seoCategory = 'books'
+      }
+      
+      return `${semPath}/${subSlug}/${seoCategory}/${itemSlug}`
     }
     return `/${category === 'papers' ? 'paper' : 'note'}/${fallbackSlug}`
   }
@@ -236,7 +245,7 @@ export default function SubjectRow({
                 onClick={(e) => { e.stopPropagation(); toggleTab('pastPapers') }}
                 style={getPillStyle('pastPapers', pastPapers.length)}
               >
-                📝 Past Papers ({pastPapers.length})
+                📝 Question Papers ({pastPapers.length})
               </button>
             )}
 
@@ -245,7 +254,7 @@ export default function SubjectRow({
                 onClick={(e) => { e.stopPropagation(); toggleTab('guide') }}
                 style={getPillStyle('guide', guides.length)}
               >
-                📘 Guide ({guides.length})
+                📘 Books & Guides ({guides.length})
               </button>
             )}
 
@@ -393,7 +402,7 @@ export default function SubjectRow({
               {/* Guides List */}
               {activeTab === 'guide' && (
                 <div>
-                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📘 Exam Guides</h4>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📘 Books & Exam Guides</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {guides.map(note => (
                       <Link key={note.id} href={getResourceLink(note.title, 'guides', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
