@@ -23,6 +23,8 @@ export default function RegisterPage() {
     facultyId: '',
     semesterOrder: '',
   })
+  const [agreeTerms, setAgreeTerms] = useState(false)
+  const [agreePrivacy, setAgreePrivacy] = useState(false)
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
@@ -55,6 +57,10 @@ export default function RegisterPage() {
     e.preventDefault()
     if (!formData.facultyId || !formData.semesterOrder) {
       toast.error('Please select your faculty and semester/year')
+      return
+    }
+    if (!agreeTerms || !agreePrivacy) {
+      toast.error('You must agree to the Terms of Service and Privacy Policy.')
       return
     }
     setLoading(true)
@@ -183,6 +189,17 @@ export default function RegisterPage() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '8px 0' }}>
+              <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+                <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} required style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                <span>I Agree to the <Link href="/terms" target="_blank" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Terms of Service</Link></span>
+              </label>
+              <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+                <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} required style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                <span>I Agree to the <Link href="/privacy" target="_blank" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Privacy Policy</Link></span>
+              </label>
             </div>
 
             <button id="reg-submit" type="submit" className="btn btn-primary" style={{ marginTop: '8px', justifyContent: 'center' }} disabled={loading}>

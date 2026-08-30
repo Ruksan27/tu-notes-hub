@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { toast } from 'react-toastify'
 
 type CheckoutModalProps = {
@@ -21,6 +22,8 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
   const [transactionId, setTransactionId] = useState('')
   const [screenshotUrl, setScreenshotUrl] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [agreeTerms, setAgreeTerms] = useState(false)
+  const [agreePrivacy, setAgreePrivacy] = useState(false)
 
   // Inquiry Form State
   const [message, setMessage] = useState('')
@@ -54,6 +57,10 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
   }
 
   const handleSubmit = async () => {
+    if (tab === 'BUY' && (!agreeTerms || !agreePrivacy)) {
+      toast.error('You must agree to the Terms of Service and Privacy Policy.')
+      return
+    }
     setLoading(true)
 
     const payload = {
@@ -96,7 +103,7 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
           >
             <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
               <h2 className="text-xl font-bold text-white truncate pr-4">{projectTitle}</h2>
-              <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+              <button onClick={() => { setAgreeTerms(false); setAgreePrivacy(false); onClose(); }} className="text-slate-400 hover:text-white p-1">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -114,7 +121,7 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
                 onClick={() => setTab('INQUIRE')}
                 className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'INQUIRE' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/5' : 'text-slate-400 hover:text-slate-200'}`}
               >
-                I'm Interested
+                I&apos;m Interested
               </button>
             </div>
 
@@ -129,10 +136,10 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
                   <div className="flex justify-center">
                     {/* Placeholder for QR Code, replace with actual path if available */}
                     <div className="w-48 h-48 bg-white p-2 rounded-xl border-4 border-slate-700 relative">
-                        <Image src="/qr-placeholder.png" alt="QR Code" fill className="object-contain p-2" />
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-medium bg-slate-900/10">
-                            Scan to Pay
-                        </div>
+                      <Image src="/qr-placeholder.png" alt="QR Code" fill className="object-contain p-2" />
+                      <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-medium bg-slate-900/10">
+                        Scan to Pay
+                      </div>
                     </div>
                   </div>
 
@@ -158,6 +165,17 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
                       {uploading && <p className="text-indigo-400 text-xs mt-2 animate-pulse">Uploading...</p>}
                       {screenshotUrl && <p className="text-emerald-400 text-xs mt-2 flex items-center gap-1"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Uploaded successfully</p>}
                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2.5 text-left mb-4">
+                    <label className="flex gap-2 items-center cursor-pointer text-sm text-slate-300">
+                      <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} required className="cursor-pointer w-4 h-4" />
+                      <span>I Agree to the <Link href="/terms" target="_blank" className="text-indigo-400 underline">Terms of Service</Link></span>
+                    </label>
+                    <label className="flex gap-2 items-center cursor-pointer text-sm text-slate-300">
+                      <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} required className="cursor-pointer w-4 h-4" />
+                      <span>I Agree to the <Link href="/privacy" target="_blank" className="text-indigo-400 underline">Privacy Policy</Link></span>
+                    </label>
                   </div>
                 </div>
               ) : (

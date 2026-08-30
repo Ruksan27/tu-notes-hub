@@ -118,6 +118,8 @@ export default function PricingPlans() {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [agreeTerms, setAgreeTerms] = useState(false)
+  const [agreePrivacy, setAgreePrivacy] = useState(false)
 
   const [plans, setPlans] = useState<Plan[]>(fallbackPlans)
   const [settings, setSettings] = useState<any>(null)
@@ -180,12 +182,18 @@ export default function PricingPlans() {
     setScreenshot(null)
     setScreenshotPreview(null)
     setDone(false)
+    setAgreeTerms(false)
+    setAgreePrivacy(false)
   }
 
   async function handleCheckoutSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!txnId.trim() || !selectedPlan) {
       toast.error('Transaction ID is required')
+      return
+    }
+    if (!agreeTerms || !agreePrivacy) {
+      toast.error('You must agree to the Terms of Service and Privacy Policy.')
       return
     }
 
@@ -519,7 +527,7 @@ export default function PricingPlans() {
             >
               {/* Modal Close */}
               <button 
-                onClick={() => setSelectedPlan(null)}
+                onClick={() => { setSelectedPlan(null); setAgreeTerms(false); setAgreePrivacy(false) }}
                 style={{
                   position: 'absolute',
                   right: '20px',
@@ -644,6 +652,17 @@ export default function PricingPlans() {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', textAlign: 'left' }}>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+                      <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} required style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                      <span>I Agree to the <Link href="/terms" target="_blank" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Terms of Service</Link></span>
+                    </label>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+                      <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} required style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                      <span>I Agree to the <Link href="/privacy" target="_blank" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Privacy Policy</Link></span>
+                    </label>
                   </div>
 
                   {/* Actions */}

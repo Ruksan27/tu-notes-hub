@@ -97,6 +97,8 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [agreeTerms, setAgreeTerms] = useState(false)
+  const [agreePrivacy, setAgreePrivacy] = useState(false)
   const [paymentQr, setPaymentQr] = useState<string | null>(null)
   const [cartAdded, setCartAdded] = useState(false)
   const [cartLoading, setCartLoading] = useState(false)
@@ -173,8 +175,8 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
   }
 
   const handleOrderSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
     if (!screenshotFile) { toast.error('Please upload your payment screenshot.'); return }
+    if (!agreeTerms || !agreePrivacy) { toast.error('You must agree to the Terms of Service and Privacy Policy.'); return }
     setIsSubmitting(true)
     const fd = new FormData()
     fd.append('projectId', project.id)
@@ -186,7 +188,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
       const data = await res.json()
       if (res.ok) {
         toast.success('Order submitted! Check your email for confirmation.')
-        setIsCheckoutOpen(false); setStep(1); setEmailInput(''); setScreenshotFile(null); setScreenshotPreview(null)
+        setIsCheckoutOpen(false); setStep(1); setEmailInput(''); setScreenshotFile(null); setScreenshotPreview(null); setAgreeTerms(false); setAgreePrivacy(false)
       } else { toast.error(data.error || 'Failed to submit order.') }
     } catch { toast.error('Something went wrong. Please try again.') }
     finally { setIsSubmitting(false) }
@@ -560,7 +562,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', margin: 0 }}>🛍️ Checkout — {project.title}</h3>
-                <button onClick={() => { setIsCheckoutOpen(false); setStep(1) }} style={{ background: 'none', border: 'none', color: 'var(--clr-text-3)', fontSize: '24px', cursor: 'pointer' }}>×</button>
+                <button onClick={() => { setIsCheckoutOpen(false); setStep(1); setAgreeTerms(false); setAgreePrivacy(false) }} style={{ background: 'none', border: 'none', color: 'var(--clr-text-3)', fontSize: '24px', cursor: 'pointer' }}>×</button>
               </div>
 
               {step === 1 ? (
@@ -598,6 +600,17 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
                       </div>
                     )}
                   </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', textAlign: 'left' }}>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+                      <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} required style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                      <span>I Agree to the <Link href="/terms" target="_blank" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Terms of Service</Link></span>
+                    </label>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+                      <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} required style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                      <span>I Agree to the <Link href="/privacy" target="_blank" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Privacy Policy</Link></span>
+                    </label>
+                  </div>
+
                   <div style={{ background: 'rgba(110,231,183,0.05)', border: '1px solid rgba(110,231,183,0.15)', borderRadius: '10px', padding: '12px 16px', fontSize: '11px', color: 'var(--clr-text-2)', lineHeight: 1.5, marginBottom: '20px' }}>
                     ⏱️ <strong>Payment Verification:</strong> Admin will verify and approve delivery within 24 hours. Files sent to <strong>{emailInput}</strong>.
                   </div>
