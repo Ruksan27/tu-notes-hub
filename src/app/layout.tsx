@@ -16,8 +16,11 @@ export const metadata: Metadata = {
     template: '%s | TU Notes Hub',
   },
   description: 'The ultimate academic platform for Tribhuvan University (TU) students. Download free notes, past year question papers, and get AI-powered exam predictions for BCA, CSIT, BIT, BBS, BBA and all TU faculties.',
-  keywords: ['TU notes', 'Tribhuvan University', 'BCA notes', 'CSIT notes', 'TU past papers', 'exam prediction Nepal', 'free notes Nepal'],
+  keywords: ['TU notes', 'Tribhuvan University', 'BCA notes', 'CSIT notes', 'TU past papers', 'exam prediction Nepal', 'free notes Nepal', 'BBS notes', 'BBA notes', 'TU syllabus'],
   authors: [{ name: 'TU Notes Hub' }],
+  alternates: {
+    canonical: 'https://tunoteshub.com.np',
+  },
   manifest: '/manifest.json',
   openGraph: {
     type: 'website',
