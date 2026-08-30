@@ -131,7 +131,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       price: finalPrice,
       priceCurrency: 'NPR',
       availability: 'https://schema.org/InStock',
-      url: `${BASE_URL}/projects/${id}`,
+      url: `${BASE_URL}/projects/${canonicalSlug}`,
       seller: {
         '@type': 'Organization',
         name: 'TU Notes Hub',

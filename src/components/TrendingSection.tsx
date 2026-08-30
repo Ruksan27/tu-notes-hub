@@ -71,7 +71,7 @@ export function TrendingSection() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'space-between',
+                    justifyContent: 'space-between',
                     padding: '12px 14px',
                     borderRadius: '12px',
                     background: 'rgba(255,255,255,0.03)',
@@ -125,7 +125,7 @@ export function TrendingSection() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'space-between',
+                    justifyContent: 'space-between',
                     padding: '12px 14px',
                     borderRadius: '12px',
                     background: 'rgba(255,255,255,0.03)',
@@ -169,7 +169,7 @@ export function TrendingSection() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'space-between',
+                    justifyContent: 'space-between',
                     padding: '12px 14px',
                     borderRadius: '12px',
                     background: 'rgba(255,255,255,0.03)',
