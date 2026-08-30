@@ -395,7 +395,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                       {/* Thumbnail */}
                       <div style={{ position: 'relative', height: '170px', background: 'rgba(255,255,255,0.03)', flexShrink: 0 }}>
                         {p.thumbnailUrl ? (
-                          <Image src={p.thumbnailUrl} alt={p.title} fill style={{ objectFit: 'cover' }} />
+                          <Image src={p.thumbnailUrl} alt={p.title} fill unoptimized style={{ objectFit: 'cover' }} />
                         ) : (
                           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', color: 'rgba(255,255,255,0.05)' }}>
                             💻

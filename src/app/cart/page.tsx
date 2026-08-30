@@ -220,7 +220,7 @@ export default function CartPage() {
                     background: '#0d0e1a', border: '1px solid rgba(255,255,255,0.08)'
                   }}>
                     {item.projectItem.thumbnailUrl ? (
-                      <Image src={item.projectItem.thumbnailUrl} alt={item.projectItem.title} fill style={{ objectFit: 'cover' }} />
+                      <Image src={item.projectItem.thumbnailUrl} alt={item.projectItem.title} fill unoptimized style={{ objectFit: 'cover' }} />
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '24px' }}>📦</div>
                     )}

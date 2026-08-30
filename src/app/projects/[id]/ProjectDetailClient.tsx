@@ -248,7 +248,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
                   allowFullScreen
                 />
               ) : activeImg ? (
-                <Image src={activeImg} alt={project.title} fill style={{ objectFit: 'cover' }} />
+                <Image src={activeImg} alt={project.title} fill unoptimized style={{ objectFit: 'cover' }} />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--clr-text-3)', fontSize: '14px' }}>No preview available</div>
               )}
@@ -265,7 +265,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
               )}
               {allImages.map((src, i) => (
                 <div key={i} onClick={() => { setActiveImg(src); setShowVideo(false) }} style={{ width: '80px', height: '50px', flexShrink: 0, position: 'relative', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: (!showVideo && activeImg === src) ? '2px solid #6366f1' : '2px solid rgba(255,255,255,0.1)', transition: 'border 0.2s' }}>
-                  <Image src={src} alt={`img-${i}`} fill style={{ objectFit: 'cover' }} />
+                  <Image src={src} alt={`img-${i}`} fill unoptimized style={{ objectFit: 'cover' }} />
                 </div>
               ))}
             </div>

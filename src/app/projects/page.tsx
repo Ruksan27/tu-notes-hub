@@ -220,6 +220,7 @@ export default function ProjectsPage() {
                         src={project.thumbnailUrl}
                         alt={project.title}
                         fill
+                        unoptimized
                         style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
                       />
                     ) : (

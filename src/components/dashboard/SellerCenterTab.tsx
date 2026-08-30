@@ -278,7 +278,7 @@ export default function SellerCenterTab({ user }: { user: User }) {
             {projects.map(p => (
               <motion.div key={p.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(13,15,26,0.9)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: '14px', overflow: 'hidden' }}>
                 <div style={{ height: '150px', background: 'rgba(255,255,255,0.03)', position: 'relative' }}>
-                  {p.thumbnailUrl ? <Image src={p.thumbnailUrl} alt={p.title} fill style={{ objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '42px', opacity: 0.1 }}>💻</div>}
+                  {p.thumbnailUrl ? <Image src={p.thumbnailUrl} alt={p.title} fill unoptimized style={{ objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '42px', opacity: 0.1 }}>💻</div>}
                   <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
                     <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '999px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: statusColor[p.status] || '#fff', border: `1px solid ${statusColor[p.status] || '#fff'}40` }}>
                       {p.status === 'ACTIVE' ? '● LIVE' : p.status === 'PENDING' ? '⏳ REVIEW' : p.status.replace('_', ' ')}
