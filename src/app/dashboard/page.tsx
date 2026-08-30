@@ -1053,7 +1053,7 @@ function AIChatPanel({ report }: { report: any }) {
             <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
           </div>
           <div>
-            <p style={{ fontWeight: 700, fontSize: '15px', margin: 0, color: '#fff', letterSpacing: '0.3px' }}>TU Scholar AI</p>
+            <p style={{ fontWeight: 700, fontSize: '15px', margin: 0, color: '#fff', letterSpacing: '0.3px' }}>Scholar AI</p>
             <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>
               {report ? `Analyzing: ${report.subject}` : 'Your Academic Assistant'}
             </p>
@@ -1205,7 +1205,7 @@ function AIChatPanel({ report }: { report: any }) {
             </button>
           </div>
           <p style={{ textAlign: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '8px', marginBottom: 0 }}>
-            Powered by TU Scholar AI
+            Powered by Scholar AI
           </p>
         </div>
       )}

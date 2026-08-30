@@ -224,7 +224,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>
-              TU Scholar AI
+              Scholar AI
             </div>
             <div style={{
               fontSize: '11px', color: 'rgba(255,255,255,0.45)',
@@ -282,15 +282,10 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px', marginTop: '2px',
               }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                </svg>
+                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
@@ -304,15 +299,10 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px', marginTop: '2px',
               }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                </svg>
+                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
@@ -349,7 +339,6 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
               {msg.role === 'model' && (
                 <div style={{
                   width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '14px', marginTop: '2px',
                 }}>
@@ -391,15 +380,10 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '14px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px',
               }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                </svg>
+                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
@@ -482,7 +466,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             textAlign: 'center', marginTop: '8px',
             fontSize: '10px', color: 'rgba(255,255,255,0.2)',
           }}>
-            Powered by TU Scholar AI
+            Powered by Scholar AI
           </div>
         </div>
       </motion.div>

@@ -130,7 +130,7 @@ export default function ExamPaperViewer({ data }: Props) {
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
                         <button
                           onClick={() => openAiModal(q.text)}
-                          title="Ask TU Scholar AI for answer"
+                          title="Ask Scholar AI for answer"
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',

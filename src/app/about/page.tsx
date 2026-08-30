@@ -44,7 +44,7 @@ export default async function AboutPage() {
   } catch (err) {
     aboutItems = [
       { id: "1", emoji: "🎯", title: "Free Academic Access", description: "To make quality study notes and past paper solutions accessible to every Tribhuvan University student in Nepal — 100% free and fair." },
-      { id: "2", emoji: "🤖", title: "AI Exam Predictions", description: "We use our custom TU Notes Elite AI to analyze past board question papers and predict high-yield exam topics, giving you a strategic study edge." },
+      { id: "2", emoji: "🤖", title: "AI Exam Predictions", description: "We use our custom Scholar AI to analyze past board question papers and predict high-yield exam topics, giving you a strategic study edge." },
       { id: "3", emoji: "🔒", title: "Verified Projects", description: "Every student project is vetted and tested by expert admins before listing, guaranteeing working code, database scripts, and reports." },
       { id: "4", emoji: "⚡", title: "Instant Reader & PWA", description: "Read PDF study notes directly inside our high-speed viewer. Cache notes offline on your mobile phone or laptop with PWA support." }
     ]
@@ -220,7 +220,7 @@ export default async function AboutPage() {
               { label: 'TU Faculties', val: '5+ Programs' },
               { label: 'Semesters Covered', val: '1st - 8th Sem' },
               { label: 'Free Access', val: '100% Free Notes' },
-              { label: 'AI Exam Helper', val: 'TU Notes Elite AI' },
+              { label: 'AI Exam Helper', val: 'Scholar AI' },
             ].map((m, idx) => (
               <div key={idx} style={{
                 background: 'rgba(255,255,255,0.02)',
