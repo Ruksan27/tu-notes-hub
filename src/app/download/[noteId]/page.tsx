@@ -37,6 +37,15 @@ function getDriveProxyUrl(link: string): string {
   return `/api/drive-proxy?url=${encodeURIComponent(link)}`
 }
 
+function getNoteTargetId(p: any): string {
+  if (p?.noteParams && Array.isArray(p.noteParams) && p.noteParams.length > 0) {
+    const subjectPart = p.noteParams[0] || ''
+    const itemPart = p.noteParams[p.noteParams.length - 1] || ''
+    return `${subjectPart}-${itemPart}`
+  }
+  return ((p?.noteSlug || p?.noteId) as string) || ''
+}
+
 export default function DownloadPage() {
   const params = useParams()
   const [mounted, setMounted] = useState(false)
@@ -71,9 +80,10 @@ export default function DownloadPage() {
       }
     }
     
+    const targetNoteId = getNoteTargetId(params)
     // If it's a PDF, route it through our custom watermarking API
     if (url.toLowerCase().endsWith('.pdf') && !url.includes('drive.google.com')) {
-      return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${params.noteId as string}&filename=${fileName}`
+      return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${fileName}`
     }
 
     return proxyUrl
@@ -87,6 +97,8 @@ export default function DownloadPage() {
   // AI Answer Modal state
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [aiQuestion, setAiQuestion] = useState('')
+
+  const targetNoteId = getNoteTargetId(params)
 
   useEffect(() => {
     setCurrentUrl(window.location.href)
@@ -113,10 +125,12 @@ export default function DownloadPage() {
     }
     setMounted(true)
 
-    fetch(`/api/notes/${params.noteId}`)
-      .then((r) => r.json())
-      .then(setNote)
-  }, [params.noteId])
+    if (targetNoteId) {
+      fetch(`/api/notes/${targetNoteId}`)
+        .then((r) => r.json())
+        .then(setNote)
+    }
+  }, [targetNoteId])
 
   useEffect(() => {
     const fileUrl = note?.cloudinaryUrl || ''

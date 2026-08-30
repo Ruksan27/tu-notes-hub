@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getNoteSlug, getPaperSlug } from '@/lib/slugs'
+import { getNoteSlug, getPaperSlug, getSemesterPath, slugify } from '@/lib/slugs'
 
 interface Note {
   id: string
@@ -56,7 +56,7 @@ const cardItemVariants = {
     y: 0,
     scale: 1,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 400,
       damping: 26,
     },
@@ -75,6 +75,17 @@ export default function SubjectRow({
   systemType?: string
 }) {
   const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | null>(null)
+
+  const semPath = getSemesterPath(facultyId, semesterOrder, systemType)
+
+  const getResourceLink = (itemTitle: string, category: string, fallbackSlug: string) => {
+    if (semPath) {
+      const subSlug = slugify(subject.title)
+      const itemSlug = slugify(itemTitle) || 'resource'
+      return `${semPath}/${subSlug}/${category}/${itemSlug}`
+    }
+    return `/${category === 'papers' ? 'paper' : 'note'}/${fallbackSlug}`
+  }
 
   // Categorize notes
   const notes = subject.notes.filter(n => !['PROJECT_WORK', 'PROJECT', 'GUIDE', 'LAB_WORK'].includes(n.noteType))
@@ -288,7 +299,7 @@ export default function SubjectRow({
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📄 Study Notes</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {notes.map(note => (
-                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                      <Link key={note.id} href={getResourceLink(note.title, 'notes', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.2)' }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px', background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)' }}>
                           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
@@ -308,7 +319,7 @@ export default function SubjectRow({
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>🧪 Lab Works & Reports</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {labWorks.map(note => (
-                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                      <Link key={note.id} href={getResourceLink(note.title, 'lab-work', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
                           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
@@ -328,7 +339,7 @@ export default function SubjectRow({
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📁 Project Works</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {projectWorks.map(note => (
-                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                      <Link key={note.id} href={getResourceLink(note.title, 'project-work', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
                           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
@@ -348,7 +359,7 @@ export default function SubjectRow({
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>💻 Projects</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {projects.map(note => (
-                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                      <Link key={note.id} href={getResourceLink(note.title, 'projects', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
                           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
@@ -368,7 +379,7 @@ export default function SubjectRow({
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📝 Question Papers</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
                     {pastPapers.map(pp => (
-                      <Link key={pp.id} href={`/paper/${getPaperSlug({ ...pp, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                      <Link key={pp.id} href={getResourceLink(`${pp.year} ${pp.examType.replace('_', ' ')}`, 'papers', getPaperSlug({ ...pp, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.04, y: -3, boxShadow: '0 8px 24px rgba(6,182,212,0.2)' }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px', background: 'rgba(6,182,212,0.06)', borderColor: 'rgba(6,182,212,0.2)' }}>
                           <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{pp.year} {pp.examType.replace('_', ' ')}</p>
                           <span style={{ fontSize: '11px', color: 'var(--clr-accent-h)', fontWeight: 600 }}>Download / View Paper →</span>
@@ -385,7 +396,7 @@ export default function SubjectRow({
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📘 Exam Guides</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {guides.map(note => (
-                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                      <Link key={note.id} href={getResourceLink(note.title, 'guides', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
                           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
