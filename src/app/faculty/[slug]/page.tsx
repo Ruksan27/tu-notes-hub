@@ -96,10 +96,13 @@ export default async function FacultyPage({ params }: Props) {
           const totalSheets = sem.subjects.reduce((sum, s) => sum + s.cheatsheets.length, 0)
           const totalContent = totalNotes + totalPapers + totalSheets
 
+          const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`
+          const periodSlug = isYearly ? `${ord}-year` : `${ord}-semester`
+
           return (
             <Link
               key={sem.id}
-              href={`/faculty/${faculty.id}/${sem.order}`}
+              href={`/faculty/${faculty.id}/${periodSlug}`}
               style={{ textDecoration: 'none' }}
             >
               <div className="glass-card" style={{

@@ -35,17 +35,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  // 3. Dynamic Semester Routes
+  // 3. Dynamic Semester & Year Routes (SEO Friendly URLs)
   const semesters = await prisma.semester.findMany({
     where: { faculty: { visible: true } },
-    select: { order: true, facultyId: true },
+    select: {
+      order: true,
+      facultyId: true,
+      faculty: { select: { systemType: true } }
+    },
   })
-  const semesterRoutes: MetadataRoute.Sitemap = semesters.map((sem) => ({
-    url: `${baseUrl}/faculty/${sem.facultyId}/${sem.order}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.7,
-  }))
+  const semesterRoutes: MetadataRoute.Sitemap = semesters.map((sem) => {
+    const isYearly = sem.faculty?.systemType === 'YEARLY'
+    const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`
+    const periodSlug = isYearly ? `${ord}-year` : `${ord}-semester`
+    return {
+      url: `${baseUrl}/faculty/${sem.facultyId}/${periodSlug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }
+  })
 
   // 4. Dynamic Project Marketplace Items (APPROVED only — no draft/rejected/pending)
   const activeProjects = await prisma.projectItem.findMany({

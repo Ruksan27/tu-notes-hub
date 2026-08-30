@@ -1479,4 +1479,45 @@ img { max-width: 100%; display: block; }
   transform: translateY(0px);
 }
 
+/* ── Print Media Styles for Executive PDF Report Export ── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: system-ui, -apple-system, sans-serif !important;
+  }
+
+  .admin-sidebar-nav,
+  .admin-top-bar,
+  .no-print,
+  button {
+    display: none !important;
+  }
+
+  .admin-page-container,
+  .admin-content-wrapper,
+  .admin-scrollable-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  .glass-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+
+  h1, h2, h3, h4, th, td, p, span, div {
+    color: #000000 !important;
+  }
+
+  svg {
+    stroke: #000000 !important;
+  }
+}
+
 

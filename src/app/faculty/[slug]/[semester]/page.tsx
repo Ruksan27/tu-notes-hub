@@ -13,26 +13,45 @@ export async function generateStaticParams() {
     select: {
       order: true,
       facultyId: true,
+      faculty: { select: { systemType: true } }
     },
   })
-  return semesters.map((sem) => ({
-    slug: sem.facultyId,
-    semester: sem.order.toString(),
-  }))
+
+  const params: { slug: string; semester: string }[] = []
+  
+  for (const sem of semesters) {
+    const isYearly = sem.faculty?.systemType === 'YEARLY'
+    const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`
+    const periodSlug = isYearly ? `${ord}-year` : `${ord}-semester`
+
+    // Primary SEO friendly URL
+    params.push({ slug: sem.facultyId, semester: periodSlug })
+    // Legacy numeric fallback
+    params.push({ slug: sem.facultyId, semester: sem.order.toString() })
+  }
+
+  return params
 }
 
 interface Props { params: Promise<{ slug: string; semester: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, semester } = await params
-  const order = parseInt(semester)
+  const order = parseInt(semester, 10)
   const faculty = await prisma.faculty.findUnique({ where: { id: slug } })
-  if (!faculty) return {}
+  if (!faculty || isNaN(order)) return {}
   const isYearly = faculty.systemType === 'YEARLY'
-  const label = isYearly ? `Year ${order}` : `Semester ${order}`
+  const ord = order === 1 ? '1st' : order === 2 ? '2nd' : order === 3 ? '3rd' : `${order}th`
+  const label = isYearly ? `${ord} Year` : `${ord} Semester`
+  const canonicalSlug = isYearly ? `${ord.toLowerCase()}-year` : `${ord.toLowerCase()}-semester`
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'
+
   return {
     title: `${faculty.id.toUpperCase()} ${label} — Notes & Past Papers | TU Notes Hub`,
     description: `Download free study notes, past papers, and cheatsheets for ${faculty.name} ${label}.`,
+    alternates: {
+      canonical: `${baseUrl}/faculty/${slug}/${canonicalSlug}`,
+    },
   }
 }
 
