@@ -2,6 +2,7 @@
 // src/components/SubjectRow.tsx
 import { useState } from 'react'
 import Link from 'next/link'
+import { getNoteSlug, getPaperSlug } from '@/lib/slugs'
 
 interface Note {
   id: string
@@ -195,7 +196,7 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
               <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📄 Study Notes</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
                 {notes.map(note => (
-                  <Link key={note.id} href={`/download/${note.id}?type=note`} style={{ textDecoration: 'none' }}>
+                  <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
                     <div className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
@@ -215,7 +216,7 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
               <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>🧪 Lab Works & Reports</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
                 {labWorks.map(note => (
-                  <Link key={note.id} href={`/download/${note.id}?type=note`} style={{ textDecoration: 'none' }}>
+                  <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
                     <div className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
@@ -235,7 +236,7 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
               <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📁 Project Works</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
                 {projectWorks.map(note => (
-                  <Link key={note.id} href={`/download/${note.id}?type=note`} style={{ textDecoration: 'none' }}>
+                  <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
                     <div className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
@@ -255,7 +256,7 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
               <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>💻 Projects</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
                 {projects.map(note => (
-                  <Link key={note.id} href={`/download/${note.id}?type=note`} style={{ textDecoration: 'none' }}>
+                  <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
                     <div className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
@@ -275,7 +276,7 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
               <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📝 Question Papers</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
                 {pastPapers.map(pp => (
-                  <Link key={pp.id} href={`/download/${pp.id}?type=paper`} style={{ textDecoration: 'none' }}>
+                  <Link key={pp.id} href={`/download/${getPaperSlug({ ...pp, subject: { title: subject.title, code: subject.code } })}`} style={{ textDecoration: 'none' }}>
                     <div className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer', background: 'rgba(6,182,212,0.05)', borderColor: 'rgba(6,182,212,0.15)' }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{pp.year} {pp.examType.replace('_', ' ')}</p>
                       <span style={{ fontSize: '11px', color: 'var(--clr-accent)', fontWeight: 600 }}>Download / View Paper →</span>
@@ -292,7 +293,7 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
               <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📘 Exam Guides</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
                 {guides.map(note => (
-                  <Link key={note.id} href={`/download/${note.id}?type=note`} style={{ textDecoration: 'none' }}>
+                  <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
                     <div className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>

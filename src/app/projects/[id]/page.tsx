@@ -3,37 +3,64 @@ import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import ProjectDetailClient from './ProjectDetailClient'
+import { extractProjectId, getProjectSlug, slugify } from '@/lib/slugs'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'
 
 // ISR: revalidate every 1 hour
 export const revalidate = 3600
 
+async function fetchProjectBySlugOrId(rawId: string) {
+  const targetId = extractProjectId(rawId)
+  let project = await prisma.projectItem.findUnique({
+    where: { id: targetId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          sellerProfile: { select: { isVerified: true } },
+        },
+      },
+    },
+  })
+
+  if (!project) {
+    const all = await prisma.projectItem.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            sellerProfile: { select: { isVerified: true } },
+          },
+        },
+      },
+    })
+    project = all.find(p => getProjectSlug(p) === rawId || slugify(p.title) === rawId) || null
+  }
+
+  return project
+}
+
 // Pre-render top 20 projects at build time; rest rendered on demand
 export async function generateStaticParams() {
   const activeProjects = await prisma.projectItem.findMany({
     where: { status: 'APPROVED' },
-    select: { id: true },
+    select: { id: true, title: true },
     take: 20,
   })
-  return activeProjects.map((p) => ({ id: p.id }))
+  const params: { id: string }[] = []
+  for (const p of activeProjects) {
+    params.push({ id: getProjectSlug(p) })
+    params.push({ id: p.id })
+  }
+  return params
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params
-  const project = await prisma.projectItem.findUnique({
-    where: { id },
-    select: {
-      title: true,
-      shortDescription: true,
-      description: true,
-      thumbnailUrl: true,
-      technologies: true,
-      originalPrice: true,
-      discountPercentage: true,
-      category: true,
-    },
-  })
+  const { id: rawId } = await params
+  const project = await fetchProjectBySlugOrId(rawId)
 
   if (!project) {
     return { title: 'Project Not Found | TU Notes Hub' }
@@ -42,7 +69,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const finalPrice = Math.floor(project.originalPrice * (1 - project.discountPercentage / 100))
   const description = project.shortDescription || project.description?.slice(0, 160) || 'Buy verified student projects on TU Notes Hub.'
   const ogImage = project.thumbnailUrl || `${BASE_URL}/og-image.png`
-  const url = `${BASE_URL}/projects/${id}`
+  const canonicalSlug = getProjectSlug(project)
+  const url = `${BASE_URL}/projects/${canonicalSlug}`
 
   return {
     title: `${project.title} | Buy Project — TU Notes Hub`,
@@ -76,26 +104,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-
-  const project = await prisma.projectItem.findUnique({
-    where: { id },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          sellerProfile: { select: { isVerified: true } },
-        },
-      },
-    },
-  })
+  const { id: rawId } = await params
+  const project = await fetchProjectBySlugOrId(rawId)
 
   if (!project || project.status === 'REJECTED') {
     notFound()
   }
 
   const finalPrice = Math.floor(project.originalPrice * (1 - project.discountPercentage / 100))
+  const canonicalSlug = getProjectSlug(project)
 
   // JSON-LD Structured Data (Product schema for Google rich results)
   const jsonLd = {
@@ -104,7 +121,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     name: project.title,
     description: project.shortDescription || project.description,
     image: project.thumbnailUrl || `${BASE_URL}/og-image.png`,
-    url: `${BASE_URL}/projects/${id}`,
+    url: `${BASE_URL}/projects/${canonicalSlug}`,
     brand: {
       '@type': 'Organization',
       name: 'TU Notes Hub',

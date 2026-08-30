@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'react-toastify'
+import { getProjectSlug } from '@/lib/slugs'
 
 interface Project {
   id: string
@@ -256,7 +257,7 @@ export default function DeveloperProfileClient({ seller, currentUser }: Develope
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
           {seller.projectsListed.map(project => (
-            <Link key={project.id} href={`/projects/${project.id}`} style={{ textDecoration: 'none' }}>
+            <Link key={project.id} href={`/projects/${getProjectSlug(project)}`} style={{ textDecoration: 'none' }}>
               <div className="glass-card hover-lift" style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 8px', color: '#fff' }}>{project.title}</h3>
                 <p style={{ fontSize: '13px', color: 'var(--clr-text-2)', flex: 1, lineBreak: 'anywhere' }}>{project.shortDescription}</p>

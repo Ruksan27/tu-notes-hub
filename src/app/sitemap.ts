@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
+import { getProjectSlug, getNoteSlug, getPaperSlug } from '@/lib/slugs'
 
 // Revalidate sitemap every 1 hour via ISR
 export const revalidate = 3600
@@ -59,13 +60,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 4. Dynamic Project Marketplace Items (APPROVED only — no draft/rejected/pending)
   const activeProjects = await prisma.projectItem.findMany({
     where: { status: 'APPROVED' },
-    select: { id: true, createdAt: true },
+    select: { id: true, title: true, createdAt: true },
   })
   const projectRoutes: MetadataRoute.Sitemap = activeProjects.map((project) => ({
-    url: `${baseUrl}/projects/${project.id}`,
+    url: `${baseUrl}/projects/${getProjectSlug(project)}`,
     lastModified: project.createdAt,
     changeFrequency: 'weekly',
     priority: 0.85,
+  }))
+
+  // 5. Dynamic Notes & Study Guides
+  const allNotes = await prisma.note.findMany({
+    select: { id: true, title: true, createdAt: true },
+  })
+  const noteRoutes: MetadataRoute.Sitemap = allNotes.map((note) => ({
+    url: `${baseUrl}/download/${getNoteSlug(note)}`,
+    lastModified: note.createdAt,
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }))
+
+  // 6. Dynamic Past Question Papers
+  const allPapers = await prisma.pastPaper.findMany({
+    select: { id: true, year: true, examType: true, subject: { select: { title: true, code: true } } },
+  })
+  const paperRoutes: MetadataRoute.Sitemap = allPapers.map((paper) => ({
+    url: `${baseUrl}/download/${getPaperSlug(paper)}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.8,
   }))
 
   return [
@@ -73,5 +96,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...facultyRoutes,
     ...semesterRoutes,
     ...projectRoutes,
+    ...noteRoutes,
+    ...paperRoutes,
   ]
 }

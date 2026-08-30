@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'motion/react'
 import { toast } from 'react-toastify'
+import { getProjectSlug } from '@/lib/slugs'
 
 type Project = {
   id: string
@@ -306,7 +307,7 @@ export default function ProjectsPage() {
                     {/* Popularity / CTA */}
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '2px' }}>
                       <Link
-                        href={`/projects/${project.id}`}
+                        href={`/projects/${getProjectSlug(project)}`}
                         style={{
                           flex: 1,
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',

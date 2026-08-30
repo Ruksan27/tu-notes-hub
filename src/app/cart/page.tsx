@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'react-toastify'
+import { getProjectSlug } from '@/lib/slugs'
 
 interface CartItem {
   id: string
@@ -220,7 +221,7 @@ export default function CartPage() {
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Link
-                      href={`/projects/${item.projectItem.id}`}
+                      href={`/projects/${getProjectSlug(item.projectItem)}`}
                       style={{ fontWeight: 700, fontSize: '15px', color: 'var(--clr-text-1)', textDecoration: 'none', display: 'block', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                     >
                       {item.projectItem.title}
