@@ -19,11 +19,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 2. Dynamic Faculty Routes
   const faculties = await prisma.faculty.findMany({
     where: { visible: true },
-    select: { id: true, updatedAt: true },
+    select: { id: true },
   })
   const facultyRoutes: MetadataRoute.Sitemap = faculties.map((fac) => ({
     url: `${baseUrl}/faculty/${fac.id}`,
-    lastModified: fac.updatedAt,
+    lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.8,
   }))
@@ -43,11 +43,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 4. Dynamic Project Marketplace Items (APPROVED only — no draft/rejected/pending)
   const activeProjects = await prisma.projectItem.findMany({
     where: { status: 'APPROVED' },
-    select: { id: true, createdAt: true, updatedAt: true },
+    select: { id: true, createdAt: true },
   })
   const projectRoutes: MetadataRoute.Sitemap = activeProjects.map((project) => ({
     url: `${baseUrl}/projects/${project.id}`,
-    lastModified: project.updatedAt,
+    lastModified: project.createdAt,
     changeFrequency: 'weekly',
     priority: 0.85,
   }))
