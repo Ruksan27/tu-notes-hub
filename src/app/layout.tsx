@@ -1,5 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from 'next'
+import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -57,6 +58,9 @@ export const metadata: Metadata = {
   },
 }
 
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 'swap' })
+
 export const viewport: Viewport = {
   themeColor: '#6366f1',
   width: 'device-width',
@@ -65,7 +69,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable}`}>
       <head>
         {/* Google AdSense */}
         <Script

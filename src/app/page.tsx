@@ -1,9 +1,12 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
-import { AnimatedText } from '@/components/AnimatedText'
-import { Marquee } from '@/components/Marquee'
-import { TestimonialForm } from '@/components/TestimonialForm'
+import dynamic from 'next/dynamic'
+
+// Dynamically import heavy client components to reduce initial JS payload
+const AnimatedText = dynamic(() => import('@/components/AnimatedText').then(mod => mod.AnimatedText))
+const Marquee = dynamic(() => import('@/components/Marquee').then(mod => mod.Marquee))
+const TestimonialForm = dynamic(() => import('@/components/TestimonialForm').then(mod => mod.TestimonialForm))
 
 export const dynamic = 'force-dynamic'
 
