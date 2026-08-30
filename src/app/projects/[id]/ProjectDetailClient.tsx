@@ -205,11 +205,17 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 28px' }}>
 
-      {/* ── Back link + Page header (full width above the grid) ── */}
-      <div style={{ marginBottom: '20px' }}>
-        <Link href="/projects" style={{ color: 'var(--clr-text-3)', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
-          ← Back to Projects
-        </Link>
+      {/* ── SEO Breadcrumb Navigation ── */}
+      <nav aria-label="Breadcrumb" style={{ marginBottom: '20px' }}>
+        <ol style={{ display: 'flex', alignItems: 'center', gap: '6px', listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: 'var(--clr-text-3)' }}>
+          <li><Link href="/" style={{ color: 'var(--clr-text-3)', textDecoration: 'none' }}>Home</Link></li>
+          <li aria-hidden="true" style={{ opacity: 0.4 }}>/</li>
+          <li><Link href="/projects" style={{ color: 'var(--clr-text-3)', textDecoration: 'none' }}>Projects</Link></li>
+          <li aria-hidden="true" style={{ opacity: 0.4 }}>/</li>
+          <li style={{ color: 'var(--clr-text-2)', fontWeight: 600, maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-current="page">{project.title}</li>
+        </ol>
+      </nav>
+      <div style={{ marginBottom: '14px' }}>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
           {project.category && <span style={{ fontSize: '10px', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, background: 'rgba(165,180,252,0.1)', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(165,180,252,0.2)' }}>{project.category}</span>}
           {project.subcategory && <span style={{ fontSize: '10px', color: 'var(--clr-text-3)', background: 'rgba(255,255,255,0.06)', padding: '3px 10px', borderRadius: '20px' }}>{project.subcategory}</span>}

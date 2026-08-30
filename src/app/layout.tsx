@@ -37,6 +37,13 @@ export const metadata: Metadata = {
     ]
   },
   robots: { index: true, follow: true },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TU Notes Hub – Free Notes & AI Exam Predictions',
+    description: 'The ultimate academic platform for Tribhuvan University (TU) students. Download free notes, past year question papers, and get AI-powered exam predictions.',
+    images: ['/og-image.png'],
+    site: '@tunoteshub',
+  },
   icons: {
     icon: '/favicon.ico',
     apple: '/icon-192.svg',
@@ -66,6 +73,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8555533919324648"
           crossOrigin="anonymous"
           strategy="afterInteractive"
+        />
+        {/* Website + Organization JSON-LD for Google */}
+        <Script
+          id="website-jsonld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'WebSite',
+                  '@id': 'https://tunoteshub.com/#website',
+                  url: 'https://tunoteshub.com',
+                  name: 'TU Notes Hub',
+                  description: 'Free notes, past papers, and AI exam predictions for Tribhuvan University students.',
+                  potentialAction: {
+                    '@type': 'SearchAction',
+                    target: { '@type': 'EntryPoint', urlTemplate: 'https://tunoteshub.com/faculties?q={search_term_string}' },
+                    'query-input': 'required name=search_term_string',
+                  },
+                },
+                {
+                  '@type': 'Organization',
+                  '@id': 'https://tunoteshub.com/#organization',
+                  name: 'TU Notes Hub',
+                  url: 'https://tunoteshub.com',
+                  logo: { '@type': 'ImageObject', url: 'https://tunoteshub.com/icon-192.svg' },
+                  sameAs: [],
+                },
+              ],
+            }),
+          }}
         />
       </head>
       <body>
