@@ -110,7 +110,6 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
     // Record DB view & organic search metrics
     fetch(`/api/projects/${project.id}/view`, { method: 'POST' }).catch(() => {})
-  }, [project.id])
 
     // Check if already in cart
     fetch('/api/cart').then(r => r.json()).then(data => {
@@ -119,8 +118,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
       }
     }).catch(() => {})
 
-    // Fetch discount end time (if any) from pricing API for display purposes
-    // Use a fallback static discount period as an example
+    // Fetch discount end time (if any)
     const fakeEnd = new Date(Date.now() + 9 * 3600000 + 2 * 60000 + 33000)
     setDiscountEndsAt(project.discountPercentage > 0 ? fakeEnd : null)
 
