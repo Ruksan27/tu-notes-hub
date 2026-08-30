@@ -74,12 +74,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   })
 
   // 3. Dynamic Projects
-  const projects = await prisma.project.findMany({
-    select: { id: true, title: true, updatedAt: true },
+  const projects = await prisma.projectItem.findMany({
+    select: { id: true, title: true, createdAt: true },
   })
   const projectRoutes: MetadataRoute.Sitemap = projects.map((p) => ({
     url: `${baseUrl}/projects/${getProjectSlug(p)}`,
-    lastModified: p.updatedAt,
+    lastModified: p.createdAt,
     changeFrequency: 'weekly',
     priority: 0.85,
   }))
