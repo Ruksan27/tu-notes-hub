@@ -120,7 +120,7 @@ export default function ExamPaperViewer({ data }: Props) {
                     <ReactMarkdown
                       remarkPlugins={[remarkMath, remarkGfm]}
                       rehypePlugins={[rehypeKatex]}
-                      components={{ p: React.Fragment }}
+                      components={{ p: (props: any) => <>{props.children}</> }}
                     >
                       {q.text}
                     </ReactMarkdown>

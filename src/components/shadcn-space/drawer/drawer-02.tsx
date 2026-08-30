@@ -196,7 +196,7 @@ export default function ShoppingCartDrawerDemo({ children }: { children?: React.
   }, [subtotal, hasFiredConfetti]);
 
   return (
-    <Drawer swipeDirection="right">
+    <Drawer direction="right">
       <DrawerTrigger asChild>
         {children || (
           <Button variant="outline" className="cursor-pointer">

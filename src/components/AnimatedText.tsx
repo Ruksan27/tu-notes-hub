@@ -54,7 +54,7 @@ export function AnimatedText({ text, className = "", delay = 0 }: AnimatedTextPr
           {Array.from(word).map((letter, letterIdx) => (
             <motion.span
               key={letterIdx}
-              variants={child}
+              variants={child as any}
               style={{ display: "inline-block" }}
             >
               {letter}

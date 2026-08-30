@@ -61,7 +61,7 @@ export function parseLegacyMarkdownToExamData(markdown: string): ExamPaperData |
     // Parse Groups
     const groupRegex = /Group\s+([A-Z])\s+\[(.*?)\]\s+(Attempt.+?questions\.)/gi;
     let match;
-    let groupMatches = [];
+    let groupMatches: { groupName: string, marks: string, instruction: string, startIndex: number, questions: { number: number, text: string }[] }[] = [];
     
     while ((match = groupRegex.exec(cleanText)) !== null) {
       groupMatches.push({
