@@ -255,6 +255,11 @@ model ProjectItem {
   rating             Float          @default(0)
   reviewCount        Int            @default(0)
 
+  // Analytics & SEO metrics
+  views              Int            @default(0)
+  organicViews       Int            @default(0)
+  searchClicks       Int            @default(0)
+
   status             String         @default("ACTIVE") // PENDING | ACTIVE | INACTIVE | REJECTED | CHANGES_REQUESTED
   createdAt          DateTime       @default(now())
   

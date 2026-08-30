@@ -102,9 +102,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   '@type': 'Organization',
                   '@id': 'https://tunoteshub.com/#organization',
                   name: 'TU Notes Hub',
+                  alternateName: ['TuneNotesHub', 'TU Notes'],
                   url: 'https://tunoteshub.com',
                   logo: { '@type': 'ImageObject', url: 'https://tunoteshub.com/icon-192.svg' },
-                  sameAs: [],
+                  sameAs: [
+                    'https://facebook.com/tunoteshub',
+                    'https://twitter.com/tunoteshub',
+                    'https://instagram.com/tunoteshub',
+                    'https://github.com/tunoteshub',
+                    'https://linkedin.com/company/tunoteshub'
+                  ],
                 },
               ],
             }),

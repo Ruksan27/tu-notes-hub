@@ -7,8 +7,9 @@ import { AdminSkeleton } from '@/components/SkeletonLoader'
 import AdminProjectsTab from '@/components/admin/AdminProjectsTab'
 import AdminSellersTab from '@/components/admin/AdminSellersTab'
 import AdminPricingTab from '@/components/admin/AdminPricingTab'
+import AdminSeoTab from '@/components/admin/AdminSeoTab'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo'
 
 interface Payment {
   id: string
@@ -126,6 +127,7 @@ export default function AdminPage() {
 
   const navItems: { id: AdminTab; icon: string; label: string }[] = [
     { id: 'overview',  icon: '📊', label: 'Overview' },
+    { id: 'seo',       icon: '🔍', label: 'SEO Dashboard' },
     { id: 'users',     icon: '👥', label: 'Users & Plans' },
     { id: 'payments',  icon: '💳', label: 'Verify Payments' },
     { id: 'sellers',   icon: '🛍️', label: 'Seller Applications' },
@@ -313,6 +315,12 @@ export default function AdminPage() {
 
           {/* Tab Screen Render */}
           <main>
+            {tab === 'seo' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <AdminSeoTab />
+              </motion.div>
+            )}
+
             {/* ── Overview Tab ── */}
             {tab === 'projects' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>

@@ -108,6 +108,10 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
       if (d.settings?.paymentQrUrl) setPaymentQr(d.settings.paymentQrUrl)
     }).catch(() => {})
 
+    // Record DB view & organic search metrics
+    fetch(`/api/projects/${project.id}/view`, { method: 'POST' }).catch(() => {})
+  }, [project.id])
+
     // Check if already in cart
     fetch('/api/cart').then(r => r.json()).then(data => {
       if (data.items?.some((item: any) => item.projectItemId === project.id)) {
