@@ -8,6 +8,7 @@ import AdminProjectsTab from '@/components/admin/AdminProjectsTab'
 import AdminSellersTab from '@/components/admin/AdminSellersTab'
 import AdminPricingTab from '@/components/admin/AdminPricingTab'
 import AdminSeoTab from '@/components/admin/AdminSeoTab'
+import { TrendingSection } from '@/components/TrendingSection'
 
 type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo'
 
@@ -2041,6 +2042,11 @@ function StatsTab() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      {/* ── Live Analytics & Trending Content Section ── */}
+      <div style={{ marginBottom: '32px' }}>
+        <TrendingSection />
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div>
           <h3 className="section-title" style={{ margin: 0 }}>📈 Course Material Statistics</h3>

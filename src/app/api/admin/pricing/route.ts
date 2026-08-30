@@ -71,7 +71,7 @@ const defaultPlans = [
     features: [
       { icon: '✅', text: 'Everything in Semester Pass', avail: true },
       { icon: '🤖', text: 'Full AI Dashboard (Exam Predictions)', avail: true },
-      { icon: '💬', text: 'AI Tutor Chat powered by Gemini', avail: true },
+      { icon: '💬', text: 'AI Tutor Chat powered by TU Notes Elite AI', avail: true },
       { icon: '📊', text: 'Pre-computed past paper analysis reports', avail: true },
       { icon: '📋', text: 'Expert Cheatsheets per subject', avail: true },
       { icon: '📄', text: 'PDF export of AI prediction reports', avail: true },

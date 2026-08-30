@@ -7,7 +7,6 @@ import nextDynamic from 'next/dynamic'
 const AnimatedText = nextDynamic(() => import('@/components/AnimatedText').then(mod => mod.AnimatedText))
 const Marquee = nextDynamic(() => import('@/components/Marquee').then(mod => mod.Marquee))
 const TestimonialForm = nextDynamic(() => import('@/components/TestimonialForm').then(mod => mod.TestimonialForm))
-const TrendingSection = nextDynamic(() => import('@/components/TrendingSection').then(mod => mod.TrendingSection))
 
 export const dynamic = 'force-dynamic'
 
@@ -223,9 +222,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Trending Content Section (Real User Analytics) ── */}
-      <TrendingSection />
-
       {/* ── Testimonials (Marquee) ────────────────── */}
       <section className="section" style={{ overflow: 'hidden' }}>
         <div className="container" style={{ marginBottom: '40px' }}>
@@ -296,7 +292,7 @@ export default async function HomePage() {
               },
               {
                 q: "What is the AI Exam Prediction feature?",
-                a: "The AI Exam Predictor analyzes past 5 years of exam questions, syllabus models, and weightages. Using Gemini 3.6 Flash, it calculates probability patterns to highlight topics highly likely to appear in upcoming exams."
+                a: "The AI Exam Predictor analyzes past 5 years of exam questions, syllabus models, and weightages. Using TU Notes Elite AI, it calculates probability patterns to highlight topics highly likely to appear in upcoming exams."
               },
               {
                 q: "How does the Elite Pass membership work?",
@@ -371,7 +367,7 @@ export default async function HomePage() {
                     "name": "What is the AI Exam Prediction feature?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "The AI Exam Predictor analyzes past 5 years of exam questions, syllabus models, and weightages. Using Gemini 3.6 Flash, it calculates probability patterns to highlight topics highly likely to appear in upcoming exams."
+                      "text": "The AI Exam Predictor analyzes past 5 years of exam questions, syllabus models, and weightages. Using TU Notes Elite AI, it calculates probability patterns to highlight topics highly likely to appear in upcoming exams."
                     }
                   },
                   {
