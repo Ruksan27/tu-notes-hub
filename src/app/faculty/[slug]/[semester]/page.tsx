@@ -122,9 +122,9 @@ export default async function SemesterPage({ params }: Props) {
       {/* Top Banner Ad */}
       <AdUnit type="banner" slot="semester-top-banner" />
 
-      {/* Subjects List & Sidebar Grid */}
+      {/* Subjects List */}
       {sem.subjects.length === 0 ? (
-        <div className="glass-card" style={{ padding: '60px 40px', textAlign: 'center' }}>
+        <div className="glass-card" style={{ padding: '60px 40px', textAlign: 'center', marginTop: '24px' }}>
           <div style={{ fontSize: '56px', marginBottom: '16px' }}>📚</div>
           <h3 style={{ marginBottom: '8px', fontSize: '22px' }}>No Subjects Added Yet</h3>
           <p style={{ color: 'var(--clr-text-2)', maxWidth: '420px', margin: '0 auto' }}>
@@ -132,18 +132,14 @@ export default async function SemesterPage({ params }: Props) {
           </p>
         </div>
       ) : (
-        <div className="semester-layout-grid" style={{ marginTop: '24px' }}>
-          {/* Subjects List */}
-          <div className="subjects-column">
-            {sem.subjects.map((subject) => (
-              <SubjectRow key={subject.id} subject={subject as any} />
-            ))}
-          </div>
+        <div style={{ width: '100%', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {sem.subjects.map((subject) => (
+            <SubjectRow key={subject.id} subject={subject as any} />
+          ))}
 
-          {/* Sidebar Ads Column */}
-          <div className="ads-sidebar-column">
-            <AdUnit type="sidebar" slot="semester-sidebar-1" />
-            <AdUnit type="inline" slot="semester-sidebar-2" />
+          {/* Bottom Ad Unit for Free Tier users */}
+          <div style={{ marginTop: '16px' }}>
+            <AdUnit type="inline" slot="semester-bottom-ad" />
           </div>
         </div>
       )}
