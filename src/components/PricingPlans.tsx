@@ -109,7 +109,13 @@ function CheckMark({ val }: { val: boolean | string }) {
 }
 
 export default function PricingPlans() {
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  interface User {
+    id: string
+    name: string
+    email: string
+  }
+
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null)
   
   // Modal states
@@ -123,6 +129,10 @@ export default function PricingPlans() {
 
   interface SiteSettings {
     paymentQrUrl?: string
+  }
+
+  interface APIPlan extends Omit<Plan, 'id'> {
+    packageType: string
   }
 
   const [plans, setPlans] = useState<Plan[]>(fallbackPlans)
@@ -139,10 +149,10 @@ export default function PricingPlans() {
       .then(r => r.json())
       .then(data => {
         if (data.plans) {
-          setPlans(data.plans.map((p: any) => ({
+          setPlans(data.plans.map((p: APIPlan) => ({
             ...p,
             id: p.packageType, // Map packageType to id to maintain existing logic
-            features: p.features ? [...p.features].sort((a: any, b: any) => Number(b.avail) - Number(a.avail)) : []
+            features: p.features ? [...p.features].sort((a: { avail: boolean }, b: { avail: boolean }) => Number(b.avail) - Number(a.avail)) : []
           })))
         }
       })
