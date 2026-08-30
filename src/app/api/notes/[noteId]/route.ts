@@ -63,7 +63,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
     return (
       fullSlug === rawNoteId ||
       subTitleSlug === rawNoteId ||
-      (p.subject?.title && rawNoteId.includes(slugify(p.subject.title)))
+      (p.subject?.title && rawNoteId.includes(slugify(p.subject.title)) && rawNoteId.includes(String(p.year)))
     )
   })
 
