@@ -71,10 +71,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 5. Dynamic Notes & Study Guides
   const allNotes = await prisma.note.findMany({
-    select: { id: true, title: true, createdAt: true },
+    select: { id: true, title: true, createdAt: true, subject: { select: { title: true, code: true } } },
   })
   const noteRoutes: MetadataRoute.Sitemap = allNotes.map((note) => ({
-    url: `${baseUrl}/download/${getNoteSlug(note)}`,
+    url: `${baseUrl}/note/${getNoteSlug(note)}`,
     lastModified: note.createdAt,
     changeFrequency: 'weekly',
     priority: 0.8,
@@ -85,7 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { id: true, year: true, examType: true, subject: { select: { title: true, code: true } } },
   })
   const paperRoutes: MetadataRoute.Sitemap = allPapers.map((paper) => ({
-    url: `${baseUrl}/download/${getPaperSlug(paper)}`,
+    url: `${baseUrl}/paper/${getPaperSlug(paper)}`,
     lastModified: new Date(),
     changeFrequency: 'monthly',
     priority: 0.8,

@@ -393,7 +393,7 @@ export default function DashboardPage() {
                                   </p>
                                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
                                     {sub.notes.map((note) => (
-                                      <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
+                                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, subject: { title: sub.title, code: sub.code } })}`} style={{ textDecoration: 'none' }}>
                                         <motion.div
                                           whileHover={{ scale: 1.025, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.15)' }}
                                           style={{
@@ -429,7 +429,7 @@ export default function DashboardPage() {
                                   </p>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                     {sub.pastPapers.map((paper) => (
-                                      <Link key={paper.id} href={`/download/${getPaperSlug({ ...paper, subject: { title: sub.title, code: sub.code } })}`} style={{ textDecoration: 'none' }}>
+                                      <Link key={paper.id} href={`/paper/${getPaperSlug({ ...paper, subject: { title: sub.title, code: sub.code } })}`} style={{ textDecoration: 'none' }}>
                                         <motion.div
                                           whileHover={{ scale: 1.05, y: -2 }}
                                           style={{

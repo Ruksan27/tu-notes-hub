@@ -134,7 +134,13 @@ export default async function SemesterPage({ params }: Props) {
       ) : (
         <div style={{ width: '100%', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {sem.subjects.map((subject) => (
-            <SubjectRow key={subject.id} subject={subject as any} />
+            <SubjectRow
+              key={subject.id}
+              subject={subject as any}
+              facultyId={faculty.id}
+              semesterOrder={order}
+              systemType={faculty.systemType}
+            />
           ))}
 
           {/* Bottom Ad Unit for Free Tier users */}

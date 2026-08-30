@@ -38,7 +38,42 @@ interface Subject {
   cheatsheets: Cheatsheet[]
 }
 
-export default function SubjectRow({ subject }: { subject: Subject }) {
+const listContainerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.05,
+    },
+  },
+}
+
+const cardItemVariants = {
+  hidden: { opacity: 0, y: 14, scale: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 26,
+    },
+  },
+}
+
+export default function SubjectRow({
+  subject,
+  facultyId,
+  semesterOrder,
+  systemType,
+}: {
+  subject: Subject
+  facultyId?: string
+  semesterOrder?: number
+  systemType?: string
+}) {
   const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | null>(null)
 
   // Categorize notes
@@ -79,7 +114,8 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
       display: 'flex',
       alignItems: 'center',
       gap: '6px',
-      transition: 'all 0.2s ease',
+      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+      boxShadow: isActive ? '0 4px 14px rgba(99, 102, 241, 0.35)' : 'none',
     }
   }
 
@@ -98,7 +134,20 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
   }
 
   return (
-    <div className="glass-card hover-lift" style={{ padding: '0', overflow: 'hidden', marginBottom: '16px' }}>
+    <motion.div
+      layout
+      transition={{ type: 'spring', stiffness: 350, damping: 32 }}
+      className="glass-card"
+      style={{
+        padding: '0',
+        overflow: 'hidden',
+        marginBottom: '16px',
+        borderLeft: activeTab ? '4px solid var(--clr-primary-h)' : '4px solid transparent',
+        borderColor: activeTab ? 'rgba(99,102,241,0.35)' : 'var(--clr-border)',
+        boxShadow: activeTab ? '0 8px 32px rgba(99, 102, 241, 0.12)' : 'var(--shadow-sm)',
+        transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+      }}
+    >
       {/* Row Header */}
       <div
         onClick={handleRowClick}
@@ -109,9 +158,9 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
           justifyContent: 'space-between',
           gap: '16px',
           flexWrap: 'wrap',
-          background: activeTab ? 'rgba(99, 102, 241, 0.05)' : 'rgba(255, 255, 255, 0.01)',
+          background: activeTab ? 'rgba(99, 102, 241, 0.06)' : 'rgba(255, 255, 255, 0.01)',
           cursor: 'pointer',
-          transition: 'background 0.2s ease',
+          transition: 'background 0.25s ease',
         }}
       >
         {/* Subject Info */}
@@ -199,164 +248,175 @@ export default function SubjectRow({ subject }: { subject: Subject }) {
             )}
           </div>
 
-          <span style={{ fontSize: '14px', color: 'var(--clr-text-3)', transition: 'transform 0.2s', transform: activeTab ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <motion.span
+            animate={{ rotate: activeTab ? 180 : 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 26 }}
+            style={{
+              fontSize: '13px',
+              color: activeTab ? 'var(--clr-accent-h)' : 'var(--clr-text-3)',
+              display: 'inline-block',
+            }}
+          >
             ▼
-          </span>
+          </motion.span>
         </div>
       </div>
 
-      {/* Collapsible Accordion Panel with Smooth Motion Animation */}
+      {/* Collapsible Accordion Panel with Premium Motion Animation */}
       <AnimatePresence initial={false}>
         {activeTab && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            transition={{
+              height: { type: 'spring', stiffness: 350, damping: 32 },
+              opacity: { duration: 0.2 },
+            }}
             style={{ overflow: 'hidden' }}
           >
             <div
               style={{
-                padding: '20px 24px',
+                padding: '22px 24px',
                 borderTop: '1px solid var(--clr-border)',
-                background: 'rgba(255, 255, 255, 0.015)',
+                background: 'linear-gradient(180deg, rgba(99,102,241,0.03) 0%, rgba(255,255,255,0.01) 100%)',
               }}
             >
               {/* Notes List */}
               {activeTab === 'notes' && (
                 <div>
-                  <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📄 Study Notes</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📄 Study Notes</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {notes.map(note => (
-                      <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
-                        <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
+                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.2)' }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px', background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
                             <span>{note.noteType.replace('_', ' ')} ({note.fileSize || 'N/A'})</span>
-                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '1px 6px' }}>PREMIUM</span>}
+                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
                           </div>
                         </motion.div>
                       </Link>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )}
 
               {/* Lab Work List */}
               {activeTab === 'labWork' && (
                 <div>
-                  <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>🧪 Lab Works & Reports</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>🧪 Lab Works & Reports</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {labWorks.map(note => (
-                      <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
-                        <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
+                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
                             <span>{note.fileSize || 'N/A'}</span>
-                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '1px 6px' }}>PREMIUM</span>}
+                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
                           </div>
                         </motion.div>
                       </Link>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )}
 
               {/* Project Works List */}
               {activeTab === 'projectWork' && (
                 <div>
-                  <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📁 Project Works</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📁 Project Works</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {projectWorks.map(note => (
-                      <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
-                        <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
+                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
                             <span>{note.fileSize || 'N/A'}</span>
-                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '1px 6px' }}>PREMIUM</span>}
+                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
                           </div>
                         </motion.div>
                       </Link>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )}
 
               {/* Projects List */}
               {activeTab === 'project' && (
                 <div>
-                  <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>💻 Projects</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>💻 Projects</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {projects.map(note => (
-                      <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
-                        <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
+                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
                             <span>{note.fileSize || 'N/A'}</span>
-                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '1px 6px' }}>PREMIUM</span>}
+                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
                           </div>
                         </motion.div>
                       </Link>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )}
 
               {/* Past Papers List */}
               {activeTab === 'pastPapers' && (
                 <div>
-                  <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📝 Question Papers</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📝 Question Papers</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
                     {pastPapers.map(pp => (
-                      <Link key={pp.id} href={`/download/${getPaperSlug({ ...pp, subject: { title: subject.title, code: subject.code } })}`} style={{ textDecoration: 'none' }}>
-                        <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer', background: 'rgba(6,182,212,0.05)', borderColor: 'rgba(6,182,212,0.15)' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{pp.year} {pp.examType.replace('_', ' ')}</p>
-                          <span style={{ fontSize: '11px', color: 'var(--clr-accent)', fontWeight: 600 }}>Download / View Paper →</span>
+                      <Link key={pp.id} href={`/paper/${getPaperSlug({ ...pp, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.04, y: -3, boxShadow: '0 8px 24px rgba(6,182,212,0.2)' }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px', background: 'rgba(6,182,212,0.06)', borderColor: 'rgba(6,182,212,0.2)' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{pp.year} {pp.examType.replace('_', ' ')}</p>
+                          <span style={{ fontSize: '11px', color: 'var(--clr-accent-h)', fontWeight: 600 }}>Download / View Paper →</span>
                         </motion.div>
                       </Link>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )}
 
               {/* Guides List */}
               {activeTab === 'guide' && (
                 <div>
-                  <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📘 Exam Guides</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📘 Exam Guides</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {guides.map(note => (
-                      <Link key={note.id} href={`/download/${getNoteSlug(note)}`} style={{ textDecoration: 'none' }}>
-                        <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '14px', margin: 0, cursor: 'pointer' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '4px' }}>{note.title}</p>
+                      <Link key={note.id} href={`/note/${getNoteSlug({ ...note, facultyId, semesterOrder, subject: { title: subject.title, code: subject.code, semester: { order: semesterOrder, facultyId, faculty: { id: facultyId, systemType } } } })}`} style={{ textDecoration: 'none' }}>
+                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
                             <span>{note.fileSize || 'N/A'}</span>
-                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '1px 6px' }}>PREMIUM</span>}
+                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
                           </div>
                         </motion.div>
                       </Link>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )}
 
               {/* Cheatsheets List */}
               {activeTab === 'cheatsheets' && (
                 <div>
-                  <h4 style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '12px', textTransform: 'uppercase' }}>📋 Syllabus & Cheatsheets</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📋 Syllabus & Cheatsheets</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
                     {cheatsheets.map(cs => (
-                      <div key={cs.id} className="glass-card" style={{ padding: '14px', margin: 0, background: 'rgba(99,102,241,0.05)', borderColor: 'rgba(99,102,241,0.15)' }}>
+                      <motion.div key={cs.id} variants={cardItemVariants} className="glass-card" style={{ padding: '16px', margin: 0, borderRadius: '12px', background: 'rgba(99,102,241,0.06)', borderColor: 'rgba(99,102,241,0.2)' }}>
                         <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{cs.title}</p>
                         <span className="badge badge-elite" style={{ fontSize: '9px' }}>ELITE AI ONLY</span>
-                      </div>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   )
 }

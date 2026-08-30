@@ -26,17 +26,47 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
     })
   }
 
-  // 3. Slug lookup for Notes
-  const allNotes = await prisma.note.findMany()
-  const matchedNote = allNotes.find(n => getNoteSlug(n) === rawNoteId || slugify(n.title) === rawNoteId)
+  // 3. Robust Bulletproof Slug lookup for Notes (matches all URL variations)
+  const allNotes = await prisma.note.findMany({
+    include: { subject: { include: { semester: { include: { faculty: true } } } } }
+  })
+  const cleanRaw = rawNoteId.replace(/-notes$/, '')
+
+  const matchedNote = allNotes.find((n) => {
+    const fullSlug = getNoteSlug(n)
+    const titleSlug = slugify(n.title || '')
+    const subTitleSlug = slugify(`${n.subject?.title || ''} ${n.title || ''}`)
+
+    return (
+      fullSlug === rawNoteId ||
+      titleSlug === rawNoteId ||
+      titleSlug === cleanRaw ||
+      subTitleSlug === rawNoteId ||
+      subTitleSlug === cleanRaw ||
+      (titleSlug.length > 2 && rawNoteId.includes(titleSlug)) ||
+      (titleSlug.length > 2 && cleanRaw.includes(titleSlug))
+    )
+  })
+
   if (matchedNote) {
     await prisma.note.update({ where: { id: matchedNote.id }, data: { downloadCount: { increment: 1 } } })
     return NextResponse.json(matchedNote)
   }
 
-  // 4. Slug lookup for Past Papers
-  const allPapers = await prisma.pastPaper.findMany({ include: { subject: true } })
-  const matchedPaper = allPapers.find(p => getPaperSlug(p) === rawNoteId)
+  // 4. Robust Bulletproof Slug lookup for Past Papers
+  const allPapers = await prisma.pastPaper.findMany({
+    include: { subject: { include: { semester: { include: { faculty: true } } } } }
+  })
+  const matchedPaper = allPapers.find((p) => {
+    const fullSlug = getPaperSlug(p)
+    const subTitleSlug = slugify(`${p.subject?.title || ''} ${p.year} ${p.examType}`)
+    return (
+      fullSlug === rawNoteId ||
+      subTitleSlug === rawNoteId ||
+      (p.subject?.title && rawNoteId.includes(slugify(p.subject.title)))
+    )
+  })
+
   if (matchedPaper) {
     return NextResponse.json({
       title: `${matchedPaper.year} ${matchedPaper.examType.replace('_', ' ')} — ${matchedPaper.subject.title}`,
