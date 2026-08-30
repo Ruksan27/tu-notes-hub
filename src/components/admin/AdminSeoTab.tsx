@@ -241,11 +241,14 @@ export default function AdminSeoTab() {
             </button>
 
             <button
-              onClick={() => fetchSeoData()}
+              onClick={async () => {
+                await Promise.all([fetchSeoData(), runLiveSeoScan()])
+              }}
               className="btn btn-outline btn-sm"
+              disabled={loading || scanning}
               style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}
             >
-              <span>🔄</span> [Refresh]
+              <span>{loading || scanning ? '⏳' : '🔄'}</span> {loading || scanning ? 'Refreshing...' : '[Refresh]'}
             </button>
 
             <button

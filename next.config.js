@@ -8,6 +8,10 @@ const nextConfig = {
   poweredByHeader: false,
 
 
+  devIndicators: {
+    appIsrStatus: false,
+  },
+
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
