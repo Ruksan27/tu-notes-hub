@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ShoppingBagIcon,
   ShoppingCartIcon,
@@ -248,10 +249,11 @@ export default function ShoppingCartDrawerDemo({ children }: { children?: React.
                     <div className="flex items-start gap-4">
                       <div className="size-20 shrink-0 overflow-hidden rounded-lg bg-muted relative">
                         {item.projectItem.thumbnailUrl ? (
-                          <img
+                          <Image
                             src={item.projectItem.thumbnailUrl}
                             alt={item.projectItem.title}
-                            className="size-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         ) : (
                           <div className="flex items-center justify-center size-full text-2xl bg-indigo-950 text-indigo-200">📦</div>
@@ -311,10 +313,11 @@ export default function ShoppingCartDrawerDemo({ children }: { children?: React.
                       >
                         <div className="relative h-32 w-full border-b bg-muted">
                           {suggestion.thumbnailUrl ? (
-                            <img
+                            <Image
                               src={suggestion.thumbnailUrl}
                               alt={suggestion.title}
-                              className="size-full object-cover"
+                              fill
+                              className="object-cover"
                             />
                           ) : (
                             <div className="flex items-center justify-center size-full text-2xl bg-indigo-950 text-indigo-200">📦</div>
