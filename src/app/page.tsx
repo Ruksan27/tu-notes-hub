@@ -7,6 +7,7 @@ import nextDynamic from 'next/dynamic'
 const AnimatedText = nextDynamic(() => import('@/components/AnimatedText').then(mod => mod.AnimatedText))
 const Marquee = nextDynamic(() => import('@/components/Marquee').then(mod => mod.Marquee))
 const TestimonialForm = nextDynamic(() => import('@/components/TestimonialForm').then(mod => mod.TestimonialForm))
+const TrendingSection = nextDynamic(() => import('@/components/TrendingSection').then(mod => mod.TrendingSection))
 
 export const dynamic = 'force-dynamic'
 
@@ -221,6 +222,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Trending Content Section (Real User Analytics) ── */}
+      <TrendingSection />
 
       {/* ── Testimonials (Marquee) ────────────────── */}
       <section className="section" style={{ overflow: 'hidden' }}>
