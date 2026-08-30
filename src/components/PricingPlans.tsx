@@ -121,8 +121,12 @@ export default function PricingPlans() {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreePrivacy, setAgreePrivacy] = useState(false)
 
+  interface SiteSettings {
+    paymentQrUrl?: string
+  }
+
   const [plans, setPlans] = useState<Plan[]>(fallbackPlans)
-  const [settings, setSettings] = useState<any>(null)
+  const [settings, setSettings] = useState<SiteSettings | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem('tu_user')
