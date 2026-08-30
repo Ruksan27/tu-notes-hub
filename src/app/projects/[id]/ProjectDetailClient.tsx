@@ -207,7 +207,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
       {/* ── Back link + Page header (full width above the grid) ── */}
       <div style={{ marginBottom: '20px' }}>
-        <Link href="/projects" style={{ color: 'var(--clr-text-3)', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '14px', display: 'block' }}>
+        <Link href="/projects" style={{ color: 'var(--clr-text-3)', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
           ← Back to Projects
         </Link>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
