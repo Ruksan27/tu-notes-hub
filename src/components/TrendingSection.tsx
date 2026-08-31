@@ -119,36 +119,42 @@ export function TrendingSection() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {trendingSubjects.map((sub, idx) => (
-                <div
-                  key={sub.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 14px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: '#06b6d4', width: '20px' }}>
-                      {idx + 1}.
-                    </span>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--clr-text-1)' }}>
-                        {sub.title}
+              {trendingSubjects.length > 0 ? (
+                trendingSubjects.map((sub, idx) => (
+                  <div
+                    key={sub.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 800, color: '#06b6d4', width: '20px' }}>
+                        {idx + 1}.
+                      </span>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--clr-text-1)' }}>
+                          {sub.title}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>Code: {sub.code} • {sub.notesCount} Notes</div>
                       </div>
-                      <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>Code: {sub.code} • {sub.notesCount} Notes</div>
                     </div>
-                  </div>
 
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-text-2)' }}>
-                    🔥 {sub.totalDownloads} views
-                  </span>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-text-2)' }}>
+                      🔥 {sub.totalDownloads} views
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '30px 20px', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '12px', color: 'var(--clr-text-3)', fontSize: '13px' }}>
+                  💤 No subjects trending yet. Start downloading notes to see analytics!
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -163,36 +169,42 @@ export function TrendingSection() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {mostViewedNotes.map((note, idx) => (
-                <div
-                  key={note.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 14px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: '#10b981', width: '20px', flexShrink: 0 }}>
-                      {idx + 1}.
-                    </span>
-                    <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--clr-text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {note.title}
+              {mostViewedNotes.length > 0 ? (
+                mostViewedNotes.map((note, idx) => (
+                  <div
+                    key={note.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 800, color: '#10b981', width: '20px', flexShrink: 0 }}>
+                        {idx + 1}.
+                      </span>
+                      <div style={{ overflow: 'hidden' }}>
+                        <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--clr-text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {note.title}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>{note.subject?.title || 'General Note'}</div>
                       </div>
-                      <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>{note.subject?.title || 'General Note'}</div>
                     </div>
-                  </div>
 
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#10b981', flexShrink: 0, marginLeft: '8px' }}>
-                    📥 {note.downloadCount}
-                  </span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#10b981', flexShrink: 0, marginLeft: '8px' }}>
+                      📥 {note.downloadCount}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '30px 20px', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '12px', color: 'var(--clr-text-3)', fontSize: '13px' }}>
+                  💤 No notes downloaded yet. Start downloading notes to see analytics!
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
