@@ -8,10 +8,7 @@ const nextConfig = {
   poweredByHeader: false,
 
 
-  devIndicators: {
-    appIsrStatus: false,
-    buildActivity: false,
-  },
+  devIndicators: false,
 
   images: {
     formats: ['image/avif', 'image/webp'],

@@ -2,10 +2,12 @@
 // src/components/ads/AdBannerBottom.tsx
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export default function AdBannerBottom() {
   const [visible, setVisible] = useState(false)
   const [priceText, setPriceText] = useState('Rs. 99')
+  const pathname = usePathname()
 
   useEffect(() => {
     // Check if user is a paid member — hide the ad for SEMESTER_PASS or ELITE_AI users
@@ -37,6 +39,7 @@ export default function AdBannerBottom() {
       .catch(() => {})
   }, [])
 
+  if (pathname?.startsWith('/admin')) return null
   if (!visible) return null
 
   return (

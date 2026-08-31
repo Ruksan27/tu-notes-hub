@@ -1049,7 +1049,11 @@ img { max-width: 100%; display: block; }
   min-height: calc(100vh - 72px);
   background: var(--clr-bg-900);
   overflow: hidden;
-  margin-bottom: -80px; /* Negates global layout paddingBottom */
+}
+
+/* Remove main layout bottom padding on admin screens to eliminate the footer gap */
+main:has(.admin-page-container) {
+  padding-bottom: 0 !important;
 }
 
 .admin-sidebar-nav {
@@ -1531,6 +1535,14 @@ img { max-width: 100%; display: block; }
   svg {
     stroke: #000000 !important;
   }
+}
+
+/* Hide Next.js dev server status overlay indicator */
+nextjs-portal,
+#theme-dev-indicator,
+[data-nextjs-scroll-focus-boundary],
+.nextjs-toast-errors-parent {
+  display: none !important;
 }
 
 
