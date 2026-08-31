@@ -148,8 +148,8 @@ export async function POST() {
     if (subjectsWithoutNotes.length > 0) {
       recommendations.push(`2. Upload study notes or guides for the ${subjectsWithoutNotes.length} empty subjects found.`)
     }
-    if (notesWithoutDescription > 0) {
-      recommendations.push(`3. Add meta descriptions to the ${notesWithoutDescription} notes currently missing search descriptions.`)
+    if (notesWithoutDescription.length > 0) {
+      recommendations.push(`3. Add meta descriptions to the ${notesWithoutDescription.length} notes currently missing search descriptions.`)
     }
     recommendations.push('4. Generate dynamic XML sitemap ping to Google Search Console.')
 
