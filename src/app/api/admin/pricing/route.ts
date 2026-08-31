@@ -84,9 +84,7 @@ const defaultPlans = [
 
 export async function GET() {
   try {
-    let plans = await prisma.pricingPlan.findMany({
-      orderBy: { price: 'asc' } // Not perfectly accurate for strings but ok
-    })
+    let plans = await prisma.pricingPlan.findMany()
 
     if (plans.length === 0) {
       // Seed default plans
@@ -112,6 +110,25 @@ export async function GET() {
         })
       }
       plans = await prisma.pricingPlan.findMany()
+    }
+
+    // Check if any discount has expired and revert
+    const now = new Date()
+    for (const plan of plans) {
+      if (plan.discountEndsAt && new Date(plan.discountEndsAt) < now) {
+        const newPrice = plan.originalPrice || plan.price
+        await prisma.pricingPlan.update({
+          where: { id: plan.id },
+          data: {
+            price: newPrice,
+            originalPrice: null,
+            discountEndsAt: null,
+          }
+        })
+        plan.price = newPrice
+        plan.originalPrice = null
+        plan.discountEndsAt = null
+      }
     }
 
     // Sort plans by package type manually to ensure Free -> Semester -> Elite

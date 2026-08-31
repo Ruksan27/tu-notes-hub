@@ -241,7 +241,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
           <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0d0e1a', marginBottom: '12px', boxShadow: '0 16px 40px rgba(0,0,0,0.4)' }}>
             <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative' }}>
               {activeImg ? (
-                <Image src={activeImg} alt={project.title} fill unoptimized style={{ objectFit: 'cover' }} />
+                <Image src={activeImg} alt={project.title} fill unoptimized priority style={{ objectFit: 'cover' }} />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--clr-text-3)', fontSize: '14px' }}>No preview available</div>
               )}

@@ -8,9 +8,10 @@ import AdminProjectsTab from '@/components/admin/AdminProjectsTab'
 import AdminSellersTab from '@/components/admin/AdminSellersTab'
 import AdminPricingTab from '@/components/admin/AdminPricingTab'
 import AdminSeoTab from '@/components/admin/AdminSeoTab'
+import AdminBackupTab from '@/components/admin/AdminBackupTab'
 import { TrendingSection } from '@/components/TrendingSection'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup'
 
 interface Payment {
   id: string
@@ -138,6 +139,7 @@ export default function AdminPage() {
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
     { id: 'pricing',   icon: '💰', label: 'Pricing Plans' },
     { id: 'settings',  icon: '⚙️', label: 'Site Settings' },
+    { id: 'backup',    icon: '💾', label: 'Data Backup' },
   ]
 
   const statCards = [
@@ -329,6 +331,12 @@ export default function AdminPage() {
             {tab === 'settings' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <SiteSettingsTab />
+              </motion.div>
+            )}
+
+            {tab === 'backup' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <AdminBackupTab />
               </motion.div>
             )}
 
