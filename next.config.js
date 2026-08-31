@@ -35,12 +35,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com https://*.google-analytics.com https://*.googletagservices.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://pagead2.googlesyndication.com",
-              "frame-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://docs.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.youtube.com https://youtube.com https://*.youtube.com https://www.tiktok.com",
-              "connect-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://api.cloudinary.com https://generativelanguage.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://pagead2.googlesyndication.com",
+              "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com",
+              "frame-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://docs.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.youtube.com https://youtube.com https://*.youtube.com https://www.tiktok.com https://*.googlesyndication.com https://*.doubleclick.net",
+              "connect-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://api.cloudinary.com https://generativelanguage.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com",
               "media-src 'self' https://res.cloudinary.com https://*.cloudinary.com",
             ].join('; ')
           },

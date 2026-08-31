@@ -177,7 +177,7 @@ export default function ProjectsPage() {
 
         {/* ── Results ── */}
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+          <div className="project-card-grid">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="skeleton" style={{ height: '380px', borderRadius: '16px' }} />
             ))}
@@ -191,7 +191,7 @@ export default function ProjectsPage() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+          <div className="project-card-grid">
             {filtered.map((project, idx) => {
               const discountedPrice = Math.round(project.originalPrice * (1 - project.discountPercentage / 100))
               const savedAmt = Math.round(project.originalPrice * project.discountPercentage / 100)
