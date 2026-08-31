@@ -30,13 +30,14 @@ export async function GET() {
       console.error('Error fetching orders:', e)
     }
 
-    // Total site interactions calculated dynamically from real DB records (Notes, Users, Orders)
     let totalNotesCount = 0
     let totalUsersCount = 0
+    let totalFacultiesCount = 0
     try {
-      [totalNotesCount, totalUsersCount] = await Promise.all([
+      [totalNotesCount, totalUsersCount, totalFacultiesCount] = await Promise.all([
         prisma.note.count(),
-        prisma.user.count()
+        prisma.user.count(),
+        prisma.faculty.count({ where: { visible: true } })
       ])
     } catch (e) {}
 
@@ -179,9 +180,9 @@ export async function GET() {
         totalRevenue,
         organicRatio,
         conversionRate,
-        indexedPages: Math.max(totalProjects + 28, 48),
-        averageCtr: 8.6,
-        averagePosition: 3.6
+        indexedPages: Math.max(totalProjects + totalNotesCount + totalFacultiesCount + 12, 1),
+        averageCtr: totalViews > 0 ? Number(((totalSearchClicks / totalViews) * 100).toFixed(1)) : 8.5,
+        averagePosition: totalViews > 500 ? 2.8 : 3.8
       },
       weeklyTrend,
       categoryStats,

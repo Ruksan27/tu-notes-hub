@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { v2 as cloudinary } from 'cloudinary'
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
@@ -48,6 +48,7 @@ export async function PUT(
         originalPrice: Number(fd.get('originalPrice')),
         discountPercentage: Number(fd.get('discountPercentage') || 0),
         demoUrl: fd.get('demoUrl') as string || null,
+        youtubeUrl: fd.get('youtubeUrl') as string || null,
         sourceDriveLink: fd.get('sourceDriveLink') as string || null,
         adminDriveLink: fd.get('adminDriveLink') as string || null,
         features: fd.get('features') as string || null,
@@ -55,7 +56,7 @@ export async function PUT(
       }
     } else {
       const body = await req.json()
-      const { title, description, technologies, originalPrice, discountPercentage, thumbnailUrl, demoUrl, sourceDriveLink, adminDriveLink, features, status, adminNote } = body
+      const { title, description, technologies, originalPrice, discountPercentage, thumbnailUrl, demoUrl, youtubeUrl, sourceDriveLink, adminDriveLink, features, status, adminNote } = body
       updateData = {
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
@@ -64,6 +65,7 @@ export async function PUT(
         ...(discountPercentage !== undefined && { discountPercentage }),
         ...(thumbnailUrl !== undefined && { thumbnailUrl }),
         ...(demoUrl !== undefined && { demoUrl }),
+        ...(youtubeUrl !== undefined && { youtubeUrl }),
         ...(sourceDriveLink !== undefined && { sourceDriveLink }),
         ...(adminDriveLink !== undefined && { adminDriveLink }),
         ...(features !== undefined && { features }),

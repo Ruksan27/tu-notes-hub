@@ -240,14 +240,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
           {/* ── Main Image / Video Preview ── */}
           <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0d0e1a', marginBottom: '12px', boxShadow: '0 16px 40px rgba(0,0,0,0.4)' }}>
             <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative' }}>
-              {showVideo && youtubeId ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&loop=1&playlist=${youtubeId}&rel=0&modestbranding=1`}
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                />
-              ) : activeImg ? (
+              {activeImg ? (
                 <Image src={activeImg} alt={project.title} fill unoptimized style={{ objectFit: 'cover' }} />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--clr-text-3)', fontSize: '14px' }}>No preview available</div>
@@ -258,11 +251,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
           {/* ── Thumbnail strip ── */}
           {allImages.length > 0 && (
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
-              {youtubeId && (
-                <div onClick={() => setShowVideo(true)} style={{ width: '80px', height: '50px', flexShrink: 0, borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: showVideo ? '2px solid #ef4444' : '2px solid rgba(255,255,255,0.1)', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', transition: 'border 0.2s' }}>
-                  ▶️
-                </div>
-              )}
+
               {allImages.map((src, i) => (
                 <div key={i} onClick={() => { setActiveImg(src); setShowVideo(false) }} style={{ width: '80px', height: '50px', flexShrink: 0, position: 'relative', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: (!showVideo && activeImg === src) ? '2px solid #6366f1' : '2px solid rgba(255,255,255,0.1)', transition: 'border 0.2s' }}>
                   <Image src={src} alt={`img-${i}`} fill unoptimized style={{ objectFit: 'cover' }} />
@@ -463,15 +452,17 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: isAdmin ? 'rgba(6,182,212,0.2)' : 'rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
                   {isAdmin ? '🛡️' : '👨‍💻'}
                 </div>
-                <div>
-                  {project.sellerId ? (
-                    <Link href={`/projects/developer/${project.user?.id}`} style={{ textDecoration: 'none', fontWeight: 700, fontSize: '12px', color: '#fff' }}>{developerName}</Link>
-                  ) : (
-                    <div style={{ fontWeight: 700, fontSize: '12px' }}>{developerName}</div>
-                  )}
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 700, background: isAdmin ? 'linear-gradient(90deg, rgba(6,182,212,0.25), rgba(99,102,241,0.25))' : isVerified ? 'linear-gradient(90deg, rgba(110,231,183,0.2), rgba(99,102,241,0.2))' : 'rgba(255,255,255,0.06)', color: isAdmin ? '#67e8f9' : isVerified ? '#6ee7b7' : 'var(--clr-text-3)', padding: '1px 5px', borderRadius: '3px', marginTop: '1px', border: `1px solid ${isAdmin ? 'rgba(6,182,212,0.3)' : isVerified ? 'rgba(110,231,183,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
-                    {isAdmin ? '🛡️ Publisher' : isVerified ? '✓ Verified' : 'Seller'}
-                  </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    {project.sellerId ? (
+                      <Link href={`/projects/developer/${project.user?.id}`} style={{ textDecoration: 'none', fontWeight: 700, fontSize: '13px', color: '#fff' }}>{developerName}</Link>
+                    ) : (
+                      <div style={{ fontWeight: 700, fontSize: '13px', color: '#fff' }}>{developerName}</div>
+                    )}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 700, background: isAdmin ? 'linear-gradient(90deg, rgba(6,182,212,0.25), rgba(99,102,241,0.25))' : isVerified ? 'linear-gradient(90deg, rgba(16,185,129,0.15), rgba(99,102,241,0.15))' : 'rgba(255,255,255,0.06)', color: isAdmin ? '#67e8f9' : isVerified ? '#34d399' : 'var(--clr-text-3)', padding: '2px 8px', borderRadius: '999px', border: `1px solid ${isAdmin ? 'rgba(6,182,212,0.3)' : isVerified ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
+                      {isAdmin ? '🛡️ Publisher' : isVerified ? '✓ Verified' : 'Seller'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -507,18 +498,82 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
       </div>
 
+
+
       {/* Video Modal */}
       <AnimatePresence>
         {isVideoModalOpen && project.youtubeUrl && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5, 5, 12, 0.88)',
+              backdropFilter: 'blur(16px)',
+              zIndex: 2000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px'
+            }}
             onClick={() => setIsVideoModalOpen(false)}
           >
-            <div style={{ position: 'absolute', top: '20px', right: '30px', color: '#fff', fontSize: '30px', cursor: 'pointer', fontWeight: 300 }}>&times;</div>
+            <button
+              onClick={() => setIsVideoModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '24px',
+                right: '24px',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#fff',
+                fontSize: '22px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background 0.2s, transform 0.2s',
+                zIndex: 2010
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+                e.currentTarget.style.transform = 'scale(1.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              &times;
+            </button>
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              style={{ width: '100%', maxWidth: '900px', aspectRatio: '16/9', background: '#000', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}
+              initial={{ scale: 0.9, y: 30, opacity: 0 }}
+              animate={{
+                scale: 1,
+                y: 0,
+                opacity: 1,
+                transition: { type: 'spring', damping: 25, stiffness: 350 }
+              }}
+              exit={{
+                scale: 0.9,
+                y: 20,
+                opacity: 0,
+                transition: { duration: 0.15 }
+              }}
+              style={{
+                width: '100%',
+                maxWidth: '850px',
+                aspectRatio: '16/9',
+                background: '#000',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 30px 70px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08)',
+              }}
               onClick={e => e.stopPropagation()}
             >
               <iframe
@@ -526,6 +581,10 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
                 height="100%"
                 src={(() => {
                   const url = project.youtubeUrl;
+                  if (url.includes('youtube.com/shorts/')) {
+                    const videoId = url.split('/shorts/')[1]?.split('?')[0];
+                    return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                  }
                   if (url.includes('youtube.com/watch?v=')) {
                     const videoId = url.split('v=')[1]?.split('&')[0];
                     return `https://www.youtube.com/embed/${videoId}?autoplay=1`;

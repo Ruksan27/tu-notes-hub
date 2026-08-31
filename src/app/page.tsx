@@ -97,7 +97,7 @@ export default async function HomePage() {
         }} />
         <div className="container text-center" style={{ position: 'relative' }}>
           <div className="badge badge-elite animate-fade-in" style={{ marginBottom: '24px', display: 'inline-flex' }}>
-            🚀 Nepal's #1 TU Academic Platform
+            🚀 Nepal's Trusted TU Academic Platform
           </div>
           <h1 className="animate-fade-in" style={{
             fontSize: 'clamp(36px,6vw,72px)',

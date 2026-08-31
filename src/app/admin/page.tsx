@@ -238,16 +238,7 @@ export default function AdminPage() {
               TiDB Serverless
             </div>
           </div>
-          <div className="admin-param-widget">
-            <div className="admin-param-label">CPU Usage</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--clr-text-2)', marginBottom: '4px' }}>
-              <span>Load Average</span>
-              <span>{sysInfo.cpu}%</span>
-            </div>
-            <div className="admin-param-bar-bg">
-              <div className="admin-param-bar-fill" style={{ width: `${sysInfo.cpu}%`, background: sysInfo.cpu > 80 ? '#ef4444' : sysInfo.cpu > 50 ? '#f59e0b' : 'var(--clr-primary)' }}></div>
-            </div>
-          </div>
+
         </div>
       </motion.aside>
 

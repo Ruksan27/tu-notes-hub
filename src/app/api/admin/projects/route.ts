@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { v2 as cloudinary } from 'cloudinary'
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const contentType = req.headers.get('content-type') || ''
 
-    let title = '', description = '', technologies = '', features = '', demoUrl = '', sourceDriveLink = '', adminDriveLink = ''
+    let title = '', description = '', technologies = '', features = '', demoUrl = '', youtubeUrl = '', sourceDriveLink = '', adminDriveLink = ''
     let originalPrice = 0, discountPercentage = 0
     let thumbnailUrl: string | null = null
 
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
       technologies = formData.get('technologies') as string
       features = formData.get('features') as string || ''
       demoUrl = formData.get('demoUrl') as string || ''
+      youtubeUrl = formData.get('youtubeUrl') as string || ''
       sourceDriveLink = formData.get('sourceDriveLink') as string || ''
       adminDriveLink = formData.get('adminDriveLink') as string || ''
       originalPrice = Number(formData.get('originalPrice'))
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
       technologies = body.technologies
       features = body.features || ''
       demoUrl = body.demoUrl || ''
+      youtubeUrl = body.youtubeUrl || ''
       sourceDriveLink = body.sourceDriveLink || ''
       adminDriveLink = body.adminDriveLink || ''
       originalPrice = body.originalPrice
@@ -101,6 +103,7 @@ export async function POST(req: NextRequest) {
         discountPercentage,
         thumbnailUrl,
         demoUrl: demoUrl || null,
+        youtubeUrl: youtubeUrl || null,
         sourceDriveLink: sourceDriveLink || null,
         adminDriveLink: adminDriveLink || null,
         features: features || null,

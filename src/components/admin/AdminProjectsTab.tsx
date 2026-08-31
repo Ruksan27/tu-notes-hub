@@ -13,6 +13,7 @@ interface ProjectItem {
   discountPercentage: number
   thumbnailUrl: string | null
   demoUrl: string | null
+  youtubeUrl: string | null
   features: string | null
   status: string
   views?: number
@@ -49,6 +50,7 @@ const EMPTY_FORM = {
   discountPercentage: 0,
   thumbnailUrl: '',
   demoUrl: '',
+  youtubeUrl: '',
   sourceDriveLink: '',
   adminDriveLink: '',
   features: '',
@@ -131,6 +133,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
       discountPercentage: p.discountPercentage,
       thumbnailUrl: p.thumbnailUrl ?? '',
       demoUrl: p.demoUrl ?? '',
+      youtubeUrl: p.youtubeUrl ?? '',
       sourceDriveLink: p.sourceDriveLink ?? '',
       adminDriveLink: p.adminDriveLink ?? '',
       features: (() => {
@@ -165,6 +168,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
       fd.append('originalPrice', String(formData.originalPrice))
       fd.append('discountPercentage', String(formData.discountPercentage))
       fd.append('demoUrl', formData.demoUrl)
+      fd.append('youtubeUrl', formData.youtubeUrl)
       fd.append('sourceDriveLink', formData.sourceDriveLink)
       fd.append('adminDriveLink', formData.adminDriveLink)
       if (featuresJson) fd.append('features', featuresJson)
@@ -773,7 +777,6 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '20px',
             }}
-            onClick={e => { if (e.target === e.currentTarget) setIsModalOpen(false) }}
           >
             <motion.div
               key="modal-box"
@@ -1056,21 +1059,33 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                     onChange={e => setFormData({ ...formData, features: e.target.value })}
                   />
                 </div>
-
-                {/* Demo URL */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-                    Live Demo URL (optional)
-                  </label>
-                  <input
-                    className="input-field"
-                    type="url"
-                    placeholder="https://myprojectdemo.com"
-                    value={formData.demoUrl}
-                    onChange={e => setFormData({ ...formData, demoUrl: e.target.value })}
-                  />
+                 {/* Demo and YouTube URLs */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                      Live Demo URL (optional)
+                    </label>
+                    <input
+                      className="input-field"
+                      type="url"
+                      placeholder="https://myprojectdemo.com"
+                      value={formData.demoUrl}
+                      onChange={e => setFormData({ ...formData, demoUrl: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                      YouTube Demo URL (optional)
+                    </label>
+                    <input
+                      className="input-field"
+                      type="url"
+                      placeholder="https://youtube.com/watch?v=..."
+                      value={formData.youtubeUrl}
+                      onChange={e => setFormData({ ...formData, youtubeUrl: e.target.value })}
+                    />
+                  </div>
                 </div>
-
                 {/* Drive Link */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>

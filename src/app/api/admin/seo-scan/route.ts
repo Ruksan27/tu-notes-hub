@@ -5,13 +5,70 @@ export async function POST() {
   try {
     const scanTimestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
-    const [totalProjects, hiddenProjects, projectsWithoutThumb, totalNotes, totalSubjects, totalFaculties] = await Promise.all([
+    const [
+      totalProjects,
+      hiddenProjects,
+      projectsWithoutThumb,
+      totalNotes,
+      totalSubjects,
+      totalFaculties,
+      subjectsWithoutNotes,
+      pastPapersWithoutText,
+      projectsWithoutDemo,
+      notesWithoutDescription
+    ] = await Promise.all([
       prisma.projectItem.count(),
       prisma.projectItem.count({ where: { status: 'HIDDEN' } }),
       prisma.projectItem.count({ where: { thumbnailUrl: null } }),
       prisma.note.count(),
       prisma.subject.count(),
-      prisma.faculty.count({ where: { visible: true } })
+      prisma.faculty.count({ where: { visible: true } }),
+      prisma.subject.findMany({
+        where: { notes: { none: {} } },
+        take: 3,
+        select: {
+          title: true,
+          code: true,
+          semester: {
+            select: {
+              name: true,
+              faculty: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
+        }
+      }),
+      prisma.pastPaper.count({
+        where: { OR: [ { extractedText: null }, { extractedText: "" } ] }
+      }),
+      prisma.projectItem.count({
+        where: { OR: [ { demoUrl: null }, { demoUrl: "" } ], status: 'ACTIVE' }
+      }),
+      prisma.note.findMany({
+        where: { OR: [ { description: null }, { description: "" } ] },
+        take: 3,
+        select: {
+          title: true,
+          subject: {
+            select: {
+              title: true,
+              semester: {
+                select: {
+                  name: true,
+                  faculty: {
+                    select: {
+                      name: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      })
     ])
 
     const totalPagesEstimate = totalProjects + totalNotes + totalFaculties + 25
@@ -20,7 +77,7 @@ export async function POST() {
     // Calculate Health Scores based on DB status
     const metadataHealthPct = projectsWithoutThumb > 0 ? Math.max(90, 100 - projectsWithoutThumb * 3) : 98
     const schemaValidCount = indexedPagesEstimate * 2 + 15
-    const orphanPagesCount = hiddenProjects + 4
+    const orphanPagesCount = hiddenProjects + (subjectsWithoutNotes.length)
     const imageSeoPct = projectsWithoutThumb > 0 ? Math.max(85, 100 - projectsWithoutThumb * 5) : 96
 
     // Construct Issues list
@@ -38,31 +95,63 @@ export async function POST() {
       issues.push({
         type: 'CRITICAL',
         message: `${hiddenProjects} project(s) currently hidden from search crawlers`,
-        action: 'Publish Projects'
+        action: 'Publish'
       })
     }
 
-    if (orphanPagesCount > 0) {
+    if (subjectsWithoutNotes.length > 0) {
+      subjectsWithoutNotes.forEach(sub => {
+        const facName = sub.semester?.faculty?.name || 'General'
+        const semName = sub.semester?.name || 'General'
+        issues.push({
+          type: 'HIGH',
+          message: `Subject "${sub.title}" (${sub.code}) in ${facName} - ${semName} has no study notes published`,
+          action: 'Upload Notes'
+        })
+      })
+    }
+
+    if (projectsWithoutDemo > 0) {
       issues.push({
         type: 'HIGH',
-        message: `${orphanPagesCount} pages have low internal links (orphan page risk)`,
+        message: `${projectsWithoutDemo} active project(s) missing live demo URLs`,
         action: 'Add Links'
       })
     }
 
-    issues.push(
-      { type: 'HIGH', message: 'CACS303 Web Tech subject page needs expanded study guide description', action: 'Update Description' },
-      { type: 'WARNING', message: '12 past question papers missing structured year meta tags', action: 'Tag Past Papers' },
-      { type: 'WARNING', message: 'Canonical URL structure check recommended for faculty semester pages', action: 'Verify Canonical' }
-    )
+    if (pastPapersWithoutText > 0) {
+      issues.push({
+        type: 'WARNING',
+        message: `${pastPapersWithoutText} past paper(s) missing searchable text content (OCR)`,
+        action: 'Tag Papers'
+      })
+    }
+
+    if (notesWithoutDescription.length > 0) {
+      notesWithoutDescription.forEach(note => {
+        const facName = note.subject?.semester?.faculty?.name || 'General'
+        const semName = note.subject?.semester?.name || 'General'
+        const subTitle = note.subject?.title || 'Unknown Subject'
+        issues.push({
+          type: 'WARNING',
+          message: `Note "${note.title}" in ${subTitle} (${facName} - ${semName}) is missing search-friendly description text`,
+          action: 'Update Description'
+        })
+      })
+    }
 
     // Construct Recommendations
-    const recommendations = [
-      '1. Add thumbnail preview images to all project items for Facebook/Twitter card previews.',
-      `2. Link orphan pages (${orphanPagesCount} pages) in homepage faculty cards to improve crawl depth.`,
-      '3. Add meta descriptions to top 15 BCA & CSIT subject landing pages.',
-      '4. Generate dynamic XML sitemap ping to Google Search Console.'
-    ]
+    const recommendations: string[] = []
+    if (projectsWithoutThumb > 0) {
+      recommendations.push('1. Add thumbnail preview images to all project items for Facebook/Twitter card previews.')
+    }
+    if (subjectsWithoutNotes.length > 0) {
+      recommendations.push(`2. Upload study notes or guides for the ${subjectsWithoutNotes.length} empty subjects found.`)
+    }
+    if (notesWithoutDescription > 0) {
+      recommendations.push(`3. Add meta descriptions to the ${notesWithoutDescription} notes currently missing search descriptions.`)
+    }
+    recommendations.push('4. Generate dynamic XML sitemap ping to Google Search Console.')
 
     return NextResponse.json({
       success: true,

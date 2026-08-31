@@ -7,7 +7,7 @@ import path from 'path'
 
 export const metadata: Metadata = {
   title: 'About & Support — TU Notes Hub',
-  description: 'Learn about TU Notes Hub — Nepal\'s #1 academic platform for Tribhuvan University students. View contact details, rules, and social channels.',
+  description: 'Learn about TU Notes Hub — Nepal\'s trusted academic resource platform for Tribhuvan University students. View contact details, rules, and social channels.',
 }
 
 export default async function AboutPage() {
@@ -198,7 +198,7 @@ export default async function AboutPage() {
         {/* ── Hero Header ── */}
         <div className="text-center" style={{ marginBottom: '64px' }}>
           <div className="badge badge-elite" style={{ marginBottom: '16px', display: 'inline-flex', padding: '8px 16px', fontSize: '13px', borderRadius: '999px' }}>
-            ✨ NEPAL&apos;S #1 ACADEMIC PLATFORM
+            ✨ NEPAL&apos;S TRUSTED ACADEMIC PLATFORM
           </div>
           <h1 style={{ fontSize: 'clamp(32px, 5.5vw, 56px)', marginBottom: '20px', fontFamily: 'var(--font-display)', fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em' }}>
             Empowering Nepal&apos;s Students with <br className="hidden-mobile" />

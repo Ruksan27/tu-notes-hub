@@ -3,8 +3,9 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    // 1. Most Viewed Notes (Ranked by downloadCount)
-    let mostViewedNotes = await prisma.note.findMany({
+    // 1. Most Viewed Notes (Ranked by downloadCount, only those with downloads)
+    const mostViewedNotes = await prisma.note.findMany({
+      where: { downloadCount: { gt: 0 } },
       take: 5,
       orderBy: { downloadCount: 'desc' },
       select: {
@@ -18,20 +19,9 @@ export async function GET() {
       }
     })
 
-    // Fallback notes if DB count is 0
-    if (mostViewedNotes.length === 0) {
-      mostViewedNotes = [
-        { id: '1', title: 'CACS303 Web Technology Complete Notes', downloadCount: 1420, isPremium: false, subject: { title: 'Web Technology', code: 'CACS303' } },
-        { id: '2', title: 'CACS254 Computer Networks Unit-Wise Notes', downloadCount: 1180, isPremium: false, subject: { title: 'Computer Networks', code: 'CACS254' } },
-        { id: '3', title: 'CACS202 Database Management Systems PDF', downloadCount: 950, isPremium: false, subject: { title: 'Database Management Systems', code: 'CACS202' } },
-        { id: '4', title: 'CACS101 C Programming Solution Guide', downloadCount: 840, isPremium: false, subject: { title: 'C Programming', code: 'CACS101' } },
-        { id: '5', title: 'CACS351 Software Engineering Notes', downloadCount: 720, isPremium: false, subject: { title: 'Software Engineering', code: 'CACS351' } }
-      ] as any
-    }
-
-    // 2. Trending Subjects (Ranked by total notes & download count)
-    let trendingSubjects = await prisma.subject.findMany({
-      take: 5,
+    // 2. Trending Subjects (Ranked by total notes & download count, only those with downloads)
+    const trendingSubjects = await prisma.subject.findMany({
+      take: 15, // Take a larger subset to filter
       select: {
         id: true,
         title: true,
@@ -45,7 +35,7 @@ export async function GET() {
       }
     })
 
-    const formattedSubjects = trendingSubjects.map(s => {
+    const finalSubjects = trendingSubjects.map(s => {
       const totalDownloads = s.notes.reduce((sum, n) => sum + n.downloadCount, 0)
       return {
         id: s.id,
@@ -53,18 +43,12 @@ export async function GET() {
         code: s.code,
         notesCount: s._count.notes,
         pastPapersCount: s._count.pastPapers,
-        totalDownloads: totalDownloads || Math.floor(Math.random() * 800) + 400
+        totalDownloads: totalDownloads || 0
       }
-    }).sort((a, b) => b.totalDownloads - a.totalDownloads).slice(0, 5)
-
-    // Fallback subjects if DB count is 0
-    const finalSubjects = formattedSubjects.length > 0 ? formattedSubjects : [
-      { id: 's1', title: 'Computer Networking', code: 'CACS254', notesCount: 14, pastPapersCount: 8, totalDownloads: 2450 },
-      { id: 's2', title: 'Web Technology', code: 'CACS303', notesCount: 18, pastPapersCount: 10, totalDownloads: 2120 },
-      { id: 's3', title: 'Database Management System', code: 'CACS202', notesCount: 16, pastPapersCount: 9, totalDownloads: 1890 },
-      { id: 's4', title: 'Object Oriented Programming (Java)', code: 'CACS204', notesCount: 12, pastPapersCount: 7, totalDownloads: 1650 },
-      { id: 's5', title: 'Data Structures and Algorithms', code: 'CACS201', notesCount: 15, pastPapersCount: 8, totalDownloads: 1420 },
-    ]
+    })
+    .filter(s => s.totalDownloads > 0)
+    .sort((a, b) => b.totalDownloads - a.totalDownloads)
+    .slice(0, 5)
 
     // 3. Popular Faculties (BCA, CSIT, BIT, BBA, BBS, etc.)
     const faculties = await prisma.faculty.findMany({
