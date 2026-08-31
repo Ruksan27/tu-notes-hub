@@ -1045,8 +1045,8 @@ img { max-width: 100%; display: block; }
 ═══════════════════════════════════════════════ */
 .admin-page-container {
   display: flex;
-  height: calc(100vh - 72px);
-  min-height: calc(100vh - 72px);
+  height: 100vh;
+  min-height: 100vh;
   background: var(--clr-bg-900);
   overflow: hidden;
 }
