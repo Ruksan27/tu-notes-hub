@@ -214,7 +214,7 @@ export async function GET(req: NextRequest) {
           semester: {
             order: semOrder,
             faculty: {
-              name: { contains: facFilter, mode: 'insensitive' }
+              name: { contains: facFilter }
             }
           }
         },
@@ -470,6 +470,8 @@ export async function POST(req: NextRequest) {
           reviewCount: '128'
         }
       }, null, 2)
+
+      const currentNptTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' })
 
       const result = {
         targetTopic: topic,

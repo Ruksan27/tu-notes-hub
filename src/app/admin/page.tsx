@@ -1480,7 +1480,7 @@ function UploadTab() {
         payload.examType = examType
       }
 
-      const uploadApiEndpoint = contentType === 'SOLUTION_BOOK' ? '/api/upload/solution-book' : '/api/upload'
+      const uploadApiEndpoint = (contentType as string) === 'SOLUTION_BOOK' ? '/api/upload/solution-book' : '/api/upload'
       const saveRes = await fetch(uploadApiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1696,7 +1696,7 @@ function UploadTab() {
                         return
                       }
 
-                      if (!selectedSubject && contentType !== 'SOLUTION_BOOK') {
+                      if (!selectedSubject) {
                         toast.error('Please select Faculty, Semester, and Subject first!')
                         return
                       }
