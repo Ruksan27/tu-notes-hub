@@ -57,7 +57,7 @@ export default function SolutionBookList({ books, facultyId, semesterOrder }: Pr
               background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.08) 100%)',
               display: 'flex',
               flexDirection: 'column',
-              justify: 'space-between',
+              justifyContent: 'space-between',
               gap: '14px',
             }}
           >
