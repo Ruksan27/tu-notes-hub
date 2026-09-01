@@ -38,6 +38,7 @@ export default async function FacultyPage({ params }: Props) {
       semesters: {
         orderBy: { order: 'asc' },
         include: {
+          solutionBooks: { select: { id: true } },
           subjects: {
             include: {
               notes: { select: { id: true } },
@@ -91,6 +92,7 @@ export default async function FacultyPage({ params }: Props) {
         gap: '20px',
       }}>
         {faculty.semesters.map((sem) => {
+          const totalSolutionBooks = sem.solutionBooks ? sem.solutionBooks.length : 0
           const totalNotes = sem.subjects.reduce((sum, s) => sum + s.notes.length, 0)
           const totalPapers = sem.subjects.reduce((sum, s) => sum + s.pastPapers.length, 0)
           const totalSheets = sem.subjects.reduce((sum, s) => sum + s.cheatsheets.length, 0)
@@ -172,6 +174,7 @@ export default async function FacultyPage({ params }: Props) {
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     <span className="badge badge-free">📄 {totalNotes} Notes</span>
                     <span className="badge badge-semester">📝 {totalPapers} Papers</span>
+                    {totalSolutionBooks > 0 && <span className="badge badge-primary">📘 {totalSolutionBooks} Books</span>}
                     {totalSheets > 0 && <span className="badge badge-elite">📋 {totalSheets} Sheets</span>}
                   </div>
 

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import SubjectRow from '@/components/SubjectRow'
 import AdUnit from '@/components/ads/AdUnit'
+import SolutionBookList from '@/components/SolutionBookList'
 
 export const revalidate = 3600
 
@@ -66,6 +67,7 @@ export default async function SemesterPage({ params }: Props) {
       semesters: {
         where: { order },
         include: {
+          solutionBooks: { orderBy: { createdAt: 'desc' } },
           subjects: {
             orderBy: { code: 'asc' },
             include: {
@@ -83,6 +85,14 @@ export default async function SemesterPage({ params }: Props) {
   const sem = faculty.semesters[0]
   const isYearly = faculty.systemType === 'YEARLY'
   const periodLabel = isYearly ? `${order}${order === 1 ? 'st' : order === 2 ? 'nd' : order === 3 ? 'rd' : 'th'} Year` : `${order}${order === 1 ? 'st' : order === 2 ? 'nd' : order === 3 ? 'rd' : 'th'} Semester`
+
+  // Separate full semester guides vs subject-specific solution books
+  const allBooks = (sem.solutionBooks || []) as any[]
+  const semesterGuides = allBooks.filter(b => !b.subjectId)
+  const subjectsWithBooks = sem.subjects.map(sub => ({
+    ...sub,
+    solutionBooks: allBooks.filter(b => b.subjectId === sub.id)
+  }))
 
   return (
     <div className="container" style={{ padding: '40px 24px' }}>
@@ -122,8 +132,11 @@ export default async function SemesterPage({ params }: Props) {
       {/* Top Banner Ad */}
       <AdUnit type="banner" slot="semester-top-banner" />
 
+      {/* Solution Books & Semester Guides Section */}
+      <SolutionBookList books={semesterGuides} facultyId={faculty.id} semesterOrder={order} />
+
       {/* Subjects List */}
-      {sem.subjects.length === 0 ? (
+      {subjectsWithBooks.length === 0 ? (
         <div className="glass-card" style={{ padding: '60px 40px', textAlign: 'center', marginTop: '24px' }}>
           <div style={{ fontSize: '56px', marginBottom: '16px' }}>📚</div>
           <h3 style={{ marginBottom: '8px', fontSize: '22px' }}>No Subjects Added Yet</h3>
@@ -133,7 +146,7 @@ export default async function SemesterPage({ params }: Props) {
         </div>
       ) : (
         <div style={{ width: '100%', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {sem.subjects.map((subject) => (
+          {subjectsWithBooks.map((subject) => (
             <SubjectRow
               key={subject.id}
               subject={subject as any}

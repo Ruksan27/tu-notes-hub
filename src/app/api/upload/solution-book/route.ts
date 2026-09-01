@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { semesterId, title, description, cloudinaryUrl, fileSize, isPremium, author } = await req.json()
+    const { semesterId, subjectId, title, description, cloudinaryUrl, fileSize, isPremium, author } = await req.json()
 
     if (!semesterId) return NextResponse.json({ error: 'Semester is required' }, { status: 400 })
     if (!title) return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -25,8 +25,20 @@ export async function POST(req: NextRequest) {
         isPremium: isPremium === 'true' || isPremium === true,
         author: author || '',
         semesterId,
+        subjectId: subjectId || null,
+      },
+      include: {
+        semester: { select: { facultyId: true, order: true } }
       }
     })
+
+    const facultyId = solutionBook.semester.facultyId
+    try {
+      const { revalidatePath } = await import('next/cache')
+      revalidatePath(`/faculty/${facultyId}`)
+      revalidatePath(`/faculty/${facultyId}/${solutionBook.semester.order}-semester`)
+      revalidatePath(`/faculty/${facultyId}/${solutionBook.semester.order}th-semester`)
+    } catch (e) {}
 
     return NextResponse.json({ solutionBook, message: 'Solution book published successfully! 🎉' })
   } catch (error) {

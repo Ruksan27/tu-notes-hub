@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getNoteSlug, getPaperSlug, getSemesterPath, slugify } from '@/lib/slugs'
+import SolutionBookList from '@/components/SolutionBookList'
 
 interface Note {
   id: string
@@ -29,6 +30,16 @@ interface Cheatsheet {
   content: string
 }
 
+interface SolutionBook {
+  id: string
+  title: string
+  description?: string | null
+  cloudinaryUrl: string
+  fileSize?: string | null
+  isPremium: boolean
+  author?: string | null
+}
+
 interface Subject {
   id: string
   title: string
@@ -36,6 +47,7 @@ interface Subject {
   notes: Note[]
   pastPapers: PastPaper[]
   cheatsheets: Cheatsheet[]
+  solutionBooks?: SolutionBook[]
 }
 
 const listContainerVariants = {
@@ -74,7 +86,7 @@ export default function SubjectRow({
   semesterOrder?: number
   systemType?: string
 }) {
-  const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | null>(null)
+  const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | null>(null)
 
   const semPath = getSemesterPath(facultyId, semesterOrder, systemType)
 
@@ -104,8 +116,9 @@ export default function SubjectRow({
   const guides = subject.notes.filter(n => n.noteType === 'GUIDE')
   const pastPapers = subject.pastPapers
   const cheatsheets = subject.cheatsheets
+  const solutionBooks = subject.solutionBooks || []
 
-  const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets') => {
+  const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks') => {
     if (activeTab === tabName) {
       setActiveTab(null)
     } else {
@@ -255,6 +268,15 @@ export default function SubjectRow({
                 style={getPillStyle('guide', guides.length)}
               >
                 📘 Books & Guides ({guides.length})
+              </button>
+            )}
+
+            {solutionBooks.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleTab('solutionBooks') }}
+                style={getPillStyle('solutionBooks', solutionBooks.length)}
+              >
+                📘 Solution Book ({solutionBooks.length})
               </button>
             )}
 
@@ -416,6 +438,14 @@ export default function SubjectRow({
                       </Link>
                     ))}
                   </motion.div>
+                </div>
+              )}
+
+              {/* Solution Books List */}
+              {activeTab === 'solutionBooks' && (
+                <div>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📘 Subject Solution Books</h4>
+                  <SolutionBookList books={solutionBooks} />
                 </div>
               )}
 

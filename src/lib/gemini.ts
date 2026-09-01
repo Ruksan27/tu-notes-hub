@@ -5,11 +5,14 @@ const API_KEYS = [
   process.env.GEMINI_KEY_1,
   process.env.GEMINI_KEY_2,
   process.env.GEMINI_KEY_3,
+  process.env.GEMINI_API_KEY,
+  process.env.NEXT_PUBLIC_GEMINI_API_KEY,
 ].filter(Boolean) as string[]
 
 let currentKeyIndex = 0
 
 function getNextApiKey(): string {
+  if (API_KEYS.length === 0) return ''
   const key = API_KEYS[currentKeyIndex]
   currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length
   return key
@@ -21,10 +24,17 @@ export async function callGemini(
   imageBase64?: string,
   mimeType?: string
 ): Promise<string> {
+  if (API_KEYS.length === 0) {
+    console.warn('[Gemini] No GEMINI_API_KEY set in environment variables.')
+    return ''
+  }
+
   let attempts = 0
 
   while (attempts < API_KEYS.length) {
     const apiKey = getNextApiKey()
+    if (!apiKey) break
+
     try {
       const genAI = new GoogleGenAI({ apiKey })
 
@@ -34,11 +44,28 @@ export async function callGemini(
       }
       contents.push(prompt)
 
-      const response = await genAI.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents,
-        ...(systemInstruction ? { config: { systemInstruction } } : {}),
-      })
+      let response: any
+      try {
+        response = await genAI.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents,
+          ...(systemInstruction ? { config: { systemInstruction } } : {}),
+        })
+      } catch (mErr1) {
+        try {
+          response = await genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents,
+            ...(systemInstruction ? { config: { systemInstruction } } : {}),
+          })
+        } catch (mErr2) {
+          response = await genAI.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents,
+            ...(systemInstruction ? { config: { systemInstruction } } : {}),
+          })
+        }
+      }
 
       return response.text ?? ''
     } catch (error: any) {

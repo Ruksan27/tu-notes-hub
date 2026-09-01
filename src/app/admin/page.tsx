@@ -1466,13 +1466,22 @@ function UploadTab() {
         payload.noteType = noteType
         payload.isPremium = isPremium
         payload.author = author
+      } else if ((contentType as string) === 'SOLUTION_BOOK') {
+        if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title is required'); return }
+        payload.title = noteTitle
+        payload.description = noteDescription
+        payload.isPremium = isPremium
+        payload.author = author
+        payload.semesterId = semesterId
+        payload.subjectId = subjectId || null
       } else if (contentType === 'PAST_PAPER') {
         if (!paperYear) { toast.dismiss('upload-progress'); toast.error('Year is required'); return }
         payload.year = paperYear
         payload.examType = examType
       }
 
-      const saveRes = await fetch('/api/upload', {
+      const uploadApiEndpoint = contentType === 'SOLUTION_BOOK' ? '/api/upload/solution-book' : '/api/upload'
+      const saveRes = await fetch(uploadApiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1585,47 +1594,56 @@ function UploadTab() {
             </div>
           </div>
 
-          {/* Subject — hidden for Solution Books */}
-          {contentType !== 'SOLUTION_BOOK' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
-                <label className="block text-sm font-semibold" style={{ color: 'var(--clr-text-2)' }}>Subject</label>
-                {semesterId && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const title = prompt('Enter Subject Title (e.g. Computer Graphics):')
-                      if (!title) return
-                      const code = prompt('Enter Subject Code (e.g. CACS305):')
-                      if (!code) return
-                      
-                      try {
-                        const res = await fetch('/api/admin/subjects', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ title, code, semesterId })
-                        })
-                        if (res.ok) {
-                          toast.success('Subject added!')
-                          fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => { setSubjects(d.subjects || []); setSubjectId(d.subjects[d.subjects.length - 1]?.id || '') })
-                        } else {
-                          const err = await res.json()
-                          toast.error(err.error || 'Failed to add subject')
-                        }
-                      } catch (e) { toast.error('Network error') }
-                    }}
-                    style={{ fontSize: '12px', background: 'var(--grad-brand)', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}
-                  >
-                    + Add Subject
-                  </button>
-                )}
-              </div>
-              <select className="input-field" value={subjectId} onChange={e => setSubjectId(e.target.value)} required disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
-                <option value="">— Choose Subject —</option>
-                {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
-              </select>
+          {/* Subject Field */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
+              <label className="block text-sm font-semibold" style={{ color: 'var(--clr-text-2)' }}>
+                Subject {contentType === 'SOLUTION_BOOK' ? '(Optional for Solution Books)' : ''}
+              </label>
+              {semesterId && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const title = prompt('Enter Subject Title (e.g. Computer Graphics):')
+                    if (!title) return
+                    const code = prompt('Enter Subject Code (e.g. CACS305):')
+                    if (!code) return
+                    
+                    try {
+                      const res = await fetch('/api/admin/subjects', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, code, semesterId })
+                      })
+                      if (res.ok) {
+                        toast.success('Subject added!')
+                        fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => { setSubjects(d.subjects || []); setSubjectId(d.subjects[d.subjects.length - 1]?.id || '') })
+                      } else {
+                        const err = await res.json()
+                        toast.error(err.error || 'Failed to add subject')
+                      }
+                    } catch (e) { toast.error('Network error') }
+                  }}
+                  style={{ fontSize: '12px', background: 'var(--grad-brand)', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}
+                >
+                  + Add Subject
+                </button>
+              )}
             </div>
-          )}
+            <select
+              className="input-field"
+              value={subjectId}
+              onChange={e => setSubjectId(e.target.value)}
+              required={contentType !== 'SOLUTION_BOOK'}
+              disabled={!semesterId}
+              style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}
+            >
+              <option value="">
+                {contentType === 'SOLUTION_BOOK' ? '— Full Semester Guide (All Subjects) —' : '— Choose Subject —'}
+              </option>
+              {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
+            </select>
+          </div>
 
           {/* Google Drive Link Input */}
           {sourceType === 'DRIVE' && contentType !== 'CHEATSHEET' && (
@@ -1656,9 +1674,54 @@ function UploadTab() {
               style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
-                  {isSolutionBook ? 'Solution Book Title' : noteType === 'PROJECT' ? 'Project Title' : noteType === 'LAB_WORK' ? 'Lab Work Title' : 'Note Title'}
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label className="block text-sm font-semibold" style={{ color: 'var(--clr-text-2)' }}>
+                    {isSolutionBook ? 'Solution Book Title' : noteType === 'PROJECT' ? 'Project Title' : noteType === 'LAB_WORK' ? 'Lab Work Title' : 'Note Title'}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const selectedFaculty = faculties.find(f => f.id === facultyId)
+                      const selectedSemester = semesters.find(s => s.id === semesterId)
+                      const selectedSubject = subjects.find(s => s.id === subjectId)
+
+                      const facName = selectedFaculty ? selectedFaculty.name.toUpperCase() : 'TU'
+                      const semName = selectedSemester ? selectedSemester.name : ''
+                      const subName = selectedSubject ? `${selectedSubject.title} (${selectedSubject.code})` : ''
+
+                      if (contentType === 'SOLUTION_BOOK') {
+                        setNoteTitle(`TU ${facName} ${semName} Complete Solution Book & Guide PDF (2081/2082)`)
+                        setNoteDescription(`Complete chapterwise solution book and semester guide for TU ${facName} ${semName}. Covers model questions, syllabus solutions, and past exam papers.`)
+                        toast.success('✨ Rank #1 SEO Title & Description auto-filled!')
+                        return
+                      }
+
+                      if (!selectedSubject && contentType !== 'SOLUTION_BOOK') {
+                        toast.error('Please select Faculty, Semester, and Subject first!')
+                        return
+                      }
+
+                      setNoteTitle(`${facName} ${semName} ${subName} Complete Notes PDF Download (TU Updated 2026)`)
+                      setNoteDescription(`Download free ${facName} ${semName} ${subName} handwritten study notes, chapterwise solutions, and past exam question answers on TU Notes Hub.`)
+                      toast.success('✨ Rank #1 SEO Title & Description auto-filled!')
+                    }}
+                    style={{
+                      fontSize: '12px',
+                      background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    ✨ Auto-SEO Generate
+                  </button>
+                </div>
                 <input
                   className="input-field"
                   placeholder={

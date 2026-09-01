@@ -6,6 +6,7 @@ import AdUnit from '@/components/ads/AdUnit'
 import MarkdownPaperViewer from '@/components/MarkdownPaperViewer'
 import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
 import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
+import DocLoadingProgress from '@/components/DocLoadingProgress'
 
 function extractDriveFileId(link: string): string | null {
   const patterns = [
@@ -37,13 +38,16 @@ function getDriveProxyUrl(link: string): string {
   return `/api/drive-proxy?url=${encodeURIComponent(link)}`
 }
 
+import { extractIdFromSlug } from '@/lib/utils'
+
 function getNoteTargetId(p: any): string {
   if (p?.noteParams && Array.isArray(p.noteParams) && p.noteParams.length > 0) {
     const subjectPart = p.noteParams[0] || ''
     const itemPart = p.noteParams[p.noteParams.length - 1] || ''
-    return `${subjectPart}-${itemPart}`
+    return extractIdFromSlug(`${subjectPart}-${itemPart}`)
   }
-  return ((p?.noteSlug || p?.noteId) as string) || ''
+  const raw = ((p?.noteSlug || p?.noteId) as string) || ''
+  return extractIdFromSlug(raw)
 }
 
 export default function DownloadPage() {
@@ -97,6 +101,7 @@ export default function DownloadPage() {
   // AI Answer Modal state
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [aiQuestion, setAiQuestion] = useState('')
+  const [isDocLoading, setIsDocLoading] = useState(true)
 
   const targetNoteId = getNoteTargetId(params)
 
@@ -230,10 +235,11 @@ export default function DownloadPage() {
 
   // Drive files render from our own proxy. Images and PDFs can be shown directly,
   // while Office docs/presentations use the Docs viewer with the proxied file URL.
+  const driveId = extractDriveFileId(fileUrl)
   const previewUrl = isDriveLink
-    ? (isDriveOfficeDoc
-      ? `https://docs.google.com/gview?url=${encodeURIComponent(driveProxyUrl)}&embedded=true`
-      : driveProxyUrl)
+    ? (driveId
+      ? `https://docs.google.com/gview?url=${encodeURIComponent(`https://drive.google.com/uc?export=download&id=${driveId}`)}&embedded=true`
+      : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`)
     : (isImage || isPdf)
       ? proxiedUrl
       : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
@@ -289,7 +295,7 @@ export default function DownloadPage() {
         </div>
       )}
 
-      <div style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: isPaid ? '1fr' : 'minmax(0, 1fr) 340px', alignItems: 'start' }}>
+      <div style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: isPaid ? '1fr' : 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
         
         {/* Main Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -455,7 +461,12 @@ export default function DownloadPage() {
               )}
 
               {/* Document Preview (Only displayed after countdown) */}
-              <div style={{ flex: 1, minHeight: '680px', borderRadius: '16px', border: '1px solid var(--clr-border)', overflow: 'hidden', background: '#121824', position: 'relative' }}>
+              <div style={{ flex: 1, minHeight: '850px', height: '100%', borderRadius: '16px', border: '1px solid var(--clr-border)', overflow: 'hidden', background: '#121824', position: 'relative' }}>
+                {isDocLoading && (
+                  <div style={{ position: 'absolute', inset: 0, zIndex: 20, background: '#090d16' }}>
+                    <DocLoadingProgress onComplete={() => setIsDocLoading(false)} />
+                  </div>
+                )}
                 {fileUrl ? (
                   activeTab === 'text' && note?.extractedText ? (
                     <div
@@ -510,10 +521,7 @@ export default function DownloadPage() {
                     />
                   )
                 ) : (
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', color: 'var(--clr-text-3)' }}>
-                    <span className="spinner" />
-                    <p>Configuring secure document previewer...</p>
-                  </div>
+                  <DocLoadingProgress />
                 )}
               </div>
             </>

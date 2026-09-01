@@ -40,8 +40,7 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        // Allow iframe embedding from our own domain only
-        'X-Frame-Options': 'SAMEORIGIN',
+        'Access-Control-Allow-Origin': '*',
         // Cache for 1 hour
         'Cache-Control': 'public, max-age=3600',
         'Content-Length': body.byteLength.toString(),

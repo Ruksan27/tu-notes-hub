@@ -128,14 +128,15 @@ model Semester {
 }
 
 model Subject {
-  id          String       @id @default(uuid())
-  title       String
-  code        String
-  semesterId  String
-  semester    Semester     @relation(fields: [semesterId], references: [id])
-  notes       Note[]
-  pastPapers  PastPaper[]
-  cheatsheets Cheatsheet[]
+  id            String       @id @default(uuid())
+  title         String
+  code          String
+  semesterId    String
+  semester      Semester     @relation(fields: [semesterId], references: [id])
+  notes         Note[]
+  pastPapers    PastPaper[]
+  cheatsheets   Cheatsheet[]
+  solutionBooks SolutionBook[]
 }
 
 model Note {
@@ -184,6 +185,8 @@ model SolutionBook {
   author        String?
   semesterId    String
   semester      Semester @relation(fields: [semesterId], references: [id])
+  subjectId     String?
+  subject       Subject? @relation(fields: [subjectId], references: [id])
   downloadCount Int      @default(0)
   createdAt     DateTime @default(now())
 }

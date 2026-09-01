@@ -128,7 +128,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
- 
 
       {/* ── Stats ─────────────────────────────────── */}
       <section style={{ padding: '40px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)' }}>
