@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
     // 1. Fetch the original PDF from Cloudinary or Google Drive
     const response = await fetch(fileUrl)
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch the original file' }, { status: 500 })
+      const status = response.status === 404 ? 404 : 500
+      return NextResponse.json({ error: 'Failed to fetch the original file' }, { status })
     }
 
     const arrayBuffer = await response.arrayBuffer()

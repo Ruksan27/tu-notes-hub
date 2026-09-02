@@ -514,11 +514,13 @@ export default function DownloadPage() {
                             return <ExamPaperViewer data={parsed as ExamPaperData} />
                           }
                         } catch (e) {
-                          console.error("Failed to parse JSON for ExamPaperViewer:", e);
+                          // Silently fallback to legacy markdown parser instead of console.error
+                          // Next.js dev overlay pops up on console.error during render
                           const legacyParsed = parseLegacyMarkdownToExamData(note.extractedText);
                           if (legacyParsed && legacyParsed.groups && legacyParsed.groups.length > 0) {
                             return <ExamPaperViewer data={legacyParsed} />
                           }
+                          // If even legacy parser fails, show plain text
                         }
                         return <MarkdownPaperViewer content={note.extractedText} />
                       })()}

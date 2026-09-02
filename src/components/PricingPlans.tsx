@@ -65,28 +65,7 @@ interface Plan {
 
 // Plans are now fetched from the database via API.
 // A fallback plan array is still used to prevent flashing on first load.
-const fallbackPlans: Plan[] = [
-  {
-    id: 'FREE',
-    emoji: '🌱',
-    name: 'Free Tier',
-    tagline: 'Start learning today',
-    price: 'Rs. 0',
-    priceNote: 'Forever free',
-    validity: null,
-    color: '#64748b',
-    gradient: 'linear-gradient(135deg, #475569, #64748b)',
-    glow: 'rgba(100,116,139,0.15)',
-    popular: false,
-    audience: 'Casual students & browsers',
-    features: [
-      { icon: '📚', text: 'Browse all notes & past papers', avail: true },
-      { icon: '⏱️', text: '10-second countdown before download', avail: true },
-    ],
-    cta: 'Get Started Free',
-    ctaStyle: 'outline',
-  },
-]
+const fallbackPlans: Plan[] = []
 
 const comparisons = [
   { feature: 'Browse Notes & Past Papers', free: true, semester: true, elite: true },

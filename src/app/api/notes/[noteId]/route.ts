@@ -36,6 +36,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
     const fullSlug = getNoteSlug(n)
     const titleSlug = slugify(n.title || '')
     const subTitleSlug = slugify(`${n.subject?.title || ''} ${n.title || ''}`)
+    const subCodeSlug = n.subject?.code ? slugify(`${n.subject.code} ${n.title || ''}`) : ''
 
     return (
       fullSlug === rawNoteId ||
@@ -43,6 +44,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
       titleSlug === cleanRaw ||
       subTitleSlug === rawNoteId ||
       subTitleSlug === cleanRaw ||
+      subCodeSlug === rawNoteId ||
+      subCodeSlug === cleanRaw ||
       (titleSlug.length > 2 && rawNoteId.includes(titleSlug)) ||
       (titleSlug.length > 2 && cleanRaw.includes(titleSlug))
     )
@@ -60,10 +63,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
   const matchedPaper = allPapers.find((p) => {
     const fullSlug = getPaperSlug(p)
     const subTitleSlug = slugify(`${p.subject?.title || ''} ${p.year} ${p.examType}`)
+    const subCodeSlug = p.subject?.code ? slugify(`${p.subject.code} ${p.year} ${p.examType}`) : ''
     return (
       fullSlug === rawNoteId ||
       subTitleSlug === rawNoteId ||
-      (p.subject?.title && rawNoteId.includes(slugify(p.subject.title)) && rawNoteId.includes(String(p.year)))
+      subCodeSlug === rawNoteId ||
+      (p.subject?.title && rawNoteId.includes(slugify(p.subject.title)) && rawNoteId.includes(String(p.year))) ||
+      (p.subject?.code && rawNoteId.includes(slugify(p.subject.code)) && rawNoteId.includes(String(p.year)))
     )
   })
 

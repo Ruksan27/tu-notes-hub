@@ -120,59 +120,7 @@ export async function GET(req: NextRequest) {
         },
       })
 
-      const projectIdeas = [
-        {
-          id: 'google-trend-1',
-          title: 'Full-Stack MERN E-Commerce with Khalti & eSewa Payment Gateway',
-          category: 'Web App',
-          targetFaculty: ['BCA', 'CSIT', 'BIT'],
-          techStack: ['React', 'Node.js', 'Express', 'MongoDB', 'Khalti SDK', 'eSewa'],
-          searchDemandScore: 98,
-          trendVelocity: '+540% Breakout (Live Google Trend Nepal)',
-          estimatedMarketPriceNpr: 'Rs. 5,500 - Rs. 9,500',
-          targetBuyers: '7th & 8th Sem Final Year Submissions',
-          whySellingWell: 'Dual Nepali payment gateway integration impresses external viva examiners.',
-          sampleGoogleSearches: mernTrends.length > 0 ? mernTrends.slice(0, 4) : ['mern ecommerce project bca 8th sem nepal', 'khalti integration project github', 'react esewa payment source code'],
-          includedFeatures: ['JWT Authentication', 'Khalti Payment Verification', 'eSewa Verification', 'Admin Invoice PDF'],
-          liveGoogleSearchUrl: `https://www.google.com/search?q=${encodeURIComponent('mern stack project nepal')}&gl=np`,
-          liveGoogleApiEndpoint: `https://suggestqueries.google.com/complete/search?client=chrome&hl=en&gl=np&q=${encodeURIComponent('mern stack project nepal')}`,
-          fetchedTimestamp: currentNptTime,
-        },
-        {
-          id: 'google-trend-2',
-          title: 'OpenCV Computer Vision Real-Time Face Attendance System',
-          category: 'AI / Machine Learning',
-          targetFaculty: ['CSIT', 'Engineering (IOE)', 'BCA'],
-          techStack: ['Python', 'OpenCV', 'Face Recognition', 'SQLite', 'Tkinter / Streamlit'],
-          searchDemandScore: 92,
-          trendVelocity: '+390% High Demand (Google Trend NP)',
-          estimatedMarketPriceNpr: 'Rs. 4,500 - Rs. 8,000',
-          targetBuyers: 'AI/ML Elective & IOE Major Projects',
-          whySellingWell: 'Python ML projects receive highest academic scores during live webcam viva demos.',
-          sampleGoogleSearches: pythonTrends.length > 0 ? pythonTrends.slice(0, 4) : ['python face attendance system project nepal', 'opencv attendance csit project', 'ai major project report docx'],
-          includedFeatures: ['Webcam Live Frame Processing', 'CSV Attendance Log', 'User Enrollment GUI', 'Model Accuracy Report'],
-          liveGoogleSearchUrl: `https://www.google.com/search?q=${encodeURIComponent('python college project nepal')}&gl=np`,
-          liveGoogleApiEndpoint: `https://suggestqueries.google.com/complete/search?client=chrome&hl=en&gl=np&q=${encodeURIComponent('python college project nepal')}`,
-          fetchedTimestamp: currentNptTime,
-        },
-        {
-          id: 'google-trend-3',
-          title: 'Flutter Doctor Appointment & Online Health Clinic App',
-          category: 'Mobile App',
-          targetFaculty: ['BCA', 'BIT', 'BIM'],
-          techStack: ['Flutter', 'Dart', 'Firebase', 'Cloud Firestore', 'Push Notifications'],
-          searchDemandScore: 89,
-          trendVelocity: '+310% Surge (Google Trend NP)',
-          estimatedMarketPriceNpr: 'Rs. 6,000 - Rs. 10,500',
-          targetBuyers: 'Mobile App Elective & BIT Projects',
-          whySellingWell: 'Cross-platform Android & iOS deployment stand out in mobile app development viva.',
-          sampleGoogleSearches: googleTrends.length > 0 ? googleTrends.slice(0, 4) : ['flutter doctor appointment app source code', 'firebase flutter bca project nepal', 'mobile app project report sample'],
-          includedFeatures: ['Doctor Schedule Selection', 'Patient Booking History', 'Firebase Auth', 'FCM Push Alerts'],
-          liveGoogleSearchUrl: `https://www.google.com/search?q=${encodeURIComponent('bca project nepal')}&gl=np`,
-          liveGoogleApiEndpoint: `https://suggestqueries.google.com/complete/search?client=chrome&hl=en&gl=np&q=${encodeURIComponent('bca project nepal')}`,
-          fetchedTimestamp: currentNptTime,
-        },
-      ]
+      const projectIdeas: any[] = []
 
       if (listedProjects.length > 0) {
         listedProjects.forEach((p, i) => {
@@ -261,41 +209,7 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // If database has no subjects for this semester, fallback to accurate syllabus subjects for THIS EXACT SEMESTER!
-      if (alerts.length === 0) {
-        const fallbackSubjects = TU_SEMESTER_SUBJECTS_MAP[facFilter]?.[semOrder] || [
-          { code: `SUBJECT1`, title: `${facFilter} ${semFilter} Core Subject 1` },
-          { code: `SUBJECT2`, title: `${facFilter} ${semFilter} Core Subject 2` },
-        ]
-
-        for (let i = 0; i < fallbackSubjects.length; i++) {
-          const sub = fallbackSubjects[i]
-          const subTrends = await fetchGoogleNepalTrends(`tu ${facFilter.toLowerCase()} ${sub.title.toLowerCase()} notes`)
-
-          alerts.push({
-            id: `syllabus-alert-${sub.code}`,
-            faculty: facFilter,
-            semester: semFilter,
-            subjectOrEvent: `${sub.title} (${sub.code})`,
-            spikePercentage: `+${480 + (i * 45)}% Surge (Live Google NP)`,
-            searchDemandSignal: '🌐 High Google Nepal Traffic Signal',
-            urgencyLevel: i === 0 ? 'Critical Spike' : 'High Surge',
-            alertMessage: `Search volume for ${facFilter} ${semFilter} ${sub.title} detected on Google Nepal search engine in past 48h.`,
-            actionRequiredForAdmin: `Upload ${sub.title} handwritten notes and TU past paper solutions immediately.`,
-            targetKeywordsToTargetNow: subTrends.length > 0 ? subTrends.slice(0, 4) : [
-              `tu ${facFilter.toLowerCase()} ${semFilter.toLowerCase()} ${sub.title.toLowerCase()} notes pdf`,
-              `${sub.title.toLowerCase()} old questions solution tu nepal`,
-              `${sub.code.toLowerCase()} lab manual solutions`,
-              `tu ${facFilter.toLowerCase()} ${semFilter.toLowerCase()} exam routine 2026`
-            ],
-            historicalSearchPattern: 'Search interest peaks 2 weeks before official TU board exam routine announcement.',
-            liveGoogleSearchUrl: `https://www.google.com/search?q=${encodeURIComponent(`tu ${facFilter} ${semFilter} ${sub.title} notes`)}&gl=np`,
-            liveGoogleApiEndpoint: `https://suggestqueries.google.com/complete/search?client=chrome&hl=en&gl=np&q=${encodeURIComponent(`tu ${facFilter} ${semFilter} ${sub.title}`)}`,
-            fetchedTimestamp: currentNptTime,
-            rawGoogleSuggestions: subTrends.length > 0 ? subTrends : liveGoogleTrends,
-          })
-        }
-      }
+      // Remove fallback subjects loop that generated mock alerts
 
       return NextResponse.json({ success: true, alerts })
     }
@@ -305,14 +219,7 @@ export async function GET(req: NextRequest) {
       const routineTrends = await fetchGoogleNepalTrends('tu exam routine')
       const resultTrends = await fetchGoogleNepalTrends('tu result')
 
-      const tags = [
-        { id: 'gt-1', tag: '#TU_Exam_Routine_2026', label: 'TU Board Routines', category: 'Routine', volume: '28.5K', isHot: true, targetKeyword: routineTrends[0] || 'TU Board Exam Routine 2026' },
-        { id: 'gt-2', tag: '#BCA_2nd_Sem_C', label: 'BCA 2nd C Programming', category: 'Notes', volume: '18.4K', isHot: true, targetKeyword: 'BCA 2nd Sem C Programming Notes' },
-        { id: 'gt-3', tag: '#BCA_4th_DBMS', label: 'BCA 4th DBMS Notes', category: 'Notes', volume: '15.2K', isHot: true, targetKeyword: 'BCA 4th Sem DBMS Notes' },
-        { id: 'gt-4', tag: '#Nepal_College_Projects', label: 'BCA/CSIT Projects', category: 'Project', volume: '19.8K', isHot: true, targetKeyword: 'MERN E-Commerce Project Nepal' },
-        { id: 'gt-5', tag: '#CSIT_2nd_Math', label: 'CSIT 2nd Mathematics', category: 'Notes', volume: '13.1K', isHot: false, targetKeyword: 'CSIT 2nd Sem Mathematics Notes' },
-        { id: 'gt-6', tag: '#TU_Results_Nepal', label: 'TU Results 2026', category: 'Routine', volume: '22.0K', isHot: true, targetKeyword: resultTrends[0] || 'TU BCA Result 2026' },
-      ]
+      const tags: any[] = []
 
       return NextResponse.json({ success: true, tags })
     }
@@ -389,18 +296,7 @@ export async function GET(req: NextRequest) {
           { keyword: 'bca project marketplace nepal', estimatedClicks: `${totalProjects * 15}`, rank: 1 },
         ],
       },
-      competitorSite: {
-        url: 'https://edusanjal.com',
-        name: 'Edusanjal / CollegeNepal',
-        isUserSite: false,
-        formattedMonthlyVisits: '180.5K',
-        dailyActiveStudents: 14000,
-        tuKeywordRankings: 1200,
-        domainAuthority: 54,
-        indexedPages: 1450,
-        mobileSpeedScore: 82,
-        contentFreshnessScore: 78,
-      },
+      competitorSite: null,
       missedKeywordGaps,
     }
 
