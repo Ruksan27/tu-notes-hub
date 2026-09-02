@@ -53,13 +53,13 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
     return hasNew && hasOld
   }, [faculty])
 
-  const [activeTab, setActiveTab] = useState<'new' | 'old' | 'all'>('new')
+  const [activeTab, setActiveTab] = useState<'new' | 'old'>('new')
 
   // Filter subjects according to active syllabus tab
   const filteredSemesters = useMemo(() => {
     return faculty.semesters.map((sem) => {
       const filteredSubjects = sem.subjects.filter((sub) => {
-        if (activeTab === 'all' || !hasNewAndOld) return true
+        if (!hasNewAndOld) return true
 
         const isNew = sub.title.includes('New Syllabus') || sub.code.startsWith('BCA ')
         const isOld =
@@ -76,15 +76,8 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
           sub.code.startsWith('CAIN') ||
           sub.code.startsWith('CAOR')
 
-        if (activeTab === 'new') {
-           // Strictly only show new subjects. 
-           // If it's old, definitely hide it. If it's ambiguous, assume it's NOT new unless it says New.
-           return isNew
-        }
-        if (activeTab === 'old') {
-           // Strictly only show old subjects.
-           return isOld
-        }
+        if (activeTab === 'new') return isNew
+        if (activeTab === 'old') return isOld
         return true
       })
 
@@ -134,52 +127,34 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
             <button
               onClick={() => setActiveTab('new')}
               style={{
-                padding: '10px 20px',
-                borderRadius: '8px',
-                fontSize: '13px',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.2s ease',
                 background: activeTab === 'new' ? 'var(--grad-brand)' : 'transparent',
                 color: activeTab === 'new' ? '#ffffff' : 'var(--clr-text-2)',
-                boxShadow: activeTab === 'new' ? '0 4px 16px rgba(99,102,241,0.5)' : 'none',
               }}
             >
-              ✨ New Syllabus (2080+)
+              ✨ New Syllabus
             </button>
             <button
               onClick={() => setActiveTab('old')}
               style={{
-                padding: '10px 20px',
-                borderRadius: '8px',
-                fontSize: '13px',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.2s ease',
                 background: activeTab === 'old' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent',
                 color: activeTab === 'old' ? '#ffffff' : 'var(--clr-text-2)',
-                boxShadow: activeTab === 'old' ? '0 4px 16px rgba(245,158,11,0.5)' : 'none',
               }}
             >
-              📜 Old Syllabus (2074)
-            </button>
-            <button
-              onClick={() => setActiveTab('all')}
-              style={{
-                padding: '10px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: 'none',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                background: activeTab === 'all' ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                color: activeTab === 'all' ? '#ffffff' : 'var(--clr-text-3)',
-              }}
-            >
-              🌐 Show All
+              📜 Old Syllabus
             </button>
           </div>
         </div>

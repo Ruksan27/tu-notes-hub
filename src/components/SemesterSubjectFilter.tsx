@@ -110,7 +110,7 @@ export default function SemesterSubjectFilter({
                 color: activeTab === 'new' ? '#ffffff' : 'var(--clr-text-2)',
               }}
             >
-              ✨ New Syllabus (2080+)
+              ✨ New Syllabus
             </button>
             <button
               onClick={() => setActiveTab('old')}
@@ -126,7 +126,7 @@ export default function SemesterSubjectFilter({
                 color: activeTab === 'old' ? '#ffffff' : 'var(--clr-text-2)',
               }}
             >
-              📜 Old Syllabus (2074)
+              📜 Old Syllabus
             </button>
           </div>
         </div>
