@@ -79,9 +79,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="shortcut icon" href="/top%20nav%20log%20o.png?v=4" type="image/png" />
         <link rel="apple-touch-icon" href="/top%20nav%20log%20o.png?v=4" />
         {/* Google AdSense */}
-        <script
-          async
+        <Script
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8555533919324648"
+          strategy="afterInteractive"
           crossOrigin="anonymous"
         />
         {/* Website + Organization JSON-LD for Google */}
