@@ -85,12 +85,29 @@ Professor:`
     }
 
     const genAI = new GoogleGenAI({ apiKey })
-    const response = await genAI.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-    })
+    
+    // Model fallback sequence to ensure reliability even during high demand / 503 errors
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+    let reply = ''
+    let lastError: any = null
 
-    const reply = response.text ?? ''
+    for (const modelName of modelsToTry) {
+      try {
+        const response = await genAI.models.generateContent({
+          model: modelName,
+          contents: prompt,
+        })
+        reply = response.text ?? ''
+        if (reply) break
+      } catch (err: any) {
+        console.warn(`[AI_CHAT] Model ${modelName} failed, trying next...`, err?.message || err)
+        lastError = err
+      }
+    }
+
+    if (!reply && lastError) {
+      throw lastError
+    }
 
     // Save both messages to DB (fire-and-forget — don't block response)
     Promise.all([

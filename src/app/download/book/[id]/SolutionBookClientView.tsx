@@ -54,10 +54,15 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
   // Ad Lock Modal states for FREE users
   const [isPaid, setIsPaid] = useState(false)
   const [downloadAdActive, setDownloadAdActive] = useState(false)
-  const [downloadAdCountdown, setDownloadAdCountdown] = useState(10)
+  const [downloadAdCountdown, setDownloadAdCountdown] = useState(6)
 
   // Default view mode to 'proxy' for 100% reliable document rendering without iframe blocks
   const [viewMode, setViewMode] = useState<'gview' | 'drive' | 'proxy'>('proxy')
+
+  // Clean title — strip "(Old Syllabus)" / "(New Syllabus)" from display
+  const cleanTitle = (book.title || '')
+    .replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '')
+    .trim()
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -79,7 +84,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
   const isDrive = rawUrl.includes('drive.google.com')
   const driveId = extractDriveFileId(rawUrl)
 
-  // Fetch Drive file metadata (content-type) just like 5th sem notes page
+  // Fetch Drive file metadata (content-type)
   useEffect(() => {
     if (!isDrive) {
       setDriveContentType('')
@@ -102,20 +107,33 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
   const gviewEmbedUrl = driveId
     ? `https://drive.google.com/file/d/${driveId}/preview`
     : `https://docs.google.com/gview?url=${encodeURIComponent(rawUrl)}&embedded=true`
+  // For Cloudinary PDFs, use the URL directly — the browser will embed it properly in an iframe
+  // We do NOT use /api/drive-proxy for Cloudinary as that can cause downloads
   const proxyEmbedUrl = isDrive ? `/api/drive-proxy?url=${encodeURIComponent(rawUrl)}` : rawUrl
-  const downloadUrl = getDriveDownloadUrl(rawUrl)
+  let downloadUrl = rawUrl
+  if (isDrive) {
+    downloadUrl = getDriveDownloadUrl(rawUrl)
+  } else if (rawUrl.includes('res.cloudinary.com')) {
+    const parts = rawUrl.split('/upload/')
+    if (parts.length === 2) {
+      const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9 _-]/g, '_')
+      downloadUrl = `${parts[0]}/upload/fl_attachment:${safeTitle}/${parts[1]}`
+    }
+  }
 
-  // Download file ad countdown
+  // Download file ad countdown — triggers actual download when countdown hits 0
   useEffect(() => {
     if (!downloadAdActive) return
     if (downloadAdCountdown <= 0) {
       setDownloadAdActive(false)
       if (downloadUrl) {
-        const safeTitle = (book.title || 'SolutionBook').replace(/[^a-zA-Z0-9_-]/g, '_')
+        // Force browser to download rather than view
+        const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9 _-]/g, '_')
         const link = document.createElement('a')
         link.href = downloadUrl
+        link.setAttribute('download', `TUNotes_${safeTitle}.pdf`)
         link.target = '_blank'
-        link.download = `TUNotes_${safeTitle}`
+        link.rel = 'noopener noreferrer'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -124,14 +142,22 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
     }
     const t = setTimeout(() => setDownloadAdCountdown((c) => c - 1), 1000)
     return () => clearTimeout(t)
-  }, [downloadAdActive, downloadAdCountdown, downloadUrl, book.title])
+  }, [downloadAdActive, downloadAdCountdown, downloadUrl, cleanTitle])
 
   const handleDownloadClick = (e: React.MouseEvent) => {
     e.preventDefault()
     if (isPaid) {
-      window.open(downloadUrl, '_blank')
+      // Premium — direct download, no ad
+      const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9 _-]/g, '_')
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.setAttribute('download', `TUNotes_${safeTitle}.pdf`)
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     } else {
-      setDownloadAdCountdown(10)
+      setDownloadAdCountdown(6)
       setDownloadAdActive(true)
     }
   }
@@ -147,11 +173,14 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
   const semLabel = `${ord} Semester`
   const semSlug = `${ord.toLowerCase()}-semester`
 
+  // Get the correct embed URL based on viewMode
   const getActiveSourceUrl = () => {
-    if (driveId) {
-      return `https://docs.google.com/gview?url=${encodeURIComponent(`https://drive.google.com/uc?export=download&id=${driveId}`)}&embedded=true`
+    if (isDrive && driveId) {
+      return driveEmbedUrl
     }
-    return `https://docs.google.com/gview?url=${encodeURIComponent(rawUrl)}&embedded=true`
+    if (viewMode === 'drive' && driveId) return driveEmbedUrl
+    if (viewMode === 'gview') return gviewEmbedUrl
+    return proxyEmbedUrl
   }
 
   return (
@@ -166,7 +195,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
           <span>/</span>
           <Link href={`/faculty/${book.semester.facultyId}/${semSlug}`} style={{ color: 'var(--clr-text-3)' }}>{semLabel}</Link>
           <span>/</span>
-          <span style={{ color: 'var(--clr-text-1)' }}>{book.title}</span>
+          <span style={{ color: 'var(--clr-text-1)' }}>{cleanTitle}</span>
         </div>
 
         {/* TOP TOOLBAR */}
@@ -184,7 +213,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
                 </span>
               </div>
               <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#fff', margin: 0 }}>
-                {book.title}
+                {cleanTitle}
               </h1>
               {book.author && (
                 <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
@@ -393,7 +422,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
             </div>
 
             <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginTop: '20px' }}>
-              Your file will download automatically in <strong style={{ color: 'var(--clr-accent)' }}>{downloadAdCountdown} seconds</strong>. Do not close this tab.
+              Your file will download automatically in <strong style={{ color: 'var(--clr-accent)' }}>{downloadAdCountdown} second{downloadAdCountdown !== 1 ? 's' : ''}</strong>. Do not close this tab.
             </p>
           </div>
         </div>

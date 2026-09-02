@@ -126,6 +126,12 @@ export default async function SemesterPage({ params, searchParams }: Props) {
       isPremium: true,
       author: true,
       subjectId: true,
+      semester: {
+        select: {
+          order: true,
+          facultyId: true,
+        }
+      },
     }
   })
 

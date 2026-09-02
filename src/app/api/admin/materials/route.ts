@@ -12,33 +12,42 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const subjectId = searchParams.get('subjectId')
+    const semesterId = searchParams.get('semesterId')
 
-    if (!subjectId) {
-      return NextResponse.json({ error: 'Subject ID is required' }, { status: 400 })
+    if (!subjectId && !semesterId) {
+      return NextResponse.json({ error: 'Subject ID or Semester ID is required' }, { status: 400 })
     }
 
+    if (semesterId) {
+      // Fetch full semester guides (SolutionBooks with no subjectId)
+      const solutionBooks = await prisma.solutionBook.findMany({
+        where: { semesterId, subjectId: null },
+        orderBy: { createdAt: 'desc' }
+      })
+      return NextResponse.json({ notes: [], pastPapers: [], cheatsheets: [], solutionBooks })
+    }
+
+    // Fetch subject-specific materials
     const notes = await prisma.note.findMany({
-      where: { subjectId },
+      where: { subjectId: subjectId as string },
       orderBy: { createdAt: 'desc' }
     })
 
     const pastPapers = await prisma.pastPaper.findMany({
-      where: { subjectId },
+      where: { subjectId: subjectId as string },
       orderBy: { year: 'desc' }
     })
 
     const cheatsheets = await prisma.cheatsheet.findMany({
-      where: { subjectId },
+      where: { subjectId: subjectId as string },
       orderBy: { createdAt: 'desc' }
     })
 
     const solutionBooks = await prisma.solutionBook.findMany({
-      where: { subjectId },
+      where: { subjectId: subjectId as string },
       orderBy: { createdAt: 'desc' }
     })
 
-    // Also fetch semester-level solution books if a semesterId is passed, but for now we query by subjectId.
-    // If a solution book doesn't have a subjectId, it is a full semester guide.
     return NextResponse.json({ notes, pastPapers, cheatsheets, solutionBooks })
   } catch (error: any) {
     console.error('Error fetching materials:', error)

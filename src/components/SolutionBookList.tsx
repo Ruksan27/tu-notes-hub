@@ -16,7 +16,7 @@ interface SolutionBook {
   semester?: {
     facultyId: string
     order: number
-  }
+  } | null
 }
 
 interface Props {
@@ -32,10 +32,14 @@ export default function SolutionBookList({ books, facultyId, semesterOrder }: Pr
 
   const getBookHref = (book: SolutionBook) => {
     const fId = book.semester?.facultyId || facultyId || 'bca'
-    const order = book.semester?.order || semesterOrder || 1
+    const order = book.semester?.order ?? semesterOrder ?? 1
     const ord = order === 1 ? '1st' : order === 2 ? '2nd' : order === 3 ? '3rd' : `${order}th`
     const semSlug = `${ord.toLowerCase()}-semester`
-    const slug = toSeoSlug(book.title) || book.id
+    // Strip "(Old Syllabus)" / "(New Syllabus)" from the slug so URLs are clean
+    const cleanedTitle = (book.title || '')
+      .replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '')
+      .trim()
+    const slug = toSeoSlug(cleanedTitle) || book.id
     return `/faculty/${fId.toLowerCase()}/${semSlug}/solution-book/${slug}`
   }
 

@@ -50,14 +50,49 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    if (!response.ok) {
-      const fileId = extractDriveFileId(url)
-      if (fileId) {
-        response = await fetch(`https://drive.usercontent.google.com/download?id=${fileId}&export=view&confirm=t`, {
+    // If Google Drive returns the virus scan warning page, it typically sets a cookie named 'download_warning_...'
+    // Or we can fetch the HTML, extract the confirm=XXXX token, and re-fetch.
+    let contentType = (response.headers.get('content-type') || '').toLowerCase()
+    
+    if (contentType.includes('text/html')) {
+      const htmlText = await response.text()
+      // Look for confirm=XXXX in the HTML (skipping confirm=t which is generic)
+      const confirmMatch = htmlText.match(/confirm=([a-zA-Z0-9_-]{3,})/)
+      
+      if (confirmMatch && confirmMatch[1]) {
+        const confirmToken = confirmMatch[1]
+        const fileId = extractDriveFileId(url)
+        const bypassUrl = `https://drive.google.com/uc?export=download&id=${fileId}&confirm=${confirmToken}`
+        
+        // Also extract cookies to send back
+        const setCookie = response.headers.get('set-cookie') || ''
+        const cookieStr = setCookie.split(';')[0]
+        
+        response = await fetch(bypassUrl, {
           redirect: 'follow',
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Cookie': cookieStr
           },
+        })
+        contentType = (response.headers.get('content-type') || '').toLowerCase()
+      } else {
+        // If it's HTML but no confirm token, it might be a login page (restricted file)
+        // Return a clear error HTML page so the iframe isn't just blank!
+        const errorHtml = `
+          <html>
+            <body style="background: #090d16; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center;">
+              <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">🔒 Access Restricted</h2>
+              <p style="color: #94a3b8; max-width: 400px; line-height: 1.5; margin-bottom: 24px;">
+                This Google Drive file requires authentication or is restricted. We cannot display it securely inside the proxy viewer.
+              </p>
+              <a href="${url}" target="_blank" style="padding: 12px 24px; background: #6366f1; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Open directly in Google Drive</a>
+            </body>
+          </html>
+        `
+        return new NextResponse(errorHtml, {
+          status: 403,
+          headers: { 'Content-Type': 'text/html' }
         })
       }
     }
@@ -66,7 +101,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch Drive file' }, { status: response.status })
     }
 
-    const contentType = (response.headers.get('content-type') || '').toLowerCase()
+    contentType = (response.headers.get('content-type') || '').toLowerCase()
 
     if (mode === 'meta') {
       return NextResponse.json({
@@ -75,38 +110,21 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    const body = await response.arrayBuffer()
-    const uint8 = new Uint8Array(body)
-
     let finalContentType = contentType
-    // PNG magic bytes (0x89 0x50 0x4E 0x47)
-    if (uint8.length >= 4 && uint8[0] === 0x89 && uint8[1] === 0x50 && uint8[2] === 0x4E && uint8[3] === 0x47) {
-      finalContentType = 'image/png'
-    }
-    // JPEG magic bytes (0xFF 0xD8 0xFF)
-    else if (uint8.length >= 3 && uint8[0] === 0xFF && uint8[1] === 0xD8 && uint8[2] === 0xFF) {
-      finalContentType = 'image/jpeg'
-    }
-    // GIF magic bytes (0x47 0x49 0x46)
-    else if (uint8.length >= 3 && uint8[0] === 0x47 && uint8[1] === 0x49 && uint8[2] === 0x46) {
-      finalContentType = 'image/gif'
-    }
-    // PDF magic bytes %PDF- (0x25 0x50 0x44 0x46 0x2D)
-    else if (uint8.length >= 5 && uint8[0] === 0x25 && uint8[1] === 0x50 && uint8[2] === 0x44 && uint8[3] === 0x46 && uint8[4] === 0x2D) {
-      finalContentType = 'application/pdf'
-    }
-    else if (finalContentType.includes('octet-stream') || finalContentType.includes('download')) {
+    if (finalContentType.includes('octet-stream') || finalContentType.includes('download')) {
       finalContentType = 'application/pdf'
     }
 
-    return new NextResponse(body, {
+    // Stream the response directly to avoid out-of-memory errors on large files!
+    return new NextResponse(response.body, {
       status: 200,
       headers: {
         'Content-Type': finalContentType,
         'Content-Disposition': 'inline',
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, max-age=3600',
-        'Content-Length': body.byteLength.toString(),
+        // We cannot reliably send Content-Length when streaming without extracting it from the original response
+        ...(response.headers.has('content-length') && { 'Content-Length': response.headers.get('content-length')! })
       },
     })
   } catch (error) {

@@ -910,8 +910,16 @@ function AIChatPanel({ report }: { report: any }) {
     document.addEventListener('mouseup', onMouseUp)
   }
 
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll inside chat container ONLY (does not scroll main page/window)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      })
+    }
   }, [messages, sending])
 
   async function loadSessions() {
@@ -1099,7 +1107,7 @@ function AIChatPanel({ report }: { report: any }) {
 
       {/* Messages */}
       {!showHistory && (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {messages.length === 0 && !sending && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '16px', padding: '20px' }}>
                <div style={{

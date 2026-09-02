@@ -31,7 +31,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
   const [fromCache, setFromCache] = useState(false)
   const [error, setError] = useState('')
   const [isPaidUser, setIsPaidUser] = useState(false)
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   
   const dragControls = useDragControls()
@@ -111,9 +111,14 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
       .finally(() => setLoading(false))
   }, [isOpen, questionText])
 
-  // Auto-scroll to bottom
+  // Auto-scroll inside chat container ONLY (does not scroll main page/window)
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      })
+    }
   }, [chatHistory, loading])
 
   // Close on Escape key
@@ -260,7 +265,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
         </div>
 
         {/* Scrollable Content Area */}
-        <div style={{
+        <div ref={chatContainerRef} style={{
           flex: 1, overflowY: 'auto', padding: '20px',
           scrollbarWidth: 'thin',
           scrollbarColor: 'rgba(99,102,241,0.3) transparent',

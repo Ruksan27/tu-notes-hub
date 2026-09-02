@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingSection } from '@/components/TrendingSection'
 import { toast } from 'react-toastify'
 
 interface SeoData {
@@ -724,9 +723,6 @@ export default function AdminSeoTab({ onNavigateTab }: Props) {
           ))}
         </div>
       </div>
-
-      {/* ── Trending Section Widget ── */}
-      <TrendingSection />
     </div>
   )
 }

@@ -99,15 +99,31 @@ ${history}
 Please answer the student's latest follow-up question in a helpful, concise manner. Use markdown formatting.`
     }
 
-    const response = await genAI.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: 'You are a helpful TU Nepal university professor. Always respond in English unless the student explicitly asks for Nepali.',
-      },
-    })
+    // Model fallback sequence to ensure reliability even during high demand / 503 errors
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+    let answer = ''
+    let lastError: any = null
 
-    const answer = response.text ?? ''
+    for (const modelName of modelsToTry) {
+      try {
+        const response = await genAI.models.generateContent({
+          model: modelName,
+          contents: prompt,
+          config: {
+            systemInstruction: 'You are a helpful TU Nepal university professor. Always respond in English unless the student explicitly asks for Nepali.',
+          },
+        })
+        answer = response.text ?? ''
+        if (answer) break
+      } catch (err: any) {
+        console.warn(`[AI Solve Question] Model ${modelName} failed, trying next...`, err?.message || err)
+        lastError = err
+      }
+    }
+
+    if (!answer && lastError) {
+      throw lastError
+    }
 
     // --- Save to cache (only initial answers) ---
     if (isInitialQuestion && answer) {

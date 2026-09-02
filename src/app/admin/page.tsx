@@ -9,8 +9,6 @@ import AdminSellersTab from '@/components/admin/AdminSellersTab'
 import AdminPricingTab from '@/components/admin/AdminPricingTab'
 import AdminSeoTab from '@/components/admin/AdminSeoTab'
 import AdminBackupTab from '@/components/admin/AdminBackupTab'
-import { TrendingSection } from '@/components/TrendingSection'
-
 type AdminTab = 'overview' | 'payments' | 'faculties' | 'semesters' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup'
 
 interface Payment {
@@ -550,10 +548,14 @@ function ManageMaterialsTab() {
   }, [semesterId])
 
   async function loadMaterials() {
-    if (!subjectId) return
+    if (!subjectId && !semesterId) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/materials?subjectId=${subjectId}`)
+      const url = subjectId === 'FULL_SEMESTER' 
+        ? `/api/admin/materials?semesterId=${semesterId}`
+        : `/api/admin/materials?subjectId=${subjectId}`
+        
+      const res = await fetch(url)
       if (res.ok) {
         const data = await res.json()
         setNotes(data.notes || [])
@@ -628,7 +630,7 @@ function ManageMaterialsTab() {
     }
   }
 
-  const totalItems = notes.length + pastPapers.length + cheatsheets.length
+  const totalItems = notes.length + pastPapers.length + cheatsheets.length + solutionBooks.length
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -658,6 +660,7 @@ function ManageMaterialsTab() {
             <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Subject</label>
             <select className="input-field" value={subjectId} onChange={e => setSubjectId(e.target.value)} disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
               <option value="">— Choose Subject —</option>
+              <option value="FULL_SEMESTER" style={{ fontWeight: 'bold' }}>— Full Semester Guide (All Subjects) —</option>
               {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()}</option>)}
             </select>
           </div>
@@ -1598,16 +1601,25 @@ function UploadTab() {
   const isSolutionBook = contentType === 'SOLUTION_BOOK'
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h3 className="section-title">📤 Upload Course Materials</h3>
-      <div className="glass-card" style={{ padding: '36px', maxWidth: '660px' }}>
-        <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: '850px', margin: '0 auto', paddingBottom: '60px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
+        <div style={{ padding: '16px', background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(6,182,212,0.2))', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '16px', display: 'flex' }}>
+          <span style={{ fontSize: '28px' }}>📤</span>
+        </div>
+        <div>
+          <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Publish Material</h2>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: '14px', marginTop: '4px' }}>Add new study notes, solution books, past papers, or cheatsheets to the platform.</p>
+        </div>
+      </div>
 
-          {/* Content Type Buttons */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--clr-text-3)' }}>
-              Material Type
-            </label>
+      <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+        {/* Step 1: Material Type */}
+        <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #6366f1' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ background: '#6366f1', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>1</div>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Material Type</h3>
+          </div>
             {isSolutionBook && (
               <div style={{ marginTop: '8px', padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.25)', borderRadius: '10px', fontSize: '13px', color: '#67e8f9' }}>
                 📚 <strong>Solution Book:</strong> Select a specific subject (e.g. <em>Numerical Methods</em>) to display it inside that subject only. Choose <em>"Full Semester Guide"</em> to display it at the top for all subjects.
@@ -1632,13 +1644,16 @@ function UploadTab() {
                 </button>
               ))}
             </div>
-          </div>
+        </div>
 
-          {/* Source Type Toggle */}
-          {contentType !== 'CHEATSHEET' && (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--clr-text-3)' }}>File Source</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
+        {/* Step 2: File Source */}
+        {contentType !== 'CHEATSHEET' && (
+          <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #06b6d4' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ background: '#06b6d4', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>2</div>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>File Source</h3>
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
                 {[{ v: 'FILE', icon: '📁', label: 'Upload File (Max 10MB)' }, { v: 'DRIVE', icon: '🔗', label: 'Google Drive Link' }].map(s => (
                   <button key={s.v} type="button" onClick={() => setSourceType(s.v as any)}
                     style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', transition: 'all 0.2s',
@@ -1656,10 +1671,15 @@ function UploadTab() {
                 </div>
               )}
             </div>
-          )}
+        )}
 
-          {/* Faculty, Semester & Syllabus Version selects */}
-          <div style={{ display: 'grid', gridTemplateColumns: facultyId === 'bca' ? 'repeat(auto-fit, minmax(160px, 1fr))' : '1fr 1fr', gap: '12px' }}>
+        {/* Step 3: Location Details */}
+        <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #10b981' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ background: '#10b981', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>3</div>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Course Location</h3>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: facultyId === 'bca' ? 'repeat(auto-fit, minmax(180px, 1fr))' : '1fr 1fr', gap: '16px' }}>
             <div>
               <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Faculty</label>
               <select className="input-field" value={facultyId} onChange={e => setFacultyId(e.target.value)} required style={{ cursor: 'pointer' }}>
@@ -1773,11 +1793,19 @@ function UploadTab() {
               )}
             </motion.div>
           )}
+        </div>
+
+        {/* Step 4: Metadata & Properties */}
+        <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #f59e0b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ background: '#f59e0b', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>4</div>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Material Details</h3>
+          </div>
 
           {/* NOTE Fields */}
           {(contentType === 'NOTE' || contentType === 'SOLUTION_BOOK') && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -1946,7 +1974,7 @@ function UploadTab() {
           {/* PAST_PAPER Fields */}
           {contentType === 'PAST_PAPER' && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
@@ -1977,7 +2005,7 @@ function UploadTab() {
           {/* CHEATSHEET Fields */}
           {contentType === 'CHEATSHEET' && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
               <div>
                 <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Cheatsheet Title</label>
@@ -1996,15 +2024,15 @@ function UploadTab() {
               </div>
             </motion.div>
           )}
+        </div>
 
-          <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '4px', padding: '14px' }} disabled={uploading}>
-            {uploading ? <><span className="spinner" /> Processing...</>
-              : isSolutionBook ? '📚 Publish Solution Book'
-              : sourceType === 'DRIVE' ? '🔗 Save Drive Link & Publish'
-              : '📤 Upload & Publish Material'}
-          </button>
-        </form>
-      </div>
+        <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '12px', padding: '18px', fontSize: '16px', borderRadius: '12px', letterSpacing: '0.5px' }} disabled={uploading}>
+          {uploading ? <><span className="spinner" /> Processing Upload...</>
+            : isSolutionBook ? '📚 Publish Solution Book'
+            : sourceType === 'DRIVE' ? '🔗 Save Drive Link & Publish'
+            : '📤 Upload & Publish Material'}
+        </button>
+      </form>
     </motion.div>
   )
 }
