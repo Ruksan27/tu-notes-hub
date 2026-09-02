@@ -59,8 +59,7 @@ export default function DeveloperProfileClient({ seller, currentUser }: Develope
   const [saving, setSaving] = useState(false)
 
   const isOwner = currentUser?.id === seller.id
-  const isAdmin = currentUser?.role === 'ADMIN'
-  const canEdit = isOwner || isAdmin
+  const canEdit = isOwner
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
