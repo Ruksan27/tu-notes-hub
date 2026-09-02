@@ -5,8 +5,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import FacultySemesterList from '@/components/FacultySemesterList'
 
-// We revalidate this page every 1 hour (ISR)
-export const revalidate = 3600
+// Dynamic page (revalidate on every request in dev)
+export const revalidate = 0
 
 // Pre-render all faculty index paths to make them load instantly
 export async function generateStaticParams() {
@@ -39,7 +39,7 @@ export default async function FacultyPage({ params }: Props) {
       semesters: {
         orderBy: { order: 'asc' },
         include: {
-          solutionBooks: { select: { id: true } },
+          solutionBooks: { select: { id: true, title: true } },
           subjects: {
             include: {
               notes: { select: { id: true } },

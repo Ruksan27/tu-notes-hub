@@ -54,6 +54,7 @@ export const metadata: Metadata = {
   },
   // Apple PWA meta
   other: {
+    'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
     'apple-mobile-web-app-title': 'TU Notes Hub',
