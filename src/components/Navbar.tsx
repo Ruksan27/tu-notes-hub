@@ -22,9 +22,9 @@ export default function Navbar() {
     if (stored) {
       try {
         setUser(JSON.parse(stored))
-      } catch {}
+      } catch { }
     }
-    
+
     // Verify server session
     fetch('/api/auth/me')
       .then((res) => {
@@ -41,7 +41,7 @@ export default function Navbar() {
           setUser(data.user)
         }
       })
-      .catch(() => {})
+      .catch(() => { })
 
     const onScroll = () => setScrolled(window.scrollY > 8)
     window.addEventListener('scroll', onScroll)
@@ -54,7 +54,7 @@ export default function Navbar() {
     fetch('/api/cart')
       .then(r => r.json())
       .then(d => setCartCount((d.items || []).length))
-      .catch(() => {})
+      .catch(() => { })
   }, [user])
 
   // Close dropdown on outside click
@@ -80,9 +80,9 @@ export default function Navbar() {
   }
 
   const pkgBadge: Record<string, { text: string; bg: string; color: string; border: string }> = {
-    FREE:          { text: '🆓 Free',     bg: 'rgba(100,116,139,0.18)', color: '#94a3b8', border: 'rgba(100,116,139,0.3)' },
-    SEMESTER_PASS: { text: '⚡ Semester', bg: 'rgba(6,182,212,0.15)',  color: '#67e8f9', border: 'rgba(6,182,212,0.35)' },
-    ELITE_AI:      { text: '🤖 Elite AI', bg: 'rgba(99,102,241,0.18)', color: '#a5b4fc', border: 'rgba(99,102,241,0.4)' },
+    FREE: { text: '🆓 Free', bg: 'rgba(100,116,139,0.18)', color: '#94a3b8', border: 'rgba(100,116,139,0.3)' },
+    SEMESTER_PASS: { text: '⚡ Semester', bg: 'rgba(6,182,212,0.15)', color: '#67e8f9', border: 'rgba(6,182,212,0.35)' },
+    ELITE_AI: { text: '🤖 Elite AI', bg: 'rgba(99,102,241,0.18)', color: '#a5b4fc', border: 'rgba(99,102,241,0.4)' },
   }
   const pkg = user ? (pkgBadge[user.packageType] ?? pkgBadge.FREE) : null
 
@@ -90,9 +90,9 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/faculties', label: 'Faculties' },
-    { href: '/projects',  label: 'Projects' },
-    { href: '/pricing',   label: 'Pricing' },
-    { href: '/about',     label: 'About' },
+    { href: '/projects', label: 'Projects' },
+    { href: '/pricing', label: 'Pricing' },
+    { href: '/about', label: 'About' },
   ]
 
   if (pathname?.startsWith('/admin')) return null
@@ -106,11 +106,8 @@ export default function Navbar() {
       >
         <div className="nav-inner">
           {/* Logo */}
-          <Link href="/" className="nav-logo" onClick={() => setMenuOpen(false)}>
-            <div className="nav-logo-icon">📚</div>
-            <span className="nav-logo-text">
-              TU <span className="text-gradient">Notes Hub</span>
-            </span>
+          <Link href="/" className="nav-logo" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <img src="/download.gif" alt="TU Notes Hub Logo" style={{ height: '65px', width: 'auto', objectFit: 'contain' }} />
           </Link>
 
           <div className="nav-links">
@@ -209,7 +206,7 @@ export default function Navbar() {
               </div>
             ) : (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <Link href="/login"    className="btn btn-outline btn-sm">Login</Link>
+                <Link href="/login" className="btn btn-outline btn-sm">Login</Link>
                 <Link href="/register" className="btn btn-primary btn-sm">Sign Up Free</Link>
               </div>
             )}
@@ -299,7 +296,7 @@ export default function Navbar() {
                 </>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '8px' }}>
-                  <Link href="/login"    className="btn btn-outline" style={{ justifyContent: 'center' }}>Login</Link>
+                  <Link href="/login" className="btn btn-outline" style={{ justifyContent: 'center' }}>Login</Link>
                   <Link href="/register" className="btn btn-primary" style={{ justifyContent: 'center' }}>Sign Up Free</Link>
                 </div>
               )}

@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from 'next'
-import { Inter, Outfit } from 'next/font/google'
+import { Inter, Outfit, Montserrat } from 'next/font/google'
 import './globals.css'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -46,8 +46,9 @@ export const metadata: Metadata = {
     site: '@tunoteshub',
   },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/icon-192.svg',
+    icon: '/Untitled design1.svg',
+    shortcut: '/Untitled design1.svg',
+    apple: '/Untitled design1.svg',
   },
   // Apple PWA meta
   other: {
@@ -60,6 +61,7 @@ export const metadata: Metadata = {
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 'swap' })
+const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat', display: 'swap' })
 
 export const viewport: Viewport = {
   themeColor: '#6366f1',
@@ -69,7 +71,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable}`} data-scroll-behavior="smooth">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${montserrat.variable}`} data-scroll-behavior="smooth">
       <head>
         {/* Google AdSense */}
         <script
@@ -103,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   name: 'TU Notes Hub',
                   alternateName: ['TuneNotesHub', 'TU Notes'],
                   url: 'https://tunoteshub.com',
-                  logo: { '@type': 'ImageObject', url: 'https://tunoteshub.com/icon-192.svg' },
+                  logo: { '@type': 'ImageObject', url: 'https://tunoteshub.com/Untitled%20design1.svg' },
                   sameAs: [
                     'https://facebook.com/tunoteshub',
                     'https://twitter.com/tunoteshub',
