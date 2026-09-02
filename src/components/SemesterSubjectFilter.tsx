@@ -6,6 +6,7 @@ import SubjectRow from '@/components/SubjectRow'
 
 interface Props {
   subjects: any[]
+  semesterGuides?: any[]
   facultyId: string
   semesterOrder: number
   systemType: 'SEMESTER' | 'YEARLY'
@@ -14,6 +15,7 @@ interface Props {
 
 export default function SemesterSubjectFilter({
   subjects,
+  semesterGuides = [],
   facultyId,
   semesterOrder,
   systemType,
@@ -66,6 +68,20 @@ export default function SemesterSubjectFilter({
       return true
     })
   }, [subjects, activeTab, hasNewAndOld])
+
+  const filteredGuides = useMemo(() => {
+    if (!hasNewAndOld || semesterGuides.length === 0) return semesterGuides
+
+    return semesterGuides.filter((guide) => {
+      const title = guide.title.toLowerCase()
+      const isOld = title.includes('old syllabus') || title.includes('(old)')
+      const isNew = title.includes('new syllabus') || title.includes('(new)')
+
+      if (activeTab === 'new') return isNew || (!isOld && !title.includes('old')) // Default to new if no label
+      if (activeTab === 'old') return isOld || (!isNew && title.includes('old'))
+      return true
+    })
+  }, [semesterGuides, activeTab, hasNewAndOld])
 
   return (
     <div style={{ marginTop: '24px' }}>
@@ -128,6 +144,66 @@ export default function SemesterSubjectFilter({
             >
               📜 Old Syllabus
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Solution Books & Semester Guides Section (Filtered) */}
+      {filteredGuides.length > 0 && (
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📘</span> Solution Books & Full Semester Guides ({filteredGuides.length})
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+            {filteredGuides.map((book) => {
+              const slug = book.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') || book.id
+              const periodSlug = systemType === 'YEARLY' ? `${semesterOrder}th-year` : `${semesterOrder}th-semester` // Simplistic for demo
+              const href = `/faculty/${facultyId.toLowerCase()}/${periodSlug}/solution-book/${slug}`
+              return (
+                <div
+                  key={book.id}
+                  className="glass-card"
+                  style={{
+                    padding: '20px',
+                    borderRadius: '14px',
+                    border: '1px solid rgba(99,102,241,0.25)',
+                    background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.08) 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '14px',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <span className="badge badge-primary" style={{ fontSize: '11px' }}>📘 SOLUTION BOOK</span>
+                      {book.isPremium ? (
+                        <span className="badge badge-elite" style={{ fontSize: '11px' }}>⚡ ELITE / PREMIER</span>
+                      ) : (
+                        <span className="badge badge-free" style={{ fontSize: '11px' }}>FREE</span>
+                      )}
+                    </div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', margin: '0 0 6px 0' }}>
+                      {book.title}
+                    </h3>
+                    {book.description && (
+                      <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
+                        {book.description}
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ marginTop: '4px' }}>
+                    <a
+                      href={href}
+                      className="btn btn-primary btn-sm"
+                      style={{ width: '100%', textAlign: 'center', textDecoration: 'none', fontWeight: 700, padding: '10px' }}
+                    >
+                      📖 Read Solution Book
+                    </a>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

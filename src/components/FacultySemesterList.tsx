@@ -167,7 +167,18 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
         gap: '24px',
       }}>
         {filteredSemesters.map((sem) => {
-          const totalSolutionBooks = sem.solutionBooks ? sem.solutionBooks.length : 0
+          const filteredSolutionBooks = (sem.solutionBooks || []).filter((book: any) => {
+            if (!hasNewAndOld) return true
+            const title = (book.title || '').toLowerCase()
+            const isOld = title.includes('old syllabus') || title.includes('(old)')
+            const isNew = title.includes('new syllabus') || title.includes('(new)')
+
+            if (activeTab === 'new') return isNew || (!isOld && !title.includes('old'))
+            if (activeTab === 'old') return isOld || (!isNew && title.includes('old'))
+            return true
+          })
+
+          const totalSolutionBooks = filteredSolutionBooks.length
           const totalNotes = sem.subjects.reduce((sum, s) => sum + s.notes.length, 0)
           const totalPapers = sem.subjects.reduce((sum, s) => sum + s.pastPapers.length, 0)
           const totalSheets = sem.subjects.reduce((sum, s) => sum + s.cheatsheets.length, 0)

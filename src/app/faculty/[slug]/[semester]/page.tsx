@@ -137,12 +137,10 @@ export default async function SemesterPage({ params, searchParams }: Props) {
       {/* Top Banner Ad */}
       <AdUnit type="banner" slot="semester-top-banner" />
 
-      {/* Solution Books & Semester Guides Section */}
-      <SolutionBookList books={semesterGuides} facultyId={faculty.id} semesterOrder={order} />
-
       {/* Subjects List with Syllabus Filter */}
       <SemesterSubjectFilter
         subjects={subjectsWithBooks as any}
+        semesterGuides={semesterGuides as any}
         facultyId={faculty.id}
         semesterOrder={order}
         systemType={faculty.systemType}
