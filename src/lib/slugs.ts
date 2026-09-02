@@ -3,9 +3,18 @@ export function slugify(text: string): string {
   return text
     .toLowerCase()
     .trim()
+    .replace(/\s*(old syllabus|new syllabus|\(old\)|\(new\))/gi, '')
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+/** Truncate a slug to maxLen chars without cutting a word mid-way */
+export function truncateSlug(slug: string, maxLen = 60): string {
+  if (slug.length <= maxLen) return slug
+  const cut = slug.substring(0, maxLen)
+  const lastDash = cut.lastIndexOf('-')
+  return lastDash > 20 ? cut.substring(0, lastDash) : cut
 }
 
 /**
@@ -40,15 +49,11 @@ export function getNoteSlug(note: {
     code?: string
   }
 }): string {
-  const subTitle = note.subject?.title ? `${note.subject.title} ` : ''
-  const noteTitle = note.title || 'study notes'
-
-  let combined = `${subTitle}${noteTitle}`
-  if (!combined.toLowerCase().includes('note')) {
-    combined += ' notes'
-  }
-  const titleSlug = slugify(combined)
-  return titleSlug || note.id
+  // Use subject code (e.g. CACS303) + clean note title for short, meaningful URLs
+  const code = note.subject?.code ? slugify(note.subject.code) : ''
+  const noteTitle = slugify(note.title || 'study-notes')
+  const combined = code ? `${code}-${noteTitle}` : noteTitle
+  return truncateSlug(combined, 60) || note.id
 }
 
 /**
@@ -65,16 +70,12 @@ export function getPaperSlug(paper: {
     code?: string
   }
 }): string {
-  let titleStr = paper.title || ''
-  if (!titleStr) {
-    const subTitle = paper.subject?.title ? `${paper.subject.title} ` : ''
-    const yr = paper.year ? `${paper.year} ` : ''
-    const type = paper.examType ? `${paper.examType.replace(/_/g, ' ')} ` : ''
-
-    titleStr = `${subTitle}${yr}${type}question paper`.trim()
-  }
-  const titleSlug = slugify(titleStr)
-  return titleSlug || paper.id
+  // Use subject code + year + exam type for clean short URLs
+  const code = paper.subject?.code ? slugify(paper.subject.code) : ''
+  const yr = paper.year ? `${paper.year}` : ''
+  const type = paper.examType ? slugify(paper.examType.replace(/_/g, ' ')) : ''
+  const combined = [code, yr, type, 'question-paper'].filter(Boolean).join('-')
+  return truncateSlug(combined, 60) || paper.id
 }
 
 /**

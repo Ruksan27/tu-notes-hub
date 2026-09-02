@@ -92,8 +92,13 @@ export default function SubjectRow({
 
   const getResourceLink = (itemTitle: string, category: string, fallbackSlug: string) => {
     if (semPath) {
-      const subSlug = slugify(subject.title)
-      const itemSlug = slugify(itemTitle) || 'resource'
+      // Use subject code (e.g. cacs303) instead of full title for shorter URLs
+      const subSlug = subject.code ? slugify(subject.code) : slugify(subject.title)
+      const rawItemSlug = slugify(itemTitle) || 'resource'
+      // Truncate item slug to keep URL clean (max 50 chars for item part)
+      const itemSlug = rawItemSlug.length > 50
+        ? rawItemSlug.substring(0, rawItemSlug.lastIndexOf('-', 50)) || rawItemSlug.substring(0, 50)
+        : rawItemSlug
       
       // SEO Mappings for URL category segment
       let seoCategory = category

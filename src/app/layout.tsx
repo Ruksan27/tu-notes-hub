@@ -79,10 +79,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/top%20nav%20log%20o.png?v=4" type="image/png" sizes="any" />
         <link rel="shortcut icon" href="/top%20nav%20log%20o.png?v=4" type="image/png" />
         <link rel="apple-touch-icon" href="/top%20nav%20log%20o.png?v=4" />
-        {/* Google AdSense */}
-        <Script
+        {/* Google AdSense — must use plain <script> tag, NOT Next.js <Script>, AdSense rejects data-nscript */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script
+          async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8555533919324648"
-          strategy="afterInteractive"
           crossOrigin="anonymous"
         />
         {/* Website + Organization JSON-LD for Google */}

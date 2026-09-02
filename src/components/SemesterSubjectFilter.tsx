@@ -1,7 +1,7 @@
 // src/components/SemesterSubjectFilter.tsx
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import SubjectRow from '@/components/SubjectRow'
 
 import { toSeoSlug } from '@/lib/utils'
@@ -45,6 +45,10 @@ export default function SemesterSubjectFilter({
   const [activeTab, setActiveTab] = useState<'new' | 'old'>(
     initialSyllabus === 'old' ? 'old' : 'new'
   )
+
+  useEffect(() => {
+    setActiveTab(initialSyllabus === 'old' ? 'old' : 'new')
+  }, [initialSyllabus])
 
   const filteredSubjects = useMemo(() => {
     if (!hasNewAndOld) return subjects
