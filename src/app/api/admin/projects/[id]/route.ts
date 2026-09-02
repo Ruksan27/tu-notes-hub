@@ -107,7 +107,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await prisma.projectItem.delete({ where: { id } })
+    await prisma.$transaction([
+      prisma.cartItem.deleteMany({ where: { projectItemId: id } }),
+      prisma.projectOrder.deleteMany({ where: { projectItemId: id } }),
+      prisma.projectReview.deleteMany({ where: { projectId: id } }),
+      prisma.projectItem.delete({ where: { id } })
+    ])
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[ADMIN_PROJECT_DELETE]', error)

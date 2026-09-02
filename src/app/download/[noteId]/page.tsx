@@ -484,9 +484,37 @@ export default function DownloadPage() {
                     >
                       {(() => {
                         try {
-                          const parsed = JSON.parse(note.extractedText) as ExamPaperData;
-                          if (parsed.groups) return <ExamPaperViewer data={parsed} />
+                          let cleanText = note.extractedText.trim();
+                          
+                          // Remove markdown formatting if the AI returned it inside a code block
+                          if (cleanText.startsWith('```')) {
+                            cleanText = cleanText.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '');
+                          }
+
+                          let parsed: any;
+                          try {
+                            parsed = JSON.parse(cleanText);
+                          } catch (parseErr) {
+                            // Replace literal newlines with spaces
+                            let fixedText = cleanText.replace(/\n/g, ' ').replace(/\r/g, '').replace(/\t/g, ' ');
+                            
+                            // Fix Bad escaped character errors (e.g., AI generating LaTeX like \alpha or \c)
+                            // We escape any backslash that isn't followed by a valid JSON escape character (" \ / b f n r t u)
+                            fixedText = fixedText.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1');
+                            
+                            parsed = JSON.parse(fixedText);
+                          }
+
+                          // Handle double-stringified JSON
+                          if (typeof parsed === 'string') {
+                            parsed = JSON.parse(parsed);
+                          }
+
+                          if (parsed && typeof parsed === 'object' && parsed.groups) {
+                            return <ExamPaperViewer data={parsed as ExamPaperData} />
+                          }
                         } catch (e) {
+                          console.error("Failed to parse JSON for ExamPaperViewer:", e);
                           const legacyParsed = parseLegacyMarkdownToExamData(note.extractedText);
                           if (legacyParsed && legacyParsed.groups && legacyParsed.groups.length > 0) {
                             return <ExamPaperViewer data={legacyParsed} />

@@ -38,12 +38,12 @@ export default function SemesterSubjectFilter({
     return hasNew && hasOld
   }, [subjects])
 
-  const [activeTab, setActiveTab] = useState<'new' | 'old' | 'all'>(
-    initialSyllabus === 'old' ? 'old' : initialSyllabus === 'all' ? 'all' : 'new'
+  const [activeTab, setActiveTab] = useState<'new' | 'old'>(
+    initialSyllabus === 'old' ? 'old' : 'new'
   )
 
   const filteredSubjects = useMemo(() => {
-    if (!hasNewAndOld || activeTab === 'all') return subjects
+    if (!hasNewAndOld) return subjects
 
     return subjects.filter((sub) => {
       const isNew = sub.title.includes('New Syllabus') || sub.code.startsWith('BCA ')
@@ -61,8 +61,8 @@ export default function SemesterSubjectFilter({
         sub.code.startsWith('CAIN') ||
         sub.code.startsWith('CAOR')
 
-      if (activeTab === 'new') return isNew || (!isOld && !sub.title.includes('Old'))
-      if (activeTab === 'old') return isOld || (!isNew && sub.title.includes('Old'))
+      if (activeTab === 'new') return isNew
+      if (activeTab === 'old') return isOld
       return true
     })
   }, [subjects, activeTab, hasNewAndOld])
@@ -127,22 +127,6 @@ export default function SemesterSubjectFilter({
               }}
             >
               📜 Old Syllabus (2074)
-            </button>
-            <button
-              onClick={() => setActiveTab('all')}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: 'none',
-                transition: 'all 0.2s ease',
-                background: activeTab === 'all' ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                color: activeTab === 'all' ? '#ffffff' : 'var(--clr-text-3)',
-              }}
-            >
-              🌐 All ({subjects.length})
             </button>
           </div>
         </div>

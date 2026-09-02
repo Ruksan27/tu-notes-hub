@@ -76,8 +76,15 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
           sub.code.startsWith('CAIN') ||
           sub.code.startsWith('CAOR')
 
-        if (activeTab === 'new') return isNew || (!isOld && !sub.title.includes('Old'))
-        if (activeTab === 'old') return isOld || (!isNew && sub.title.includes('Old'))
+        if (activeTab === 'new') {
+           // Strictly only show new subjects. 
+           // If it's old, definitely hide it. If it's ambiguous, assume it's NOT new unless it says New.
+           return isNew
+        }
+        if (activeTab === 'old') {
+           // Strictly only show old subjects.
+           return isOld
+        }
         return true
       })
 
