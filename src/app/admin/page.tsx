@@ -2232,18 +2232,18 @@ function SemestersTab() {
       .catch(() => setLoading(false))
   }, [selectedFaculty])
 
-  async function toggleSemesterVisibility(semesterId: string, currentVisible: boolean) {
+  async function toggleSemesterVisibility(semesterId: string, field: 'visible' | 'visibleNew' | 'visibleOld', currentVisible: boolean) {
     try {
       const res = await fetch('/api/admin/semesters', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ semesterId, visible: !currentVisible }),
+        body: JSON.stringify({ semesterId, [field]: !currentVisible }),
       })
       if (res.ok) {
-        toast.success('Semester visibility updated! 🎉')
-        setSemesters(prev => prev.map(s => s.id === semesterId ? { ...s, visible: !currentVisible } : s))
+        toast.success('Visibility updated! 🎉')
+        setSemesters(prev => prev.map(s => s.id === semesterId ? { ...s, [field]: !currentVisible } : s))
       } else {
-        toast.error('Failed to update semester visibility')
+        toast.error('Failed to update visibility')
       }
     } catch {
       toast.error('Network error')
@@ -2285,9 +2285,13 @@ function SemestersTab() {
             No semesters configured for this faculty.
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
             {semesters.map((sem) => {
-              const isVisible = sem.visible !== false
+              const isBca = selectedFaculty.toLowerCase() === 'bca'
+              const isVisibleNew = sem.visibleNew !== false
+              const isVisibleOld = sem.visibleOld !== false
+              const isVisibleGeneral = sem.visible !== false
+
               return (
                 <div
                   key={sem.id}
@@ -2296,40 +2300,55 @@ function SemestersTab() {
                     padding: '20px',
                     borderRadius: '14px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    border: `1px solid ${isVisible ? 'rgba(99,102,241,0.35)' : 'var(--clr-border)'}`,
-                    background: isVisible ? 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.08) 100%)' : 'rgba(255,255,255,0.01)',
-                    transition: 'all 0.2s ease',
+                    flexDirection: 'column',
+                    gap: '14px',
+                    border: '1px solid var(--clr-border)',
+                    background: 'rgba(255,255,255,0.01)',
                   }}
                 >
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '16px', color: 'var(--clr-text-1)', marginBottom: '4px' }}>
-                      {sem.name}
-                    </div>
-                    <div style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: isVisible ? '#67e8f9' : 'var(--clr-text-3)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}>
-                      <span>{isVisible ? '🟢 Visible on Frontend' : '⚪ Hidden from Students'}</span>
-                    </div>
+                  <div style={{ fontWeight: 800, fontSize: '16px', color: 'var(--clr-text-1)' }}>
+                    {sem.name}
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={isVisible}
-                    onChange={() => toggleSemesterVisibility(sem.id, isVisible)}
-                    style={{
-                      width: '22px',
-                      height: '22px',
-                      cursor: 'pointer',
-                      accentColor: 'var(--clr-primary)',
-                    }}
-                  />
+
+                  {isBca ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', cursor: 'pointer' }}>
+                        <span style={{ color: isVisibleNew ? '#67e8f9' : 'var(--clr-text-3)', fontWeight: 700 }}>
+                          ✨ New Syllabus (2080+)
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={isVisibleNew}
+                          onChange={() => toggleSemesterVisibility(sem.id, 'visibleNew', isVisibleNew)}
+                          style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--clr-primary)' }}
+                        />
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', cursor: 'pointer' }}>
+                        <span style={{ color: isVisibleOld ? '#fcd34d' : 'var(--clr-text-3)', fontWeight: 700 }}>
+                          📜 Old Syllabus (2074)
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={isVisibleOld}
+                          onChange={() => toggleSemesterVisibility(sem.id, 'visibleOld', isVisibleOld)}
+                          style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#f59e0b' }}
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px' }}>
+                      <span style={{ fontSize: '12px', color: isVisibleGeneral ? '#67e8f9' : 'var(--clr-text-3)', fontWeight: 700 }}>
+                        {isVisibleGeneral ? '🟢 Visible on Frontend' : '⚪ Hidden from Students'}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={isVisibleGeneral}
+                        onChange={() => toggleSemesterVisibility(sem.id, 'visible', isVisibleGeneral)}
+                        style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--clr-primary)' }}
+                      />
+                    </div>
+                  )}
                 </div>
               )
             })}
