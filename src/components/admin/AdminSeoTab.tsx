@@ -71,6 +71,15 @@ export default function AdminSeoTab({ onNavigateTab }: Props) {
   const [hoveredTrendPoint, setHoveredTrendPoint] = useState<number | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string>('')
 
+  // Auto-SEO Generator State
+  const [showAutoSeoModal, setShowAutoSeoModal] = useState(false)
+  const [seoTopic, setSeoTopic] = useState('C Programming & Algorithms')
+  const [seoFaculty, setSeoFaculty] = useState('BCA')
+  const [seoSemester, setSeoSemester] = useState('2nd Semester')
+  const [seoItemType, setSeoItemType] = useState('note')
+  const [isGeneratingSeo, setIsGeneratingSeo] = useState(false)
+  const [seoResult, setSeoResult] = useState<any>(null)
+
   const fetchSeoData = useCallback(async (isSilent = false) => {
     try {
       if (!isSilent) setLoading(true)
@@ -203,14 +212,6 @@ export default function AdminSeoTab({ onNavigateTab }: Props) {
   const chartColor = activeChartTab === 'VIEWS' ? '#6366f1' : activeChartTab === 'ORGANIC' ? '#06b6d4' : '#10b981'
   const gradId = `chartGrad_${activeChartTab}`
 
-  // Auto-SEO Generator State
-  const [showAutoSeoModal, setShowAutoSeoModal] = useState(false)
-  const [seoTopic, setSeoTopic] = useState('C Programming & Algorithms')
-  const [seoFaculty, setSeoFaculty] = useState('BCA')
-  const [seoSemester, setSeoSemester] = useState('2nd Semester')
-  const [seoItemType, setSeoItemType] = useState('note')
-  const [isGeneratingSeo, setIsGeneratingSeo] = useState(false)
-  const [seoResult, setSeoResult] = useState<any>(null)
 
   const handleGenerateSeo = async () => {
     setIsGeneratingSeo(true)

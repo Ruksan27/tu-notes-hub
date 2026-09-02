@@ -496,7 +496,7 @@ export async function POST(req: NextRequest) {
         ],
         liveGoogleSearchUrl: `https://www.google.com/search?q=${encodeURIComponent(`${fac} ${topic} notes nepal`)}&gl=np`,
         liveGoogleApiEndpoint: `https://suggestqueries.google.com/complete/search?client=chrome&hl=en&gl=np&q=${encodeURIComponent(`${fac} ${topic}`)}`,
-        fetchedTimestamp: currentNptTime,
+        fetchedTimestamp: new Date().toISOString(),
         rawGoogleSuggestions: googleSuggestions,
       }
 
