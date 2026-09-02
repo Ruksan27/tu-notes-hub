@@ -72,13 +72,37 @@ export default async function SemesterPage({ params, searchParams }: Props) {
       semesters: {
         where: { order },
         include: {
-          solutionBooks: { orderBy: { createdAt: 'desc' } },
           subjects: {
             orderBy: { code: 'asc' },
             include: {
-              notes: { orderBy: { createdAt: 'desc' } },
-              pastPapers: { orderBy: { year: 'desc' } },
-              cheatsheets: { orderBy: { createdAt: 'desc' } },
+              notes: {
+                orderBy: { createdAt: 'desc' },
+                select: {
+                  id: true,
+                  title: true,
+                  description: true,
+                  cloudinaryUrl: true,
+                  fileSize: true,
+                  noteType: true,
+                  isPremium: true,
+                  downloadCount: true,
+                  // Exclude extractedText — not needed in list view, can be very large
+                }
+              },
+              pastPapers: {
+                orderBy: { year: 'desc' },
+                select: {
+                  id: true,
+                  year: true,
+                  examType: true,
+                  cloudinaryUrl: true,
+                  // Exclude extractedText — not needed in list view
+                }
+              },
+              cheatsheets: {
+                orderBy: { createdAt: 'desc' },
+                select: { id: true, title: true, content: true, subjectId: true, createdAt: true }
+              },
             },
           },
         },
@@ -88,15 +112,33 @@ export default async function SemesterPage({ params, searchParams }: Props) {
   if (!faculty || faculty.semesters.length === 0) notFound()
 
   const sem = faculty.semesters[0]
+
+  // Fetch solution books separately (lean query) to avoid bloating main query
+  const solutionBooks = await prisma.solutionBook.findMany({
+    where: { semesterId: sem.id },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      cloudinaryUrl: true,
+      fileSize: true,
+      isPremium: true,
+      author: true,
+      subjectId: true,
+    }
+  })
+
   const isYearly = faculty.systemType === 'YEARLY'
-  const periodLabel = isYearly ? `${order}${order === 1 ? 'st' : order === 2 ? 'nd' : order === 3 ? 'rd' : 'th'} Year` : `${order}${order === 1 ? 'st' : order === 2 ? 'nd' : order === 3 ? 'rd' : 'th'} Semester`
+  const periodLabel = isYearly
+    ? `${order}${order === 1 ? 'st' : order === 2 ? 'nd' : order === 3 ? 'rd' : 'th'} Year`
+    : `${order}${order === 1 ? 'st' : order === 2 ? 'nd' : order === 3 ? 'rd' : 'th'} Semester`
 
   // Separate full semester guides vs subject-specific solution books
-  const allBooks = (sem.solutionBooks || []) as any[]
-  const semesterGuides = allBooks.filter(b => !b.subjectId)
-  const subjectsWithBooks = sem.subjects.map(sub => ({
+  const semesterGuides = solutionBooks.filter((b: any) => !b.subjectId)
+  const subjectsWithBooks = sem.subjects.map((sub: any) => ({
     ...sub,
-    solutionBooks: allBooks.filter(b => b.subjectId === sub.id)
+    solutionBooks: solutionBooks.filter((b: any) => b.subjectId === sub.id)
   }))
 
   return (

@@ -3,7 +3,9 @@ export function slugify(text: string): string {
   return text
     .toLowerCase()
     .trim()
-    .replace(/\s*(old syllabus|new syllabus|\(old\)|\(new\))/gi, '')
+    // Strip "(Old Syllabus)", "(New Syllabus)", "(Old)", "(New)" — with or without parens
+    .replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '')
+    .replace(/\s*(old syllabus|new syllabus)/gi, '')
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '')

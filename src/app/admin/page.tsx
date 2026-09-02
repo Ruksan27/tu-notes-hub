@@ -528,6 +528,7 @@ function ManageMaterialsTab() {
   const [notes, setNotes] = useState<any[]>([])
   const [pastPapers, setPastPapers] = useState<any[]>([])
   const [cheatsheets, setCheatsheets] = useState<any[]>([])
+  const [solutionBooks, setSolutionBooks] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [editItem, setEditItem] = useState<any>(null)
   const [editType, setEditType] = useState('')
@@ -558,6 +559,7 @@ function ManageMaterialsTab() {
         setNotes(data.notes || [])
         setPastPapers(data.pastPapers || [])
         setCheatsheets(data.cheatsheets || [])
+        setSolutionBooks(data.solutionBooks || [])
       } else {
         toast.error('Failed to load materials')
       }
@@ -570,7 +572,7 @@ function ManageMaterialsTab() {
 
   useEffect(() => {
     if (subjectId) loadMaterials()
-    else { setNotes([]); setPastPapers([]); setCheatsheets([]) }
+    else { setNotes([]); setPastPapers([]); setCheatsheets([]); setSolutionBooks([]) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectId])
 
@@ -581,8 +583,10 @@ function ManageMaterialsTab() {
       setEditForm({ title: item.title, description: item.description || '', noteType: item.noteType, isPremium: item.isPremium, author: item.author || '' })
     } else if (type === 'pastpaper') {
       setEditForm({ year: item.year, examType: item.examType })
-    } else {
+    } else if (type === 'cheatsheet') {
       setEditForm({ title: item.title, content: item.content })
+    } else if (type === 'solutionbook') {
+      setEditForm({ title: item.title, description: item.description || '', isPremium: item.isPremium, author: item.author || '' })
     }
   }
 
@@ -654,7 +658,7 @@ function ManageMaterialsTab() {
             <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Subject</label>
             <select className="input-field" value={subjectId} onChange={e => setSubjectId(e.target.value)} disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
               <option value="">— Choose Subject —</option>
-              {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
+              {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()}</option>)}
             </select>
           </div>
         </div>
@@ -798,6 +802,47 @@ function ManageMaterialsTab() {
               </div>
             </div>
           )}
+
+          {/* Solution Books Table */}
+          {solutionBooks.length > 0 && (
+            <div className="glass-card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 800 }}>📚 Solution Books</h3>
+                <span className="badge badge-primary">{solutionBooks.length} items</span>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--clr-border)' }}>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', color: 'var(--clr-text-3)', fontSize: '12px', textTransform: 'uppercase' }}>Title</th>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', color: 'var(--clr-text-3)', fontSize: '12px', textTransform: 'uppercase' }}>Access</th>
+                      <th style={{ textAlign: 'right', padding: '12px 16px', color: 'var(--clr-text-3)', fontSize: '12px', textTransform: 'uppercase' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {solutionBooks.map(b => (
+                      <tr key={b.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '16px' }}>
+                          <div style={{ fontWeight: 600 }}>{b.title}</div>
+                          {b.fileSize && <div style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '4px' }}>{b.fileSize}</div>}
+                        </td>
+                        <td style={{ padding: '16px' }}>
+                          {b.isPremium ? <span className="badge badge-elite" style={{ fontSize: '10px' }}>PREMIUM</span> : <span className="badge badge-free" style={{ fontSize: '10px' }}>FREE</span>}
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <a href={b.cloudinaryUrl} target="_blank" rel="noreferrer" className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.05)' }}>👁️ View</a>
+                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(b, 'solutionbook')}>✏️ Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(b.id, 'solutionbook', b.title)}>🗑️ Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -811,7 +856,7 @@ function ManageMaterialsTab() {
             onClick={e => e.stopPropagation()}
           >
             <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '20px' }}>
-              ✏️ Edit {editType === 'note' ? 'Note' : editType === 'pastpaper' ? 'Past Paper' : 'Cheatsheet'}
+              ✏️ Edit {editType === 'note' ? 'Note' : editType === 'pastpaper' ? 'Past Paper' : editType === 'solutionbook' ? 'Solution Book' : 'Cheatsheet'}
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -881,6 +926,32 @@ function ManageMaterialsTab() {
                   <div>
                     <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Content (Markdown)</label>
                     <textarea className="input-field" value={editForm.content || ''} onChange={e => setEditForm({ ...editForm, content: e.target.value })} style={{ minHeight: '200px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px' }} />
+                  </div>
+                </>
+              )}
+
+              {editType === 'solutionbook' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Title</label>
+                    <input className="input-field" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Description</label>
+                    <textarea className="input-field" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} style={{ minHeight: '80px', resize: 'vertical' }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Access</label>
+                      <select className="input-field" value={editForm.isPremium ? 'true' : 'false'} onChange={e => setEditForm({ ...editForm, isPremium: e.target.value === 'true' })} style={{ cursor: 'pointer' }}>
+                        <option value="false">🔓 Free</option>
+                        <option value="true">💎 Premium</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author</label>
+                      <input className="input-field" value={editForm.author || ''} onChange={e => setEditForm({ ...editForm, author: e.target.value })} />
+                    </div>
                   </div>
                 </>
               )}
@@ -1674,7 +1745,7 @@ function UploadTab() {
                 })
                 .map(s => (
                   <option key={s.id} value={s.id}>
-                    [{s.code}] {s.title.replace(' (New Syllabus)', '').replace(' (Old Syllabus)', '')}
+                    [{s.code}] {s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()}
                   </option>
                 ))}
             </select>
@@ -2399,13 +2470,7 @@ function StatsTab() {
   )
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      {/* ── Live Analytics & Trending Content Section ── */}
-      <div style={{ marginBottom: '32px' }}>
-        <TrendingSection />
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div>
           <h3 className="section-title" style={{ margin: 0 }}>📈 Course Material Statistics</h3>
           <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: '4px 0 0 0' }}>

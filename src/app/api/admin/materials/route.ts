@@ -32,7 +32,14 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ notes, pastPapers, cheatsheets })
+    const solutionBooks = await prisma.solutionBook.findMany({
+      where: { subjectId },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    // Also fetch semester-level solution books if a semesterId is passed, but for now we query by subjectId.
+    // If a solution book doesn't have a subjectId, it is a full semester guide.
+    return NextResponse.json({ notes, pastPapers, cheatsheets, solutionBooks })
   } catch (error: any) {
     console.error('Error fetching materials:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -78,6 +85,16 @@ export async function PUT(request: Request) {
         data: {
           title: fields.title,
           content: fields.content,
+        }
+      })
+    } else if (type === 'solutionbook') {
+      updated = await prisma.solutionBook.update({
+        where: { id },
+        data: {
+          title: fields.title,
+          description: fields.description,
+          isPremium: fields.isPremium,
+          author: fields.author,
         }
       })
     }
@@ -142,6 +159,13 @@ export async function DELETE(request: Request) {
       }
     } else if (type === 'cheatsheet') {
       await prisma.cheatsheet.delete({ where: { id } })
+    } else if (type === 'solutionbook') {
+      const item = await prisma.solutionBook.findUnique({ where: { id } })
+      if (item) {
+        const publicId = extractPublicId(item.cloudinaryUrl)
+        if (publicId) await deleteFromCloudinary(publicId, 'raw')
+        await prisma.solutionBook.delete({ where: { id } })
+      }
     }
 
     return NextResponse.json({ success: true })

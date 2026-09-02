@@ -15,6 +15,14 @@ interface Props {
   initialSyllabus?: string
 }
 
+/** Strip "(Old Syllabus)", "(New Syllabus)", "(Old)", "(New)" from a display title */
+function cleanTitle(title: string): string {
+  return title
+    .replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '')
+    .replace(/\s*(old syllabus|new syllabus)/gi, '')
+    .trim()
+}
+
 export default function SemesterSubjectFilter({
   subjects,
   semesterGuides = [],
@@ -83,7 +91,7 @@ export default function SemesterSubjectFilter({
       const isOld = title.includes('old syllabus') || title.includes('(old)')
       const isNew = title.includes('new syllabus') || title.includes('(new)')
 
-      if (activeTab === 'new') return isNew || (!isOld && !title.includes('old')) // Default to new if no label
+      if (activeTab === 'new') return isNew || (!isOld && !title.includes('old'))
       if (activeTab === 'old') return isOld || (!isNew && title.includes('old'))
       return true
     })
@@ -91,7 +99,7 @@ export default function SemesterSubjectFilter({
 
   return (
     <div style={{ marginTop: '24px' }}>
-      {/* Syllabus Filter Selector if faculty has both */}
+      {/* ── Syllabus Toggle ── */}
       {hasNewAndOld && (
         <div style={{
           display: 'flex',
@@ -99,62 +107,84 @@ export default function SemesterSubjectFilter({
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '16px',
-          padding: '14px 20px',
-          borderRadius: '14px',
-          background: 'rgba(18, 21, 38, 0.8)',
-          border: '1px solid rgba(99, 102, 241, 0.25)',
-          marginBottom: '24px',
+          padding: '16px 20px',
+          borderRadius: '16px',
+          background: 'rgba(15, 18, 36, 0.85)',
+          border: '1px solid rgba(99, 102, 241, 0.2)',
+          marginBottom: '28px',
+          backdropFilter: 'blur(10px)',
         }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🎓</span>
-            <span>Filter Curriculum:</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', letterSpacing: '0.02em' }}>
+              🎓 Curriculum Version
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>
+              {activeTab === 'new' ? 'Showing new curriculum subjects' : 'Showing old curriculum subjects'}
+            </span>
           </div>
 
+          {/* Toggle Switch */}
           <div style={{
             display: 'flex',
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'rgba(255, 255, 255, 0.04)',
             padding: '4px',
-            borderRadius: '10px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.07)',
             gap: '4px',
           }}>
             <button
+              id="syllabus-toggle-new"
               onClick={() => setActiveTab('new')}
               style={{
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontSize: '12px',
+                padding: '9px 22px',
+                borderRadius: '8px',
+                fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
-                transition: 'all 0.2s ease',
-                background: activeTab === 'new' ? 'var(--grad-brand)' : 'transparent',
-                color: activeTab === 'new' ? '#ffffff' : 'var(--clr-text-2)',
+                transition: 'all 0.22s ease',
+                background: activeTab === 'new'
+                  ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+                  : 'transparent',
+                color: activeTab === 'new' ? '#fff' : 'var(--clr-text-3)',
+                boxShadow: activeTab === 'new' ? '0 4px 14px rgba(99,102,241,0.4)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              ✨ New Syllabus
+              <span>✨</span>
+              <span>New</span>
             </button>
             <button
+              id="syllabus-toggle-old"
               onClick={() => setActiveTab('old')}
               style={{
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontSize: '12px',
+                padding: '9px 22px',
+                borderRadius: '8px',
+                fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
-                transition: 'all 0.2s ease',
-                background: activeTab === 'old' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent',
-                color: activeTab === 'old' ? '#ffffff' : 'var(--clr-text-2)',
+                transition: 'all 0.22s ease',
+                background: activeTab === 'old'
+                  ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                  : 'transparent',
+                color: activeTab === 'old' ? '#fff' : 'var(--clr-text-3)',
+                boxShadow: activeTab === 'old' ? '0 4px 14px rgba(245,158,11,0.35)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              📜 Old Syllabus
+              <span>📜</span>
+              <span>Old</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Solution Books & Semester Guides Section (Filtered) */}
+      {/* Solution Books & Semester Guides Section */}
       {filteredGuides.length > 0 && (
         <div style={{ marginBottom: '32px' }}>
           <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -162,14 +192,8 @@ export default function SemesterSubjectFilter({
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
             {filteredGuides.map((book) => {
-              const cleanTitle = (book.title || '')
-                .replace(/\s*\(Old Syllabus\)/gi, '')
-                .replace(/\s*\(New Syllabus\)/gi, '')
-                .replace(/\s*\(Old\)/gi, '')
-                .replace(/\s*\(New\)/gi, '')
-                .trim()
-
-              const slug = toSeoSlug(cleanTitle) || book.id
+              const bookTitle = cleanTitle(book.title || '')
+              const slug = toSeoSlug(bookTitle) || book.id
               const ord = semesterOrder === 1 ? '1st' : semesterOrder === 2 ? '2nd' : semesterOrder === 3 ? '3rd' : `${semesterOrder}th`
               const periodSlug = systemType === 'YEARLY' ? `${ord}-year` : `${ord}-semester`
               const href = `/faculty/${facultyId.toLowerCase()}/${periodSlug}/solution-book/${slug}`
@@ -198,7 +222,7 @@ export default function SemesterSubjectFilter({
                       )}
                     </div>
                     <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', margin: '0 0 6px 0' }}>
-                      {cleanTitle}
+                      {bookTitle}
                     </h3>
                     {book.description && (
                       <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>

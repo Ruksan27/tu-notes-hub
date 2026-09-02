@@ -92,8 +92,9 @@ export default function SubjectRow({
 
   const getResourceLink = (itemTitle: string, category: string, fallbackSlug: string) => {
     if (semPath) {
-      // Use subject code (e.g. cacs303) instead of full title for shorter URLs
-      const subSlug = subject.code ? slugify(subject.code) : slugify(subject.title)
+      // Use clean subject title for SEO — "computer-graphics-and-animation" ranks better than "cacs305"
+      // slugify() already strips "(Old Syllabus)" / "(New Syllabus)" suffixes
+      const subSlug = slugify(subject.title) || slugify(subject.code)
       const rawItemSlug = slugify(itemTitle) || 'resource'
       // Truncate item slug to keep URL clean (max 50 chars for item part)
       const itemSlug = rawItemSlug.length > 50
