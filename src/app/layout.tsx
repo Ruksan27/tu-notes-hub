@@ -46,9 +46,9 @@ export const metadata: Metadata = {
     site: '@tunoteshub',
   },
   icons: {
-    icon: '/Untitled design.svg',
-    shortcut: '/Untitled design.svg',
-    apple: '/Untitled design.svg',
+    icon: '/Untitled design.svg?v=2',
+    shortcut: '/Untitled design.svg?v=2',
+    apple: '/Untitled design.svg?v=2',
   },
   // Apple PWA meta
   other: {
