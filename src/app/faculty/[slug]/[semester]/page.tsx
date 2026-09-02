@@ -3,9 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import SubjectRow from '@/components/SubjectRow'
 import AdUnit from '@/components/ads/AdUnit'
 import SolutionBookList from '@/components/SolutionBookList'
+
+import SemesterSubjectFilter from '@/components/SemesterSubjectFilter'
 
 export const revalidate = 3600
 
@@ -34,7 +35,10 @@ export async function generateStaticParams() {
   return params
 }
 
-interface Props { params: Promise<{ slug: string; semester: string }> }
+interface Props {
+  params: Promise<{ slug: string; semester: string }>
+  searchParams?: Promise<{ syllabus?: string }>
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, semester } = await params
@@ -56,8 +60,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function SemesterPage({ params }: Props) {
+export default async function SemesterPage({ params, searchParams }: Props) {
   const { slug, semester } = await params
+  const { syllabus: initialSyllabus } = (await searchParams) || {}
   const order = parseInt(semester)
   if (isNaN(order)) notFound()
 
@@ -135,33 +140,19 @@ export default async function SemesterPage({ params }: Props) {
       {/* Solution Books & Semester Guides Section */}
       <SolutionBookList books={semesterGuides} facultyId={faculty.id} semesterOrder={order} />
 
-      {/* Subjects List */}
-      {subjectsWithBooks.length === 0 ? (
-        <div className="glass-card" style={{ padding: '60px 40px', textAlign: 'center', marginTop: '24px' }}>
-          <div style={{ fontSize: '56px', marginBottom: '16px' }}>📚</div>
-          <h3 style={{ marginBottom: '8px', fontSize: '22px' }}>No Subjects Added Yet</h3>
-          <p style={{ color: 'var(--clr-text-2)', maxWidth: '420px', margin: '0 auto' }}>
-            Subjects for this {isYearly ? 'year' : 'semester'} haven&apos;t been added yet. Check back soon or contact the admin!
-          </p>
-        </div>
-      ) : (
-        <div style={{ width: '100%', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {subjectsWithBooks.map((subject) => (
-            <SubjectRow
-              key={subject.id}
-              subject={subject as any}
-              facultyId={faculty.id}
-              semesterOrder={order}
-              systemType={faculty.systemType}
-            />
-          ))}
+      {/* Subjects List with Syllabus Filter */}
+      <SemesterSubjectFilter
+        subjects={subjectsWithBooks as any}
+        facultyId={faculty.id}
+        semesterOrder={order}
+        systemType={faculty.systemType}
+        initialSyllabus={initialSyllabus}
+      />
 
-          {/* Bottom Ad Unit for Free Tier users */}
-          <div style={{ marginTop: '16px' }}>
-            <AdUnit type="inline" slot="semester-bottom-ad" />
-          </div>
-        </div>
-      )}
+      {/* Bottom Ad Unit */}
+      <div style={{ marginTop: '24px' }}>
+        <AdUnit type="inline" slot="semester-bottom-ad" />
+      </div>
     </div>
   )
 }

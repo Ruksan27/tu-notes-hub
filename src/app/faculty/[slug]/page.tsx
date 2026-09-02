@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import FacultySemesterList from '@/components/FacultySemesterList'
 
 // We revalidate this page every 1 hour (ISR)
 export const revalidate = 3600
@@ -85,114 +86,9 @@ export default async function FacultyPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Semester/Year Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '20px',
-      }}>
-        {faculty.semesters.map((sem) => {
-          const totalSolutionBooks = sem.solutionBooks ? sem.solutionBooks.length : 0
-          const totalNotes = sem.subjects.reduce((sum, s) => sum + s.notes.length, 0)
-          const totalPapers = sem.subjects.reduce((sum, s) => sum + s.pastPapers.length, 0)
-          const totalSheets = sem.subjects.reduce((sum, s) => sum + s.cheatsheets.length, 0)
-          const totalContent = totalNotes + totalPapers + totalSheets
-
-          const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`
-          const periodSlug = isYearly ? `${ord}-year` : `${ord}-semester`
-
-          return (
-            <Link
-              key={sem.id}
-              href={`/faculty/${faculty.id}/${periodSlug}`}
-              style={{ textDecoration: 'none' }}
-            >
-              <div className="glass-card" style={{
-                padding: '28px',
-                cursor: 'pointer',
-                position: 'relative',
-                overflow: 'hidden',
-              }}>
-                {/* Decorative number */}
-                <div style={{
-                  position: 'absolute',
-                  top: '-10px',
-                  right: '-5px',
-                  fontSize: '100px',
-                  fontWeight: 900,
-                  fontFamily: 'var(--font-display)',
-                  color: 'rgba(99,102,241,0.06)',
-                  lineHeight: 1,
-                  pointerEvents: 'none',
-                }}>{sem.order}</div>
-
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                  {/* Semester badge */}
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '6px 14px',
-                    borderRadius: '8px',
-                    background: 'rgba(99,102,241,0.12)',
-                    marginBottom: '16px',
-                  }}>
-                    <span style={{
-                      width: '28px', height: '28px', borderRadius: '6px',
-                      background: 'var(--grad-brand)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '13px', fontWeight: 800, color: '#fff',
-                    }}>{sem.order}</span>
-                    <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--clr-primary-h)' }}>
-                      {isYearly ? `${sem.order}${sem.order === 1 ? 'st' : sem.order === 2 ? 'nd' : sem.order === 3 ? 'rd' : 'th'} Year` : `${sem.order}${sem.order === 1 ? 'st' : sem.order === 2 ? 'nd' : sem.order === 3 ? 'rd' : 'th'} Semester`}
-                    </span>
-                  </div>
-
-                  {/* Subjects count */}
-                  <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>
-                    {sem.subjects.length} Subject{sem.subjects.length !== 1 ? 's' : ''}
-                  </h3>
-
-                  {/* Subject names preview */}
-                  {sem.subjects.length > 0 && (
-                    <div style={{ marginBottom: '16px' }}>
-                      {sem.subjects.slice(0, 3).map((sub) => (
-                        <p key={sub.id} style={{ fontSize: '13px', color: 'var(--clr-text-3)', lineHeight: 1.8 }}>
-                          <span style={{ color: 'var(--clr-accent)', fontWeight: 600, marginRight: '6px' }}>{sub.code}</span>
-                          {sub.title}
-                        </p>
-                      ))}
-                      {sem.subjects.length > 3 && (
-                        <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
-                          +{sem.subjects.length - 3} more subjects...
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Stats */}
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <span className="badge badge-free">📄 {totalNotes} Notes</span>
-                    <span className="badge badge-semester">📝 {totalPapers} Papers</span>
-                    {totalSolutionBooks > 0 && <span className="badge badge-primary">📘 {totalSolutionBooks} Books</span>}
-                    {totalSheets > 0 && <span className="badge badge-elite">📋 {totalSheets} Sheets</span>}
-                  </div>
-
-                  {/* Arrow */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '0',
-                    right: '0',
-                    fontSize: '20px',
-                    color: 'var(--clr-text-3)',
-                    opacity: 0.5,
-                  }}>→</div>
-                </div>
-              </div>
-            </Link>
-          )
-        })}
-      </div>
+      {/* Semester/Year Grid with Interactive Syllabus Toggle */}
+      <FacultySemesterList faculty={faculty as any} />
     </div>
   )
+}
 }

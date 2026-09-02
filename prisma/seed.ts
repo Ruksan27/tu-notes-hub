@@ -7,42 +7,136 @@ const prisma = new PrismaClient()
 // Core subject mapping to seed realistic syllabus
 const subjectsMap: Record<string, { semester: number; code: string; title: string }[]> = {
   bca: [
-    // Sem 1
-    { semester: 1, code: "CACS101", title: "Computer Fundamentals & Applications" },
-    { semester: 1, code: "CACS102", title: "Society & Technology" },
-    { semester: 1, code: "CACS103", title: "English I" },
-    { semester: 1, code: "CACS104", title: "Mathematics I" },
-    { semester: 1, code: "CACS105", title: "C Programming" },
-    // Sem 2
-    { semester: 2, code: "CACS151", title: "Digital Logic" },
-    { semester: 2, code: "CACS152", title: "Discrete Structure" },
-    { semester: 2, code: "CACS153", title: "English II" },
-    { semester: 2, code: "CACS154", title: "Mathematics II" },
-    { semester: 2, code: "CACS155", title: "Object Oriented Programming in C++" },
-    // Sem 3
-    { semester: 3, code: "CACS201", title: "Data Structures and Algorithms" },
-    { semester: 3, code: "CACS202", title: "System Analysis and Design" },
-    { semester: 3, code: "CACS203", title: "Microprocessor" },
-    { semester: 3, code: "CACS204", title: "Numerical Methods" },
-    { semester: 3, code: "CACS205", title: "Computer Architecture" },
-    // Sem 4
-    { semester: 4, code: "CACS251", title: "Operating System" },
-    { semester: 4, code: "CACS252", title: "Database Management System" },
-    { semester: 4, code: "CACS253", title: "Software Engineering" },
-    { semester: 4, code: "CACS254", title: "Scripting Language" },
-    { semester: 4, code: "CACS255", title: "Probability & Statistics" },
-    // Sem 5
-    { semester: 5, code: "CACS301", title: "MIS & E-Business" },
-    { semester: 5, code: "CACS302", title: "Dot Net Technology" },
-    { semester: 5, code: "CACS303", title: "Computer Networking" },
-    { semester: 5, code: "CACS304", title: "Introduction to Management" },
-    { semester: 5, code: "CACS305", title: "Computer Graphics" },
-    // Sem 6
-    { semester: 6, code: "CACS351", title: "Mobile Programming" },
-    { semester: 6, code: "CACS352", title: "Distributed System" },
-    { semester: 6, code: "CACS353", title: "Applied Economics" },
-    { semester: 6, code: "CACS354", title: "Advanced Java Programming" },
-    { semester: 6, code: "CACS355", title: "Network Security" }
+    // --- NEW SYLLABUS ---
+    // Sem 1 (New)
+    { semester: 1, code: "BCA 101", title: "Computer Fundamentals and Applications (New Syllabus)" },
+    { semester: 1, code: "BCA 102", title: "Programming in C (New Syllabus)" },
+    { semester: 1, code: "BCA 103", title: "Digital Logic (New Syllabus)" },
+    { semester: 1, code: "BCA 104", title: "Mathematics-I (New Syllabus)" },
+    { semester: 1, code: "BCA 105", title: "Professional Communication and Ethics (New Syllabus)" },
+    { semester: 1, code: "BCA 106", title: "Hardware Workshop (New Syllabus)" },
+
+    // Sem 2 (New)
+    { semester: 2, code: "BCA 151", title: "Discrete Structure (New Syllabus)" },
+    { semester: 2, code: "BCA 152", title: "Microprocessor and Computer Architecture (New Syllabus)" },
+    { semester: 2, code: "BCA 153", title: "OOP in Java (New Syllabus)" },
+    { semester: 2, code: "BCA 154", title: "Mathematics-II (New Syllabus)" },
+    { semester: 2, code: "BCA 155", title: "UX/UI Design (New Syllabus)" },
+    { semester: 2, code: "BCA 156", title: "Principle of Management (New Syllabus)" },
+
+    // Sem 3 (New)
+    { semester: 3, code: "BCA 201", title: "Data Structure and Algorithms (New Syllabus)" },
+    { semester: 3, code: "BCA 202", title: "Database Management System (New Syllabus)" },
+    { semester: 3, code: "BCA 203", title: "Web Technology-I (New Syllabus)" },
+    { semester: 3, code: "BCA 204", title: "System Analysis and Design (New Syllabus)" },
+    { semester: 3, code: "BCA 205", title: "Probability and Statistics (New Syllabus)" },
+    { semester: 3, code: "BCA 206", title: "Applied Economics (New Syllabus)" },
+
+    // Sem 4 (New)
+    { semester: 4, code: "BCA 251", title: "Operating Systems (New Syllabus)" },
+    { semester: 4, code: "BCA 252", title: "Software Engineering (New Syllabus)" },
+    { semester: 4, code: "BCA 253", title: "Numerical Methods (New Syllabus)" },
+    { semester: 4, code: "BCA 254", title: "Python Programming (New Syllabus)" },
+    { semester: 4, code: "BCA 255", title: "Web Technology-II (New Syllabus)" },
+    { semester: 4, code: "BCA 256", title: "Project-I (New Syllabus)" },
+
+    // Sem 5 (New)
+    { semester: 5, code: "BCA 301", title: "Computer Network (New Syllabus)" },
+    { semester: 5, code: "BCA 302", title: "Artificial Intelligence (New Syllabus)" },
+    { semester: 5, code: "BCA 303", title: "Advance Java Programming (New Syllabus)" },
+    { semester: 5, code: "BCA 304", title: "MIS and e-Business (New Syllabus)" },
+    { semester: 5, code: "BCA 305", title: "Society and Technology (New Syllabus)" },
+    { semester: 5, code: "BCA 306", title: "Project-II (New Syllabus)" },
+
+    // Sem 6 (New)
+    { semester: 6, code: "BCA 351", title: "Computer Graphics and Animation (New Syllabus)" },
+    { semester: 6, code: "BCA 352", title: "Mobile Programming (New Syllabus)" },
+    { semester: 6, code: "BCA 353", title: "Cryptography and Network Security (New Syllabus)" },
+    { semester: 6, code: "BCA 354", title: "Technical Writing (New Syllabus)" },
+    { semester: 6, code: "BCA 355", title: "Distributed System (New Syllabus)" },
+    { semester: 6, code: "BCA 356", title: "Project-III (New Syllabus)" },
+
+    // Sem 7 (New)
+    { semester: 7, code: "BCA 401", title: "Cyber Security and Ethical Hacking (New Syllabus)" },
+    { semester: 7, code: "BCA 402", title: "Software Project Management (New Syllabus)" },
+    { semester: 7, code: "BCA 403", title: "Financial Accounting (New Syllabus)" },
+    { semester: 7, code: "BCA 404", title: "Project-IV (New Syllabus)" },
+    { semester: 7, code: "BCA 405-I", title: "Machine Learning (Elective-I)" },
+    { semester: 7, code: "BCA 405-II", title: "E-Commerce (Elective-I)" },
+    { semester: 7, code: "BCA 405-III", title: "Database Administration (Elective-I)" },
+    { semester: 7, code: "BCA 405-IV", title: "Linux (Elective-I)" },
+    { semester: 7, code: "BCA 406-I", title: "Dotnet Technology (Elective-II)" },
+    { semester: 7, code: "BCA 406-II", title: "Business Intelligence (Elective-II)" },
+    { semester: 7, code: "BCA 406-III", title: "Software Testing and QA (Elective-II)" },
+    { semester: 7, code: "BCA 406-IV", title: "Data Visualization (Elective-II)" },
+
+    // Sem 8 (New)
+    { semester: 8, code: "BCA 451", title: "Cloud Computing (New Syllabus)" },
+    { semester: 8, code: "BCA 452", title: "Internship (New Syllabus)" },
+    { semester: 8, code: "BCA 453-I", title: "Network Administration (Elective-III)" },
+    { semester: 8, code: "BCA 453-II", title: "E-Governance (Elective-III)" },
+    { semester: 8, code: "BCA 453-III", title: "Database Programming (Elective-III)" },
+    { semester: 8, code: "BCA 453-IV", title: "Geographical Information System (Elective-III)" },
+    { semester: 8, code: "BCA 454-I", title: "Digital Marketing and SEO (Elective-IV)" },
+    { semester: 8, code: "BCA 454-IV", title: "Data Mining and Data Warehouse (Elective-IV)" },
+
+    // --- OLD SYLLABUS ---
+    // Sem 1 (Old)
+    { semester: 1, code: "CACS101", title: "Computer Fundamentals and Applications (Old Syllabus)" },
+    { semester: 1, code: "CASO102", title: "Society and Technology (Old Syllabus)" },
+    { semester: 1, code: "CAEN103", title: "English I (Old Syllabus)" },
+    { semester: 1, code: "CAMT104", title: "Mathematics I (Old Syllabus)" },
+    { semester: 1, code: "CACS105", title: "Digital Logic (Old Syllabus)" },
+
+    // Sem 2 (Old)
+    { semester: 2, code: "CACS151", title: "C Programming (Old Syllabus)" },
+    { semester: 2, code: "CAAC152", title: "Financial Accounting (Old Syllabus)" },
+    { semester: 2, code: "CAEN153", title: "English II (Old Syllabus)" },
+    { semester: 2, code: "CAMT154", title: "Mathematics II (Old Syllabus)" },
+    { semester: 2, code: "CACS155", title: "Microprocessor & Computer Architecture (Old Syllabus)" },
+
+    // Sem 3 (Old)
+    { semester: 3, code: "CACS201", title: "Data Structures and Algorithms (Old Syllabus)" },
+    { semester: 3, code: "CAST202", title: "Probability and Statistics (Old Syllabus)" },
+    { semester: 3, code: "CACS203", title: "System Analysis and Design (Old Syllabus)" },
+    { semester: 3, code: "CACS204", title: "OOP in Java (Old Syllabus)" },
+    { semester: 3, code: "CACS205", title: "Web Technology (Old Syllabus)" },
+
+    // Sem 4 (Old)
+    { semester: 4, code: "CACS251", title: "Operating System (Old Syllabus)" },
+    { semester: 4, code: "CAMT252", title: "Numerical Methods (Old Syllabus)" },
+    { semester: 4, code: "CACS253", title: "Software Engineering (Old Syllabus)" },
+    { semester: 4, code: "CACS254", title: "Scripting Language (Old Syllabus)" },
+    { semester: 4, code: "CACS255", title: "Database Management System (Old Syllabus)" },
+    { semester: 4, code: "CAPJ256", title: "Project I (Old Syllabus)" },
+
+    // Sem 5 (Old)
+    { semester: 5, code: "CACS301", title: "MIS and e-Business (Old Syllabus)" },
+    { semester: 5, code: "CACS302", title: "DotNet Technology (Old Syllabus)" },
+    { semester: 5, code: "CACS303", title: "Computer Networking (Old Syllabus)" },
+    { semester: 5, code: "CAMG304", title: "Introduction to Management (Old Syllabus)" },
+    { semester: 5, code: "CACS305", title: "Computer Graphics and Animation (Old Syllabus)" },
+
+    // Sem 6 (Old)
+    { semester: 6, code: "CACS351", title: "Mobile Programming (Old Syllabus)" },
+    { semester: 6, code: "CACS352", title: "Distributed System (Old Syllabus)" },
+    { semester: 6, code: "CAEC353", title: "Applied Economics (Old Syllabus)" },
+    { semester: 6, code: "CACS354", title: "Advanced Java Programming (Old Syllabus)" },
+    { semester: 6, code: "CACS355", title: "Network Programming (Old Syllabus)" },
+    { semester: 6, code: "CAPJ356", title: "Project II (Old Syllabus)" },
+
+    // Sem 7 (Old)
+    { semester: 7, code: "CACS401", title: "Cyber Law and Professional Ethics (Old Syllabus)" },
+    { semester: 7, code: "CACS402", title: "Cloud Computing (Old Syllabus)" },
+    { semester: 7, code: "CAIN403", title: "Internship (Old Syllabus)" },
+    { semester: 7, code: "CACS404", title: "Elective I (Image Processing / DBA / Network Security) (Old)" },
+    { semester: 7, code: "CACS405", title: "Elective II (Adv DotNet / E-Gov / AI) (Old)" },
+
+    // Sem 8 (Old)
+    { semester: 8, code: "CAOR451", title: "Operations Research (Old Syllabus)" },
+    { semester: 8, code: "CAPJ452", title: "Project III (Old Syllabus)" },
+    { semester: 8, code: "CACS453", title: "Elective III (Data Mining / Wireless / GIS) (Old)" },
+    { semester: 8, code: "CACS454", title: "Elective IV (Knowledge Mgmt / Testing / Adv Web) (Old)" },
   ],
   csit: [
     // Sem 1
