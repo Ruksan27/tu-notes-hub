@@ -53,41 +53,61 @@ export default async function FacultyPage({ params }: Props) {
   })
   if (!faculty) notFound()
 
+  // Fetch raw semester visibility flags directly from MySQL
+  let rawSemesters: any[] = []
+  try {
+    rawSemesters = await prisma.$queryRawUnsafe(
+      `SELECT id, \`visible\`, \`visibleNew\`, \`visibleOld\` FROM \`Semester\` WHERE \`facultyId\` = ?;`,
+      slug
+    )
+  } catch {}
+
+  const semestersWithVisibility = faculty.semesters.map((sem) => {
+    const raw = rawSemesters.find((r: any) => r.id === sem.id)
+    return {
+      ...sem,
+      visible: raw ? Boolean(raw.visible !== 0 && raw.visible !== false) : true,
+      visibleNew: raw ? Boolean(raw.visibleNew !== 0 && raw.visibleNew !== false) : true,
+      visibleOld: raw ? Boolean(raw.visibleOld !== 0 && raw.visibleOld !== false) : true,
+    }
+  })
+
+  const facultyData = {
+    ...faculty,
+    semesters: semestersWithVisibility,
+  }
+
   const isYearly = faculty.systemType === 'YEARLY'
   const periodLabel = isYearly ? 'Year' : 'Semester'
 
   return (
     <div className="container" style={{ padding: '40px 24px' }}>
-      {/* Breadcrumb */}
+      {/* Breadcrumb Navigation */}
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '24px' }}>
         <Link href="/" style={{ color: 'var(--clr-text-3)' }}>Home</Link>
         <span>/</span>
         <Link href="/faculties" style={{ color: 'var(--clr-text-3)' }}>Faculties</Link>
         <span>/</span>
-        <span style={{ color: 'var(--clr-text-1)' }}>{faculty.id.toUpperCase()}</span>
+        <span style={{ color: 'var(--clr-text-1)' }}>{faculty.name}</span>
       </div>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '48px', flexWrap: 'wrap' }}>
-        <div style={{
-          width: '80px', height: '80px', borderRadius: '20px',
-          background: 'var(--grad-brand)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '40px', flexShrink: 0,
-          boxShadow: '0 8px 32px rgba(99,102,241,0.4)',
-        }}>{faculty.icon}</div>
-        <div>
-          <h1 style={{ fontSize: 'clamp(24px, 4vw, 40px)', marginBottom: '6px' }}>
-            {faculty.id.toUpperCase()} — <span className="text-gradient">{faculty.name}</span>
-          </h1>
-          <p style={{ color: 'var(--clr-text-2)', fontSize: '15px' }}>
-            {faculty.semesters.length} {isYearly ? 'Years' : 'Semesters'} • Free Notes & Past Papers Available
-          </p>
+      <div style={{ marginBottom: '40px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+          <span style={{ fontSize: '40px' }}>{faculty.icon}</span>
+          <div>
+            <h1 style={{ fontSize: 'clamp(26px, 4vw, 40px)' }}>
+              {faculty.name} <span className="text-gradient">({faculty.id.toUpperCase()})</span>
+            </h1>
+            <p style={{ color: 'var(--clr-text-2)', fontSize: '15px', marginTop: '4px' }}>
+              Select a {periodLabel.toLowerCase()} below to access free study notes, question papers, and solutions.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Semester/Year Grid with Interactive Syllabus Toggle */}
-      <FacultySemesterList faculty={faculty as any} />
+      {/* Interactive Semester Grid Component */}
+      <FacultySemesterList faculty={facultyData as any} />
     </div>
   )
 }
