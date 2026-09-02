@@ -11,7 +11,7 @@ import AdminSeoTab from '@/components/admin/AdminSeoTab'
 import AdminBackupTab from '@/components/admin/AdminBackupTab'
 import { TrendingSection } from '@/components/TrendingSection'
 
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'semesters' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup'
 
 interface Payment {
   id: string
@@ -136,6 +136,7 @@ export default function AdminPage() {
     { id: 'stats',     icon: '📈', label: 'Material Stats' },
     { id: 'materials', icon: '🛠️', label: 'Manage Materials' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
+    { id: 'semesters', icon: '🗓️', label: 'Semester Visibility' },
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
     { id: 'pricing',   icon: '💰', label: 'Pricing Plans' },
     { id: 'settings',  icon: '⚙️', label: 'Site Settings' },
@@ -487,6 +488,9 @@ export default function AdminPage() {
 
             {/* ── Faculties Tab ── */}
             {tab === 'faculties' && <FacultiesTab />}
+
+            {/* ── Semesters Tab ── */}
+            {tab === 'semesters' && <SemestersTab />}
 
             {/* ── Stats Tab ── */}
             {tab === 'stats' && <StatsTab />}
@@ -1206,12 +1210,13 @@ function UploadTab() {
     return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : link
   }
 
+  const [syllabusFilter, setSyllabusFilter] = useState<'all' | 'new' | 'old'>('all')
+
   useEffect(() => {
     if (!semesterId) { setSubjects([]); setSubjectId(''); return }
     const sem = semesters.find(s => s.id === semesterId)
     if (sem) setSemesterOrder(sem.order || 0)
-    if (contentType !== 'SOLUTION_BOOK')
-      fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => setSubjects(d.subjects || []))
+    fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => setSubjects(d.subjects || []))
   }, [semesterId, semesters])
 
   // Check project restrictions whenever subjectId or noteType changes
@@ -1292,7 +1297,13 @@ function UploadTab() {
       }
       toast.dismiss('upload-progress')
       toast.loading('Saving...', { toastId: 'upload-progress' })
-      const saveRes = await fetch('/api/upload/solution-book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ semesterId, title: noteTitle, description: noteDescription, cloudinaryUrl, fileSize, isPremium, author }) })
+      let finalTitle = noteTitle
+      if (syllabusFilter === 'old' && !finalTitle.includes('(Old Syllabus)')) {
+        finalTitle = `${finalTitle} (Old Syllabus)`
+      } else if (syllabusFilter === 'new' && !finalTitle.includes('(New Syllabus)')) {
+        finalTitle = `${finalTitle} (New Syllabus)`
+      }
+      const saveRes = await fetch('/api/upload/solution-book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ semesterId, title: finalTitle, description: noteDescription, cloudinaryUrl, fileSize, isPremium, author, subjectId: subjectId || null }) })
       const sd = await saveRes.json()
       toast.dismiss('upload-progress')
       if (saveRes.ok) { toast.success('Solution book published! 🎉'); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setDriveLink('') }
@@ -1528,7 +1539,7 @@ function UploadTab() {
             </label>
             {isSolutionBook && (
               <div style={{ marginTop: '8px', padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.25)', borderRadius: '10px', fontSize: '13px', color: '#67e8f9' }}>
-                📚 <strong>Solution Book</strong> — applies to all subjects in a semester. No subject selection needed.
+                📚 <strong>Solution Book:</strong> Select a specific subject (e.g. <em>Numerical Methods</em>) to display it inside that subject only. Choose <em>"Full Semester Guide"</em> to display it at the top for all subjects.
               </div>
             )}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
@@ -1576,8 +1587,8 @@ function UploadTab() {
             </div>
           )}
 
-          {/* Faculty & Semester selects */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          {/* Faculty, Semester & Syllabus Version selects */}
+          <div style={{ display: 'grid', gridTemplateColumns: facultyId === 'bca' ? 'repeat(auto-fit, minmax(160px, 1fr))' : '1fr 1fr', gap: '12px' }}>
             <div>
               <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Faculty</label>
               <select className="input-field" value={facultyId} onChange={e => setFacultyId(e.target.value)} required style={{ cursor: 'pointer' }}>
@@ -1592,6 +1603,16 @@ function UploadTab() {
                 {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
+            {facultyId === 'bca' && (
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Syllabus Version</label>
+                <select className="input-field" value={syllabusFilter} onChange={e => setSyllabusFilter(e.target.value as any)} style={{ cursor: 'pointer' }}>
+                  <option value="all">🌐 All (Both Syllabuses)</option>
+                  <option value="new">✨ New Syllabus (2080+)</option>
+                  <option value="old">📜 Old Syllabus (2074)</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Subject Field */}
@@ -1604,11 +1625,15 @@ function UploadTab() {
                 <button
                   type="button"
                   onClick={async () => {
-                    const title = prompt('Enter Subject Title (e.g. Computer Graphics):')
-                    if (!title) return
+                    const rawTitle = prompt('Enter Subject Title (e.g. Computer Graphics):')
+                    if (!rawTitle) return
                     const code = prompt('Enter Subject Code (e.g. CACS305):')
                     if (!code) return
                     
+                    let title = rawTitle
+                    if (syllabusFilter === 'old' && !title.includes('(Old Syllabus)')) title += ' (Old Syllabus)'
+                    if (syllabusFilter === 'new' && !title.includes('(New Syllabus)')) title += ' (New Syllabus)'
+
                     try {
                       const res = await fetch('/api/admin/subjects', {
                         method: 'POST',
@@ -1641,7 +1666,17 @@ function UploadTab() {
               <option value="">
                 {contentType === 'SOLUTION_BOOK' ? '— Full Semester Guide (All Subjects) —' : '— Choose Subject —'}
               </option>
-              {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
+              {subjects
+                .filter(s => {
+                  if (syllabusFilter === 'new') return s.title.includes('New Syllabus') || s.code.startsWith('BCA ')
+                  if (syllabusFilter === 'old') return s.title.includes('Old Syllabus') || !s.code.startsWith('BCA ')
+                  return true
+                })
+                .map(s => (
+                  <option key={s.id} value={s.id}>
+                    [{s.code}] {s.title.replace(' (New Syllabus)', '').replace(' (Old Syllabus)', '')}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -1938,9 +1973,47 @@ function FacultiesTab() {
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [search, setSearch] = useState('')
 
+  // Semester visibility states
+  const [selectedFacultyForSemesters, setSelectedFacultyForSemesters] = useState('')
+  const [semestersList, setSemestersList] = useState<any[]>([])
+  const [semestersLoading, setSemestersLoading] = useState(false)
+
   useEffect(() => {
     fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
   }, [])
+
+  useEffect(() => {
+    if (!selectedFacultyForSemesters) {
+      setSemestersList([])
+      return
+    }
+    setSemestersLoading(true)
+    fetch(`/api/admin/semesters?facultyId=${selectedFacultyForSemesters}`)
+      .then(r => r.json())
+      .then(d => {
+        setSemestersList(d.semesters || [])
+        setSemestersLoading(false)
+      })
+      .catch(() => setSemestersLoading(false))
+  }, [selectedFacultyForSemesters])
+
+  async function toggleSemesterVisibility(semesterId: string, currentVisible: boolean) {
+    try {
+      const res = await fetch('/api/admin/semesters', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ semesterId, visible: !currentVisible }),
+      })
+      if (res.ok) {
+        toast.success('Semester visibility updated! 🎉')
+        setSemestersList(prev => prev.map(s => s.id === semesterId ? { ...s, visible: !currentVisible } : s))
+      } else {
+        toast.error('Failed to update semester visibility')
+      }
+    } catch {
+      toast.error('Network error')
+    }
+  }
 
   async function toggleVisibility(facultyId: string, currentVisible: boolean) {
     try {
@@ -2058,6 +2131,210 @@ function FacultiesTab() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* ── Semester / Year Visibility Control Section ── */}
+      <div style={{ marginTop: '40px' }}>
+        <h3 className="section-title">🗓️ Semester / Year Visibility Control</h3>
+        <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '20px' }}>
+          Select a Faculty to tick ✓ which Semesters / Years should be visible to students on the frontend.
+        </p>
+
+        <div className="glass-card" style={{ padding: '24px' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>
+              Select Faculty
+            </label>
+            <select
+              className="input-field"
+              value={selectedFacultyForSemesters}
+              onChange={e => setSelectedFacultyForSemesters(e.target.value)}
+              style={{ maxWidth: '320px', cursor: 'pointer' }}
+            >
+              <option value="">— Choose Faculty —</option>
+              {faculties.map(f => (
+                <option key={f.id} value={f.id}>{f.icon} {f.name} ({f.id.toUpperCase()})</option>
+              ))}
+            </select>
+          </div>
+
+          {selectedFacultyForSemesters && (
+            <div>
+              {semestersLoading ? (
+                <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Loading semesters...</p>
+              ) : semestersList.length === 0 ? (
+                <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>No semesters found for this faculty.</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+                  {semestersList.map((sem) => (
+                    <div
+                      key={sem.id}
+                      className="glass-card"
+                      style={{
+                        padding: '16px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        border: '1px solid var(--clr-border)',
+                        background: sem.visible !== false ? 'rgba(99,102,241,0.06)' : 'rgba(255,255,255,0.01)',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--clr-text-1)' }}>{sem.name}</div>
+                        <div style={{ fontSize: '11px', color: sem.visible !== false ? 'var(--clr-accent-h)' : 'var(--clr-text-3)', marginTop: '2px' }}>
+                          {sem.visible !== false ? '✓ Visible on Frontend' : '✕ Hidden from Students'}
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={sem.visible !== false}
+                        onChange={() => toggleSemesterVisibility(sem.id, sem.visible !== false)}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--clr-primary)' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+/* ── Semesters Visibility Tab ── */
+function SemestersTab() {
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [selectedFaculty, setSelectedFaculty] = useState('bca')
+  const [semesters, setSemesters] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/faculties')
+      .then(r => r.json())
+      .then(d => setFaculties(d.faculties || []))
+  }, [])
+
+  useEffect(() => {
+    if (!selectedFaculty) {
+      setSemesters([])
+      return
+    }
+    setLoading(true)
+    fetch(`/api/admin/semesters?facultyId=${selectedFaculty}`)
+      .then(r => r.json())
+      .then(d => {
+        setSemesters(d.semesters || [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [selectedFaculty])
+
+  async function toggleSemesterVisibility(semesterId: string, currentVisible: boolean) {
+    try {
+      const res = await fetch('/api/admin/semesters', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ semesterId, visible: !currentVisible }),
+      })
+      if (res.ok) {
+        toast.success('Semester visibility updated! 🎉')
+        setSemesters(prev => prev.map(s => s.id === semesterId ? { ...s, visible: !currentVisible } : s))
+      } else {
+        toast.error('Failed to update semester visibility')
+      }
+    } catch {
+      toast.error('Network error')
+    }
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h3 className="section-title" style={{ margin: 0 }}>🗓️ Semester & Year Visibility Control</h3>
+        <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
+          Tick ✓ to show a semester on the frontend. Untick to hide it from students.
+        </p>
+      </div>
+
+      <div className="glass-card" style={{ padding: '28px', marginBottom: '28px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>
+            Select Faculty to Manage
+          </label>
+          <select
+            className="input-field"
+            value={selectedFaculty}
+            onChange={e => setSelectedFaculty(e.target.value)}
+            style={{ maxWidth: '360px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+          >
+            {faculties.map(f => (
+              <option key={f.id} value={f.id}>{f.icon} {f.name} ({f.id.toUpperCase()})</option>
+            ))}
+          </select>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--clr-text-3)' }}>
+            <span className="spinner" /> Loading semesters...
+          </div>
+        ) : semesters.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--clr-text-3)' }}>
+            No semesters configured for this faculty.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
+            {semesters.map((sem) => {
+              const isVisible = sem.visible !== false
+              return (
+                <div
+                  key={sem.id}
+                  className="glass-card"
+                  style={{
+                    padding: '20px',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    border: `1px solid ${isVisible ? 'rgba(99,102,241,0.35)' : 'var(--clr-border)'}`,
+                    background: isVisible ? 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.08) 100%)' : 'rgba(255,255,255,0.01)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '16px', color: 'var(--clr-text-1)', marginBottom: '4px' }}>
+                      {sem.name}
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: isVisible ? '#67e8f9' : 'var(--clr-text-3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}>
+                      <span>{isVisible ? '🟢 Visible on Frontend' : '⚪ Hidden from Students'}</span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isVisible}
+                    onChange={() => toggleSemesterVisibility(sem.id, isVisible)}
+                    style={{
+                      width: '22px',
+                      height: '22px',
+                      cursor: 'pointer',
+                      accentColor: 'var(--clr-primary)',
+                    }}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </motion.div>
   )

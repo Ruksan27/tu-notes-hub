@@ -4,7 +4,14 @@ export function cn(...classes: (string | undefined | null | false)[]) {
 
 export function toSeoSlug(title: string): string {
   if (!title) return ''
-  return title
+  const cleaned = title
+    .replace(/\s*\(Old Syllabus\)/gi, '')
+    .replace(/\s*\(New Syllabus\)/gi, '')
+    .replace(/\s*\(Old\)/gi, '')
+    .replace(/\s*\(New\)/gi, '')
+    .trim()
+
+  return cleaned
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')

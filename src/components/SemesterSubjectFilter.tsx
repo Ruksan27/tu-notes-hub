@@ -4,6 +4,8 @@
 import { useState, useMemo } from 'react'
 import SubjectRow from '@/components/SubjectRow'
 
+import { toSeoSlug } from '@/lib/utils'
+
 interface Props {
   subjects: any[]
   semesterGuides?: any[]
@@ -156,8 +158,16 @@ export default function SemesterSubjectFilter({
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
             {filteredGuides.map((book) => {
-              const slug = book.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') || book.id
-              const periodSlug = systemType === 'YEARLY' ? `${semesterOrder}th-year` : `${semesterOrder}th-semester` // Simplistic for demo
+              const cleanTitle = (book.title || '')
+                .replace(/\s*\(Old Syllabus\)/gi, '')
+                .replace(/\s*\(New Syllabus\)/gi, '')
+                .replace(/\s*\(Old\)/gi, '')
+                .replace(/\s*\(New\)/gi, '')
+                .trim()
+
+              const slug = toSeoSlug(cleanTitle) || book.id
+              const ord = semesterOrder === 1 ? '1st' : semesterOrder === 2 ? '2nd' : semesterOrder === 3 ? '3rd' : `${semesterOrder}th`
+              const periodSlug = systemType === 'YEARLY' ? `${ord}-year` : `${ord}-semester`
               const href = `/faculty/${facultyId.toLowerCase()}/${periodSlug}/solution-book/${slug}`
               return (
                 <div
@@ -184,7 +194,7 @@ export default function SemesterSubjectFilter({
                       )}
                     </div>
                     <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', margin: '0 0 6px 0' }}>
-                      {book.title}
+                      {cleanTitle}
                     </h3>
                     {book.description && (
                       <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>

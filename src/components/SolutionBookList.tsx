@@ -71,7 +71,11 @@ export default function SolutionBookList({ books, facultyId, semesterOrder }: Pr
                 )}
               </div>
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', margin: '0 0 6px 0' }}>
-                {book.title}
+                {book.title
+                  .replace(/\s*\(Old Syllabus\)/gi, '')
+                  .replace(/\s*\(New Syllabus\)/gi, '')
+                  .replace(/\s*\(Old\)/gi, '')
+                  .replace(/\s*\(New\)/gi, '')}
               </h3>
               {book.description && (
                 <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>

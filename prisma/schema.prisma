@@ -125,6 +125,7 @@ model Semester {
   faculty       Faculty        @relation(fields: [facultyId], references: [id])
   subjects      Subject[]
   solutionBooks SolutionBook[]
+  visible       Boolean        @default(true)
 }
 
 model Subject {

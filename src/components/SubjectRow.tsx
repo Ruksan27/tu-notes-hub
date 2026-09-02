@@ -211,7 +211,13 @@ export default function SubjectRow({
           >
             {subject.code}
           </span>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--clr-text-1)' }}>{subject.title}</h3>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--clr-text-1)' }}>
+            {subject.title
+              .replace(/\s*\(Old Syllabus\)/gi, '')
+              .replace(/\s*\(New Syllabus\)/gi, '')
+              .replace(/\s*\(Old\)/gi, '')
+              .replace(/\s*\(New\)/gi, '')}
+          </h3>
         </div>
 
         {/* Action Toggles & Expand Arrow */}

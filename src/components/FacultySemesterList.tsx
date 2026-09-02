@@ -55,9 +55,16 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
 
   const [activeTab, setActiveTab] = useState<'new' | 'old'>('new')
 
-  // Filter subjects according to active syllabus tab
+  // Filter subjects according to active syllabus tab and semester visibility
   const filteredSemesters = useMemo(() => {
-    return faculty.semesters.map((sem) => {
+    return faculty.semesters
+      .filter((sem: any) => {
+        if (sem.visible === false) return false
+        if (activeTab === 'new' && sem.visibleNew === false) return false
+        if (activeTab === 'old' && sem.visibleOld === false) return false
+        return true
+      })
+      .map((sem) => {
       const filteredSubjects = sem.subjects.filter((sub) => {
         if (!hasNewAndOld) return true
 
