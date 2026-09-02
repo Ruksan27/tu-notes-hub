@@ -46,9 +46,11 @@ export const metadata: Metadata = {
     site: '@tunoteshub',
   },
   icons: {
-    icon: '/Untitled design.svg?v=2',
-    shortcut: '/Untitled design.svg?v=2',
-    apple: '/Untitled design.svg?v=2',
+    icon: [
+      { url: '/top%20nav%20log%20o.png?v=4', type: 'image/png' },
+    ],
+    shortcut: '/top%20nav%20log%20o.png?v=4',
+    apple: '/top%20nav%20log%20o.png?v=4',
   },
   // Apple PWA meta
   other: {
@@ -73,6 +75,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${montserrat.variable}`} data-scroll-behavior="smooth">
       <head>
+        <link rel="icon" href="/top%20nav%20log%20o.png?v=4" type="image/png" sizes="any" />
+        <link rel="shortcut icon" href="/top%20nav%20log%20o.png?v=4" type="image/png" />
+        <link rel="apple-touch-icon" href="/top%20nav%20log%20o.png?v=4" />
         {/* Google AdSense */}
         <script
           async
@@ -105,7 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   name: 'TU Notes Hub',
                   alternateName: ['TuneNotesHub', 'TU Notes'],
                   url: 'https://tunoteshub.com',
-                  logo: { '@type': 'ImageObject', url: 'https://tunoteshub.com/Untitled%20design.svg' },
+                  logo: { '@type': 'ImageObject', url: 'https://tunoteshub.com/Untitled%20design.png' },
                   sameAs: [
                     'https://facebook.com/tunoteshub',
                     'https://twitter.com/tunoteshub',

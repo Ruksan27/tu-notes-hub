@@ -107,7 +107,7 @@ export default function Navbar() {
         <div className="nav-inner">
           {/* Logo */}
           <Link href="/" className="nav-logo" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <img src="/download.gif" alt="TU Notes Hub Logo" style={{ height: '65px', width: 'auto', objectFit: 'contain' }} />
+            <img src="/Logo.gif" alt="TU Notes Hub Logo" style={{ height: '65px', width: 'auto', objectFit: 'contain' }} />
           </Link>
 
           <div className="nav-links">
