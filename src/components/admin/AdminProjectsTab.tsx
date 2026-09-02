@@ -483,9 +483,9 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                             const conversionRate = views > 0 ? ((sales / views) * 100).toFixed(1) : '0'
                             return (
                               <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dotted rgba(255,255,255,0.08)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px' }}>
-                                <div style={{ color: 'var(--clr-text-2)' }}>👁 Views: <strong style={{ color: 'var(--clr-text-1)' }}>{views}</strong> <span style={{ color: '#06b6d4', fontSize: '10px' }}>({organicViews} org)</span></div>
-                                <div style={{ color: 'var(--clr-text-2)' }}>🛒 Sales: <strong style={{ color: '#10b981' }}>{sales}</strong></div>
-                                <div style={{ color: 'var(--clr-text-2)', gridColumn: 'span 2' }}>🎯 Conv. Rate: <strong style={{ color: '#818cf8' }}>{conversionRate}%</strong></div>
+                                <div style={{ color: 'var(--clr-text-2)' }}>👁 Views: <span style={{ color: '#ffffff', fontWeight: 700 }}>{views}</span> <span style={{ color: '#06b6d4', fontSize: '10px' }}>({organicViews} org)</span></div>
+                                <div style={{ color: 'var(--clr-text-2)' }}>🛒 Sales: <span style={{ color: '#10b981', fontWeight: 700 }}>{sales}</span></div>
+                                <div style={{ color: 'var(--clr-text-2)', gridColumn: 'span 2' }}>🎯 Conv. Rate: <span style={{ color: '#818cf8', fontWeight: 700 }}>{conversionRate}%</span></div>
                               </div>
                             )
                           })()}
