@@ -91,4 +91,3 @@ export default async function FacultyPage({ params }: Props) {
     </div>
   )
 }
-}
