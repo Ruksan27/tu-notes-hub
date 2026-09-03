@@ -230,3 +230,34 @@ Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra te
   return JSON.parse(cleaned)
 }
 
+// Generate MCQs directly from an image (question paper photo)
+export async function generateMcqsFromImage(
+  subjectTitle: string,
+  imageBase64: string,
+  mimeType: string
+): Promise<any[]> {
+  const prompt = `
+You are an expert TU (Tribhuvan University) examiner looking at a question paper image for subject: "${subjectTitle}".
+
+Look at this image carefully. It may contain handwritten or printed exam questions, MCQs, or study material.
+
+Task:
+Generate 10 high-yield Multiple Choice Questions (MCQs) based on the topics and questions visible in this image.
+If the image already contains MCQs, extract and format them properly.
+If it contains long-form questions, convert the key concepts into MCQs.
+
+Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra text):
+[
+  {
+    "question": "string",
+    "options": ["string", "string", "string", "string"],
+    "correctOption": number (0 to 3),
+    "explanation": "short explanation of the correct answer"
+  }
+]
+`
+
+  const raw = await callGemini(prompt, undefined, imageBase64, mimeType)
+  const cleaned = raw.replace(/```json|```/g, '').trim()
+  return JSON.parse(cleaned)
+}

@@ -1271,6 +1271,60 @@ function UploadTab() {
     { question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }
   ])
   const [savingMcqs, setSavingMcqs] = useState(false)
+  const [mcqImageFile, setMcqImageFile] = useState<File | null>(null)
+  const [mcqImageGenerating, setMcqImageGenerating] = useState(false)
+
+  async function handleGenerateMcqsFromImage() {
+    if (!subjectId) { toast.error('Please select a subject first'); return }
+    if (!mcqImageFile) { toast.error('Please select an image file first'); return }
+    
+    setMcqImageGenerating(true)
+    toast.loading('Uploading image & generating MCQs...', { toastId: 'mcq-gen' })
+
+    try {
+      // 1. Get Cloudinary signature
+      const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/mcq-images' }) })
+      if (!sigRes.ok) throw new Error('Signature error')
+      const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
+
+      // 2. Upload to Cloudinary
+      const formData = new FormData()
+      formData.append('file', mcqImageFile)
+      formData.append('api_key', apiKey)
+      formData.append('timestamp', String(timestamp))
+      formData.append('signature', signature)
+      formData.append('folder', sf)
+
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData
+      })
+      const uploadData = await uploadRes.json()
+      if (!uploadRes.ok) throw new Error(uploadData.error?.message || 'Failed to upload image')
+
+      // 3. Generate MCQs from image
+      const genRes = await fetch('/api/ai/mcq-from-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subjectId, imageUrl: uploadData.secure_url })
+      })
+      const genData = await genRes.json()
+      
+      if (genRes.ok) {
+        toast.dismiss('mcq-gen')
+        toast.success(`🎉 Generated ${genData.mcqs.length} MCQs from image! Review and save.`)
+        setMcqItems(genData.mcqs)
+        setMcqImageFile(null)
+      } else {
+        throw new Error(genData.error || 'Failed to generate MCQs')
+      }
+    } catch (err: any) {
+      toast.dismiss('mcq-gen')
+      toast.error(err.message || 'An error occurred')
+    } finally {
+      setMcqImageGenerating(false)
+    }
+  }
 
   function addMcqItem() {
     setMcqItems(prev => [...prev, { question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }])
@@ -2079,6 +2133,49 @@ function UploadTab() {
               <div style={{ padding: '12px 16px', background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', fontSize: '13px', color: '#6ee7b7' }}>
                 ✅ Add multiple MCQs at once. Each question needs 4 options and a correct answer. Explanation is optional.
               </div>
+
+              {/* AI Image Upload Section */}
+              <div style={{ background: 'linear-gradient(135deg, rgba(217,70,239,0.05), rgba(99,102,241,0.05))', border: '1px solid rgba(217,70,239,0.2)', borderRadius: '14px', padding: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '20px' }}>✨</span>
+                  <div>
+                    <h4 style={{ margin: 0, fontWeight: 700, color: '#e879f9' }}>AI Magic: Extract from Question Paper</h4>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--clr-text-3)' }}>Upload a photo of a question paper to automatically generate MCQs from it.</p>
+                  </div>
+                </div>
+                
+                <FileDropZone 
+                  label="Question Paper Photo (JPG, PNG, WEBP)" 
+                  accept=".jpg,.jpeg,.png,.webp" 
+                  file={mcqImageFile} 
+                  onFile={setMcqImageFile} 
+                  hint="Clear photos work best" 
+                />
+
+                {mcqImageFile && (
+                  <button 
+                    type="button" 
+                    onClick={handleGenerateMcqsFromImage}
+                    disabled={mcqImageGenerating || !subjectId}
+                    style={{ 
+                      marginTop: '16px', width: '100%', padding: '12px', borderRadius: '10px', fontWeight: 700, border: 'none', cursor: (mcqImageGenerating || !subjectId) ? 'not-allowed' : 'pointer',
+                      background: 'linear-gradient(135deg, #d946ef, #6366f1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                    }}
+                  >
+                    {mcqImageGenerating ? (
+                      <><span className="spinner" style={{ width: '16px', height: '16px' }}/> Processing Image & Generating MCQs...</>
+                    ) : (
+                      <>✨ Auto-Generate MCQs from Photo</>
+                    )}
+                  </button>
+                )}
+                {!subjectId && mcqImageFile && (
+                  <p style={{ marginTop: '8px', fontSize: '12px', color: '#fca5a5', textAlign: 'center' }}>⚠️ Please select a subject above first.</p>
+                )}
+              </div>
+              
+              <hr style={{ border: 'none', borderTop: '1px dashed rgba(255,255,255,0.1)', margin: '10px 0' }} />
+
               {mcqItems.map((mcq, qi) => (
                 <div key={qi} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
