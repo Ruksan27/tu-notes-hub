@@ -1,11 +1,11 @@
 // src/app/api/ai/solve-question/route.ts
 // API Route: Solve an exam question using Gemini AI
 // - Checks TiDB cache first (fast & free)
-// - Falls back to Gemini API if not cached
+// - Falls back to Gemini API (with retry + Groq fallback) if not cached
 // - Saves result to cache for future requests
 
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenAI } from '@google/genai'
+import { callGemini } from '@/lib/gemini'
 import { getCachedAnswer, saveCachedAnswer, ensureCacheTable, hashQuestion } from '@/lib/cacheDb'
 
 // Simple in-memory IP rate limit store
@@ -61,14 +61,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- Call Gemini ---
-    const apiKey = process.env.GEMINI_KEY_ANSWER_SOLVER!
-    const genAI = new GoogleGenAI({ apiKey })
-
+    // --- Build prompt ---
     let prompt: string
 
     if (isInitialQuestion) {
-      // Initial answer prompt
       prompt = `You are an expert university professor and academic tutor specializing in Tribhuvan University (TU) Nepal curriculum (BCA, CSIT, BBS programs).
 
 A student is asking about the following exam question:
@@ -99,30 +95,16 @@ ${history}
 Please answer the student's latest follow-up question in a helpful, concise manner. Use markdown formatting.`
     }
 
-    // Model fallback sequence to ensure reliability even during high demand / 503 errors
-    const modelsToTry = ['gemini-3.6-flash']
-    let answer = ''
-    let lastError: any = null
+    const systemInstruction = 'You are a helpful TU Nepal university professor. Always respond in English unless the student explicitly asks for Nepali.'
 
-    for (const modelName of modelsToTry) {
-      try {
-        const response = await genAI.models.generateContent({
-          model: modelName,
-          contents: prompt,
-          config: {
-            systemInstruction: 'You are a helpful TU Nepal university professor. Always respond in English unless the student explicitly asks for Nepali.',
-          },
-        })
-        answer = response.text ?? ''
-        if (answer) break
-      } catch (err: any) {
-        console.warn(`[AI Solve Question] Model ${modelName} failed, trying next...`, err?.message || err)
-        lastError = err
-      }
-    }
+    // --- Call AI (Gemini with 3x retry + Groq fallback) ---
+    const answer = await callGemini(prompt, systemInstruction)
 
-    if (!answer && lastError) {
-      throw lastError
+    if (!answer) {
+      return NextResponse.json(
+        { error: 'AI बाट उत्तर ल्याउन समस्या भयो। कृपया पुनः प्रयास गर्नुहोस्।' },
+        { status: 503 }
+      )
     }
 
     // --- Save to cache (only initial answers) ---

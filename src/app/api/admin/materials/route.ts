@@ -48,7 +48,12 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ notes, pastPapers, cheatsheets, solutionBooks })
+    const mcqs = await prisma.mCQ.findMany({
+      where: { subjectId: subjectId as string },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    return NextResponse.json({ notes, pastPapers, cheatsheets, solutionBooks, mcqs })
   } catch (error: any) {
     console.error('Error fetching materials:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -106,6 +111,18 @@ export async function PUT(request: Request) {
           author: fields.author,
         }
       })
+    } else if (type === 'mcq') {
+      updated = await prisma.mCQ.update({
+        where: { id },
+        data: {
+          question: fields.question,
+          options: fields.options,
+          correctOption: parseInt(fields.correctOption),
+          explanation: fields.explanation || null,
+          year: fields.year ? parseInt(fields.year) : null,
+          examCategory: fields.examCategory || null,
+        }
+      })
     }
 
     return NextResponse.json({ success: true, updated })
@@ -116,17 +133,13 @@ export async function PUT(request: Request) {
 }
 
 function extractPublicId(url: string) {
-  // Rough extraction of cloudinary publicId from URL
-  // Example: https://res.cloudinary.com/demo/image/upload/v1234567/tu-notes/my-file.pdf
   try {
     const parts = url.split('/upload/')
     if (parts.length === 2) {
       let path = parts[1]
-      // remove version if exists
       if (path.match(/^v\d+\//)) {
         path = path.substring(path.indexOf('/') + 1)
       }
-      // remove extension
       const dotIndex = path.lastIndexOf('.')
       if (dotIndex !== -1) {
         path = path.substring(0, dotIndex)
@@ -175,6 +188,8 @@ export async function DELETE(request: Request) {
         if (publicId) await deleteFromCloudinary(publicId, 'raw')
         await prisma.solutionBook.delete({ where: { id } })
       }
+    } else if (type === 'mcq') {
+      await prisma.mCQ.delete({ where: { id } })
     }
 
     return NextResponse.json({ success: true })

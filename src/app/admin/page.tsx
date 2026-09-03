@@ -525,18 +525,18 @@ function ManageMaterialsTab() {
   const [semesterId, setSemesterId] = useState('')
   const [subjectId, setSubjectId] = useState('')
   const [notes, setNotes] = useState<any[]>([])
-  
-  // MCQ specific state
-  const [mcqYear, setMcqYear] = useState<string>(new Date().getFullYear().toString())
-  const [mcqExamType, setMcqExamType] = useState('BOARD_EXAM')
   const [pastPapers, setPastPapers] = useState<any[]>([])
   const [cheatsheets, setCheatsheets] = useState<any[]>([])
   const [solutionBooks, setSolutionBooks] = useState<any[]>([])
+  const [mcqs, setMcqs] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [editItem, setEditItem] = useState<any>(null)
   const [editType, setEditType] = useState('')
   const [editForm, setEditForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [ocrRunningId, setOcrRunningId] = useState<string | null>(null)
+  const [showAddMcq, setShowAddMcq] = useState(false)
+  const [newMcq, setNewMcq] = useState<any>({ question: '', options: ['', '', '', ''], correctOption: 0, explanation: '', year: new Date().getFullYear(), examCategory: 'BOARD_EXAM' })
 
   useEffect(() => {
     fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
@@ -567,6 +567,7 @@ function ManageMaterialsTab() {
         setPastPapers(data.pastPapers || [])
         setCheatsheets(data.cheatsheets || [])
         setSolutionBooks(data.solutionBooks || [])
+        setMcqs(data.mcqs || [])
       } else {
         toast.error('Failed to load materials')
       }
@@ -579,9 +580,33 @@ function ManageMaterialsTab() {
 
   useEffect(() => {
     if (subjectId) loadMaterials()
-    else { setNotes([]); setPastPapers([]); setCheatsheets([]); setSolutionBooks([]) }
+    else { setNotes([]); setPastPapers([]); setCheatsheets([]); setSolutionBooks([]); setMcqs([]) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectId])
+
+  async function handleRunOcr(id: string, type: 'pastpaper' | 'note', label: string) {
+    if (!window.confirm(`🤖 Run AI OCR Text Extraction for "${label}"?\n\nThis will send the document to Gemini 3.6 Flash to extract structured questions & text.`)) return
+    setOcrRunningId(id)
+    toast.info('Extracting text using Gemini AI... ⏳', { autoClose: 10000 })
+    try {
+      const res = await fetch('/api/admin/materials/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, type })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(`OCR Success! Extracted ${data.extractedTextLength.toLocaleString()} characters 🎉`)
+        loadMaterials()
+      } else {
+        toast.error(data.error || 'OCR failed')
+      }
+    } catch {
+      toast.error('Network error during OCR')
+    } finally {
+      setOcrRunningId(null)
+    }
+  }
 
   function openEdit(item: any, type: string) {
     setEditItem(item)
@@ -594,6 +619,17 @@ function ManageMaterialsTab() {
       setEditForm({ title: item.title, content: item.content })
     } else if (type === 'solutionbook') {
       setEditForm({ title: item.title, description: item.description || '', isPremium: item.isPremium, author: item.author || '' })
+    } else if (type === 'mcq') {
+      const opts = Array.isArray(item.options) ? [...item.options] : (typeof item.options === 'string' ? JSON.parse(item.options) : ['', '', '', ''])
+      while (opts.length < 4) opts.push('')
+      setEditForm({
+        question: item.question,
+        options: opts,
+        correctOption: item.correctOption ?? 0,
+        explanation: item.explanation || '',
+        year: item.year || new Date().getFullYear(),
+        examCategory: item.examCategory || 'BOARD_EXAM'
+      })
     }
   }
 
@@ -620,8 +656,37 @@ function ManageMaterialsTab() {
     }
   }
 
+  async function handleAddMcqSubmit() {
+    if (!subjectId || subjectId === 'FULL_SEMESTER') return
+    if (!newMcq.question.trim()) { toast.error('Question text is required'); return }
+    if (newMcq.options.some((o: string) => !o.trim())) { toast.error('All 4 options are required'); return }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/mcqs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subjectId,
+          mcqs: [newMcq]
+        })
+      })
+      if (res.ok) {
+        toast.success('MCQ added successfully! 🎯')
+        setShowAddMcq(false)
+        setNewMcq({ question: '', options: ['', '', '', ''], correctOption: 0, explanation: '', year: new Date().getFullYear(), examCategory: 'BOARD_EXAM' })
+        loadMaterials()
+      } else {
+        toast.error('Failed to add MCQ')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleDelete(id: string, type: string, name: string) {
-    if (!window.confirm(`⚠️ Are you sure you want to permanently delete "${name}"?\n\nThis will also remove the file from Cloudinary. This action cannot be undone.`)) return
+    if (!window.confirm(`⚠️ Are you sure you want to permanently delete "${name}"?\n\nThis action cannot be undone.`)) return
     try {
       const res = await fetch(`/api/admin/materials?id=${id}&type=${type}`, { method: 'DELETE' })
       if (res.ok) {
@@ -635,13 +700,24 @@ function ManageMaterialsTab() {
     }
   }
 
-  const totalItems = notes.length + pastPapers.length + cheatsheets.length + solutionBooks.length
+  const totalItems = notes.length + pastPapers.length + cheatsheets.length + solutionBooks.length + mcqs.length
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h3 className="section-title">🛠️ Manage Materials</h3>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <h3 className="section-title" style={{ margin: 0 }}>🛠️ Manage Materials</h3>
+        {subjectId && subjectId !== 'FULL_SEMESTER' && (
+          <button
+            className="btn btn-sm"
+            style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: 700, borderRadius: '8px', padding: '8px 16px' }}
+            onClick={() => setShowAddMcq(true)}
+          >
+            + Add MCQ
+          </button>
+        )}
+      </div>
       <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '20px' }}>
-        Select a Faculty → Semester → Subject to view, edit, or delete uploaded documents.
+        Select a Faculty → Semester → Subject to view, edit, re-run AI OCR, or manage MCQs and uploaded documents.
       </p>
 
       {/* Filter Dropdowns */}
@@ -689,50 +765,8 @@ function ManageMaterialsTab() {
           <p style={{ color: 'var(--clr-text-3)', fontSize: '15px' }}>No materials uploaded for this subject yet.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Notes Section */}
-          {notes.length > 0 && (
-            <div>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                📄 Notes ({notes.length})
-              </h4>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Type</th>
-                      <th>Access</th>
-                      <th>Downloads</th>
-                      <th>Date</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {notes.map(n => (
-                      <tr key={n.id}>
-                        <td>
-                          <div style={{ fontWeight: 600, maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
-                          {n.author && <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>by {n.author}</div>}
-                        </td>
-                        <td><span className="badge badge-semester" style={{ fontSize: '11px' }}>{n.noteType?.replace('_', ' ')}</span></td>
-                        <td><span className={`badge ${n.isPremium ? 'badge-elite' : 'badge-success'}`}>{n.isPremium ? '💎 Premium' : '🔓 Free'}</span></td>
-                        <td style={{ fontWeight: 600 }}>{n.downloadCount || 0}</td>
-                        <td style={{ fontSize: '12px' }}>{new Date(n.createdAt).toLocaleDateString()}</td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(n, 'note')}>✏️ Edit</button>
-                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(n.id, 'note', n.title)}>🗑️ Delete</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
           {/* Past Papers Section */}
           {pastPapers.length > 0 && (
             <div>
@@ -745,35 +779,205 @@ function ManageMaterialsTab() {
                     <tr>
                       <th>Year</th>
                       <th>Exam Type</th>
+                      <th>Smart AI Status</th>
                       <th>File</th>
                       <th>Date Added</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pastPapers.map(p => (
-                      <tr key={p.id}>
-                        <td style={{ fontWeight: 700, fontSize: '16px' }}>{p.year}</td>
-                        <td><span className="badge badge-pending">{p.examType?.replace('_', ' ')}</span></td>
-                        <td>
-                          <a href={p.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline" style={{ padding: '3px 8px', fontSize: '11px' }}>
-                            View File ↗
-                          </a>
-                        </td>
-                        <td style={{ fontSize: '12px' }}>{new Date(p.createdAt).toLocaleDateString()}</td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(p, 'pastpaper')}>✏️ Edit</button>
-                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id, 'pastpaper', `${p.year} ${p.examType}`)}>🗑️ Delete</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {pastPapers.map(p => {
+                      const hasText = Boolean(p.extractedText && p.extractedText.trim().length > 0)
+                      const textLen = p.extractedText ? p.extractedText.length : 0
+                      return (
+                        <tr key={p.id}>
+                          <td style={{ fontWeight: 700, fontSize: '16px' }}>{p.year}</td>
+                          <td><span className="badge badge-pending">{p.examType?.replace('_', ' ')}</span></td>
+                          <td>
+                            {hasText ? (
+                              <span className="badge badge-success" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title={`Extracted text length: ${textLen} chars`}>
+                                ✨ Smart AI Ready ({textLen > 1000 ? `${(textLen/1000).toFixed(1)}k` : textLen} chars)
+                              </span>
+                            ) : (
+                              <span className="badge badge-danger" style={{ fontSize: '11px' }}>
+                                ❌ No AI Text
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <a href={p.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline" style={{ padding: '3px 8px', fontSize: '11px' }}>
+                              View File ↗
+                            </a>
+                          </td>
+                          <td style={{ fontSize: '12px' }}>{new Date(p.createdAt).toLocaleDateString()}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <button
+                                className="btn btn-sm"
+                                style={{
+                                  background: hasText ? 'rgba(6,182,212,0.12)' : 'rgba(245,158,11,0.15)',
+                                  color: hasText ? '#22d3ee' : '#fbbf24',
+                                  border: `1px solid ${hasText ? 'rgba(6,182,212,0.3)' : 'rgba(245,158,11,0.4)'}`,
+                                  fontSize: '11px'
+                                }}
+                                disabled={ocrRunningId === p.id}
+                                onClick={() => handleRunOcr(p.id, 'pastpaper', `${p.year} ${p.examType}`)}
+                              >
+                                {ocrRunningId === p.id ? '⏳ OCR Running...' : hasText ? '🔄 Re-run OCR' : '🤖 Run AI OCR'}
+                              </button>
+                              <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(p, 'pastpaper')}>✏️ Edit</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id, 'pastpaper', `${p.year} ${p.examType}`)}>🗑️ Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
+
+          {/* Notes Section */}
+          {notes.length > 0 && (
+            <div>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                📄 Notes ({notes.length})
+              </h4>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Type</th>
+                      <th>Smart AI Status</th>
+                      <th>Access</th>
+                      <th>Downloads</th>
+                      <th>Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {notes.map(n => {
+                      const hasText = Boolean(n.extractedText && n.extractedText.trim().length > 0)
+                      const textLen = n.extractedText ? n.extractedText.length : 0
+                      return (
+                        <tr key={n.id}>
+                          <td>
+                            <div style={{ fontWeight: 600, maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
+                            {n.author && <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>by {n.author}</div>}
+                          </td>
+                          <td><span className="badge badge-semester" style={{ fontSize: '11px' }}>{n.noteType?.replace('_', ' ')}</span></td>
+                          <td>
+                            {hasText ? (
+                              <span className="badge badge-success" style={{ fontSize: '11px' }}>
+                                ✨ AI Text ({textLen > 1000 ? `${(textLen/1000).toFixed(1)}k` : textLen} chars)
+                              </span>
+                            ) : (
+                              <span className="badge badge-secondary" style={{ fontSize: '11px' }}>
+                                No Text
+                              </span>
+                            )}
+                          </td>
+                          <td><span className={`badge ${n.isPremium ? 'badge-elite' : 'badge-success'}`}>{n.isPremium ? '💎 Premium' : '🔓 Free'}</span></td>
+                          <td style={{ fontWeight: 600 }}>{n.downloadCount || 0}</td>
+                          <td style={{ fontSize: '12px' }}>{new Date(n.createdAt).toLocaleDateString()}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                className="btn btn-sm"
+                                style={{ background: 'rgba(6,182,212,0.12)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', fontSize: '11px' }}
+                                disabled={ocrRunningId === n.id}
+                                onClick={() => handleRunOcr(n.id, 'note', n.title)}
+                              >
+                                {ocrRunningId === n.id ? '⏳ Extracting...' : hasText ? '🔄 Re-OCR' : '🤖 Run AI OCR'}
+                              </button>
+                              <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(n, 'note')}>✏️ Edit</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => handleDelete(n.id, 'note', n.title)}>🗑️ Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* MCQs Section */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                🎯 Multiple Choice Questions ({mcqs.length})
+              </h4>
+              <button
+                className="btn btn-sm"
+                style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', fontSize: '12px' }}
+                onClick={() => setShowAddMcq(true)}
+              >
+                + Add New MCQ
+              </button>
+            </div>
+
+            {mcqs.length === 0 ? (
+              <div className="glass-card" style={{ padding: '30px', textAlign: 'center', background: 'rgba(255,255,255,0.01)' }}>
+                <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>No MCQs added for this subject yet. Click "+ Add New MCQ" to add questions.</p>
+              </div>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '40%' }}>Question</th>
+                      <th>Options</th>
+                      <th>Correct Answer</th>
+                      <th>Year / Category</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mcqs.map((m, idx) => {
+                      const opts = Array.isArray(m.options) ? m.options : (typeof m.options === 'string' ? JSON.parse(m.options) : [])
+                      const correctText = opts[m.correctOption] || `Option ${m.correctOption + 1}`
+                      return (
+                        <tr key={m.id || idx}>
+                          <td style={{ fontWeight: 600, fontSize: '13px' }}>
+                            <div style={{ maxWidth: '360px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {idx + 1}. {m.question}
+                            </div>
+                          </td>
+                          <td style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>
+                            {opts.map((o: string, oIdx: number) => (
+                              <div key={oIdx} style={{ color: oIdx === m.correctOption ? '#34d399' : 'inherit', fontWeight: oIdx === m.correctOption ? 700 : 400 }}>
+                                {String.fromCharCode(65 + oIdx)}. {o}
+                              </div>
+                            ))}
+                          </td>
+                          <td>
+                            <span className="badge badge-success" style={{ fontSize: '11px' }}>
+                              ✓ {correctText}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="badge badge-semester" style={{ fontSize: '11px' }}>
+                              {m.year || 'General'} · {m.examCategory?.replace('_', ' ') || 'BOARD'}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(m, 'mcq')}>✏️ Edit</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => handleDelete(m.id, 'mcq', `MCQ: ${m.question.substring(0, 30)}...`)}>🗑️ Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
           {/* Cheatsheets Section */}
           {cheatsheets.length > 0 && (
@@ -854,20 +1058,153 @@ function ManageMaterialsTab() {
         </div>
       )}
 
+      {/* Add MCQ Modal */}
+      {showAddMcq && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', padding: '20px' }} onClick={() => setShowAddMcq(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="glass-card"
+            style={{ padding: '32px', maxWidth: '580px', width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '20px' }}>
+              🎯 Add New Multiple Choice Question (MCQ)
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Question Text</label>
+                <textarea className="input-field" rows={3} placeholder="e.g. Which algorithm is used for line drawing in Computer Graphics?" value={newMcq.question} onChange={e => setNewMcq({ ...newMcq, question: e.target.value })} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                {newMcq.options.map((opt: string, idx: number) => (
+                  <div key={idx}>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: idx === newMcq.correctOption ? '#34d399' : 'var(--clr-text-3)' }}>
+                      Option {String.fromCharCode(65 + idx)} {idx === newMcq.correctOption && '✓ (Correct)'}
+                    </label>
+                    <input
+                      className="input-field"
+                      placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                      value={opt}
+                      onChange={e => {
+                        const newOpts = [...newMcq.options]
+                        newOpts[idx] = e.target.value
+                        setNewMcq({ ...newMcq, options: newOpts })
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Correct Option</label>
+                  <select className="input-field" value={newMcq.correctOption} onChange={e => setNewMcq({ ...newMcq, correctOption: parseInt(e.target.value) })}>
+                    <option value={0}>Option A</option>
+                    <option value={1}>Option B</option>
+                    <option value={2}>Option C</option>
+                    <option value={3}>Option D</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Year</label>
+                  <input className="input-field" type="number" value={newMcq.year} onChange={e => setNewMcq({ ...newMcq, year: parseInt(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Category</label>
+                  <select className="input-field" value={newMcq.examCategory} onChange={e => setNewMcq({ ...newMcq, examCategory: e.target.value })}>
+                    <option value="BOARD_EXAM">Board Exam</option>
+                    <option value="INTERNAL_EXAM">Internal Exam</option>
+                    <option value="PRACTICE">Practice</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Explanation (Optional)</label>
+                <textarea className="input-field" rows={2} placeholder="Explain why this answer is correct..." value={newMcq.explanation} onChange={e => setNewMcq({ ...newMcq, explanation: e.target.value })} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
+              <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--clr-border)', color: 'var(--clr-text-2)' }} onClick={() => setShowAddMcq(false)}>Cancel</button>
+              <button className="btn btn-sm" style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', fontWeight: 700 }} onClick={handleAddMcqSubmit} disabled={saving}>
+                {saving ? 'Adding...' : 'Save MCQ 🎯'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Edit Modal */}
       {editItem && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', padding: '20px' }} onClick={() => setEditItem(null)}>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="glass-card"
-            style={{ padding: '32px', maxWidth: '520px', width: '100%', maxHeight: '80vh', overflowY: 'auto' }}
+            style={{ padding: '32px', maxWidth: '560px', width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}
           >
             <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '20px' }}>
-              ✏️ Edit {editType === 'note' ? 'Note' : editType === 'pastpaper' ? 'Past Paper' : editType === 'solutionbook' ? 'Solution Book' : 'Cheatsheet'}
+              ✏️ Edit {editType === 'note' ? 'Note' : editType === 'pastpaper' ? 'Past Paper' : editType === 'solutionbook' ? 'Solution Book' : editType === 'mcq' ? 'MCQ' : 'Cheatsheet'}
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {editType === 'mcq' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Question</label>
+                    <textarea className="input-field" rows={3} value={editForm.question || ''} onChange={e => setEditForm({ ...editForm, question: e.target.value })} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    {(editForm.options || ['', '', '', '']).map((opt: string, idx: number) => (
+                      <div key={idx}>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: idx === Number(editForm.correctOption) ? '#34d399' : 'var(--clr-text-3)' }}>
+                          Option {String.fromCharCode(65 + idx)} {idx === Number(editForm.correctOption) && '✓'}
+                        </label>
+                        <input
+                          className="input-field"
+                          value={opt}
+                          onChange={e => {
+                            const newOpts = [...(editForm.options || ['', '', '', ''])]
+                            newOpts[idx] = e.target.value
+                            setEditForm({ ...editForm, options: newOpts })
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Correct Option</label>
+                      <select className="input-field" value={editForm.correctOption} onChange={e => setEditForm({ ...editForm, correctOption: parseInt(e.target.value) })}>
+                        <option value={0}>Option A</option>
+                        <option value={1}>Option B</option>
+                        <option value={2}>Option C</option>
+                        <option value={3}>Option D</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Year</label>
+                      <input className="input-field" type="number" value={editForm.year || ''} onChange={e => setEditForm({ ...editForm, year: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Category</label>
+                      <select className="input-field" value={editForm.examCategory || 'BOARD_EXAM'} onChange={e => setEditForm({ ...editForm, examCategory: e.target.value })}>
+                        <option value="BOARD_EXAM">Board Exam</option>
+                        <option value="INTERNAL_EXAM">Internal Exam</option>
+                        <option value="PRACTICE">Practice</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Explanation</label>
+                    <textarea className="input-field" rows={2} value={editForm.explanation || ''} onChange={e => setEditForm({ ...editForm, explanation: e.target.value })} />
+                  </div>
+                </>
+              )}
+
               {editType === 'note' && (
                 <>
                   <div>
