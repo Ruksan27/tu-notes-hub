@@ -111,14 +111,22 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
   // We do NOT use /api/drive-proxy for Cloudinary as that can cause downloads
   const proxyEmbedUrl = isDrive ? `/api/drive-proxy?url=${encodeURIComponent(rawUrl)}` : rawUrl
   let downloadUrl = rawUrl
-  if (isDrive) {
-    downloadUrl = getDriveDownloadUrl(rawUrl)
-  } else if (rawUrl.includes('res.cloudinary.com')) {
+  const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9 _-]/g, '_')
+  const fileName = `TUNotes_${safeTitle}`
+
+  if (rawUrl.includes('res.cloudinary.com') && rawUrl.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
     const parts = rawUrl.split('/upload/')
     if (parts.length === 2) {
-      const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9 _-]/g, '_')
-      downloadUrl = `${parts[0]}/upload/fl_attachment:${safeTitle}/${parts[1]}`
+      // Cloudinary Image Watermark
+      const diagonalWatermark = `l_text:Arial_100_bold:TU%20Notes%20Hub/co_black,o_12,a_-45/fl_layer_apply,g_center`
+      const footerLink = `l_text:Arial_22:tunoteshub.com/co_black,o_50/fl_layer_apply,g_south_east,x_15,y_15`
+      downloadUrl = `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${footerLink}/${parts[1]}`
     }
+  } else if (rawUrl.toLowerCase().endsWith('.pdf') || isDrive) {
+    // Route through universal watermark API for PDFs and Drive files
+    downloadUrl = `/api/download/watermark?fileUrl=${encodeURIComponent(rawUrl)}&bookId=${book.id}&filename=${encodeURIComponent(fileName)}`
+  } else {
+    downloadUrl = getDriveDownloadUrl(rawUrl)
   }
 
   // Download file ad countdown — triggers actual download when countdown hits 0
@@ -131,7 +139,8 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
         const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9 _-]/g, '_')
         const link = document.createElement('a')
         link.href = downloadUrl
-        link.setAttribute('download', `TUNotes_${safeTitle}.pdf`)
+        const extension = downloadUrl.includes('fl_attachment') && downloadUrl.match(/\.(png|jpg|jpeg|webp|gif)$/i) ? 'jpg' : 'pdf'
+        link.setAttribute('download', `TUNotes_${safeTitle}.${extension}`)
         link.target = '_blank'
         link.rel = 'noopener noreferrer'
         document.body.appendChild(link)
@@ -151,7 +160,8 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
       const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9 _-]/g, '_')
       const link = document.createElement('a')
       link.href = downloadUrl
-      link.setAttribute('download', `TUNotes_${safeTitle}.pdf`)
+      const extension = downloadUrl.includes('fl_attachment') && downloadUrl.match(/\.(png|jpg|jpeg|webp|gif)$/i) ? 'jpg' : 'pdf'
+      link.setAttribute('download', `TUNotes_${safeTitle}.${extension}`)
       link.target = '_blank'
       document.body.appendChild(link)
       link.click()
