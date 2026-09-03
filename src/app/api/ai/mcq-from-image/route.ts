@@ -14,10 +14,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    const { subjectId, imageUrl } = await req.json()
+    const { subjectId, imageUrls } = await req.json()
 
-    if (!subjectId || !imageUrl) {
-      return NextResponse.json({ error: 'Subject and image URL are required' }, { status: 400 })
+    if (!subjectId || !imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+      return NextResponse.json({ error: 'Subject and at least one image URL are required' }, { status: 400 })
     }
 
     const subject = await prisma.subject.findUnique({ where: { id: subjectId } })
@@ -25,20 +25,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
     }
 
-    // Fetch the image from Cloudinary and convert to base64
-    const res = await fetch(imageUrl)
-    if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`)
-    const arrayBuffer = await res.arrayBuffer()
-    const base64 = Buffer.from(arrayBuffer).toString('base64')
+    // Fetch all files from Cloudinary and convert to base64
+    const imagesData = await Promise.all(imageUrls.map(async (url: string) => {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`)
+      const arrayBuffer = await res.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
 
-    // Determine mime type from URL
-    const lower = imageUrl.toLowerCase()
-    let mimeType = 'image/jpeg'
-    if (lower.includes('.png')) mimeType = 'image/png'
-    else if (lower.includes('.webp')) mimeType = 'image/webp'
+      // Determine mime type from URL or content type
+      const lower = url.toLowerCase().split('?')[0]
+      let mimeType = 'image/jpeg'
+      if (lower.endsWith('.png')) mimeType = 'image/png'
+      else if (lower.endsWith('.webp')) mimeType = 'image/webp'
+      else if (lower.endsWith('.gif')) mimeType = 'image/gif'
+      else if (lower.endsWith('.pdf') || lower.includes('/pdf')) mimeType = 'application/pdf'
+      else if (lower.endsWith('.docx')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      else if (lower.endsWith('.doc')) mimeType = 'application/msword'
+      // Fallback: check the actual content-type from Cloudinary
+      else {
+        const ct = res.headers.get('content-type') || ''
+        if (ct.includes('pdf')) mimeType = 'application/pdf'
+        else if (ct.includes('word')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        else if (ct.includes('png')) mimeType = 'image/png'
+        else if (ct.includes('webp')) mimeType = 'image/webp'
+      }
 
-    // Generate MCQs from image using Gemini Vision
-    const mcqs = await generateMcqsFromImage(subject.title, base64, mimeType)
+      return { base64, mimeType }
+    }))
+
+    // Generate MCQs from image(s) using Gemini Vision
+    const mcqs = await generateMcqsFromImage(subject.title, imagesData)
 
     return NextResponse.json({ mcqs, subjectTitle: subject.title })
   } catch (error: any) {

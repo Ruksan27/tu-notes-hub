@@ -28,6 +28,9 @@ export async function GET() {
                 },
                 cheatsheets: {
                   select: { id: true }
+                },
+                mcqs: {
+                  select: { id: true }
                 }
               }
             }
@@ -50,10 +53,12 @@ export async function GET() {
           let labWorkCount = 0
           let pastPapersCount = 0
           let cheatsheetsCount = 0
+          let mcqsCount = 0
 
           sem.subjects.forEach(sub => {
             pastPapersCount += sub.pastPapers.length
             cheatsheetsCount += sub.cheatsheets.length
+            mcqsCount += sub.mcqs.length
             sub.notes.forEach(note => {
               if (note.noteType === 'PROJECT_WORK') {
                 projectWorkCount++
@@ -80,7 +85,8 @@ export async function GET() {
             labWorkCount,
             pastPapersCount,
             cheatsheetsCount,
-            total: notesCount + projectWorkCount + projectCount + guideCount + labWorkCount + pastPapersCount + cheatsheetsCount
+            mcqsCount,
+            total: notesCount + projectWorkCount + projectCount + guideCount + labWorkCount + pastPapersCount + cheatsheetsCount + mcqsCount
           }
         })
       }

@@ -130,7 +130,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning data-disable-image-menu="true">
         <AdBlockerGuard />
         <PWARegister />
         <Navbar />

@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
         options: m.options,
         correctOption: m.correctOption,
         explanation: m.explanation || null,
+        year: m.year || null,
+        examCategory: m.examCategory || null,
         subjectId
       }))
     })

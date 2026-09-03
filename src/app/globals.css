@@ -108,7 +108,8 @@ body {
 /* ── Typography ──────────────────────────────── */
 h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); font-weight: 700; line-height: 1.2; }
 a { color: inherit; text-decoration: none; }
-img { max-width: 100%; display: block; }
+img { max-width: 100%; display: block; pointer-events: none; -webkit-user-drag: none; }
+video { pointer-events: none; -webkit-user-drag: none; }
 
 /* ── Glass Card ──────────────────────────────── */
 .glass-card {

@@ -157,7 +157,7 @@ export default function ExamPaperViewer({ data }: Props) {
                             e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,0.1)'
                           }}
                         >
-                          <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'scale(1.2)' }} />
+                          <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'scale(1.2)', pointerEvents: 'none' }} />
                           Smart Answer
                         </button>
                       </span>

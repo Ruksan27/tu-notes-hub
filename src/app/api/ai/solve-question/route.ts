@@ -100,7 +100,7 @@ Please answer the student's latest follow-up question in a helpful, concise mann
     }
 
     // Model fallback sequence to ensure reliability even during high demand / 503 errors
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+    const modelsToTry = ['gemini-3.6-flash']
     let answer = ''
     let lastError: any = null
 

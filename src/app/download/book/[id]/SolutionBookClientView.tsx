@@ -54,7 +54,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
   // Ad Lock Modal states for FREE users
   const [isPaid, setIsPaid] = useState(false)
   const [downloadAdActive, setDownloadAdActive] = useState(false)
-  const [downloadAdCountdown, setDownloadAdCountdown] = useState(6)
+  const [downloadAdCountdown, setDownloadAdCountdown] = useState(10)
 
   // Default view mode to 'proxy' for 100% reliable document rendering without iframe blocks
   const [viewMode, setViewMode] = useState<'gview' | 'drive' | 'proxy'>('proxy')
@@ -157,7 +157,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
       link.click()
       document.body.removeChild(link)
     } else {
-      setDownloadAdCountdown(6)
+      setDownloadAdCountdown(10)
       setDownloadAdActive(true)
     }
   }

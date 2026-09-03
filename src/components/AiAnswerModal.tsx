@@ -32,6 +32,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
   const [error, setError] = useState('')
   const [isPaidUser, setIsPaidUser] = useState(false)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   
   const dragControls = useDragControls()
@@ -225,7 +226,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
             fontSize: '16px', flexShrink: 0,
             boxShadow: '0 2px 8px rgba(99,102,241,0.4)',
           }}>
-            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>
@@ -290,7 +291,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px', marginTop: '2px',
               }}>
-                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
@@ -307,7 +308,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px', marginTop: '2px',
               }}>
-                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
@@ -347,7 +348,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '14px', marginTop: '2px',
                 }}>
-                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
                 </div>
               )}
               <div style={{
@@ -388,7 +389,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px',
               }}>
-                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',

@@ -95,7 +95,7 @@ export default function DownloadPage() {
 
   // Download-trigger ad modal states
   const [downloadAdActive, setDownloadAdActive] = useState(false)
-  const [downloadAdCountdown, setDownloadAdCountdown] = useState(15)
+  const [downloadAdCountdown, setDownloadAdCountdown] = useState(10)
   const [currentUrl, setCurrentUrl] = useState('')
 
   // AI Answer Modal state
@@ -281,7 +281,7 @@ export default function DownloadPage() {
       return;
     }
 
-    setDownloadAdCountdown(15)
+    setDownloadAdCountdown(10)
     setDownloadAdActive(true)
   }
 
@@ -587,32 +587,58 @@ export default function DownloadPage() {
         </div>
       )}
 
-      {/* ── 15-Second Download Ad Lock Modal Overlay ── */}
+      {/* ── 15-S      {/* 10-SECOND SPONSORED AD COUNTDOWN MODAL (FOR FREE USERS) */}
       {downloadAdActive && (
         <div style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(5, 8, 16, 0.85)',
-          backdropFilter: 'blur(8px)',
           zIndex: 9999,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(12px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '20px',
         }}>
-          <div className="glass-card" style={{
-            maxWidth: '560px',
+          <div style={{
             width: '100%',
+            maxWidth: '520px',
+            background: '#0f172a',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: '24px',
             padding: '36px',
             textAlign: 'center',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-            border: '1px solid rgba(99,102,241,0.3)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            position: 'relative',
           }}>
-            <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px', color: 'var(--clr-text-1)' }}>
-              Preparing Offline File Download
+            <button
+              onClick={() => setDownloadAdActive(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'rgba(255,255,255,0.06)',
+                border: 'none',
+                color: 'var(--clr-text-3)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              ✕
+            </button>
+
+            <span className="badge badge-primary" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>
+              🔒 FREE DOWNLOAD AD GATEWAY
+            </span>
+
+            <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', margin: '8px 0' }}>
+              Preparing Study File...
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '24px' }}>
-              Please wait while the file server finishes packing your document.
+              Please wait while our server packs your file and verifies sponsor links.
             </p>
 
             {/* Modal Circular Countdown */}
@@ -620,18 +646,24 @@ export default function DownloadPage() {
               width: '90px',
               height: '90px',
               fontSize: '32px',
-              margin: '0 auto 28px',
+              fontWeight: 800,
+              margin: '0 auto 24px',
               background: 'linear-gradient(135deg, #06b6d4, #6366f1)',
-              boxShadow: '0 8px 24px rgba(6,182,212,0.3)',
+              boxShadow: '0 8px 24px rgba(6,182,212,0.4)',
+              borderRadius: '50%',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}>
-              {downloadAdCountdown}
+              {downloadAdCountdown}s
             </div>
 
-            {/* Advertisement Block inside Overlay */}
+            {/* Sponsored Advertisement Unit */}
             <div style={{
               background: 'rgba(255,255,255,0.02)',
-              border: '1px solid var(--clr-border)',
-              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px',
               padding: '24px',
               minHeight: '120px',
               display: 'flex',
@@ -639,12 +671,12 @@ export default function DownloadPage() {
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-              <p style={{ fontSize: '9px', color: 'var(--clr-text-3)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>Sponsored Advertisement</p>
+              <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Sponsored Advertisement</p>
               <AdUnit type="inline" slot="modal-ad-banner" />
             </div>
 
             <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginTop: '20px' }}>
-              File will download automatically in <strong style={{ color: 'var(--clr-accent)' }}>{downloadAdCountdown} seconds</strong>. Do not close this tab.
+              Your file will download automatically in <strong style={{ color: 'var(--clr-accent)' }}>{downloadAdCountdown} second{downloadAdCountdown !== 1 ? 's' : ''}</strong>. Do not close this tab.
             </p>
           </div>
         </div>

@@ -21,69 +21,140 @@ function getNextApiKey(): string {
 export async function callGemini(
   prompt: string,
   systemInstruction?: string,
-  imageBase64?: string,
-  mimeType?: string
+  images?: { base64: string, mimeType: string }[]
 ): Promise<string> {
   if (API_KEYS.length === 0) {
     console.warn('[Gemini] No GEMINI_API_KEY set in environment variables.')
     return ''
   }
 
-  let attempts = 0
+  const MODEL = 'gemini-3.6-flash'
+  const MAX_RETRIES = 3
+  const RETRY_DELAY_MS = 3_000
+  const TIMEOUT_MS = 60_000 // 60 seconds — generous for PDF OCR
 
-  while (attempts < API_KEYS.length) {
+  // Build contents once
+  const contents: any[] = []
+  if (images && images.length > 0) {
+    for (const img of images) {
+      contents.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } })
+    }
+  }
+  contents.push(prompt)
+
+  let lastError: any = null
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const apiKey = getNextApiKey()
     if (!apiKey) break
 
     try {
       const genAI = new GoogleGenAI({ apiKey })
 
-      const contents: any[] = []
-      if (imageBase64 && mimeType) {
-        contents.push({ inlineData: { mimeType, data: imageBase64 } })
-      }
-      contents.push(prompt)
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(Object.assign(new Error('Gemini request timed out'), { status: 503, _isTimeout: true })), TIMEOUT_MS)
+      )
 
-      let response: any
-      try {
-        response = await genAI.models.generateContent({
-          model: 'gemini-2.5-flash',
+      const response = await Promise.race([
+        genAI.models.generateContent({
+          model: MODEL,
           contents,
           ...(systemInstruction ? { config: { systemInstruction } } : {}),
-        })
-      } catch (mErr1) {
-        try {
-          response = await genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents,
-            ...(systemInstruction ? { config: { systemInstruction } } : {}),
-          })
-        } catch (mErr2) {
-          response = await genAI.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents,
-            ...(systemInstruction ? { config: { systemInstruction } } : {}),
-          })
-        }
-      }
+        }),
+        timeoutPromise,
+      ])
 
-      return response.text ?? ''
+      const text = response?.text ?? ''
+      if (text) return text
     } catch (error: any) {
-      const isRateLimited =
-        error?.status === 429 ||
-        error?.message?.includes('429') ||
-        error?.message?.includes('quota') ||
-        error?.message?.includes('RESOURCE_EXHAUSTED')
-      if (isRateLimited) {
-        attempts++
-        console.warn(`[Gemini] Key ${currentKeyIndex} rate limited. Rotating...`)
+      lastError = error
+      const status = error?.status ?? error?.error?.code ?? 0
+      const msg = error?.message || ''
+
+      const isRetryable =
+        status === 429 || status === 503 || status === 500 || status === 502 || status === 504 ||
+        msg.includes('429') || msg.includes('503') || msg.includes('UNAVAILABLE') ||
+        msg.includes('high demand') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED') ||
+        error?._isTimeout
+
+      if (isRetryable && attempt < MAX_RETRIES - 1) {
+        console.warn(`[Gemini] Attempt ${attempt + 1}/${MAX_RETRIES} failed (${status || 'timeout'}). Retrying in ${RETRY_DELAY_MS / 1000}s...`)
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS))
         continue
       }
-      throw error
+
+      console.warn(`[Gemini] All ${attempt + 1} attempts failed. Falling back to Groq AI...`)
+      break
     }
   }
 
-  throw new Error('All Gemini API keys are rate-limited. Please try again in a minute.')
+  // Groq fallback
+  try {
+    return await callGroq(prompt, systemInstruction, images)
+  } catch (groqErr) {
+    console.warn('[Groq Fallback Failed]. Skipping.')
+    if (lastError) throw lastError
+    throw new Error('All AI providers failed. Please try again later.')
+  }
+}
+
+// Fallback AI provider using Groq (gsk_...)
+export async function callGroq(
+  prompt: string,
+  systemInstruction?: string,
+  images?: { base64: string; mimeType: string }[]
+): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey) {
+    console.warn('[Groq] GROQ_API_KEY is not set in environment variables.')
+    return ''
+  }
+
+  // Filter images: Groq vision API only accepts image/* mimeTypes (jpg, png, webp)
+  const validImages = images?.filter(img => img.mimeType.startsWith('image/')) || []
+  const hasImages = validImages.length > 0
+  const model = hasImages ? 'llama-3.2-11b-vision-preview' : 'llama-3.3-70b-versatile'
+  console.log(`[Groq AI] Calling model: ${model}`)
+
+  const messages: any[] = []
+  if (systemInstruction) {
+    messages.push({ role: 'system', content: systemInstruction })
+  }
+
+  if (hasImages) {
+    const contentParts: any[] = [{ type: 'text', text: prompt }]
+    for (const img of validImages) {
+      contentParts.push({
+        type: 'image_url',
+        image_url: { url: `data:${img.mimeType};base64,${img.base64}` }
+      })
+    }
+    messages.push({ role: 'user', content: contentParts })
+  } else {
+    messages.push({ role: 'user', content: prompt })
+  }
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.2,
+    })
+  })
+
+  if (!response.ok) {
+    const errText = await response.text()
+    console.error(`[Groq Error] ${response.status}:`, errText)
+    throw new Error(`Groq API returned ${response.status}: ${errText}`)
+  }
+
+  const data = await response.json()
+  return data.choices?.[0]?.message?.content ?? ''
 }
 
 // Extract text from a document URL (PDF or Image) using Gemini
@@ -96,7 +167,23 @@ export async function extractTextFromPdfUrl(url: string): Promise<string> {
     }
   }
 
-  const res = await fetch(targetUrl)
+  // 15-second timeout on the PDF fetch — prevents hanging when Cloudinary is slow
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 15_000)
+
+  let res: Response
+  try {
+    res = await fetch(targetUrl, { signal: controller.signal })
+  } catch (fetchErr: any) {
+    clearTimeout(timeoutId)
+    if (fetchErr?.name === 'AbortError') {
+      console.warn('[OCR] PDF fetch timed out after 15s. Skipping OCR.')
+      return ''
+    }
+    throw fetchErr
+  }
+  clearTimeout(timeoutId)
+
   if (!res.ok) throw new Error(`Failed to fetch file for text extraction: ${res.statusText}`)
   const arrayBuffer = await res.arrayBuffer()
   const base64 = Buffer.from(arrayBuffer).toString('base64')
@@ -133,7 +220,7 @@ Extract the exam paper content exactly as written and return it STRICTLY as a va
 }
 If any field is missing, use an empty string or omit it, but keep the structure intact. Ensure math symbols remain intact (e.g. $A(2,3)$ or $$x^2$$).
 `;
-  const rawResponse = await callGemini(prompt, undefined, base64, mimeType)
+  const rawResponse = await callGemini(prompt, undefined, [{ base64, mimeType }])
   
   // Clean up if gemini returned markdown code blocks
   return rawResponse.replace(/```json|```/g, '').trim()
@@ -233,18 +320,18 @@ Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra te
 // Generate MCQs directly from an image (question paper photo)
 export async function generateMcqsFromImage(
   subjectTitle: string,
-  imageBase64: string,
-  mimeType: string
+  images: { base64: string, mimeType: string }[]
 ): Promise<any[]> {
   const prompt = `
-You are an expert TU (Tribhuvan University) examiner looking at a question paper image for subject: "${subjectTitle}".
+You are an expert TU (Tribhuvan University) examiner looking at ${images.length} image(s) of a question paper for subject: "${subjectTitle}".
 
-Look at this image carefully. It may contain handwritten or printed exam questions, MCQs, or study material.
+Look at ALL provided images carefully. They represent multiple pages of the SAME exam paper.
+The questions might be numbered as 1, 2, 3... or i, ii, iii... or Q1, Q2... Make sure you don't extract the same question twice.
 
 Task:
-Generate 10 high-yield Multiple Choice Questions (MCQs) based on the topics and questions visible in this image.
-If the image already contains MCQs, extract and format them properly.
-If it contains long-form questions, convert the key concepts into MCQs.
+Generate 10 high-yield Multiple Choice Questions (MCQs) based on the topics and questions visible across all these images.
+If the images already contain MCQs, extract and format ALL unique ones properly.
+If they contain long-form questions, convert the key concepts into MCQs.
 
 Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra text):
 [
@@ -257,7 +344,7 @@ Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra te
 ]
 `
 
-  const raw = await callGemini(prompt, undefined, imageBase64, mimeType)
+  const raw = await callGemini(prompt, undefined, images)
   const cleaned = raw.replace(/```json|```/g, '').trim()
   return JSON.parse(cleaned)
 }

@@ -772,10 +772,13 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 
       {/* MCQs View */}
       {mcqs && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '32px', marginBottom: '24px' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" id="ai-mcq-container" style={{ padding: '32px', marginBottom: '24px' }}>
           <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
             <h3 className="text-xl font-bold">📝 Generated MCQs for {currentSubject?.title}</h3>
-            <button className="btn btn-outline" onClick={() => setMcqs(null)} style={{ fontSize: '12px', padding: '6px 14px' }}>← Close MCQs</button>
+            <div style={{ display: 'flex', gap: '8px' }} className="hide-on-print">
+              <button className="btn btn-outline" onClick={downloadPDF} style={{ fontSize: '12px', padding: '6px 14px' }}>💾 Save PDF</button>
+              <button className="btn btn-outline" onClick={() => setMcqs(null)} style={{ fontSize: '12px', padding: '6px 14px' }}>← Close MCQs</button>
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {mcqs.map((m: any, i: number) => (
@@ -802,6 +805,26 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Print Watermark & Footer */}
+          <div className="print-watermark" aria-hidden="true">TU Notes Hub</div>
+          <div className="print-qr-footer">
+            <div style={{ borderTop: '2px solid rgba(99,102,241,0.4)', paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', width: '100%' }}>
+              <div>
+                <p style={{ fontWeight: 800, fontSize: '16px', marginBottom: '4px', color: '#fff' }}>📚 TU Notes Hub</p>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '2px' }}>AI-Generated MCQ Solution Set</p>
+                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Scan QR to visit our website</p>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&bgcolor=080a12&color=ffffff&data=${encodeURIComponent('https://tunoteshub.vercel.app')}`}
+                  alt="QR Code"
+                  style={{ width: '90px', height: '90px', borderRadius: '8px', border: '2px solid rgba(99,102,241,0.4)' }}
+                />
+                <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>tunoteshub.vercel.app</p>
+              </div>
+            </div>
           </div>
         </motion.div>
       )}
@@ -1065,7 +1088,7 @@ function AIChatPanel({ report }: { report: any }) {
         }}
         whileHover={{ scale: 1.05 }}
       >
-        <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.6)' }} />
+        <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.6)', pointerEvents: 'none' }} />
       </motion.div>
     )
   }
@@ -1124,7 +1147,7 @@ function AIChatPanel({ report }: { report: any }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 15px rgba(168,85,247,0.4)',
           }}>
-            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
           </div>
           <div>
             <p style={{ fontWeight: 700, fontSize: '15px', margin: 0, color: '#fff', letterSpacing: '0.3px' }}>Scholar AI</p>
@@ -1180,7 +1203,7 @@ function AIChatPanel({ report }: { report: any }) {
                   width: '120px', height: '120px', borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
                 </div>
               <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 500 }}>
                 {report ? `How can I help you with ${report.subject}?` : 'How can I help with your studies today?'}
@@ -1196,7 +1219,7 @@ function AIChatPanel({ report }: { report: any }) {
                   background: 'linear-gradient(135deg, #a855f7, #6366f1)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
                 </div>
               )}
               <div style={{
@@ -1221,7 +1244,7 @@ function AIChatPanel({ report }: { report: any }) {
                   background: 'linear-gradient(135deg, #a855f7, #6366f1)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
                 </div>
                <div style={{
                  padding: '16px',

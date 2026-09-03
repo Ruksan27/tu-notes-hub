@@ -87,7 +87,7 @@ Professor:`
     const genAI = new GoogleGenAI({ apiKey })
     
     // Model fallback sequence to ensure reliability even during high demand / 503 errors
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+    const modelsToTry = ['gemini-3.6-flash']
     let reply = ''
     let lastError: any = null
 
@@ -105,8 +105,16 @@ Professor:`
       }
     }
 
-    if (!reply && lastError) {
-      throw lastError
+    if (!reply) {
+      console.warn('[AI_CHAT] All Gemini models failed. Attempting Groq AI fallback...')
+      try {
+        const { callGroq } = await import('@/lib/gemini')
+        reply = await callGroq(prompt)
+      } catch (groqErr: any) {
+        console.error('[AI_CHAT] Groq fallback also failed:', groqErr)
+        if (lastError) throw lastError
+        throw groqErr
+      }
     }
 
     // Save both messages to DB (fire-and-forget — don't block response)

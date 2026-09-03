@@ -1,6 +1,6 @@
 'use client'
 // src/components/SubjectRow.tsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getNoteSlug, getPaperSlug, getSemesterPath, slugify } from '@/lib/slugs'
@@ -24,10 +24,18 @@ interface PastPaper {
   cloudinaryUrl: string
 }
 
+interface CheatsheetFile {
+  url: string
+  name: string
+  size?: string
+  type?: string
+}
+
 interface Cheatsheet {
   id: string
   title: string
-  content: string
+  content?: string | null
+  files?: CheatsheetFile[] | any | null
 }
 
 interface MCQ {
@@ -36,6 +44,8 @@ interface MCQ {
   options: string[]
   correctOption: number
   explanation: string | null
+  year?: number | null
+  examCategory?: string | null
 }
 
 interface SolutionBook {
@@ -95,7 +105,18 @@ export default function SubjectRow({
   semesterOrder?: number
   systemType?: string
 }) {
-  const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | null>(null)
+  const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus' | null>(null)
+  const [isEliteAI, setIsEliteAI] = useState(false)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('tu_user')
+      if (stored) {
+        const u = JSON.parse(stored)
+        setIsEliteAI(u?.packageType === 'ELITE_AI')
+      }
+    } catch {}
+  }, [])
 
   const semPath = getSemesterPath(facultyId, semesterOrder, systemType)
 
@@ -124,17 +145,18 @@ export default function SubjectRow({
   }
 
   // Categorize notes
-  const notes = subject.notes.filter(n => !['PROJECT_WORK', 'PROJECT', 'GUIDE', 'LAB_WORK'].includes(n.noteType))
+  const notes = subject.notes.filter(n => !['PROJECT_WORK', 'PROJECT', 'GUIDE', 'LAB_WORK', 'SYLLABUS'].includes(n.noteType))
   const labWorks = subject.notes.filter(n => n.noteType === 'LAB_WORK')
   const projectWorks = subject.notes.filter(n => n.noteType === 'PROJECT_WORK')
   const projects = subject.notes.filter(n => n.noteType === 'PROJECT')
   const guides = subject.notes.filter(n => n.noteType === 'GUIDE')
+  const syllabusFiles = subject.notes.filter(n => n.noteType === 'SYLLABUS')
   const pastPapers = subject.pastPapers
   const cheatsheets = subject.cheatsheets
   const solutionBooks = subject.solutionBooks || []
   const mcqs = subject.mcqs || []
 
-  const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs') => {
+  const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus') => {
     if (activeTab === tabName) {
       setActiveTab(null)
     } else {
@@ -179,6 +201,7 @@ export default function SubjectRow({
     else if (projectWorks.length > 0) setActiveTab('projectWork')
     else if (projects.length > 0) setActiveTab('project')
     else if (guides.length > 0) setActiveTab('guide')
+    else if (syllabusFiles.length > 0) setActiveTab('syllabus')
     else if (cheatsheets.length > 0) setActiveTab('cheatsheets')
     else if (mcqs.length > 0) setActiveTab('mcqs')
   }
@@ -294,6 +317,22 @@ export default function SubjectRow({
               </button>
             )}
 
+            {syllabusFiles.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleTab('syllabus') }}
+                style={{
+                  ...getPillStyle('syllabus', syllabusFiles.length),
+                  ...(activeTab === 'syllabus' ? {} : {
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    color: '#fbbf24',
+                  }),
+                }}
+              >
+                📋 Syllabus ({syllabusFiles.length})
+              </button>
+            )}
+
             {solutionBooks.length > 0 && (
               <button
                 onClick={(e) => { e.stopPropagation(); toggleTab('solutionBooks') }}
@@ -313,12 +352,24 @@ export default function SubjectRow({
             )}
 
             {mcqs.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('mcqs') }}
-                style={getPillStyle('mcqs', mcqs.length)}
+              <Link
+                href={`/mcq/${subject.id}`}
+                onClick={e => e.stopPropagation()}
+                style={{ textDecoration: 'none' }}
               >
-                ✅ MCQs ({mcqs.length})
-              </button>
+                <span style={{
+                  ...getPillStyle('mcqs', mcqs.length),
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15))',
+                  border: '1px solid rgba(99,102,241,0.35)',
+                  color: '#a5b4fc',
+                  cursor: 'pointer',
+                }}>
+                  ✅ MCQs ({mcqs.length})
+                </span>
+              </Link>
             )}
           </div>
 
@@ -481,29 +532,148 @@ export default function SubjectRow({
                 </div>
               )}
 
-              {/* Cheatsheets List */}
-              {activeTab === 'cheatsheets' && (
+              {/* Syllabus Files */}
+              {activeTab === 'syllabus' && (
                 <div>
-                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📋 Syllabus & Cheatsheets</h4>
-                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
+                  <h4 style={{ fontSize: '12px', color: '#fbbf24', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📋 Course Syllabus</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
+                    {syllabusFiles.map(note => (
+                      <Link key={note.id} href={getResourceLink(note.title, 'notes', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
+                        <motion.div
+                          variants={cardItemVariants}
+                          whileHover={{ scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(245,158,11,0.2)' }}
+                          whileTap={{ scale: 0.98 }}
+                          className="glass-card"
+                          style={{
+                            padding: '16px',
+                            margin: 0,
+                            cursor: 'pointer',
+                            borderRadius: '12px',
+                            background: 'rgba(245, 158, 11, 0.05)',
+                            border: '1px solid rgba(245, 158, 11, 0.2)',
+                          }}
+                        >
+                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
+                            <span>📋 Syllabus {note.fileSize ? `(${note.fileSize})` : ''}</span>
+                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
+                          </div>
+                        </motion.div>
+                      </Link>
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Cheatsheets List — Elite AI Only */}
+              {activeTab === 'cheatsheets' && (
+                <div style={{ position: 'relative' }}>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📋 Cheatsheets</h4>
+
+                  {/* Blurred preview cards always shown */}
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px', filter: isEliteAI ? 'none' : 'blur(6px)', userSelect: isEliteAI ? 'auto' : 'none', pointerEvents: isEliteAI ? 'auto' : 'none' }}>
                     {cheatsheets.map(cs => (
                       <motion.div key={cs.id} variants={cardItemVariants} className="glass-card" style={{ padding: '16px', margin: 0, borderRadius: '12px', background: 'rgba(99,102,241,0.06)', borderColor: 'rgba(99,102,241,0.2)' }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{cs.title}</p>
-                        <span className="badge badge-elite" style={{ fontSize: '9px' }}>ELITE AI ONLY</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', margin: 0 }}>{cs.title}</p>
+                          <span className="badge badge-elite" style={{ fontSize: '9px' }}>ELITE AI ONLY</span>
+                        </div>
+                        {cs.content && <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{cs.content}</p>}
+                        
+                        {/* Attached Files List */}
+                        {cs.files && Array.isArray(cs.files) && cs.files.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-primary-h)' }}>📎 Attached Files ({cs.files.length}):</span>
+                            {cs.files.map((file: CheatsheetFile, fi: number) => {
+                              const isImg = file.url?.match(/\.(jpg|jpeg|png|webp)/i) || file.type?.includes('image')
+                              const isPdf = file.url?.endsWith('.pdf') || file.name?.endsWith('.pdf')
+                              return (
+                                <a
+                                  key={fi}
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px',
+                                    background: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)',
+                                    fontSize: '12px', color: 'var(--clr-text-2)', textDecoration: 'none'
+                                  }}
+                                >
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {isImg ? '🖼️' : isPdf ? '📄' : '📝'} {file.name || `File ${fi + 1}`}
+                                  </span>
+                                  <span style={{ fontSize: '10px', color: 'var(--clr-primary-h)', fontWeight: 600, shrink: 0 }}>View ↗</span>
+                                </a>
+                              )
+                            })}
+                          </div>
+                        )}
                       </motion.div>
                     ))}
                   </motion.div>
+
+                  {/* Lock Overlay for non-Elite users */}
+                  {!isEliteAI && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10,
+                      gap: '10px',
+                      background: 'rgba(9, 11, 22, 0.6)',
+                      backdropFilter: 'blur(2px)',
+                      borderRadius: '12px',
+                    }}>
+                      <div style={{ fontSize: '32px' }}>🔒</div>
+                      <p style={{ fontSize: '15px', fontWeight: 800, color: '#fff', margin: 0 }}>Elite AI Plan Required</p>
+                      <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', margin: 0, textAlign: 'center', maxWidth: '240px' }}>
+                        Cheatsheets are exclusive to Elite AI members. Upgrade to unlock instant access.
+                      </p>
+                      <Link href="/pricing" style={{ textDecoration: 'none', marginTop: '4px' }}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '8px 20px',
+                          borderRadius: '8px',
+                          background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                          color: '#fff',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          boxShadow: '0 4px 14px rgba(99,102,241,0.4)',
+                          cursor: 'pointer',
+                        }}>
+                          🚀 Upgrade to Elite AI
+                        </span>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* MCQs List */}
               {activeTab === 'mcqs' && (
                 <div>
-                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>✅ Practice MCQs</h4>
-                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {mcqs.map((m, i) => (
-                      <McqItem key={m.id} mcq={m} index={i} />
-                    ))}
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>✅ MCQ Answers</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
+                    <Link href={`/mcq/${subject.id}`} style={{ textDecoration: 'none' }}>
+                      <motion.div
+                        variants={cardItemVariants}
+                        whileHover={{ scale: 1.04, y: -3, boxShadow: '0 8px 24px rgba(99,102,241,0.25)' }}
+                        whileTap={{ scale: 0.98 }}
+                        className="glass-card"
+                        style={{ padding: '18px', margin: 0, cursor: 'pointer', borderRadius: '12px', background: 'rgba(99,102,241,0.06)', borderColor: 'rgba(99,102,241,0.2)' }}
+                      >
+                        <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                          ✅ View MCQ Answers
+                        </p>
+                        <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '10px' }}>
+                          {mcqs.length} question{mcqs.length !== 1 ? 's' : ''} available
+                        </p>
+                        <span style={{ fontSize: '11px', color: '#a5b4fc', fontWeight: 600 }}>View Answers →</span>
+                      </motion.div>
+                    </Link>
                   </motion.div>
                 </div>
               )}
@@ -515,63 +685,155 @@ export default function SubjectRow({
   )
 }
 
+function formatExamType(type: string) {
+  switch (type) {
+    case 'BOARD_EXAM': return '🎓 Board Exam'
+    case 'INTERNAL_EXAM': return '🏫 Internal Exam'
+    case 'BACK_PAPER': return '🔄 Back Paper'
+    default: return type
+  }
+}
+
+function McqSection({ mcqs, subject }: { mcqs: MCQ[], subject: Subject }) {
+  const [filterYear, setFilterYear] = useState<string>('all')
+  const [filterCategory, setFilterCategory] = useState<string>('all')
+
+  const years = Array.from(new Set(mcqs.map(m => m.year).filter(Boolean))).sort((a, b) => (b as number) - (a as number))
+  const categories = Array.from(new Set(mcqs.map(m => m.examCategory).filter(Boolean)))
+
+  const filtered = mcqs.filter(m => {
+    if (filterYear !== 'all' && String(m.year) !== filterYear) return false
+    if (filterCategory !== 'all' && m.examCategory !== filterCategory) return false
+    return true
+  })
+
+  const pageUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareTitle = encodeURIComponent(`Practice MCQs — ${subject.title} (${subject.code}) | TU Notes Hub`)
+
+  return (
+    <div>
+      {/* Resource-style Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(11,60,93,0.95) 0%, rgba(24,40,72,0.97) 100%)',
+        borderRadius: '14px',
+        padding: '22px 24px',
+        marginBottom: '20px',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.3)'
+      }}>
+        {/* Badge */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.35)', borderRadius: '20px', padding: '4px 12px', marginBottom: '12px' }}>
+          <span style={{ fontSize: '10px', color: '#67e8f9', fontWeight: 700, letterSpacing: '0.08em' }}>✅ PRACTICE MCQs</span>
+        </div>
+
+        {/* Title */}
+        <h2 style={{ margin: '0 0 14px', fontSize: '20px', fontWeight: 700, color: '#ffffff', lineHeight: 1.3 }}>
+          {subject.title} ({subject.code}) — MCQ Practice Set
+        </h2>
+
+        {/* Share buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginRight: '4px' }}>Share:</span>
+          <a href={`https://wa.me/?text=${shareTitle}%20${encodeURIComponent(pageUrl)}`} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#25D366', color: '#fff', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>🟢 WhatsApp</a>
+          <a href={`viber://forward?text=${shareTitle}%20${encodeURIComponent(pageUrl)}`} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#7360F2', color: '#fff', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>🟣 Viber</a>
+          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#1877F2', color: '#fff', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>🔵 Facebook</a>
+          <button onClick={() => { if (typeof navigator !== 'undefined') navigator.clipboard.writeText(pageUrl) }} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>🔗 Copy Link</button>
+        </div>
+      </div>
+
+      {/* Filters + white paper card */}
+      <div style={{ background: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+        {/* Filter Bar */}
+        {(years.length > 0 || categories.length > 0) && (
+          <div style={{ display: 'flex', gap: '12px', padding: '16px 20px', borderBottom: '1px solid #e5e7eb', flexWrap: 'wrap', alignItems: 'center', background: '#f8fafc' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Filter:</span>
+            {years.length > 1 && (
+              <select value={filterYear} onChange={e => setFilterYear(e.target.value)} style={{ fontSize: '13px', padding: '5px 10px', borderRadius: '6px', border: '1px solid #d1d5db', background: '#fff', color: '#374151', cursor: 'pointer' }}>
+                <option value="all">All Years</option>
+                {years.map(y => <option key={y} value={String(y)}>{y}</option>)}
+              </select>
+            )}
+            {categories.length > 1 && (
+              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={{ fontSize: '13px', padding: '5px 10px', borderRadius: '6px', border: '1px solid #d1d5db', background: '#fff', color: '#374151', cursor: 'pointer' }}>
+                <option value="all">All Categories</option>
+                {categories.map(c => <option key={c} value={c as string}>{formatExamType(c as string)}</option>)}
+              </select>
+            )}
+            <span style={{ fontSize: '12px', color: '#6b7280', marginLeft: 'auto' }}>{filtered.length} question{filtered.length !== 1 ? 's' : ''}</span>
+          </div>
+        )}
+
+        {/* Questions */}
+        <div style={{ padding: '20px', fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif' }}>
+          {filtered.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#9ca3af', padding: '40px 0' }}>No MCQs match the selected filters.</p>
+          ) : (
+            filtered.map((m, i) => <McqItem key={m.id} mcq={m} index={i} />)
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function McqItem({ mcq, index }: { mcq: MCQ, index: number }) {
   const [selectedOpt, setSelectedOpt] = useState<number | null>(null)
-  
+
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px' }}>
-      <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '12px' }}>{index + 1}. {mcq.question}</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+    <div style={{
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      padding: '18px 20px',
+      marginBottom: '16px',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
+    }}>
+      {/* Meta Badges */}
+      {(mcq.year || mcq.examCategory) && (
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
+          {mcq.year && (
+            <span style={{ fontSize: '11px', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>📅 {mcq.year}</span>
+          )}
+          {mcq.examCategory && (
+            <span style={{ fontSize: '11px', background: '#fce7f3', color: '#be185d', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>{formatExamType(mcq.examCategory)}</span>
+          )}
+        </div>
+      )}
+
+      <p style={{ fontWeight: 600, marginBottom: '14px', color: '#1f2937', fontSize: '15px', lineHeight: 1.5 }}>
+        {index + 1}. {mcq.question}
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {mcq.options.map((opt, idx) => {
           const isSelected = selectedOpt === idx
           const isCorrect = mcq.correctOption === idx
           const showResult = selectedOpt !== null
-          
-          let bg = 'rgba(255,255,255,0.04)'
-          let border = '1px solid transparent'
-          let color = 'var(--clr-text-2)'
-          
+
+          let bg = '#f9fafb'
+          let border = '1px solid #e5e7eb'
+          let color = '#333333'
+          let fontWeight = 'normal'
+
           if (showResult) {
-            if (isCorrect) {
-              bg = 'rgba(34, 197, 94, 0.15)'
-              border = '1px solid var(--clr-success)'
-              color = 'var(--clr-success)'
-            } else if (isSelected) {
-              bg = 'rgba(239, 68, 68, 0.15)'
-              border = '1px solid var(--clr-danger)'
-              color = 'var(--clr-danger)'
-            }
-          } else if (isSelected) {
-            bg = 'rgba(99,102,241,0.2)'
-            border = '1px solid var(--clr-primary)'
-            color = '#fff'
+            if (isCorrect) { bg = '#fff3cd'; border = '1px solid #ffc107'; color = '#856404'; fontWeight = 'bold' }
+            else if (isSelected) { bg = '#f8d7da'; border = '1px solid #f5c6cb'; color = '#721c24' }
           }
 
           return (
-            <button
-              key={idx}
-              onClick={() => { if (selectedOpt === null) setSelectedOpt(idx) }}
-              disabled={selectedOpt !== null}
-              style={{
-                textAlign: 'left',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                cursor: selectedOpt === null ? 'pointer' : 'default',
-                background: bg,
-                border: border,
-                color: color,
-                transition: 'all 0.2s ease'
-              }}
+            <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', borderRadius: '6px', fontSize: '14px', cursor: selectedOpt === null ? 'pointer' : 'default', background: bg, border, color, fontWeight: fontWeight as any, transition: 'all 0.2s ease', margin: 0 }}
+              onMouseEnter={e => { if (selectedOpt === null) { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.borderColor = '#3b82f6' } }}
+              onMouseLeave={e => { if (selectedOpt === null) { e.currentTarget.style.background = '#f9fafb'; e.currentTarget.style.borderColor = '#e5e7eb' } }}
             >
-              {String.fromCharCode(65 + idx)}. {opt}
-            </button>
+              <input type="radio" name={`mcq-${mcq.id}`} value={idx} checked={isSelected || (showResult && isCorrect)} onChange={() => { if (selectedOpt === null) setSelectedOpt(idx) }} disabled={showResult && !isSelected && !isCorrect} style={{ margin: 0, accentColor: showResult && isCorrect ? '#856404' : '#0b3c5d', cursor: selectedOpt === null ? 'pointer' : 'default' }} />
+              <span>{String.fromCharCode(97 + idx)}) {opt}</span>
+            </label>
           )
         })}
       </div>
+
       {selectedOpt !== null && mcq.explanation && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ marginTop: '12px', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '13px', color: 'var(--clr-text-2)' }}>
-          <strong style={{ color: 'var(--clr-primary-h)' }}>Explanation:</strong> {mcq.explanation}
+        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '14px', padding: '12px', background: '#f0f9ff', borderRadius: '8px', fontSize: '13px', color: '#0c4a6e', border: '1px solid #bae6fd' }}>
+          <strong>💡 Explanation:</strong> {mcq.explanation}
         </motion.div>
       )}
     </div>

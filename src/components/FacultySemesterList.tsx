@@ -8,9 +8,10 @@ interface SubjectData {
   id: string
   code: string
   title: string
-  notes: { id: string }[]
+  notes: { id: string; noteType?: string }[]
   pastPapers: { id: string }[]
   cheatsheets: { id: string }[]
+  mcqs?: { id: string }[]
 }
 
 interface SemesterData {
@@ -186,9 +187,11 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
           })
 
           const totalSolutionBooks = filteredSolutionBooks.length
-          const totalNotes = sem.subjects.reduce((sum, s) => sum + s.notes.length, 0)
+          const totalNotes = sem.subjects.reduce((sum, s) => sum + s.notes.filter(n => n.noteType !== 'SYLLABUS').length, 0)
           const totalPapers = sem.subjects.reduce((sum, s) => sum + s.pastPapers.length, 0)
           const totalSheets = sem.subjects.reduce((sum, s) => sum + s.cheatsheets.length, 0)
+          const totalMcqs = sem.subjects.reduce((sum, s) => sum + (s.mcqs?.length || 0), 0)
+          const totalSyllabus = sem.subjects.reduce((sum, s) => sum + s.notes.filter(n => n.noteType === 'SYLLABUS').length, 0)
 
           const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`
           const periodSlug = isYearly ? `${ord}-year` : `${ord}-semester`
@@ -270,11 +273,13 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
                     </p>
                   )}
 
-                  {/* Stats Badges */}
+                  {/* Stats Badges — Only show when count > 0 */}
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <span className="badge badge-free" style={{ fontSize: '12px' }}>📄 {totalNotes} Notes</span>
-                    <span className="badge badge-semester" style={{ fontSize: '12px' }}>📝 {totalPapers} Papers</span>
+                    {totalNotes > 0 && <span className="badge badge-free" style={{ fontSize: '12px' }}>📄 {totalNotes} Notes</span>}
+                    {totalPapers > 0 && <span className="badge badge-semester" style={{ fontSize: '12px' }}>📝 {totalPapers} Papers</span>}
                     {totalSolutionBooks > 0 && <span className="badge badge-primary" style={{ fontSize: '12px' }}>📘 {totalSolutionBooks} Books</span>}
+                    {totalMcqs > 0 && <span className="badge badge-success" style={{ fontSize: '12px', background: 'rgba(16,185,129,0.15)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }}>✅ {totalMcqs} MCQs</span>}
+                    {totalSyllabus > 0 && <span className="badge" style={{ fontSize: '12px', background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>📋 {totalSyllabus} Syllabus</span>}
                     {totalSheets > 0 && <span className="badge badge-elite" style={{ fontSize: '12px' }}>📋 {totalSheets} Sheets</span>}
                   </div>
                 </div>

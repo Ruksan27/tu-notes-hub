@@ -42,9 +42,10 @@ export default async function FacultyPage({ params }: Props) {
           solutionBooks: { select: { id: true, title: true } },
           subjects: {
             include: {
-              notes: { select: { id: true } },
+              notes: { select: { id: true, noteType: true } },
               pastPapers: { select: { id: true } },
               cheatsheets: { select: { id: true } },
+              mcqs: { select: { id: true } },
             },
           },
         },

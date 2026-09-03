@@ -173,7 +173,8 @@ model PastPaper {
 model Cheatsheet {
   id        String   @id @default(uuid())
   title     String
-  content   String   @db.LongText
+  content   String?  @db.LongText
+  files     Json?
   subjectId String
   subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
@@ -185,6 +186,8 @@ model MCQ {
   options       Json     
   correctOption Int      
   explanation   String?  @db.Text
+  year          Int?
+  examCategory  String?
   subjectId     String
   subject       Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())

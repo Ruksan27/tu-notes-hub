@@ -525,6 +525,10 @@ function ManageMaterialsTab() {
   const [semesterId, setSemesterId] = useState('')
   const [subjectId, setSubjectId] = useState('')
   const [notes, setNotes] = useState<any[]>([])
+  
+  // MCQ specific state
+  const [mcqYear, setMcqYear] = useState<string>(new Date().getFullYear().toString())
+  const [mcqExamType, setMcqExamType] = useState('BOARD_EXAM')
   const [pastPapers, setPastPapers] = useState<any[]>([])
   const [cheatsheets, setCheatsheets] = useState<any[]>([])
   const [solutionBooks, setSolutionBooks] = useState<any[]>([])
@@ -1264,22 +1268,25 @@ function UploadTab() {
   const [paperFile, setPaperFile] = useState<File | null>(null)
   const [sheetTitle, setSheetTitle] = useState('')
   const [sheetContent, setSheetContent] = useState('')
+  const [sheetFiles, setSheetFiles] = useState<File[]>([])
   const [extractText, setExtractText] = useState(true)
 
   // MCQ State
+  const [mcqYear, setMcqYear] = useState<string>(new Date().getFullYear().toString())
+  const [mcqExamType, setMcqExamType] = useState('BOARD_EXAM')
   const [mcqItems, setMcqItems] = useState([
     { question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }
   ])
   const [savingMcqs, setSavingMcqs] = useState(false)
-  const [mcqImageFile, setMcqImageFile] = useState<File | null>(null)
+  const [mcqImageFiles, setMcqImageFiles] = useState<File[]>([])
   const [mcqImageGenerating, setMcqImageGenerating] = useState(false)
 
   async function handleGenerateMcqsFromImage() {
     if (!subjectId) { toast.error('Please select a subject first'); return }
-    if (!mcqImageFile) { toast.error('Please select an image file first'); return }
+    if (mcqImageFiles.length === 0) { toast.error('Please select at least one image file'); return }
     
     setMcqImageGenerating(true)
-    toast.loading('Uploading image & generating MCQs...', { toastId: 'mcq-gen' })
+    toast.loading(`Uploading ${mcqImageFiles.length} image(s) & generating MCQs...`, { toastId: 'mcq-gen' })
 
     try {
       // 1. Get Cloudinary signature
@@ -1287,37 +1294,60 @@ function UploadTab() {
       if (!sigRes.ok) throw new Error('Signature error')
       const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
 
-      // 2. Upload to Cloudinary
-      const formData = new FormData()
-      formData.append('file', mcqImageFile)
-      formData.append('api_key', apiKey)
-      formData.append('timestamp', String(timestamp))
-      formData.append('signature', signature)
-      formData.append('folder', sf)
+      let uploadedUrls: string[] = []
 
-      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: 'POST',
-        body: formData
-      })
-      const uploadData = await uploadRes.json()
-      if (!uploadRes.ok) throw new Error(uploadData.error?.message || 'Failed to upload image')
+      // 2. Loop through all files and upload them
+      for (let i = 0; i < mcqImageFiles.length; i++) {
+        const file = mcqImageFiles[i]
+        
+        // Upload to Cloudinary
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('api_key', apiKey)
+        formData.append('timestamp', String(timestamp))
+        formData.append('signature', signature)
+        formData.append('folder', sf)
 
-      // 3. Generate MCQs from image
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST',
+          body: formData
+        })
+        const uploadData = await uploadRes.json()
+        if (!uploadRes.ok) throw new Error(uploadData.error?.message || `Failed to upload image ${i + 1}`)
+        
+        uploadedUrls.push(uploadData.secure_url)
+      }
+
+      // 3. Generate MCQs from all images at once
       const genRes = await fetch('/api/ai/mcq-from-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subjectId, imageUrl: uploadData.secure_url })
+        body: JSON.stringify({ subjectId, imageUrls: uploadedUrls })
       })
       const genData = await genRes.json()
       
-      if (genRes.ok) {
-        toast.dismiss('mcq-gen')
-        toast.success(`🎉 Generated ${genData.mcqs.length} MCQs from image! Review and save.`)
-        setMcqItems(genData.mcqs)
-        setMcqImageFile(null)
-      } else {
-        throw new Error(genData.error || 'Failed to generate MCQs')
+      if (!genRes.ok) {
+        throw new Error(genData.error || `Failed to generate MCQs from images`)
       }
+
+      const allGeneratedMcqs = genData.mcqs || []
+
+      toast.dismiss('mcq-gen')
+      toast.success(`🎉 Generated ${allGeneratedMcqs.length} MCQs from ${mcqImageFiles.length} image(s)!`)
+      setMcqItems(prev => {
+        // Filter out generated MCQs that already exist in the list (case-insensitive check)
+        const existingQuestions = new Set(prev.map(p => (p.question || '').toLowerCase().trim()))
+        const uniqueNewMcqs = allGeneratedMcqs.filter(
+          newMcq => !existingQuestions.has((newMcq.question || '').toLowerCase().trim())
+        )
+
+        // If there was only 1 empty item initially, replace it. Otherwise append.
+        if (prev.length === 1 && prev[0].question === '') {
+          return uniqueNewMcqs
+        }
+        return [...prev, ...uniqueNewMcqs]
+      })
+      setMcqImageFiles([])
     } catch (err: any) {
       toast.dismiss('mcq-gen')
       toast.error(err.message || 'An error occurred')
@@ -1390,21 +1420,32 @@ function UploadTab() {
     // ── MCQ path ──
     if (contentType === 'MCQ') {
       if (!subjectId) { toast.error('Please select a subject'); return }
-      const invalid = mcqItems.find(m => !m.question.trim() || m.options.some(o => !o.trim()))
-      if (invalid) { toast.error('Fill in all questions and options'); return }
+      const validItems = mcqItems.filter(m => m.question.trim())
+      if (validItems.length === 0) { toast.error('Please fill in at least one question'); return }
       setSavingMcqs(true)
       try {
-        let saved = 0
-        for (const m of mcqItems) {
-          const res = await fetch('/api/admin/mcqs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subjectId, question: m.question, options: m.options, correctOption: m.correctOption, explanation: m.explanation })
+        const res = await fetch('/api/admin/mcqs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subjectId,
+            mcqs: validItems.map(m => ({
+              question: m.question.trim(),
+              options: m.options,
+              correctOption: m.correctOption,
+              explanation: m.explanation || null,
+              year: parseInt(mcqYear) || null,
+              examCategory: mcqExamType
+            }))
           })
-          if (res.ok) saved++
+        })
+        const data = await res.json()
+        if (res.ok) {
+          toast.success(`✅ ${data.count} MCQ(s) saved successfully!`)
+          setMcqItems([{ question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }])
+        } else {
+          toast.error(data.error || 'Failed to save MCQs')
         }
-        toast.success(`✅ ${saved} MCQ(s) saved successfully!`)
-        setMcqItems([{ question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }])
       } catch { toast.error('Failed to save MCQs') }
       finally { setSavingMcqs(false) }
       return
@@ -1493,24 +1534,69 @@ function UploadTab() {
       return
     }
 
-    // For cheatsheets, no file upload needed — use old path
+    // For cheatsheets, support uploading multiple files as well as markdown content
     if (contentType === 'CHEATSHEET') {
-      if (!sheetTitle || !sheetContent) { toast.error('Title and content are required'); return }
+      if (!sheetTitle) { toast.error('Title is required'); return }
+      if (!sheetContent && sheetFiles.length === 0) { toast.error('Please provide Markdown content or attach at least one file'); return }
       setUploading(true)
+      toast.loading(sheetFiles.length > 0 ? `Uploading ${sheetFiles.length} file(s)...` : 'Saving cheatsheet...', { toastId: 'upload-progress' })
       try {
-        const fd = new FormData()
-        fd.append('contentType', 'CHEATSHEET')
-        fd.append('subjectId', subjectId)
-        fd.append('title', sheetTitle)
-        fd.append('content', sheetContent)
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        let uploadedFiles: { url: string; name: string; size: string; type: string }[] = []
+
+        if (sheetFiles.length > 0) {
+          const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/cheatsheets' }) })
+          if (!sigRes.ok) throw new Error('Signature error')
+          const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
+
+          for (let i = 0; i < sheetFiles.length; i++) {
+            const file = sheetFiles[i]
+            const isRaw = !['jpg', 'jpeg', 'png', 'webp'].includes(file.name.split('.').pop()?.toLowerCase() || '')
+            const resourceType = isRaw ? 'raw' : 'image'
+
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('api_key', apiKey)
+            formData.append('timestamp', String(timestamp))
+            formData.append('signature', signature)
+            formData.append('folder', sf)
+
+            const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
+              method: 'POST',
+              body: formData
+            })
+            const uploadData = await uploadRes.json()
+            if (!uploadRes.ok) throw new Error(uploadData.error?.message || `Failed to upload file ${file.name}`)
+
+            uploadedFiles.push({
+              url: uploadData.secure_url,
+              name: file.name,
+              size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+              type: file.type || file.name.split('.').pop()?.toUpperCase() || 'FILE'
+            })
+          }
+        }
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contentType: 'CHEATSHEET',
+            subjectId,
+            title: sheetTitle,
+            content: sheetContent,
+            files: uploadedFiles.length > 0 ? uploadedFiles : null
+          })
+        })
         const data = await res.json()
+        toast.dismiss('upload-progress')
         if (res.ok) {
-          toast.success(data.message || 'Cheatsheet created! 🎉')
-          setSheetTitle(''); setSheetContent('')
+          toast.success(data.message || 'Cheatsheet published! 🎉')
+          setSheetTitle(''); setSheetContent(''); setSheetFiles([])
         } else { toast.error(data.error || 'Failed to create cheatsheet') }
-      } catch { toast.error('Network error') }
-      finally { setUploading(false) }
+      } catch (err: any) {
+        toast.dismiss('upload-progress')
+        toast.error(err.message || 'Network error')
+      } finally { setUploading(false) }
       return
     }
 
@@ -2113,13 +2199,19 @@ function UploadTab() {
                 <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Cheatsheet Title</label>
                 <input className="input-field" placeholder="e.g. .NET Quick Revision Cheatsheet" required value={sheetTitle} onChange={e => setSheetTitle(e.target.value)} />
               </div>
+              <MultiFileDropZone 
+                label="Attach Files (PDF, Images, Word, Docs, etc.)" 
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.doc,.pptx,.ppt,.txt" 
+                files={sheetFiles} 
+                onFiles={setSheetFiles} 
+                hint="Select multiple documents or photos to attach to this cheatsheet" 
+              />
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Markdown Content</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Markdown Content / Description (Optional)</label>
                 <textarea
                   className="input-field"
                   placeholder={'# Cheatsheet Title\n- Key concept\n- **Important term**\n\n## Section\n- Point 1'}
-                  required
-                  style={{ minHeight: '220px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: 1.6 }}
+                  style={{ minHeight: '140px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: 1.6 }}
                   value={sheetContent}
                   onChange={e => setSheetContent(e.target.value)}
                 />
@@ -2130,6 +2222,21 @@ function UploadTab() {
           {/* MCQ Fields */}
           {contentType === 'MCQ' && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Year</label>
+                  <input className="input-field" type="number" required value={mcqYear} onChange={e => setMcqYear(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Category</label>
+                  <select className="input-field" value={mcqExamType} onChange={e => setMcqExamType(e.target.value)} style={{ cursor: 'pointer' }}>
+                    <option value="BOARD_EXAM">🎓 Board Exam</option>
+                    <option value="INTERNAL_EXAM">🏫 Internal Exam</option>
+                    <option value="BACK_PAPER">🔄 Back Paper</option>
+                  </select>
+                </div>
+              </div>
+
               <div style={{ padding: '12px 16px', background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', fontSize: '13px', color: '#6ee7b7' }}>
                 ✅ Add multiple MCQs at once. Each question needs 4 options and a correct answer. Explanation is optional.
               </div>
@@ -2144,15 +2251,15 @@ function UploadTab() {
                   </div>
                 </div>
                 
-                <FileDropZone 
-                  label="Question Paper Photo (JPG, PNG, WEBP)" 
-                  accept=".jpg,.jpeg,.png,.webp" 
-                  file={mcqImageFile} 
-                  onFile={setMcqImageFile} 
-                  hint="Clear photos work best" 
+                <MultiFileDropZone 
+                  label="Question Paper — Photos, PDF or Word (JPG, PNG, PDF, DOCX)" 
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.doc" 
+                  files={mcqImageFiles} 
+                  onFiles={setMcqImageFiles} 
+                  hint="Select multiple files — all pages of the same paper together" 
                 />
 
-                {mcqImageFile && (
+                {mcqImageFiles.length > 0 && (
                   <button 
                     type="button" 
                     onClick={handleGenerateMcqsFromImage}
@@ -2163,13 +2270,13 @@ function UploadTab() {
                     }}
                   >
                     {mcqImageGenerating ? (
-                      <><span className="spinner" style={{ width: '16px', height: '16px' }}/> Processing Image & Generating MCQs...</>
+                      <><span className="spinner" style={{ width: '16px', height: '16px' }}/> Processing {mcqImageFiles.length} Image(s) & Generating MCQs...</>
                     ) : (
-                      <>✨ Auto-Generate MCQs from Photo</>
+                      <>✨ Auto-Generate MCQs from {mcqImageFiles.length} Photo(s)</>
                     )}
                   </button>
                 )}
-                {!subjectId && mcqImageFile && (
+                {!subjectId && mcqImageFiles.length > 0 && (
                   <p style={{ marginTop: '8px', fontSize: '12px', color: '#fca5a5', textAlign: 'center' }}>⚠️ Please select a subject above first.</p>
                 )}
               </div>
@@ -2262,6 +2369,49 @@ function FileDropZone({ label, accept, file, onFile, hint, required }: {
           {file ? file.name : 'Click to Browse File'}
         </p>
         <p className="text-xs mt-1" style={{ color: 'var(--clr-text-3)' }}>{hint}</p>
+      </div>
+    </div>
+  )
+}
+/* ── Multi File Drop Zone ── */
+function MultiFileDropZone({ label, accept, files, onFiles, hint, required }: {
+  label: string; accept: string; files: File[]; onFiles: (f: File[]) => void; hint: string; required?: boolean
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>{label}</label>
+      <div
+        style={{
+          border: `2px dashed ${files.length > 0 ? 'var(--clr-primary)' : 'var(--clr-border)'}`,
+          borderRadius: '12px', padding: '28px',
+          textAlign: 'center', background: files.length > 0 ? 'rgba(99,102,241,0.05)' : 'rgba(255,255,255,0.01)',
+          position: 'relative', cursor: 'pointer', transition: 'all 0.2s',
+        }}
+      >
+        <input
+          type="file" accept={accept} required={required} multiple
+          onChange={e => {
+            if (e.target.files) {
+              onFiles(Array.from(e.target.files))
+            }
+          }}
+          style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+        />
+        <div style={{ fontSize: '32px', marginBottom: '8px' }}>{files.length > 0 ? '✅' : '📂'}</div>
+        <p className="text-sm font-semibold" style={{ color: files.length > 0 ? 'var(--clr-primary-h)' : 'var(--clr-text-2)' }}>
+          {files.length > 0 ? `${files.length} file(s) selected` : 'Click to Browse Files'}
+        </p>
+        <p className="text-xs mt-1" style={{ color: 'var(--clr-text-3)' }}>{hint}</p>
+        
+        {files.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginTop: '12px' }}>
+            {files.map((f, i) => (
+              <span key={i} style={{ fontSize: '11px', background: 'rgba(99,102,241,0.1)', padding: '4px 8px', borderRadius: '4px', color: 'var(--clr-primary-h)' }}>
+                {f.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -2747,6 +2897,7 @@ function StatsTab() {
                       <th>Guides</th>
                       <th>Past Papers</th>
                       <th>Cheatsheets</th>
+                      <th>MCQs</th>
                       <th>Total Resources</th>
                     </tr>
                   </thead>
@@ -2763,6 +2914,7 @@ function StatsTab() {
                         <td>{sem.guideCount}</td>
                         <td>{sem.pastPapersCount}</td>
                         <td>{sem.cheatsheetsCount}</td>
+                        <td>{sem.mcqsCount || 0}</td>
                         <td style={{ fontWeight: 700, color: 'var(--clr-accent)' }}>{sem.total}</td>
                       </tr>
                     ))}
