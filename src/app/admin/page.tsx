@@ -499,6 +499,7 @@ export default function AdminPage() {
             {/* ── Manage Materials Tab ── */}
             {tab === 'materials' && <ManageMaterialsTab />}
 
+
             {/* ── Upload Tab ── */}
             {tab === 'upload' && <UploadTab />}
 
@@ -1232,7 +1233,7 @@ function UsersTab() {
 
 /* ── Upload Tab ── */
 function UploadTab() {
-  const [contentType, setContentType] = useState<'NOTE' | 'PAST_PAPER' | 'CHEATSHEET' | 'SOLUTION_BOOK'>('NOTE')
+  const [contentType, setContentType] = useState<'NOTE' | 'PAST_PAPER' | 'CHEATSHEET' | 'SOLUTION_BOOK' | 'MCQ'>('NOTE')
   const [sourceType, setSourceType] = useState<'FILE' | 'DRIVE'>('FILE')
   const [driveLink, setDriveLink] = useState('')
   const [faculties, setFaculties] = useState<Faculty[]>([])
@@ -1264,6 +1265,28 @@ function UploadTab() {
   const [sheetTitle, setSheetTitle] = useState('')
   const [sheetContent, setSheetContent] = useState('')
   const [extractText, setExtractText] = useState(true)
+
+  // MCQ State
+  const [mcqItems, setMcqItems] = useState([
+    { question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }
+  ])
+  const [savingMcqs, setSavingMcqs] = useState(false)
+
+  function addMcqItem() {
+    setMcqItems(prev => [...prev, { question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }])
+  }
+
+  function removeMcqItem(i: number) {
+    setMcqItems(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  function updateMcqItem(i: number, field: string, val: any) {
+    setMcqItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
+  }
+
+  function updateMcqOption(qi: number, oi: number, val: string) {
+    setMcqItems(prev => prev.map((item, idx) => idx === qi ? { ...item, options: item.options.map((o, k) => k === oi ? val : o) } : item))
+  }
 
   useEffect(() => {
     fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
@@ -1309,6 +1332,29 @@ function UploadTab() {
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
+
+    // ── MCQ path ──
+    if (contentType === 'MCQ') {
+      if (!subjectId) { toast.error('Please select a subject'); return }
+      const invalid = mcqItems.find(m => !m.question.trim() || m.options.some(o => !o.trim()))
+      if (invalid) { toast.error('Fill in all questions and options'); return }
+      setSavingMcqs(true)
+      try {
+        let saved = 0
+        for (const m of mcqItems) {
+          const res = await fetch('/api/admin/mcqs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subjectId, question: m.question, options: m.options, correctOption: m.correctOption, explanation: m.explanation })
+          })
+          if (res.ok) saved++
+        }
+        toast.success(`✅ ${saved} MCQ(s) saved successfully!`)
+        setMcqItems([{ question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }])
+      } catch { toast.error('Failed to save MCQs') }
+      finally { setSavingMcqs(false) }
+      return
+    }
 
     // ── SOLUTION BOOK path ──
     if (contentType === 'SOLUTION_BOOK') {
@@ -1596,9 +1642,11 @@ function UploadTab() {
     { type: 'PAST_PAPER',    icon: '📝', label: 'Past Paper' },
     { type: 'CHEATSHEET',    icon: '📋', label: 'Cheatsheet' },
     { type: 'SOLUTION_BOOK', icon: '📚', label: 'Solution Book' },
+    { type: 'MCQ',           icon: '✅', label: 'MCQ Questions' },
   ]
 
   const isSolutionBook = contentType === 'SOLUTION_BOOK'
+  const isMcq = contentType === 'MCQ'
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: '850px', margin: '0 auto', paddingBottom: '60px' }}>
@@ -1625,7 +1673,7 @@ function UploadTab() {
                 📚 <strong>Solution Book:</strong> Select a specific subject (e.g. <em>Numerical Methods</em>) to display it inside that subject only. Choose <em>"Full Semester Guide"</em> to display it at the top for all subjects.
               </div>
             )}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
               {typeOptions.map((item) => (
                 <button
                   key={item.type} type="button"
@@ -1647,7 +1695,7 @@ function UploadTab() {
         </div>
 
         {/* Step 2: File Source */}
-        {contentType !== 'CHEATSHEET' && (
+        {contentType !== 'CHEATSHEET' && contentType !== 'MCQ' && (
           <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #06b6d4' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
               <div style={{ background: '#06b6d4', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>2</div>
@@ -2024,10 +2072,65 @@ function UploadTab() {
               </div>
             </motion.div>
           )}
+
+          {/* MCQ Fields */}
+          {contentType === 'MCQ' && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ padding: '12px 16px', background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', fontSize: '13px', color: '#6ee7b7' }}>
+                ✅ Add multiple MCQs at once. Each question needs 4 options and a correct answer. Explanation is optional.
+              </div>
+              {mcqItems.map((mcq, qi) => (
+                <div key={qi} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-primary-h)' }}>Question {qi + 1}</span>
+                    {mcqItems.length > 1 && (
+                      <button type="button" onClick={() => removeMcqItem(qi)} style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer' }}>✕ Remove</button>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Question Text</label>
+                      <input className="input-field" placeholder="e.g. Which of the following is a feature of OOP?" value={mcq.question} onChange={e => updateMcqItem(qi, 'question', e.target.value)} required />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      {mcq.options.map((opt, oi) => (
+                        <div key={oi}>
+                          <label className="block text-sm font-semibold mb-1" style={{ color: oi === mcq.correctOption ? 'var(--clr-success)' : 'var(--clr-text-3)', fontSize: '11px' }}>
+                            Option {String.fromCharCode(65 + oi)} {oi === mcq.correctOption ? '✓ Correct' : ''}
+                          </label>
+                          <input className="input-field" placeholder={`Option ${String.fromCharCode(65 + oi)}`} value={opt} onChange={e => updateMcqOption(qi, oi, e.target.value)}
+                            style={{ borderColor: oi === mcq.correctOption ? 'rgba(34,197,94,0.5)' : undefined }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Correct Answer</label>
+                        <select className="input-field" value={mcq.correctOption} onChange={e => updateMcqItem(qi, 'correctOption', parseInt(e.target.value))} style={{ cursor: 'pointer' }}>
+                          {['A', 'B', 'C', 'D'].map((l, i) => <option key={i} value={i}>Option {l}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Explanation (optional)</label>
+                        <input className="input-field" placeholder="Brief explanation for the answer" value={mcq.explanation} onChange={e => updateMcqItem(qi, 'explanation', e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={addMcqItem}
+                style={{ background: 'rgba(99,102,241,0.1)', border: '1px dashed rgba(99,102,241,0.5)', borderRadius: '10px', padding: '14px', fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', cursor: 'pointer', width: '100%' }}
+              >
+                + Add Another Question
+              </button>
+            </motion.div>
+          )}
         </div>
 
-        <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '12px', padding: '18px', fontSize: '16px', borderRadius: '12px', letterSpacing: '0.5px' }} disabled={uploading}>
-          {uploading ? <><span className="spinner" /> Processing Upload...</>
+        <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '12px', padding: '18px', fontSize: '16px', borderRadius: '12px', letterSpacing: '0.5px', background: isMcq ? 'linear-gradient(135deg, #10b981, #059669)' : undefined }} disabled={uploading || savingMcqs}>
+          {(uploading || savingMcqs) ? <><span className="spinner" /> {isMcq ? 'Saving MCQs...' : 'Processing Upload...'}</>
+            : isMcq ? `✅ Save ${mcqItems.length} MCQ(s) to Database`
             : isSolutionBook ? '📚 Publish Solution Book'
             : sourceType === 'DRIVE' ? '🔗 Save Drive Link & Publish'
             : '📤 Upload & Publish Material'}

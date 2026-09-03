@@ -30,6 +30,14 @@ interface Cheatsheet {
   content: string
 }
 
+interface MCQ {
+  id: string
+  question: string
+  options: string[]
+  correctOption: number
+  explanation: string | null
+}
+
 interface SolutionBook {
   id: string
   title: string
@@ -48,6 +56,7 @@ interface Subject {
   pastPapers: PastPaper[]
   cheatsheets: Cheatsheet[]
   solutionBooks?: SolutionBook[]
+  mcqs?: MCQ[]
 }
 
 const listContainerVariants = {
@@ -86,7 +95,7 @@ export default function SubjectRow({
   semesterOrder?: number
   systemType?: string
 }) {
-  const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | null>(null)
+  const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | null>(null)
 
   const semPath = getSemesterPath(facultyId, semesterOrder, systemType)
 
@@ -123,8 +132,9 @@ export default function SubjectRow({
   const pastPapers = subject.pastPapers
   const cheatsheets = subject.cheatsheets
   const solutionBooks = subject.solutionBooks || []
+  const mcqs = subject.mcqs || []
 
-  const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks') => {
+  const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs') => {
     if (activeTab === tabName) {
       setActiveTab(null)
     } else {
@@ -170,6 +180,7 @@ export default function SubjectRow({
     else if (projects.length > 0) setActiveTab('project')
     else if (guides.length > 0) setActiveTab('guide')
     else if (cheatsheets.length > 0) setActiveTab('cheatsheets')
+    else if (mcqs.length > 0) setActiveTab('mcqs')
   }
 
   return (
@@ -298,6 +309,15 @@ export default function SubjectRow({
                 style={getPillStyle('cheatsheets', cheatsheets.length)}
               >
                 📋 Cheatsheet ({cheatsheets.length})
+              </button>
+            )}
+
+            {mcqs.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleTab('mcqs') }}
+                style={getPillStyle('mcqs', mcqs.length)}
+              >
+                ✅ MCQs ({mcqs.length})
               </button>
             )}
           </div>
@@ -475,10 +495,85 @@ export default function SubjectRow({
                   </motion.div>
                 </div>
               )}
+
+              {/* MCQs List */}
+              {activeTab === 'mcqs' && (
+                <div>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>✅ Practice MCQs</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {mcqs.map((m, i) => (
+                      <McqItem key={m.id} mcq={m} index={i} />
+                    ))}
+                  </motion.div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
+  )
+}
+
+function McqItem({ mcq, index }: { mcq: MCQ, index: number }) {
+  const [selectedOpt, setSelectedOpt] = useState<number | null>(null)
+  
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px' }}>
+      <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '12px' }}>{index + 1}. {mcq.question}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+        {mcq.options.map((opt, idx) => {
+          const isSelected = selectedOpt === idx
+          const isCorrect = mcq.correctOption === idx
+          const showResult = selectedOpt !== null
+          
+          let bg = 'rgba(255,255,255,0.04)'
+          let border = '1px solid transparent'
+          let color = 'var(--clr-text-2)'
+          
+          if (showResult) {
+            if (isCorrect) {
+              bg = 'rgba(34, 197, 94, 0.15)'
+              border = '1px solid var(--clr-success)'
+              color = 'var(--clr-success)'
+            } else if (isSelected) {
+              bg = 'rgba(239, 68, 68, 0.15)'
+              border = '1px solid var(--clr-danger)'
+              color = 'var(--clr-danger)'
+            }
+          } else if (isSelected) {
+            bg = 'rgba(99,102,241,0.2)'
+            border = '1px solid var(--clr-primary)'
+            color = '#fff'
+          }
+
+          return (
+            <button
+              key={idx}
+              onClick={() => { if (selectedOpt === null) setSelectedOpt(idx) }}
+              disabled={selectedOpt !== null}
+              style={{
+                textAlign: 'left',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                cursor: selectedOpt === null ? 'pointer' : 'default',
+                background: bg,
+                border: border,
+                color: color,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {String.fromCharCode(65 + idx)}. {opt}
+            </button>
+          )
+        })}
+      </div>
+      {selectedOpt !== null && mcq.explanation && (
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ marginTop: '12px', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '13px', color: 'var(--clr-text-2)' }}>
+          <strong style={{ color: 'var(--clr-primary-h)' }}>Explanation:</strong> {mcq.explanation}
+        </motion.div>
+      )}
+    </div>
   )
 }

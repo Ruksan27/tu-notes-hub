@@ -140,6 +140,7 @@ model Subject {
   pastPapers    PastPaper[]
   cheatsheets   Cheatsheet[]
   solutionBooks SolutionBook[]
+  mcqs          MCQ[]
 }
 
 model Note {
@@ -176,6 +177,17 @@ model Cheatsheet {
   subjectId String
   subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model MCQ {
+  id            String   @id @default(uuid())
+  question      String   @db.Text
+  options       Json     
+  correctOption Int      
+  explanation   String?  @db.Text
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
 }
 
 model SolutionBook {

@@ -103,6 +103,9 @@ export default async function SemesterPage({ params, searchParams }: Props) {
                 orderBy: { createdAt: 'desc' },
                 select: { id: true, title: true, content: true, subjectId: true, createdAt: true }
               },
+              mcqs: {
+                orderBy: { createdAt: 'asc' },
+              },
             },
           },
         },

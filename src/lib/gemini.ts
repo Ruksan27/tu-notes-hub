@@ -194,3 +194,39 @@ Return STRICTLY valid JSON only (no markdown, no extra text):
   const cleaned = raw.replace(/```json|```/g, '').trim()
   return JSON.parse(cleaned)
 }
+
+// Generate MCQs based on past papers
+export async function generateMcqs(
+  subjectTitle: string,
+  papersText: Array<{ year: number; text: string }>
+): Promise<any[]> {
+  const papersContext = papersText
+    .map((p) => `=== YEAR ${p.year} ===\n${p.text}`)
+    .join('\n\n')
+
+  const prompt = `
+You are an expert TU (Tribhuvan University) examiner.
+
+Analyze these past exam papers for subject: "${subjectTitle}"
+
+${papersContext}
+
+Task:
+Generate 10 high-yield Multiple Choice Questions (MCQs) that are highly likely to appear in future exams based on the concepts tested in these past papers.
+
+Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra text):
+[
+  {
+    "question": "string",
+    "options": ["string", "string", "string", "string"],
+    "correctOption": number (0 to 3),
+    "explanation": "short explanation of the correct answer"
+  }
+]
+`
+
+  const raw = await callGemini(prompt)
+  const cleaned = raw.replace(/```json|```/g, '').trim()
+  return JSON.parse(cleaned)
+}
+

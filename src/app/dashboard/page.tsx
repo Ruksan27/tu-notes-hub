@@ -545,7 +545,9 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
   const [selectedSubjectId, setSelectedSubjectId] = useState('')
   const [selectedPaperIds, setSelectedPaperIds] = useState<string[]>([])
   const [report, setReport] = useState<any>(null)
+  const [mcqs, setMcqs] = useState<any[] | null>(null)
   const [loading, setLoading] = useState(false)
+  const [generatingMcqs, setGeneratingMcqs] = useState(false)
   const currentSubject = subjects.find((s) => s.id === selectedSubjectId)
 
   useEffect(() => { setSelectedPaperIds([]); setReport(null) }, [selectedSubjectId])
@@ -567,6 +569,26 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
       } else toast.error(data.error || 'Failed to generate report')
     } catch { toast.error('AI request failed') }
     finally { setLoading(false) }
+  }
+
+  async function handleGenerateMcqs() {
+    if (selectedPaperIds.length < 2) { toast.error('Select at least 2 papers'); return }
+    setGeneratingMcqs(true); setMcqs(null)
+    try {
+      const res = await fetch('/api/ai/mcq-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subjectId: selectedSubjectId, paperIds: selectedPaperIds }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setMcqs(data.mcqs)
+        toast.success('Generated 10 MCQs successfully! 🎉')
+      } else {
+        toast.error(data.error || 'Failed to generate MCQs')
+      }
+    } catch { toast.error('MCQ request failed') }
+    finally { setGeneratingMcqs(false) }
   }
 
   async function downloadPDF() {
@@ -731,13 +753,57 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
             </motion.div>
           )}
 
-          <button className="btn btn-primary btn-lg" onClick={runAIAnalysis}
-            disabled={loading || selectedPaperIds.length < 2}
-            style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
-          >
-            {loading ? <><span className="spinner" /> Analyzing with AI...</> : `🤖 Run AI Analysis (${selectedPaperIds.length} selected)`}
-          </button>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+            <button className="btn btn-primary btn-lg" onClick={runAIAnalysis}
+              disabled={loading || generatingMcqs || selectedPaperIds.length < 2}
+              style={{ flex: 1, justifyContent: 'center' }}
+            >
+              {loading ? <><span className="spinner" /> Analyzing with AI...</> : `🤖 Run AI Analysis (${selectedPaperIds.length})`}
+            </button>
+            <button className="btn btn-primary btn-lg" onClick={handleGenerateMcqs}
+              disabled={loading || generatingMcqs || selectedPaperIds.length < 2}
+              style={{ flex: 1, justifyContent: 'center', background: 'linear-gradient(135deg, #10b981, #059669)' }}
+            >
+              {generatingMcqs ? <><span className="spinner" /> Generating MCQs...</> : `📝 Generate MCQs (${selectedPaperIds.length})`}
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* MCQs View */}
+      {mcqs && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '32px', marginBottom: '24px' }}>
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+            <h3 className="text-xl font-bold">📝 Generated MCQs for {currentSubject?.title}</h3>
+            <button className="btn btn-outline" onClick={() => setMcqs(null)} style={{ fontSize: '12px', padding: '6px 14px' }}>← Close MCQs</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {mcqs.map((m: any, i: number) => (
+              <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '16px', borderRadius: '12px' }}>
+                <p style={{ fontWeight: 600, marginBottom: '12px', fontSize: '15px' }}>{i + 1}. {m.question}</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  {m.options.map((opt: string, idx: number) => (
+                    <div key={idx} style={{ 
+                      padding: '10px 14px', 
+                      borderRadius: '8px', 
+                      background: m.correctOption === idx ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.03)',
+                      border: m.correctOption === idx ? '1px solid var(--clr-success)' : '1px solid transparent',
+                      color: m.correctOption === idx ? 'var(--clr-success)' : 'var(--clr-text-2)',
+                      fontSize: '13px'
+                    }}>
+                      {String.fromCharCode(65 + idx)}. {opt} {m.correctOption === idx && '✓'}
+                    </div>
+                  ))}
+                </div>
+                {m.explanation && (
+                  <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', fontSize: '12px' }}>
+                    <strong style={{ color: 'var(--clr-primary-h)' }}>Explanation:</strong> {m.explanation}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
       )}
 
       <div style={{
