@@ -28,6 +28,9 @@ export interface ExamPaperData {
     questions: {
       number: number;
       text: string;
+      options?: string[];
+      correctOption?: number;
+      explanation?: string;
     }[];
   }[];
 }
@@ -109,58 +112,114 @@ export default function ExamPaperViewer({ data }: Props) {
               {group.questions.map((q, qIndex) => {
                 const qKey = `${gIndex}-${qIndex}`
                 const isHovered = hoveredQ === qKey
+
+                // Handle MCQ options parsing if options array isn't provided but embedded in text
+                let mainQuestion = q.text
+                let rawOptions: string[] = q.options ? [...q.options] : []
+                const correctOptionIndex = q.correctOption
+                const explanation = q.explanation
+
+                if (rawOptions.length === 0 && /[a-d]\)/i.test(mainQuestion)) {
+                  const optRegex = /([a-d]\)\s*[\s\S]+?)(?=\s*[a-d]\)|$)/gi
+                  const matches = mainQuestion.match(optRegex)
+                  if (matches && matches.length >= 2) {
+                    const firstOptIdx = mainQuestion.search(/[a-d]\)/i)
+                    if (firstOptIdx > 0) {
+                      rawOptions = matches.map(m => m.trim())
+                      mainQuestion = mainQuestion.substring(0, firstOptIdx).trim()
+                    }
+                  }
+                }
+
                 return (
                   <li
                     key={qIndex}
-                    className="mb-[10px] text-justify pl-2"
+                    className="mb-[14px] text-justify pl-2"
                     style={{ position: 'relative' }}
                     onMouseEnter={() => setHoveredQ(qKey)}
                     onMouseLeave={() => setHoveredQ(null)}
                   >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath, remarkGfm]}
-                      rehypePlugins={[rehypeKatex]}
-                      components={{ p: (props: any) => <>{props.children}</> }}
-                    >
-                      {q.text}
-                    </ReactMarkdown>
+                    <div style={{ display: 'inline' }}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath, remarkGfm]}
+                        rehypePlugins={[rehypeKatex]}
+                        components={{ p: (props: any) => <>{props.children}</> }}
+                      >
+                        {mainQuestion}
+                      </ReactMarkdown>
 
-                    {/* Gemini AI Button — appears on hover */}
-                    {isHovered && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
-                        <button
-                          onClick={() => openAiModal(q.text)}
-                          title="Ask Scholar AI for answer"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            padding: '3px 10px 3px 6px',
-                            borderRadius: '20px',
-                            border: '1px solid rgba(99,102,241,0.3)',
-                            background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(236,72,153,0.05))',
-                            cursor: 'pointer',
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            color: '#4f46e5',
-                            fontFamily: 'Inter, sans-serif',
-                            boxShadow: '0 2px 8px rgba(99,102,241,0.1)',
-                            transition: 'all 0.15s',
-                            verticalAlign: 'middle',
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1))'
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.25)'
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(236,72,153,0.05))'
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,0.1)'
-                          }}
-                        >
-                          <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'scale(1.2)', pointerEvents: 'none' }} />
-                          Smart Answer
-                        </button>
-                      </span>
+                      {/* Gemini AI Button — appears on hover */}
+                      {isHovered && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
+                          <button
+                            onClick={() => openAiModal(q.text)}
+                            title="Ask Scholar AI for answer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '3px 10px 3px 6px',
+                              borderRadius: '20px',
+                              border: '1px solid rgba(99,102,241,0.3)',
+                              background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(236,72,153,0.05))',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: '#4f46e5',
+                              fontFamily: 'Inter, sans-serif',
+                              boxShadow: '0 2px 8px rgba(99,102,241,0.1)',
+                              transition: 'all 0.15s',
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'scale(1.2)', pointerEvents: 'none' }} />
+                            Smart Answer
+                          </button>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* MCQ Options Rendering */}
+                    {rawOptions.length > 0 && (
+                      <ul style={{ listStyleType: 'none', paddingLeft: '0', margin: '8px 0 12px 0' }}>
+                        {rawOptions.map((opt, idx) => {
+                          const isCorrect = correctOptionIndex === idx
+                          const cleanOptText = opt.replace(/^[a-d][\).\s]+/i, '')
+
+                          return (
+                            <li
+                              key={idx}
+                              style={{
+                                marginBottom: '6px',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                backgroundColor: isCorrect ? 'rgba(16, 185, 129, 0.14)' : 'transparent',
+                                border: isCorrect ? '1px solid #10b981' : '1px solid transparent',
+                                fontWeight: isCorrect ? 'bold' : 'normal',
+                                color: isCorrect ? '#047857' : '#1e293b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '11.5pt'
+                              }}
+                            >
+                              <span>{String.fromCharCode(97 + idx)}) {cleanOptText}</span>
+                              {isCorrect && (
+                                <span style={{ fontSize: '11px', marginLeft: 'auto', background: '#10b981', color: '#ffffff', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                  ✓ Correct Answer
+                                </span>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+
+                    {/* Explanation Box */}
+                    {explanation && (
+                      <div style={{ marginTop: '8px', padding: '8px 12px', background: '#f1f5f9', borderRadius: '6px', fontSize: '10.5pt', color: '#1e293b', borderLeft: '4px solid #0284c7' }}>
+                        <strong style={{ color: '#0369a1' }}>💡 Explanation:</strong> {explanation}
+                      </div>
                     )}
                   </li>
                 )

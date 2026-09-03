@@ -68,8 +68,11 @@ export async function PUT(request: Request) {
     const data = await request.json()
     const { id, type, ...fields } = data
 
-    if (!id || !type) {
+    if (type !== 'mcq-set' && (!id || !type)) {
       return NextResponse.json({ error: 'ID and type are required' }, { status: 400 })
+    }
+    if (!type) {
+      return NextResponse.json({ error: 'Type is required' }, { status: 400 })
     }
 
     let updated;
@@ -78,19 +81,21 @@ export async function PUT(request: Request) {
       updated = await prisma.note.update({
         where: { id },
         data: {
-          title: fields.title,
-          description: fields.description,
-          noteType: fields.noteType,
-          isPremium: fields.isPremium,
-          author: fields.author,
+          ...(fields.title !== undefined ? { title: fields.title } : {}),
+          ...(fields.description !== undefined ? { description: fields.description } : {}),
+          ...(fields.noteType !== undefined ? { noteType: fields.noteType } : {}),
+          ...(fields.isPremium !== undefined ? { isPremium: fields.isPremium } : {}),
+          ...(fields.author !== undefined ? { author: fields.author } : {}),
+          ...(fields.extractedText !== undefined ? { extractedText: fields.extractedText } : {}),
         }
       })
     } else if (type === 'pastpaper') {
       updated = await prisma.pastPaper.update({
         where: { id },
         data: {
-          year: parseInt(fields.year),
-          examType: fields.examType,
+          ...(fields.year !== undefined ? { year: parseInt(fields.year) } : {}),
+          ...(fields.examType !== undefined ? { examType: fields.examType } : {}),
+          ...(fields.extractedText !== undefined ? { extractedText: fields.extractedText } : {}),
         }
       })
     } else if (type === 'cheatsheet') {
@@ -123,6 +128,20 @@ export async function PUT(request: Request) {
           examCategory: fields.examCategory || null,
         }
       })
+    } else if (type === 'mcq-set') {
+      const { ids, year, examCategory } = fields
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return NextResponse.json({ error: 'ids array is required for mcq-set update' }, { status: 400 })
+      }
+      const parsedYear = year !== null && year !== undefined && year !== '' ? parseInt(`${year}`) : null
+      await prisma.mCQ.updateMany({
+        where: { id: { in: ids } },
+        data: {
+          year: isNaN(parsedYear as number) ? null : parsedYear,
+          examCategory: examCategory || null,
+        }
+      })
+      return NextResponse.json({ success: true })
     }
 
     return NextResponse.json({ success: true, updated })

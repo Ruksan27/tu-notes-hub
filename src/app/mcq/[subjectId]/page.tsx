@@ -39,13 +39,13 @@ function formatExamType(type: string) {
 
 function McqItem({ mcq, index }: { mcq: MCQ; index: number }) {
   return (
-    <div style={{ marginBottom: '20px', fontSize: '11pt', textTransform: 'none' }}>
-      <div style={{ fontWeight: 'bold', marginBottom: '6px', color: 'var(--clr-text-1)', lineHeight: '1.5' }}>
+    <div style={{ marginBottom: '22px', fontSize: '11pt', textTransform: 'none', color: '#1e293b' }}>
+      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#0f172a', lineHeight: '1.5', fontSize: '11.5pt' }}>
         {index + 1}. {mcq.question}
       </div>
 
-      {/* Options List — Directly showing correct answer in Yellow */}
-      <ul style={{ listStyleType: 'none', paddingLeft: '20px', margin: '6px 0' }}>
+      {/* Options List — High contrast for print/view */}
+      <ul style={{ listStyleType: 'none', paddingLeft: '16px', margin: '6px 0' }}>
         {mcq.options.map((opt, idx) => {
           const isCorrect = mcq.correctOption === idx
 
@@ -54,20 +54,24 @@ function McqItem({ mcq, index }: { mcq: MCQ; index: number }) {
               key={idx}
               className={isCorrect ? 'correct' : ''}
               style={{
-                marginBottom: '5px',
-                padding: '6px 10px',
+                marginBottom: '6px',
+                padding: '6px 12px',
                 borderRadius: '6px',
-                backgroundColor: isCorrect ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                border: isCorrect ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                backgroundColor: isCorrect ? 'rgba(16, 185, 129, 0.14)' : 'transparent',
+                border: isCorrect ? '1px solid #10b981' : '1px solid transparent',
                 fontWeight: isCorrect ? 'bold' : 'normal',
-                color: isCorrect ? '#10b981' : 'var(--clr-text-2)',
+                color: isCorrect ? '#047857' : '#334155',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}
             >
               <span>{String.fromCharCode(97 + idx)}) {opt}</span>
-              {isCorrect && <span style={{ fontSize: '12px', marginLeft: 'auto' }}>✅ Correct Answer</span>}
+              {isCorrect && (
+                <span style={{ fontSize: '11px', marginLeft: 'auto', background: '#10b981', color: '#ffffff', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                  ✓ Correct Answer
+                </span>
+              )}
             </li>
           )
         })}
@@ -75,8 +79,8 @@ function McqItem({ mcq, index }: { mcq: MCQ; index: number }) {
 
       {/* Explanation shown directly */}
       {mcq.explanation && (
-        <div style={{ marginTop: '8px', marginLeft: '20px', padding: '8px 12px', background: '#f8fafc', borderRadius: '4px', fontSize: '10pt', color: '#334155', borderLeft: '3px solid #0284c7' }}>
-          <strong>💡 Explanation:</strong> {mcq.explanation}
+        <div style={{ marginTop: '10px', marginLeft: '16px', padding: '10px 14px', background: '#f1f5f9', borderRadius: '6px', fontSize: '10pt', color: '#1e293b', borderLeft: '4px solid #0284c7' }}>
+          <strong style={{ color: '#0369a1' }}>💡 Explanation:</strong> {mcq.explanation}
         </div>
       )}
     </div>
@@ -377,8 +381,8 @@ export default function McqPracticePage() {
                 Group A (Multiple Choice Questions)
               </div>
 
-              <div style={{ fontWeight: 'bold', fontSize: '11pt', marginBottom: '15px' }}>
-                Attempt all questions. Correct answers are highlighted in yellow.
+              <div style={{ fontWeight: 'bold', fontSize: '11pt', marginBottom: '15px', color: '#1e293b' }}>
+                Attempt all questions. Correct answers are highlighted in green.
               </div>
 
               {/* Questions List */}

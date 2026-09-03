@@ -28,10 +28,8 @@ export async function callGemini(
     return ''
   }
 
-  const MODEL = 'gemini-3.6-flash'
-  const MAX_RETRIES = 3
-  const RETRY_DELAY_MS = 3_000
-  const TIMEOUT_MS = 60_000 // 60 seconds — generous for PDF OCR
+  const MODELS_TO_TRY = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+  const TIMEOUT_MS = 45_000
 
   // Build contents once
   const contents: any[] = []
@@ -44,11 +42,12 @@ export async function callGemini(
 
   let lastError: any = null
 
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+  for (const modelName of MODELS_TO_TRY) {
     const apiKey = getNextApiKey()
     if (!apiKey) break
 
     try {
+      console.log(`[Gemini AI] Trying model: ${modelName}`)
       const genAI = new GoogleGenAI({ apiKey })
 
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -57,7 +56,7 @@ export async function callGemini(
 
       const response = await Promise.race([
         genAI.models.generateContent({
-          model: MODEL,
+          model: modelName,
           contents,
           ...(systemInstruction ? { config: { systemInstruction } } : {}),
         }),
@@ -69,24 +68,11 @@ export async function callGemini(
     } catch (error: any) {
       lastError = error
       const status = error?.status ?? error?.error?.code ?? 0
-      const msg = error?.message || ''
-
-      const isRetryable =
-        status === 429 || status === 503 || status === 500 || status === 502 || status === 504 ||
-        msg.includes('429') || msg.includes('503') || msg.includes('UNAVAILABLE') ||
-        msg.includes('high demand') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED') ||
-        error?._isTimeout
-
-      if (isRetryable && attempt < MAX_RETRIES - 1) {
-        console.warn(`[Gemini] Attempt ${attempt + 1}/${MAX_RETRIES} failed (${status || 'timeout'}). Retrying in ${RETRY_DELAY_MS / 1000}s...`)
-        await new Promise(r => setTimeout(r, RETRY_DELAY_MS))
-        continue
-      }
-
-      console.warn(`[Gemini] All ${attempt + 1} attempts failed. Falling back to Groq AI...`)
-      break
+      console.warn(`[Gemini Model ${modelName} Failed (${status})]. Trying next model...`)
     }
   }
+
+  console.warn(`[Gemini AI] All models failed. Falling back to Groq AI...`)
 
   // Groq fallback
   try {
@@ -98,7 +84,7 @@ export async function callGemini(
   }
 }
 
-// Fallback AI provider using Groq (gsk_...)
+// Fallback AI provider using Groq
 export async function callGroq(
   prompt: string,
   systemInstruction?: string,
@@ -110,11 +96,13 @@ export async function callGroq(
     return ''
   }
 
-  // Filter images: Groq vision API only accepts image/* mimeTypes (jpg, png, webp)
   const validImages = images?.filter(img => img.mimeType.startsWith('image/')) || []
   const hasImages = validImages.length > 0
-  const model = hasImages ? 'llama-3.2-11b-vision-preview' : 'llama-3.3-70b-versatile'
-  console.log(`[Groq AI] Calling model: ${model}`)
+  
+  // Try models in order until one succeeds
+  const modelsToTry = hasImages
+    ? ['llama-3.2-11b-vision-preview']
+    : ['llama-3.1-70b-versatile', 'llama3-70b-8192', 'mixtral-8x7b-32768', 'llama-3.3-70b-specdec']
 
   const messages: any[] = []
   if (systemInstruction) {
@@ -134,27 +122,36 @@ export async function callGroq(
     messages.push({ role: 'user', content: prompt })
   }
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.2,
-    })
-  })
+  for (const model of modelsToTry) {
+    try {
+      console.log(`[Groq AI] Trying model: ${model}`)
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.2,
+        })
+      })
 
-  if (!response.ok) {
-    const errText = await response.text()
-    console.error(`[Groq Error] ${response.status}:`, errText)
-    throw new Error(`Groq API returned ${response.status}: ${errText}`)
+      if (response.ok) {
+        const data = await response.json()
+        const resText = data.choices?.[0]?.message?.content ?? ''
+        if (resText) return resText
+      } else {
+        const errText = await response.text()
+        console.warn(`[Groq Model ${model} ${response.status}]:`, errText)
+      }
+    } catch (e) {
+      console.warn(`[Groq Model ${model} Exception]:`, e)
+    }
   }
 
-  const data = await response.json()
-  return data.choices?.[0]?.message?.content ?? ''
+  return ''
 }
 
 // Extract text from a document URL (PDF or Image) using Gemini
@@ -209,6 +206,20 @@ Extract the exam paper content exactly as written and return it STRICTLY as a va
   "instruction": "Candidates are required to answer the questions in their own words as far as possible.",
   "groups": [
     {
+      "groupName": "Group A",
+      "marks": "[10 x 1 = 10]",
+      "instruction": "Attempt all questions.",
+      "questions": [
+        {
+          "number": 1,
+          "text": "What is the original point if it is reflected relative to diagonal line y = x such that the reflected point is (5, 6)?",
+          "options": ["(-5, -6)", "(5, -6)", "(6, 5)", "(-6, -5)"],
+          "correctOption": 2,
+          "explanation": "Reflection across y = x swaps x and y coordinates, turning (x, y) into (y, x)."
+        }
+      ]
+    },
+    {
       "groupName": "Group B",
       "marks": "[6 x 5 = 30]",
       "instruction": "Attempt any SIX questions.",
@@ -218,7 +229,7 @@ Extract the exam paper content exactly as written and return it STRICTLY as a va
     }
   ]
 }
-If any field is missing, use an empty string or omit it, but keep the structure intact. Ensure math symbols remain intact (e.g. $A(2,3)$ or $$x^2$$).
+If any question is a Multiple Choice Question (MCQ), ALWAYS extract its 4 options into the "options" array, determine the "correctOption" index (0, 1, 2, or 3), and add a concise "explanation". If any field is missing, use an empty string or omit it, but keep the structure intact. Ensure math symbols remain intact (e.g. $A(2,3)$ or $$x^2$$).
 `;
   const rawResponse = await callGemini(prompt, undefined, [{ base64, mimeType }])
   

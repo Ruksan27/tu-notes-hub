@@ -9,6 +9,9 @@ import AdminSellersTab from '@/components/admin/AdminSellersTab'
 import AdminPricingTab from '@/components/admin/AdminPricingTab'
 import AdminSeoTab from '@/components/admin/AdminSeoTab'
 import AdminBackupTab from '@/components/admin/AdminBackupTab'
+import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
+import MarkdownPaperViewer from '@/components/MarkdownPaperViewer'
+import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
 type AdminTab = 'overview' | 'payments' | 'faculties' | 'semesters' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup'
 
 interface Payment {
@@ -537,6 +540,195 @@ function ManageMaterialsTab() {
   const [ocrRunningId, setOcrRunningId] = useState<string | null>(null)
   const [showAddMcq, setShowAddMcq] = useState(false)
   const [newMcq, setNewMcq] = useState<any>({ question: '', options: ['', '', '', ''], correctOption: 0, explanation: '', year: new Date().getFullYear(), examCategory: 'BOARD_EXAM' })
+  
+  // Paper Viewer & Text Editor modal states
+  const [viewPaperItem, setViewPaperItem] = useState<{ id: string; type: 'pastpaper' | 'note'; title: string; extractedText: string; cloudinaryUrl: string } | null>(null)
+  const [viewPaperMode, setViewPaperMode] = useState<'PREVIEW' | 'EDIT'>('PREVIEW')
+  const [editTextValue, setEditTextValue] = useState('')
+  const [savingPaperText, setSavingPaperText] = useState(false)
+
+  function openPaperViewer(item: any, type: 'pastpaper' | 'note', title: string) {
+    setViewPaperItem({ id: item.id, type, title, extractedText: item.extractedText || '', cloudinaryUrl: item.cloudinaryUrl })
+    setEditTextValue(item.extractedText || '')
+    setViewPaperMode('PREVIEW')
+  }
+
+  async function handleSavePaperText() {
+    if (!viewPaperItem) return
+    setSavingPaperText(true)
+    try {
+      const res = await fetch('/api/admin/materials', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: viewPaperItem.id,
+          type: viewPaperItem.type,
+          extractedText: editTextValue
+        })
+      })
+      if (res.ok) {
+        toast.success('Extracted text updated successfully! 🎉')
+        setViewPaperItem({ ...viewPaperItem, extractedText: editTextValue })
+        setViewPaperMode('PREVIEW')
+        loadMaterials()
+      } else {
+        toast.error('Failed to update text')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setSavingPaperText(false)
+    }
+  }
+
+  const [manageMcqSet, setManageMcqSet] = useState<{ label: string; items: any[] } | null>(null)
+  const [editMcqSetItem, setEditMcqSetItem] = useState<{ label: string; year: any; examCategory: any; ids: string[] } | null>(null)
+  const [editMcqSetForm, setEditMcqSetForm] = useState<{ year: string; examCategory: string }>({ year: '', examCategory: 'BOARD_EXAM' })
+  const [savingMcqSet, setSavingMcqSet] = useState(false)
+
+  function openEditMcqSet(setObj: { label: string; year: any; examCategory: any; items: any[] }) {
+    setEditMcqSetItem({
+      label: setObj.label,
+      year: setObj.year,
+      examCategory: setObj.examCategory,
+      ids: setObj.items.map(i => i.id)
+    })
+    setEditMcqSetForm({
+      year: setObj.year ? `${setObj.year}` : '',
+      examCategory: setObj.examCategory || 'BOARD_EXAM'
+    })
+  }
+
+  async function handleSaveMcqSet() {
+    if (!editMcqSetItem) return
+    setSavingMcqSet(true)
+    try {
+      const res = await fetch('/api/admin/materials', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'mcq-set',
+          ids: editMcqSetItem.ids,
+          year: editMcqSetForm.year ? parseInt(editMcqSetForm.year) : null,
+          examCategory: editMcqSetForm.examCategory
+        })
+      })
+      if (res.ok) {
+        toast.success('MCQ Collection details updated! 🎉')
+        setEditMcqSetItem(null)
+        loadMaterials()
+      } else {
+        toast.error('Failed to update MCQ Collection')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setSavingMcqSet(false)
+    }
+  }
+
+  function openMcqPaperViewer() {
+    if (mcqs.length === 0) {
+      toast.error('No MCQs available for this subject')
+      return
+    }
+    const currentSub = subjects.find(s => s.id === subjectId)
+    const paperJson = {
+      university: 'TRIBHUVAN UNIVERSITY',
+      faculty: 'Faculty of Humanities & Social Sciences',
+      office: 'OFFICE OF THE DEAN',
+      year: new Date().getFullYear().toString(),
+      program: 'Bachelor in Computer Application',
+      courseTitle: currentSub?.name || 'Multiple Choice Questions',
+      codeNo: currentSub?.code || '',
+      semester: 'Semester',
+      fullMarks: (mcqs.length * 1).toString(),
+      passMarks: Math.ceil(mcqs.length * 0.4).toString(),
+      time: '1 hour',
+      instruction: 'Attempt all questions. Correct answers are highlighted in green.',
+      groups: [
+        {
+          groupName: 'Group A (Multiple Choice Questions)',
+          marks: `[${mcqs.length} x 1 = ${mcqs.length}]`,
+          instruction: 'Select the correct option for each question.',
+          questions: mcqs.map((m, idx) => ({
+            number: idx + 1,
+            text: m.question,
+            options: Array.isArray(m.options) ? m.options : (typeof m.options === 'string' ? JSON.parse(m.options) : []),
+            correctOption: m.correctOption,
+            explanation: m.explanation
+          }))
+        }
+      ]
+    }
+
+    const jsonStr = JSON.stringify(paperJson, null, 2)
+    setViewPaperItem({
+      id: 'mcqs-all',
+      type: 'pastpaper',
+      title: `${currentSub?.name || 'Subject'} — All ${mcqs.length} MCQs Paper Sheet`,
+      extractedText: jsonStr,
+      cloudinaryUrl: ''
+    })
+    setEditTextValue(jsonStr)
+    setViewPaperMode('PREVIEW')
+  }
+
+  function openMcqSetPaperViewer(setObj: { label: string; items: any[] }) {
+    const currentSub = subjects.find(s => s.id === subjectId)
+    const paperJson = {
+      university: 'TRIBHUVAN UNIVERSITY',
+      faculty: 'Faculty of Humanities & Social Sciences',
+      office: 'OFFICE OF THE DEAN',
+      year: new Date().getFullYear().toString(),
+      program: 'Bachelor in Computer Application',
+      courseTitle: currentSub?.name || 'Multiple Choice Questions',
+      codeNo: currentSub?.code || '',
+      semester: 'Semester',
+      fullMarks: (setObj.items.length * 1).toString(),
+      passMarks: Math.ceil(setObj.items.length * 0.4).toString(),
+      time: '1 hour',
+      instruction: 'Attempt all questions. Correct answers are highlighted in green.',
+      groups: [
+        {
+          groupName: 'Group A (Multiple Choice Questions)',
+          marks: `[${setObj.items.length} x 1 = ${setObj.items.length}]`,
+          instruction: 'Select the correct option for each question.',
+          questions: setObj.items.map((m, idx) => ({
+            number: idx + 1,
+            text: m.question,
+            options: Array.isArray(m.options) ? m.options : (typeof m.options === 'string' ? JSON.parse(m.options) : []),
+            correctOption: m.correctOption,
+            explanation: m.explanation
+          }))
+        }
+      ]
+    }
+
+    const jsonStr = JSON.stringify(paperJson, null, 2)
+    setViewPaperItem({
+      id: `mcqs-${setObj.label}`,
+      type: 'pastpaper',
+      title: `${currentSub?.name || 'Subject'} — ${setObj.label}`,
+      extractedText: jsonStr,
+      cloudinaryUrl: ''
+    })
+    setEditTextValue(jsonStr)
+    setViewPaperMode('PREVIEW')
+  }
+
+  async function handleDeleteMcqSet(setObj: { label: string; items: any[] }) {
+    if (!window.confirm(`⚠️ Delete all ${setObj.items.length} questions in "${setObj.label}"?`)) return
+    try {
+      for (const item of setObj.items) {
+        await fetch(`/api/admin/materials?id=${item.id}&type=mcq`, { method: 'DELETE' })
+      }
+      toast.success(`Deleted MCQ Set "${setObj.label}" 🎉`)
+      loadMaterials()
+    } catch {
+      toast.error('Failed to delete MCQ set')
+    }
+  }
 
   useEffect(() => {
     fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
@@ -789,6 +981,7 @@ function ManageMaterialsTab() {
                     {pastPapers.map(p => {
                       const hasText = Boolean(p.extractedText && p.extractedText.trim().length > 0)
                       const textLen = p.extractedText ? p.extractedText.length : 0
+
                       return (
                         <tr key={p.id}>
                           <td style={{ fontWeight: 700, fontSize: '16px' }}>{p.year}</td>
@@ -811,7 +1004,15 @@ function ManageMaterialsTab() {
                           </td>
                           <td style={{ fontSize: '12px' }}>{new Date(p.createdAt).toLocaleDateString()}</td>
                           <td>
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <button
+                                className="btn btn-sm"
+                                style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '11px' }}
+                                onClick={() => openPaperViewer(p, 'pastpaper', `${p.year} ${p.examType}`)}
+                              >
+                                👁️ View Paper
+                              </button>
+
                               <button
                                 className="btn btn-sm"
                                 style={{
@@ -825,6 +1026,7 @@ function ManageMaterialsTab() {
                               >
                                 {ocrRunningId === p.id ? '⏳ OCR Running...' : hasText ? '🔄 Re-run OCR' : '🤖 Run AI OCR'}
                               </button>
+
                               <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(p, 'pastpaper')}>✏️ Edit</button>
                               <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id, 'pastpaper', `${p.year} ${p.examType}`)}>🗑️ Delete</button>
                             </div>
@@ -883,7 +1085,14 @@ function ManageMaterialsTab() {
                           <td style={{ fontWeight: 600 }}>{n.downloadCount || 0}</td>
                           <td style={{ fontSize: '12px' }}>{new Date(n.createdAt).toLocaleDateString()}</td>
                           <td>
-                            <div style={{ display: 'flex', gap: '6px' }}>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <button
+                                className="btn btn-sm"
+                                style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '11px' }}
+                                onClick={() => openPaperViewer(n, 'note', n.title)}
+                              >
+                                👁️ View Paper
+                              </button>
                               <button
                                 className="btn btn-sm"
                                 style={{ background: 'rgba(6,182,212,0.12)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', fontSize: '11px' }}
@@ -911,13 +1120,24 @@ function ManageMaterialsTab() {
               <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 🎯 Multiple Choice Questions ({mcqs.length})
               </h4>
-              <button
-                className="btn btn-sm"
-                style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', fontSize: '12px' }}
-                onClick={() => setShowAddMcq(true)}
-              >
-                + Add New MCQ
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {mcqs.length > 0 && (
+                  <button
+                    className="btn btn-sm"
+                    style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '12px', fontWeight: 600 }}
+                    onClick={openMcqPaperViewer}
+                  >
+                    👁️ View MCQ Paper Sheet
+                  </button>
+                )}
+                <button
+                  className="btn btn-sm"
+                  style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', fontSize: '12px', fontWeight: 600 }}
+                  onClick={() => setShowAddMcq(true)}
+                >
+                  + Add New MCQ
+                </button>
+              </div>
             </div>
 
             {mcqs.length === 0 ? (
@@ -929,50 +1149,83 @@ function ManageMaterialsTab() {
                 <table>
                   <thead>
                     <tr>
-                      <th style={{ width: '40%' }}>Question</th>
-                      <th>Options</th>
-                      <th>Correct Answer</th>
-                      <th>Year / Category</th>
+                      <th>MCQ Collection / Paper</th>
+                      <th>Total Questions</th>
+                      <th>Category</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {mcqs.map((m, idx) => {
-                      const opts = Array.isArray(m.options) ? m.options : (typeof m.options === 'string' ? JSON.parse(m.options) : [])
-                      const correctText = opts[m.correctOption] || `Option ${m.correctOption + 1}`
-                      return (
-                        <tr key={m.id || idx}>
-                          <td style={{ fontWeight: 600, fontSize: '13px' }}>
-                            <div style={{ maxWidth: '360px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {idx + 1}. {m.question}
-                            </div>
-                          </td>
-                          <td style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>
-                            {opts.map((o: string, oIdx: number) => (
-                              <div key={oIdx} style={{ color: oIdx === m.correctOption ? '#34d399' : 'inherit', fontWeight: oIdx === m.correctOption ? 700 : 400 }}>
-                                {String.fromCharCode(65 + oIdx)}. {o}
-                              </div>
-                            ))}
+                    {(() => {
+                      const mcqGroupsMap = new Map<string, { label: string; year: any; examCategory: any; items: any[] }>()
+                      for (const m of mcqs) {
+                        const yearStr = m.year ? `${m.year}` : 'General'
+                        const catStr = m.examCategory ? m.examCategory.replace('_', ' ') : 'BOARD EXAM'
+                        const key = `${yearStr}_${catStr}`
+                        if (!mcqGroupsMap.has(key)) {
+                          mcqGroupsMap.set(key, {
+                            label: `${yearStr} ${catStr} MCQs`,
+                            year: m.year,
+                            examCategory: m.examCategory,
+                            items: []
+                          })
+                        }
+                        mcqGroupsMap.get(key)!.items.push(m)
+                      }
+                      const mcqSets = Array.from(mcqGroupsMap.values())
+
+                      return mcqSets.map((setObj, setIdx) => (
+                        <tr key={setIdx}>
+                          <td style={{ fontWeight: 700, fontSize: '15px' }}>
+                            🎯 {setObj.label}
                           </td>
                           <td>
-                            <span className="badge badge-success" style={{ fontSize: '11px' }}>
-                              ✓ {correctText}
+                            <span className="badge badge-success" style={{ fontSize: '12px', padding: '4px 10px' }}>
+                              {setObj.items.length} Questions
                             </span>
                           </td>
                           <td>
-                            <span className="badge badge-semester" style={{ fontSize: '11px' }}>
-                              {m.year || 'General'} · {m.examCategory?.replace('_', ' ') || 'BOARD'}
+                            <span className="badge badge-pending">
+                              {setObj.examCategory ? setObj.examCategory.replace('_', ' ') : 'BOARD EXAM'}
                             </span>
                           </td>
                           <td>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(m, 'mcq')}>✏️ Edit</button>
-                              <button className="btn btn-sm btn-danger" onClick={() => handleDelete(m.id, 'mcq', `MCQ: ${m.question.substring(0, 30)}...`)}>🗑️ Delete</button>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <button
+                                className="btn btn-sm"
+                                style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '11px', fontWeight: 600 }}
+                                onClick={() => openMcqSetPaperViewer(setObj)}
+                              >
+                                👁️ View Paper
+                              </button>
+
+                              <button
+                                className="btn btn-sm"
+                                style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', fontSize: '11px', fontWeight: 600 }}
+                                onClick={() => openEditMcqSet(setObj)}
+                              >
+                                ✏️ Edit Topic/Year
+                              </button>
+
+                              <button
+                                className="btn btn-sm"
+                                style={{ background: 'rgba(6,182,212,0.12)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', fontSize: '11px' }}
+                                onClick={() => setManageMcqSet(setObj)}
+                              >
+                                📋 Manage Questions ({setObj.items.length})
+                              </button>
+
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleDeleteMcqSet(setObj)}
+                              >
+                                🗑️ Delete Set
+                              </button>
                             </div>
                           </td>
                         </tr>
-                      )
-                    })}
+                      ))
+                    })()}
                   </tbody>
                 </table>
               </div>
@@ -1055,6 +1308,288 @@ function ManageMaterialsTab() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Paper View & Edit Modal */}
+      {viewPaperItem && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', padding: '20px' }} onClick={() => setViewPaperItem(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="glass-card"
+            style={{ width: '100%', maxWidth: '960px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0 }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--clr-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📄 Paper View &amp; AI Text Editor — {viewPaperItem.title}
+                </h3>
+                <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', margin: '2px 0 0' }}>
+                  Preview formatted paper sheet or edit raw extracted text/JSON directly.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {/* View Mode Toggle */}
+                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '3px', border: '1px solid var(--clr-border)' }}>
+                  <button
+                    className="btn btn-xs"
+                    style={{
+                      background: viewPaperMode === 'PREVIEW' ? 'var(--grad-brand)' : 'transparent',
+                      color: '#fff', fontWeight: 700, padding: '5px 12px', borderRadius: '6px'
+                    }}
+                    onClick={() => setViewPaperMode('PREVIEW')}
+                  >
+                    👁️ Formatted View
+                  </button>
+                  <button
+                    className="btn btn-xs"
+                    style={{
+                      background: viewPaperMode === 'EDIT' ? 'var(--grad-brand)' : 'transparent',
+                      color: '#fff', fontWeight: 700, padding: '5px 12px', borderRadius: '6px'
+                    }}
+                    onClick={() => setViewPaperMode('EDIT')}
+                  >
+                    ✏️ Edit Text / JSON
+                  </button>
+                </div>
+
+                {viewPaperMode === 'EDIT' && (
+                  <button
+                    className="btn btn-sm"
+                    style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: 700, padding: '6px 14px' }}
+                    onClick={handleSavePaperText}
+                    disabled={savingPaperText}
+                  >
+                    {savingPaperText ? 'Saving...' : '💾 Save Changes'}
+                  </button>
+                )}
+
+                <button
+                  className="btn btn-sm"
+                  style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', padding: 0 }}
+                  onClick={() => setViewPaperItem(null)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '24px', background: viewPaperMode === 'PREVIEW' ? '#0f172a' : 'transparent' }}>
+              {viewPaperMode === 'PREVIEW' ? (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  {(() => {
+                    if (!viewPaperItem.extractedText || !viewPaperItem.extractedText.trim()) {
+                      return (
+                        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--clr-text-3)' }}>
+                          <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
+                          <p style={{ fontSize: '15px', color: 'var(--clr-text-2)', marginBottom: '16px' }}>No extracted text found for this file.</p>
+                          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                            <button className="btn btn-sm btn-primary" onClick={() => { handleRunOcr(viewPaperItem.id, viewPaperItem.type, viewPaperItem.title); setViewPaperItem(null); }}>
+                              🤖 Run AI OCR Now
+                            </button>
+                            <button className="btn btn-sm btn-outline" onClick={() => setViewPaperMode('EDIT')}>
+                              ✏️ Write / Paste Text Manually
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    try {
+                      let cleanText = viewPaperItem.extractedText.trim()
+                      if (cleanText.startsWith('```')) {
+                        cleanText = cleanText.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '')
+                      }
+                      let parsed: any
+                      try {
+                        parsed = JSON.parse(cleanText)
+                      } catch {
+                        let fixedText = cleanText.replace(/\n/g, ' ').replace(/\r/g, '').replace(/\t/g, ' ')
+                        fixedText = fixedText.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1')
+                        parsed = JSON.parse(fixedText)
+                      }
+                      if (typeof parsed === 'string') parsed = JSON.parse(parsed)
+                      if (parsed && typeof parsed === 'object' && parsed.groups) {
+                        return <ExamPaperViewer data={parsed as ExamPaperData} />
+                      }
+                    } catch (e) {
+                      const legacyParsed = parseLegacyMarkdownToExamData(viewPaperItem.extractedText)
+                      if (legacyParsed && legacyParsed.groups && legacyParsed.groups.length > 0) {
+                        return <ExamPaperViewer data={legacyParsed} />
+                      }
+                    }
+                    return <MarkdownPaperViewer content={viewPaperItem.extractedText} />
+                  })()}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)' }}>
+                      Raw Extracted Text / JSON Data:
+                    </label>
+                    <button
+                      className="btn btn-xs"
+                      style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', fontSize: '11px' }}
+                      onClick={() => {
+                        try {
+                          const parsed = JSON.parse(editTextValue)
+                          setEditTextValue(JSON.stringify(parsed, null, 2))
+                          toast.success('Prettified JSON!')
+                        } catch {
+                          toast.error('Invalid JSON syntax — could not format')
+                        }
+                      }}
+                    >
+                      ✨ Prettify JSON
+                    </button>
+                  </div>
+                  <textarea
+                    className="input-field"
+                    rows={20}
+                    style={{ fontFamily: 'monospace', fontSize: '13px', width: '100%', resize: 'vertical', lineHeight: 1.55 }}
+                    value={editTextValue}
+                    onChange={e => setEditTextValue(e.target.value)}
+                    placeholder="Paste or edit structured JSON or paper markdown text..."
+                  />
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Manage MCQ Questions Modal */}
+      {manageMcqSet && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', padding: '20px' }} onClick={() => setManageMcqSet(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="glass-card"
+            style={{ width: '100%', maxWidth: '850px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--clr-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📋 Manage Questions — {manageMcqSet.label}
+                </h3>
+                <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', margin: '2px 0 0' }}>
+                  {manageMcqSet.items.length} questions in this collection
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  className="btn btn-sm"
+                  style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '12px', fontWeight: 600 }}
+                  onClick={() => {
+                    const setObj = manageMcqSet
+                    setManageMcqSet(null)
+                    openMcqSetPaperViewer(setObj)
+                  }}
+                >
+                  👁️ View Full Paper
+                </button>
+                <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', padding: 0 }} onClick={() => setManageMcqSet(null)}>
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {manageMcqSet.items.map((m, idx) => {
+                  const opts = Array.isArray(m.options) ? m.options : (typeof m.options === 'string' ? JSON.parse(m.options) : [])
+                  return (
+                    <div key={m.id || idx} style={{ padding: '14px 18px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--clr-border)', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                        <div style={{ fontWeight: 600, fontSize: '14px', color: '#f8fafc', flex: 1 }}>
+                          {idx + 1}. {m.question}
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button className="btn btn-xs" style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8' }} onClick={() => { setManageMcqSet(null); openEdit(m, 'mcq'); }}>✏️ Edit</button>
+                          <button className="btn btn-xs btn-danger" onClick={() => { handleDelete(m.id, 'mcq', `MCQ: ${m.question.substring(0, 30)}...`); setManageMcqSet(null); }}>🗑️ Delete</button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '10px' }}>
+                        {opts.map((o: string, oIdx: number) => {
+                          const isCorrect = oIdx === m.correctOption
+                          return (
+                            <div key={oIdx} style={{ fontSize: '12px', color: isCorrect ? '#34d399' : '#cbd5e1', fontWeight: isCorrect ? 700 : 400, background: isCorrect ? 'rgba(16,185,129,0.12)' : 'transparent', padding: '3px 8px', borderRadius: '4px' }}>
+                              {String.fromCharCode(65 + oIdx)}. {o} {isCorrect && '✓'}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit MCQ Set Details Modal */}
+      {editMcqSetItem && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', padding: '20px' }} onClick={() => setEditMcqSetItem(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="glass-card"
+            style={{ padding: '28px', maxWidth: '480px', width: '100%' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>
+              ✏️ Edit MCQ Collection Topic &amp; Year
+            </h3>
+            <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '20px' }}>
+              Updating details for all {editMcqSetItem.ids.length} questions in this collection ({editMcqSetItem.label}).
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Exam Year</label>
+                <input
+                  type="number"
+                  className="input-field"
+                  placeholder="e.g. 2023, 2024, 2025"
+                  value={editMcqSetForm.year}
+                  onChange={e => setEditMcqSetForm({ ...editMcqSetForm, year: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Exam Category / Topic Tag</label>
+                <select
+                  className="input-field"
+                  value={editMcqSetForm.examCategory}
+                  onChange={e => setEditMcqSetForm({ ...editMcqSetForm, examCategory: e.target.value })}
+                >
+                  <option value="BOARD_EXAM">Board Exam</option>
+                  <option value="MODEL_EXAM">Model Exam</option>
+                  <option value="MID_TERM">Mid Term Exam</option>
+                  <option value="UNIT_TEST">Unit Test / Quiz</option>
+                  <option value="GENERAL">General Practice</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px', justifyContent: 'flex-end' }}>
+                <button className="btn btn-sm btn-outline" onClick={() => setEditMcqSetItem(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={handleSaveMcqSet}
+                  disabled={savingMcqSet}
+                >
+                  {savingMcqSet ? 'Saving...' : '💾 Save Changes'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
         </div>
       )}
 
