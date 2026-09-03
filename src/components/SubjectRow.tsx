@@ -355,19 +355,22 @@ export default function SubjectRow({
               <Link
                 href={`/mcq/${subject.id}`}
                 onClick={e => e.stopPropagation()}
-                style={{ textDecoration: 'none' }}
+                style={{ textDecoration: 'none', pointerEvents: 'auto', zIndex: 10, position: 'relative' }}
               >
                 <span style={{
                   ...getPillStyle('mcqs', mcqs.length),
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15))',
-                  border: '1px solid rgba(99,102,241,0.35)',
-                  color: '#a5b4fc',
+                  background: activeTab === 'mcqs'
+                    ? 'var(--grad-brand)'
+                    : 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15))',
+                  border: '1px solid rgba(99,102,241,0.4)',
+                  color: activeTab === 'mcqs' ? '#fff' : '#a5b4fc',
                   cursor: 'pointer',
+                  pointerEvents: 'auto',
                 }}>
-                  ✅ MCQs ({mcqs.length})
+                  ✅ MCQs
                 </span>
               </Link>
             )}

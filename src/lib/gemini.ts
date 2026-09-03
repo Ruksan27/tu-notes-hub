@@ -44,32 +44,42 @@ export async function callGemini(
   let lastError: any = null
 
   for (const modelName of MODELS_TO_TRY) {
-    const apiKey = getNextApiKey()
-    if (!apiKey) break
+    // Try each key for each model
+    for (let k = 0; k < API_KEYS.length; k++) {
+      const apiKey = getNextApiKey()
+      if (!apiKey) break
 
-    try {
-      console.log(`[Gemini AI] Trying model: ${modelName}`)
-      const genAI = new GoogleGenAI({ apiKey })
+      try {
+        console.log(`[Gemini AI] Trying model: ${modelName} (key #${k + 1})`)
+        const genAI = new GoogleGenAI({ apiKey })
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(Object.assign(new Error('Gemini request timed out'), { status: 503, _isTimeout: true })), TIMEOUT_MS)
-      )
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(Object.assign(new Error('Gemini request timed out'), { status: 503, _isTimeout: true })), TIMEOUT_MS)
+        )
 
-      const response = await Promise.race([
-        genAI.models.generateContent({
-          model: modelName,
-          contents,
-          ...(systemInstruction ? { config: { systemInstruction } } : {}),
-        }),
-        timeoutPromise,
-      ])
+        const response = await Promise.race([
+          genAI.models.generateContent({
+            model: modelName,
+            contents,
+            ...(systemInstruction ? { config: { systemInstruction } } : {}),
+          }),
+          timeoutPromise,
+        ])
 
-      const text = response?.text ?? ''
-      if (text) return text
-    } catch (error: any) {
-      lastError = error
-      const status = error?.status ?? error?.error?.code ?? 0
-      console.warn(`[Gemini Model ${modelName} Failed (${status})]. Trying next model...`)
+        const text = response?.text ?? ''
+        if (text) return text
+      } catch (error: any) {
+        lastError = error
+        const status = error?.status ?? error?.error?.code ?? 0
+        const msg = error?.message?.substring(0, 80) ?? ''
+        // If 404, this key/model combo doesn't work — try next key
+        if (status === 404) {
+          console.warn(`[Gemini] ${modelName} key#${k+1} → 404. Trying next key...`)
+          continue
+        }
+        console.warn(`[Gemini Model ${modelName} Failed (${status}): ${msg}]`)
+        break // non-404 errors: skip to next model
+      }
     }
   }
 
@@ -82,6 +92,33 @@ export async function callGemini(
     console.warn('[Groq Fallback Failed]. Skipping.')
     if (lastError) throw lastError
     throw new Error('All AI providers failed. Please try again later.')
+  }
+}
+
+// Fetch available Groq models dynamically
+async function getGroqModels(apiKey: string): Promise<string[]> {
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    })
+    if (!res.ok) return []
+    const data = await res.json()
+    const ids: string[] = (data.data ?? []).map((m: any) => m.id)
+    // Prefer larger/more capable chat models first
+    const preferred = [
+      'llama-3.3-70b-versatile', 'llama3-70b-8192', 'llama-3.1-70b-versatile',
+      'llama-3.1-8b-instant', 'llama3-8b-8192',
+      'moonshotai/kimi-k2-instruct', 'deepseek-r1-distill-llama-70b',
+      'compound-beta', 'qwen-qwq-32b',
+    ]
+    const sorted = [
+      ...preferred.filter(p => ids.includes(p)),
+      ...ids.filter(id => !preferred.includes(id) && !id.includes('whisper') && !id.includes('tts') && !id.includes('vision'))
+    ]
+    console.log('[Groq] Available models:', sorted.slice(0, 5).join(', '))
+    return sorted.slice(0, 6) // limit to top 6
+  } catch {
+    return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']
   }
 }
 
@@ -99,11 +136,13 @@ export async function callGroq(
 
   const validImages = images?.filter(img => img.mimeType.startsWith('image/')) || []
   const hasImages = validImages.length > 0
-  
-  // Try models in order until one succeeds (updated Sept 2025)
+
+  // Discover available models dynamically
+  const allModels = await getGroqModels(apiKey)
   const modelsToTry = hasImages
-    ? ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-11b-vision-preview']
-    : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it', 'meta-llama/llama-4-scout-17b-16e-instruct']
+    ? allModels.filter(m => m.includes('vision') || m.includes('scout') || m.includes('kimi'))
+        .concat(['llama-3.2-11b-vision-preview']).slice(0, 3)
+    : allModels.filter(m => !m.includes('vision') && !m.includes('whisper')).slice(0, 6)
 
   const messages: any[] = []
   if (systemInstruction) {
