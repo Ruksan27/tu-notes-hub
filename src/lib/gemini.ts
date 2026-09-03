@@ -28,7 +28,8 @@ export async function callGemini(
     return ''
   }
 
-  const MODELS_TO_TRY = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+  // Using verified working Gemini model IDs (Sept 2025+)
+  const MODELS_TO_TRY = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']
   const TIMEOUT_MS = 45_000
 
   // Build contents once
@@ -99,10 +100,10 @@ export async function callGroq(
   const validImages = images?.filter(img => img.mimeType.startsWith('image/')) || []
   const hasImages = validImages.length > 0
   
-  // Try models in order until one succeeds
+  // Try models in order until one succeeds (updated Sept 2025)
   const modelsToTry = hasImages
-    ? ['llama-3.2-11b-vision-preview']
-    : ['llama-3.1-70b-versatile', 'llama3-70b-8192', 'mixtral-8x7b-32768', 'llama-3.3-70b-specdec']
+    ? ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-11b-vision-preview']
+    : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it', 'meta-llama/llama-4-scout-17b-16e-instruct']
 
   const messages: any[] = []
   if (systemInstruction) {

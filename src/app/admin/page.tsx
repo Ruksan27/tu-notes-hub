@@ -1118,7 +1118,7 @@ function ManageMaterialsTab() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
               <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                🎯 Multiple Choice Questions ({mcqs.length})
+                MCQs ({mcqs.length})
               </h4>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {mcqs.length > 0 && (
