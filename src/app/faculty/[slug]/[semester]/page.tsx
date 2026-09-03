@@ -186,7 +186,7 @@ export default async function SemesterPage({ params, searchParams }: Props) {
       </div>
 
       {/* Top Banner Ad */}
-      <AdUnit type="banner" slot="semester-top-banner" />
+      <AdUnit type="leaderboard" slot="semester-top-banner" />
 
       {/* Subjects List with Syllabus Filter */}
       <SemesterSubjectFilter
@@ -200,7 +200,7 @@ export default async function SemesterPage({ params, searchParams }: Props) {
 
       {/* Bottom Ad Unit */}
       <div style={{ marginTop: '24px' }}>
-        <AdUnit type="inline" slot="semester-bottom-ad" />
+        <AdUnit type="large-rectangle" slot="semester-bottom-ad" />
       </div>
     </div>
   )

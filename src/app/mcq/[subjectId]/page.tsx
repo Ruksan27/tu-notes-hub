@@ -217,7 +217,7 @@ export default function McqPracticePage() {
       
       {/* Top Sponsored Ad Banner */}
       <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
-        <AdUnit type="banner" slot="mcq-top-banner" />
+        <AdUnit type="leaderboard" slot="mcq-top-banner" />
       </div>
 
       <div style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
@@ -414,7 +414,7 @@ export default function McqPracticePage() {
             <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
               Sponsored Advertisement
             </p>
-            <AdUnit type="inline" slot="mcq-sidebar-ad" />
+            <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad" />
           </div>
 
         </div>
@@ -505,7 +505,7 @@ export default function McqPracticePage() {
               alignItems: 'center',
             }}>
               <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Sponsored Advertisement</p>
-              <AdUnit type="inline" slot="mcq-download-modal-ad" />
+              <AdUnit type="medium-rectangle" slot="mcq-download-modal-ad" />
             </div>
 
             <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginTop: '20px' }}>

@@ -418,7 +418,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
               alignItems: 'center',
             }}>
               <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Sponsored Advertisement</p>
-              <AdUnit type="inline" slot="solution-book-modal-ad" />
+              <AdUnit type="medium-rectangle" slot="solution-book-modal-ad" />
             </div>
 
             <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginTop: '20px' }}>

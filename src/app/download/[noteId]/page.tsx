@@ -291,7 +291,7 @@ export default function DownloadPage() {
       {/* Top Banner Ad */}
       {!isPaid && (
         <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
-          <AdUnit type="banner" slot="download-top-banner" />
+          <AdUnit type="leaderboard" slot="download-top-banner" />
         </div>
       )}
 
@@ -410,7 +410,7 @@ export default function DownloadPage() {
                 boxShadow: 'var(--shadow-glow)',
               }}>
                 <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>Sponsored Advertisement</p>
-                <AdUnit type="inline" slot="countdown-middle-ad" />
+                <AdUnit type="large-rectangle" slot="countdown-middle-ad" />
                 <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginTop: '16px' }}>
                   🎯 <strong style={{ color: 'var(--clr-primary-h)' }}>Elite AI Pass — Rs. 199/year</strong> | 
                   Instant downloads without waiting + Full PDF solution views.
@@ -574,7 +574,7 @@ export default function DownloadPage() {
             </div>
 
             <AdUnit type="sidebar" slot="download-sidebar-banner-1" />
-            <AdUnit type="inline" slot="download-sidebar-banner-2" />
+            <AdUnit type="sidebar" slot="download-sidebar-banner-2" />
           </div>
         )}
 
@@ -583,7 +583,7 @@ export default function DownloadPage() {
       {/* Bottom Ad */}
       {!isPaid && (
         <div style={{ padding: '0 24px 24px', display: 'flex', justifyContent: 'center' }}>
-          <AdUnit type="banner" slot="download-bottom-banner" />
+          <AdUnit type="leaderboard" slot="download-bottom-banner" />
         </div>
       )}
 
@@ -672,7 +672,7 @@ export default function DownloadPage() {
               alignItems: 'center',
             }}>
               <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Sponsored Advertisement</p>
-              <AdUnit type="inline" slot="modal-ad-banner" />
+              <AdUnit type="medium-rectangle" slot="modal-ad-banner" />
             </div>
 
             <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginTop: '20px' }}>
