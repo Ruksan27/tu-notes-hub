@@ -96,7 +96,7 @@ export default function PricingPlans() {
 
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null)
-  
+
   // Modal states
   const [txnId, setTxnId] = useState('')
   const [screenshot, setScreenshot] = useState<File | null>(null)
@@ -120,7 +120,7 @@ export default function PricingPlans() {
   useEffect(() => {
     const stored = localStorage.getItem('tu_user')
     if (stored) {
-      try { setCurrentUser(JSON.parse(stored)) } catch {}
+      try { setCurrentUser(JSON.parse(stored)) } catch { }
     }
 
     // Fetch dynamic pricing plans
@@ -313,7 +313,7 @@ export default function PricingPlans() {
                   marginBottom: '24px',
                 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    
+
                     {/* Original Price (if discount exists) */}
                     {plan.originalPrice && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -325,7 +325,7 @@ export default function PricingPlans() {
                         </span>
                       </div>
                     )}
-                    
+
                     {/* Current Price & Note */}
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '40px', fontWeight: 900, color: plan.color, fontFamily: 'var(--font-display)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
@@ -335,7 +335,7 @@ export default function PricingPlans() {
                     </div>
 
                   </div>
-                  
+
                   {plan.validity && (
                     <p style={{ color: plan.color, fontSize: '13px', fontWeight: 600, marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       📅 {plan.validity}
@@ -438,7 +438,7 @@ export default function PricingPlans() {
               {comparisons.map((row, i) => (
                 <tr key={row.feature} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
                   <td style={{ padding: '14px 20px', fontSize: '14px', color: 'var(--clr-text-2)', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                     {row.feature}
+                    {row.feature}
                   </td>
                   <td style={{ padding: '14px 20px', textAlign: 'center', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                     <CheckMark val={row.free} />
@@ -488,7 +488,7 @@ export default function PricingPlans() {
       {/* ── Checkout Modal ── */}
       <AnimatePresence>
         {selectedPlan && (
-          <div 
+          <div
             style={{
               position: 'fixed',
               inset: 0,
@@ -519,7 +519,7 @@ export default function PricingPlans() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Close */}
-              <button 
+              <button
                 onClick={() => { setSelectedPlan(null); setAgreeTerms(false); setAgreePrivacy(false) }}
                 style={{
                   position: 'absolute',
@@ -589,10 +589,10 @@ export default function PricingPlans() {
                       <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--clr-text-2)', marginBottom: '8px' }}>
                         1. Transaction Reference ID <span style={{ color: 'red' }}>*</span>
                       </label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         required
-                        className="input-field" 
+                        className="input-field"
                         placeholder="e.g. REF-8374928"
                         value={txnId}
                         onChange={(e) => setTxnId(e.target.value)}
@@ -604,10 +604,10 @@ export default function PricingPlans() {
                       <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--clr-text-2)', marginBottom: '8px' }}>
                         2. Upload Payment Screenshot (Optional but Recommended)
                       </label>
-                      
+
                       <div style={{ position: 'relative' }}>
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           accept="image/*"
                           onChange={handleFileChange}
                           style={{
@@ -618,7 +618,7 @@ export default function PricingPlans() {
                             zIndex: 2,
                           }}
                         />
-                        <div 
+                        <div
                           style={{
                             border: '2px dashed var(--clr-border)',
                             borderRadius: '12px',
@@ -660,16 +660,16 @@ export default function PricingPlans() {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn btn-outline"
                       onClick={() => setSelectedPlan(null)}
                       style={{ padding: '12px 20px', fontSize: '14px' }}
                     >
                       Cancel
                     </button>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={submitting || !txnId.trim()}
                       className="btn btn-primary"
                       style={{
@@ -687,7 +687,7 @@ export default function PricingPlans() {
                 </form>
               ) : (
                 /* Done / "I am done" Success Screen */
-                <motion.div 
+                <motion.div
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   style={{ textAlign: 'center', padding: '16px 8px' }}
@@ -698,12 +698,12 @@ export default function PricingPlans() {
                   </h3>
                   <p style={{ color: 'var(--clr-text-2)', fontSize: '15px', lineHeight: 1.7, marginBottom: '28px' }}>
                     Thank you! Your payment details and transaction reference <strong>({txnId})</strong> have been successfully submitted to our admin team.
-                    <br/><br/>
+                    <br /><br />
                     We will verify the screenshot and reference within <strong>1–2 hours</strong> and activate your premium <strong>{selectedPlan.name}</strong> access.
                   </p>
-                  
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button 
+                    <button
                       className="btn btn-primary"
                       onClick={() => {
                         setSelectedPlan(null)
@@ -713,8 +713,8 @@ export default function PricingPlans() {
                     >
                       🚀 Go to My Learning Dashboard
                     </button>
-                    
-                    <button 
+
+                    <button
                       className="btn btn-outline"
                       onClick={() => setSelectedPlan(null)}
                       style={{ justifyContent: 'center', width: '100%', padding: '14px', fontSize: '15px' }}

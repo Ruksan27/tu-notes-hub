@@ -47,10 +47,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/top%20nav%20log%20o.png?v=4', type: 'image/png' },
+      { url: '/icon.png', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
-    shortcut: '/top%20nav%20log%20o.png?v=4',
-    apple: '/top%20nav%20log%20o.png?v=4',
+    shortcut: '/icon.png',
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   // Apple PWA meta
   other: {
@@ -76,9 +80,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${montserrat.variable}`} data-scroll-behavior="smooth">
       <head>
-        <link rel="icon" href="/top%20nav%20log%20o.png?v=4" type="image/png" sizes="any" />
-        <link rel="shortcut icon" href="/top%20nav%20log%20o.png?v=4" type="image/png" />
-        <link rel="apple-touch-icon" href="/top%20nav%20log%20o.png?v=4" />
+        <link rel="icon" href="/favicon.ico?v=11" sizes="any" />
+        <link rel="shortcut icon" href="/favicon.ico?v=11" />
+        <link rel="apple-touch-icon" href="/favicon.ico?v=11" />
         {/* Google AdSense — must use plain <script> tag, NOT Next.js <Script>, AdSense rejects data-nscript */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script
