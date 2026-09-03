@@ -92,7 +92,7 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
         ...sem,
         subjects: filteredSubjects,
       }
-    })
+    }).filter((sem) => !hasNewAndOld || sem.subjects.length > 0)
   }, [faculty, activeTab, hasNewAndOld])
 
   return (

@@ -25,6 +25,15 @@ async function ensureVisibleColumns() {
   isColumnChecked = true
 }
 
+function parseBool(val: any, fallback = true): boolean {
+  if (val === undefined || val === null) return fallback
+  if (typeof val === 'boolean') return val
+  if (typeof val === 'number') return val !== 0
+  if (Buffer.isBuffer(val)) return val.length > 0 && val[0] !== 0
+  if (typeof val === 'string') return val === 'true' || val === '1'
+  return Boolean(val)
+}
+
 export async function GET(req: NextRequest) {
   await ensureVisibleColumns()
   const facultyId = req.nextUrl.searchParams.get('facultyId')
@@ -37,9 +46,9 @@ export async function GET(req: NextRequest) {
     )
     const semesters = rawSemesters.map(s => ({
       ...s,
-      visible: Boolean(s.visible !== 0 && s.visible !== false),
-      visibleNew: Boolean(s.visibleNew !== 0 && s.visibleNew !== false),
-      visibleOld: Boolean(s.visibleOld !== 0 && s.visibleOld !== false),
+      visible: parseBool(s.visible, true),
+      visibleNew: parseBool(s.visibleNew, true),
+      visibleOld: parseBool(s.visibleOld, true),
     }))
     return NextResponse.json({ semesters })
   } catch (err) {

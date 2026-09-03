@@ -62,13 +62,22 @@ export default async function FacultyPage({ params }: Props) {
     )
   } catch {}
 
-  const semestersWithVisibility = faculty.semesters.map((sem) => {
+  function parseBool(val: any, fallback = true): boolean {
+    if (val === undefined || val === null) return fallback
+    if (typeof val === 'boolean') return val
+    if (typeof val === 'number') return val !== 0
+    if (Buffer.isBuffer(val)) return val.length > 0 && val[0] !== 0
+    if (typeof val === 'string') return val === 'true' || val === '1'
+    return Boolean(val)
+  }
+
+  const semestersWithVisibility = faculty.semesters.map((sem: any) => {
     const raw = rawSemesters.find((r: any) => r.id === sem.id)
     return {
       ...sem,
-      visible: raw ? Boolean(raw.visible !== 0 && raw.visible !== false) : true,
-      visibleNew: raw ? Boolean(raw.visibleNew !== 0 && raw.visibleNew !== false) : true,
-      visibleOld: raw ? Boolean(raw.visibleOld !== 0 && raw.visibleOld !== false) : true,
+      visible: raw ? parseBool(raw.visible, sem.visible ?? true) : (sem.visible ?? true),
+      visibleNew: raw ? parseBool(raw.visibleNew, sem.visibleNew ?? true) : (sem.visibleNew ?? true),
+      visibleOld: raw ? parseBool(raw.visibleOld, sem.visibleOld ?? true) : (sem.visibleOld ?? true),
     }
   })
 

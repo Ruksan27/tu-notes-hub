@@ -126,6 +126,8 @@ model Semester {
   subjects      Subject[]
   solutionBooks SolutionBook[]
   visible       Boolean        @default(true)
+  visibleNew    Boolean        @default(true)
+  visibleOld    Boolean        @default(true)
 }
 
 model Subject {
