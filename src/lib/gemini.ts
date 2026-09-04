@@ -1,13 +1,19 @@
 // src/lib/gemini.ts
 import { GoogleGenAI } from '@google/genai'
 
-const API_KEYS = [
-  process.env.GEMINI_KEY_1,
-  process.env.GEMINI_KEY_2,
-  process.env.GEMINI_KEY_3,
-  process.env.GEMINI_API_KEY,
-  process.env.NEXT_PUBLIC_GEMINI_API_KEY,
-].filter(Boolean) as string[]
+function getValidKeys() {
+  const keys = [
+    process.env.GEMINI_KEY_1,
+    process.env.GEMINI_KEY_2,
+    process.env.GEMINI_KEY_3,
+    process.env.GEMINI_API_KEY,
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+  ].filter(Boolean) as string[]
+  
+  return keys
+}
+
+const API_KEYS = getValidKeys()
 
 let currentKeyIndex = 0
 
