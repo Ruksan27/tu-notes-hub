@@ -30,16 +30,16 @@ export default async function FacultiesPage() {
   }
 
   return (
-    <div className="container" style={{ padding: '60px 24px' }}>
+    <div className="container faculties-page-container" style={{ padding: '40px 16px' }}>
       {/* Header */}
-      <div className="text-center" style={{ marginBottom: '56px' }}>
-        <div className="badge badge-elite" style={{ marginBottom: '16px', display: 'inline-flex' }}>
+      <div className="text-center faculties-page-header" style={{ marginBottom: '32px' }}>
+        <div className="badge badge-elite" style={{ marginBottom: '12px', display: 'inline-flex' }}>
           🏫 All Faculties
         </div>
-        <h1 style={{ fontSize: 'clamp(32px,5vw,52px)', marginBottom: '16px' }}>
+        <h1 style={{ fontSize: 'clamp(28px, 5vw, 48px)', marginBottom: '12px' }}>
           Choose Your <span className="text-gradient">Faculty</span>
         </h1>
-        <p style={{ color: 'var(--clr-text-2)', fontSize: '16px', maxWidth: '500px', margin: '0 auto' }}>
+        <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', maxWidth: '460px', margin: '0 auto' }}>
           Access free notes and past papers for all TU programs. Select your faculty to get started.
         </p>
       </div>

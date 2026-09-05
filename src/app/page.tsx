@@ -170,35 +170,47 @@ export default async function HomePage() {
             className="home-faculties-grid"
           >
             {faculties.length > 0 ? faculties.map((f) => (
-              <Link key={f.id} href={`/faculty/${f.slug}`} className="glass-card hover-lift" style={{ padding: '24px 20px', cursor: 'pointer', display: 'block', textDecoration: 'none' }}>
-                <div style={{ fontSize: '28px', marginBottom: '12px' }}>{f.icon || '📖'}</div>
-                <h3 style={{ fontSize: '18px', marginBottom: '4px' }}>{f.id.toUpperCase()}</h3>
-                <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', lineHeight: 1.5 }}>{f.name}</p>
+              <Link key={f.id} href={`/faculty/${f.slug}`} className="glass-card hover-lift home-fac-card" style={{ padding: '20px 18px', cursor: 'pointer', display: 'block', textDecoration: 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '24px', flexShrink: 0 }}>{f.icon || '📖'}</div>
+                  <h3 style={{ fontSize: '17px', margin: 0, fontWeight: 800 }}>{f.id.toUpperCase()}</h3>
+                </div>
+                <p style={{ color: 'var(--clr-text-2)', fontSize: '12px', lineHeight: 1.4, margin: 0 }}>{f.name}</p>
               </Link>
             )) : (
               // Placeholder cards while DB is being seeded
               ['BCA 💻', 'CSIT 🖥️', 'BIT 🔧', 'BBS 📊', 'BBA 💼', 'BE ⚙️'].map((f) => (
-                <div key={f} className="glass-card" style={{ padding: '28px' }}>
-                  <div style={{ fontSize: '36px', marginBottom: '12px' }}>{f.split(' ')[1]}</div>
-                  <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>{f.split(' ')[0]}</h3>
-                  <div className="skeleton" style={{ height: '14px', width: '80%' }} />
+                <div key={f} className="glass-card home-fac-card" style={{ padding: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '24px' }}>{f.split(' ')[1]}</span>
+                    <h3 style={{ fontSize: '17px', margin: 0 }}>{f.split(' ')[0]}</h3>
+                  </div>
+                  <div className="skeleton" style={{ height: '12px', width: '80%' }} />
                 </div>
               ))
             )}
           </div>
+          
+          <div className="text-center" style={{ marginTop: '32px' }}>
+            <Link href="/faculties" className="btn btn-outline" style={{ borderRadius: '999px', padding: '10px 24px', fontSize: '13px' }}>
+              🔍 View All Faculties →
+            </Link>
+          </div>
+
           <style>{`
             @media (max-width: 1100px) {
               .home-faculties-grid { grid-template-columns: repeat(3, 1fr) !important; }
             }
             @media (max-width: 760px) {
-              .home-faculties-grid { grid-template-columns: repeat(2, 1fr) !important; }
+              .home-faculties-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 14px !important; }
             }
             @media (max-width: 480px) {
-              .home-faculties-grid { grid-template-columns: 1fr !important; }
+              .home-faculties-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+              .home-fac-card { padding: 14px 12px !important; }
             }
           `}</style>
 
-          <div style={{ marginTop: '48px' }}>
+          <div style={{ marginTop: '40px' }}>
             <AdUnit type="inline" slot="home-after-faculties" />
           </div>
         </div>

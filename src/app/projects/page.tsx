@@ -108,21 +108,27 @@ export default function ProjectsPage() {
             Perfect for learning, college assignments, or launching your next product.
           </motion.p>
 
-          {/* Stats row */}
+          {/* Stats row — 3 columns single row on mobile */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            style={{ display: 'flex', justifyContent: 'center', gap: '40px', flexWrap: 'wrap' }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '12px',
+              maxWidth: '560px',
+              margin: '0 auto',
+            }}
           >
             {[
               { label: 'Projects', value: projects.length + '+' },
               { label: 'Technologies', value: '10+' },
               { label: 'Students Helped', value: '100+' },
             ].map(s => (
-              <div key={s.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 800, color: 'var(--clr-text-1)' }}>{s.value}</div>
-                <div style={{ fontSize: '12px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
+              <div key={s.label} style={{ textAlign: 'center', padding: '4px' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px, 4.5vw, 32px)', fontWeight: 800, color: 'var(--clr-text-1)', lineHeight: 1.2 }}>{s.value}</div>
+                <div style={{ fontSize: 'clamp(9.5px, 2.4vw, 12px)', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px', whiteSpace: 'nowrap' }}>{s.label}</div>
               </div>
             ))}
           </motion.div>
