@@ -133,8 +133,6 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
-      <Navbar />
-      
       {/* Inject JSON-LD Schema */}
       <script
         type="application/ld+json"
