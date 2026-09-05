@@ -6,7 +6,7 @@ import { sendOTPEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, facultyId, semesterOrder } = await req.json()
+    const { name, email, password, facultyId, semesterOrder, courseType } = await req.json()
 
     if (!name || !email || !password || !facultyId || !semesterOrder) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
         facultyId,
         semesterOrder: parseInt(semesterOrder),
+        courseType: courseType || 'NEW',
       },
     })
 

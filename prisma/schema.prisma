@@ -59,6 +59,7 @@ model User {
   projectsListed        ProjectItem[]
   projectReviews        ProjectReview[]
   cart                  Cart?
+  courseType            String    @default("NEW") // "NEW" or "OLD"
   createdAt             DateTime  @default(now())
 }
 

@@ -1251,6 +1251,118 @@ main:has(.admin-page-container) {
   margin-bottom: 32px;
 }
 
+.admin-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .admin-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+}
+
+.admin-section-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--clr-text-1);
+}
+
+@media (max-width: 640px) {
+  .admin-section-title {
+    font-size: 17px;
+  }
+}
+
+.admin-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--clr-text-2);
+  margin-bottom: 6px;
+}
+
+.admin-input {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--clr-text-1);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-input:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 750px;
+}
+
+.admin-table th {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--clr-text-3);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.admin-table tr:hover td {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+select, .input-field {
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+select option {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  font-size: 13px !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 8px !important;
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 640px) {
+  select option {
+    font-size: 12px !important;
+  }
+}
+
+
 /* ═══════════════════════════════════════════════
    FULL-SCREEN DASHBOARD/ADMIN — MOBILE RESPONSIVE
    Applies to: /dashboard, /admin pages

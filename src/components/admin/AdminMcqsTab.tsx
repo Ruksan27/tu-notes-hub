@@ -118,10 +118,10 @@ export default function AdminMcqsTab() {
     <div className="glass-card" style={{ padding: '24px' }}>
       <h2 className="text-2xl font-bold mb-4">Manage Multiple Choice Questions (MCQs)</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div>
           <label className="block text-sm mb-1 text-[var(--clr-text-2)]">Faculty</label>
-          <select className="form-input" value={selectedFaculty} onChange={e => setSelectedFaculty(e.target.value)}>
+          <select className="form-input w-full" value={selectedFaculty} onChange={e => setSelectedFaculty(e.target.value)}>
             <option value="">Select Faculty...</option>
             {faculties.map(f => (
               <option key={f.id} value={f.id}>{f.name}</option>
@@ -130,7 +130,7 @@ export default function AdminMcqsTab() {
         </div>
         <div>
           <label className="block text-sm mb-1 text-[var(--clr-text-2)]">Semester</label>
-          <select className="form-input" value={selectedSemester} onChange={e => setSelectedSemester(e.target.value)} disabled={!selectedFaculty}>
+          <select className="form-input w-full" value={selectedSemester} onChange={e => setSelectedSemester(e.target.value)} disabled={!selectedFaculty}>
             <option value="">Select Semester...</option>
             {semesters.map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
@@ -139,7 +139,7 @@ export default function AdminMcqsTab() {
         </div>
         <div>
           <label className="block text-sm mb-1 text-[var(--clr-text-2)]">Subject</label>
-          <select className="form-input" value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)} disabled={!selectedSemester}>
+          <select className="form-input w-full" value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)} disabled={!selectedSemester}>
             <option value="">Select Subject...</option>
             {subjects.map(s => (
               <option key={s.id} value={s.id}>{s.code} - {s.title}</option>
@@ -149,10 +149,11 @@ export default function AdminMcqsTab() {
       </div>
 
       {selectedSubject && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
             <h3 className="text-lg font-bold mb-4">Add New MCQ</h3>
             <form onSubmit={handleAddMcq} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
               <div>
                 <label className="block text-sm mb-1 text-[var(--clr-text-2)]">Question</label>
                 <textarea 

@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
         role: true,
         facultyId: true,
         semesterOrder: true,
+        courseType: true,
         sellerProfile: true,
       },
     })
@@ -70,11 +71,22 @@ export async function GET(req: NextRequest) {
       },
     })
 
+    // Filter subjects based on courseType
+    let subjectsToReturn = semester?.subjects || []
+    
+    if (dbUser.courseType === 'OLD') {
+      // For old course, exclude subjects that have "(New" in their title
+      subjectsToReturn = subjectsToReturn.filter(sub => !sub.title.toLowerCase().includes('(new'))
+    } else if (dbUser.courseType === 'NEW') {
+      // For new course, exclude subjects that have "(Old" in their title
+      subjectsToReturn = subjectsToReturn.filter(sub => !sub.title.toLowerCase().includes('(old'))
+    }
+
     return NextResponse.json({
       user: dbUser,
       faculty,
       semesterName: semester?.name || `${dbUser.semesterOrder}th period`,
-      subjects: semester?.subjects || [],
+      subjects: subjectsToReturn,
     })
   } catch (error) {
     console.error('[STUDENT_DASHBOARD]', error)

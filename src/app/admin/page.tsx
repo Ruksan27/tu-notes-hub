@@ -921,25 +921,29 @@ function ManageMaterialsTab() {
       </p>
 
       {/* Filter Dropdowns */}
-      <div className="glass-card" style={{ padding: '24px', marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-          <div>
+      <div className="glass-card" style={{ padding: '20px', marginBottom: '24px' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full max-w-full">
+          <div className="w-full min-w-0">
             <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Faculty</label>
-            <select className="input-field" value={facultyId} onChange={e => { setFacultyId(e.target.value); setSemesterId(''); setSubjectId('') }} style={{ cursor: 'pointer' }}>
+            <select className="input-field w-full max-w-full" value={facultyId} onChange={e => { setFacultyId(e.target.value); setSemesterId(''); setSubjectId('') }} style={{ cursor: 'pointer' }}>
               <option value="">— Choose Faculty —</option>
-              {faculties.map(f => <option key={f.id} value={f.id}>{f.icon} {f.name}</option>)}
+              {faculties.map(f => (
+                <option key={f.id} value={f.id}>
+                  {f.icon} {f.name}
+                </option>
+              ))}
             </select>
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Semester / Year</label>
-            <select className="input-field" value={semesterId} onChange={e => { setSemesterId(e.target.value); setSubjectId('') }} disabled={!facultyId} style={{ cursor: facultyId ? 'pointer' : 'not-allowed' }}>
+            <select className="input-field w-full max-w-full" value={semesterId} onChange={e => { setSemesterId(e.target.value); setSubjectId('') }} disabled={!facultyId} style={{ cursor: facultyId ? 'pointer' : 'not-allowed' }}>
               <option value="">— Choose Period —</option>
               {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Subject</label>
-            <select className="input-field" value={subjectId} onChange={e => setSubjectId(e.target.value)} disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
+            <select className="input-field w-full max-w-full" value={subjectId} onChange={e => setSubjectId(e.target.value)} disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
               <option value="">— Choose Subject —</option>
               <option value="FULL_SEMESTER" style={{ fontWeight: 'bold' }}>— Full Semester Guide (All Subjects) —</option>
               {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()}</option>)}
@@ -947,6 +951,7 @@ function ManageMaterialsTab() {
           </div>
         </div>
       </div>
+
 
       {/* Results */}
       {!subjectId ? (
@@ -2822,22 +2827,23 @@ function UploadTab() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: facultyId === 'bca' ? '1fr 1fr' : '1fr 1fr', gap: '12px' }}>
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                <div className="w-full min-w-0">
                   <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Faculty *</label>
-                  <select className="input-field" value={facultyId} onChange={e => setFacultyId(e.target.value)} required style={{ cursor: 'pointer', fontSize: '13px' }}>
+                  <select className="input-field w-full max-w-full" value={facultyId} onChange={e => setFacultyId(e.target.value)} required style={{ cursor: 'pointer', fontSize: '13px' }}>
                     <option value="">— Choose Faculty —</option>
                     {faculties.map(f => <option key={f.id} value={f.id}>{f.icon} {f.name}</option>)}
                   </select>
                 </div>
-                <div>
+                <div className="w-full min-w-0">
                   <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Semester / Year *</label>
-                  <select className="input-field" value={semesterId} onChange={e => setSemesterId(e.target.value)} required disabled={!facultyId} style={{ cursor: facultyId ? 'pointer' : 'not-allowed', fontSize: '13px' }}>
+                  <select className="input-field w-full max-w-full" value={semesterId} onChange={e => setSemesterId(e.target.value)} required disabled={!facultyId} style={{ cursor: facultyId ? 'pointer' : 'not-allowed', fontSize: '13px' }}>
                     <option value="">— Choose Period —</option>
                     {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
               </div>
+
 
               {facultyId === 'bca' && (
                 <div>

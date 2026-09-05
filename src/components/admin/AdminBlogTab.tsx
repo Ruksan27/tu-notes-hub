@@ -291,7 +291,7 @@ export default function AdminBlogTab() {
 
         {!showForm && (
           <button 
-            className="btn btn-primary" 
+            className="btn btn-primary w-full sm:w-auto" 
             onClick={() => {
               resetForm()
               setShowForm(true)
@@ -304,10 +304,10 @@ export default function AdminBlogTab() {
       </div>
 
       {showForm ? (
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255,255,255,0.08)', padding: '24px', borderRadius: '16px', backdropFilter: 'blur(12px)' }}>
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="p-4 sm:p-6 rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-md max-w-full overflow-hidden">
           
           {/* Header Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-white/10">
             <div>
               <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--clr-text-1)', margin: 0 }}>
                 {editingId ? '✏️ Edit Blog Post' : '✨ Create New Blog Post'}
@@ -317,10 +317,10 @@ export default function AdminBlogTab() {
               </span>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button 
                 type="button" 
-                className="btn btn-outline" 
+                className="btn btn-outline flex-1 sm:flex-none text-xs sm:text-sm" 
                 onClick={() => setShowAiPanel(!showAiPanel)} 
                 style={{ 
                   borderColor: showAiPanel ? '#a78bfa' : 'rgba(255,255,255,0.15)', 
@@ -329,11 +329,11 @@ export default function AdminBlogTab() {
                   fontWeight: 600 
                 }}
               >
-                {showAiPanel ? '💬 Hide AI Chat' : '💬 Open AI Chat Copilot'}
+                {showAiPanel ? '💬 Hide AI Chat' : '💬 Open AI Copilot'}
               </button>
               <button 
                 type="button" 
-                className="btn btn-outline" 
+                className="btn btn-outline text-xs sm:text-sm" 
                 onClick={() => { setShowForm(false); resetForm(); }}
                 style={{ color: 'var(--clr-text-3)' }}
               >
@@ -342,14 +342,14 @@ export default function AdminBlogTab() {
             </div>
           </div>
 
-          <form onSubmit={(e) => handleSubmit(e)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <form onSubmit={(e) => handleSubmit(e)} className="flex flex-col gap-5 w-full max-w-full">
             
             {/* Section 1: Basic Details */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '18px' }}>
+            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4 sm:p-5">
               <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#818cf8', marginBottom: '14px' }}>
                 1. Basic Details
               </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="admin-label">Blog Title *</label>
                   <input 
@@ -389,18 +389,18 @@ export default function AdminBlogTab() {
             </div>
 
             {/* Section 2: SIDE-BY-SIDE EDITOR & MULTI-MODEL AI CHAT COPILOT */}
-            <div style={{ display: 'grid', gridTemplateColumns: showAiPanel ? '1fr 420px' : '1fr', gap: '20px', alignItems: 'start' }}>
+            <div className={`grid grid-cols-1 ${showAiPanel ? 'lg:grid-cols-[1fr_400px]' : ''} gap-5 items-start max-w-full`}>
               
               {/* Left Side: Article Content Editor */}
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '18px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4 sm:p-5 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
                   <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#38bdf8', margin: 0 }}>
                     2. Article Content (HTML)
                   </h4>
                   <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Supports &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;code&gt;</span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3.5">
                   <div>
                     <label className="admin-label">Cover Image URL</label>
                     <input 
@@ -428,7 +428,7 @@ export default function AdminBlogTab() {
                 <textarea 
                   className="admin-input" 
                   required 
-                  rows={20}
+                  rows={16}
                   style={{ 
                     width: '100%', 
                     boxSizing: 'border-box', 
@@ -448,17 +448,7 @@ export default function AdminBlogTab() {
               {/* Right Side: Interactive AI Chat Copilot with Model Selection */}
               {showAiPanel && (
                 <div 
-                  style={{ 
-                    background: 'linear-gradient(145deg, rgba(139, 92, 246, 0.08), rgba(15, 23, 42, 0.95))', 
-                    border: '1px solid rgba(139, 92, 246, 0.3)', 
-                    borderRadius: '12px', 
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '620px',
-                    position: 'sticky',
-                    top: '20px'
-                  }}
+                  className="w-full max-w-full bg-gradient-to-br from-purple-900/20 to-slate-900/95 border border-purple-500/30 rounded-xl p-3 sm:p-4 flex flex-col h-[520px] lg:h-[620px] lg:sticky lg:top-5"
                 >
                   {/* Model Selector Top Bar */}
                   <div style={{ marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
@@ -653,7 +643,7 @@ export default function AdminBlogTab() {
             </div>
 
             {/* Section 3: SEO Metadata & Excerpt */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '18px' }}>
+            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4 sm:p-5">
               <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#34d399', marginBottom: '14px' }}>
                 3. SEO & Card Excerpt
               </h4>
@@ -670,7 +660,7 @@ export default function AdminBlogTab() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="admin-label">SEO Meta Title (60 chars max)</label>
                   <input 
@@ -693,7 +683,7 @@ export default function AdminBlogTab() {
                     onChange={e => setFormData({ ...formData, metaDesc: e.target.value })} 
                   />
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
+                <div className="col-span-1 sm:col-span-2">
                   <label className="admin-label">Keywords (Comma separated)</label>
                   <input 
                     type="text" 
@@ -708,13 +698,14 @@ export default function AdminBlogTab() {
             </div>
 
             {/* Section 4: Status Selection & Action Bar */}
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               <div>
                 <span className="admin-label" style={{ marginBottom: '6px', display: 'block' }}>Publication Visibility</span>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, isPublished: false })}
+                    className="w-full sm:w-auto"
                     style={{
                       padding: '8px 16px',
                       borderRadius: '8px',
@@ -731,6 +722,7 @@ export default function AdminBlogTab() {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, isPublished: true })}
+                    className="w-full sm:w-auto"
                     style={{
                       padding: '8px 16px',
                       borderRadius: '8px',
@@ -747,10 +739,10 @@ export default function AdminBlogTab() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
                 <button
                   type="button"
-                  className="btn btn-outline"
+                  className="btn btn-outline w-full sm:w-auto"
                   onClick={(e) => handleSubmit(e, false)}
                   style={{ borderColor: '#f59e0b', color: '#fbbf24', fontWeight: 700 }}
                 >
@@ -758,7 +750,7 @@ export default function AdminBlogTab() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn btn-primary w-full sm:w-auto"
                   onClick={(e) => handleSubmit(e, true)}
                   style={{ background: 'linear-gradient(135deg, #10b981, #059669)', fontWeight: 700, padding: '10px 24px' }}
                 >
@@ -772,11 +764,12 @@ export default function AdminBlogTab() {
       ) : (
         <div>
           {/* Filter Bar */}
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
+          <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/5 overflow-x-auto no-scrollbar">
             {(['all', 'published', 'draft'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setFilterTab(tab)}
+                className="whitespace-nowrap flex-shrink-0"
                 style={{
                   padding: '6px 14px',
                   borderRadius: '6px',
@@ -794,17 +787,17 @@ export default function AdminBlogTab() {
             ))}
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table className="admin-table">
+          <div className="table-wrap overflow-x-auto w-full max-w-full">
+            <table className="admin-table min-w-[720px] w-full">
               <thead>
                 <tr>
-                  <th>Title & Slug</th>
-                  <th>Author</th>
-                  <th>Status</th>
-                  <th>Attached Notes</th>
-                  <th>Views</th>
-                  <th>Created Date</th>
-                  <th>Actions</th>
+                  <th style={{ minWidth: '200px' }}>Title & Slug</th>
+                  <th style={{ minWidth: '110px' }}>Author</th>
+                  <th style={{ minWidth: '100px' }}>Status</th>
+                  <th style={{ minWidth: '120px' }}>Attached Notes</th>
+                  <th style={{ minWidth: '70px' }}>Views</th>
+                  <th style={{ minWidth: '100px' }}>Created Date</th>
+                  <th style={{ minWidth: '130px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -870,3 +863,4 @@ export default function AdminBlogTab() {
     </div>
   )
 }
+

@@ -256,31 +256,31 @@ export default function DashboardPage() {
                 <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.25), transparent 70%)', pointerEvents: 'none' }} />
                 <div style={{ position: 'absolute', bottom: '-30px', left: '30%', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.2), transparent 70%)', pointerEvents: 'none' }} />
 
-                <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '32px' }}>{faculty?.icon ?? '🎓'}</span>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
+                  <div className="flex flex-col gap-2 w-full md:w-auto">
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl md:text-3xl">{faculty?.icon ?? '🎓'}</span>
                       <div>
-                        <h2 style={{ fontSize: '22px', fontWeight: 800, margin: 0 }}>
+                        <h2 className="text-xl md:text-2xl font-extrabold m-0 leading-tight">
                           Welcome back, <span className="text-gradient">{user.name.split(' ')[0]}</span> 👋
                         </h2>
-                        <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0 }}>
+                        <p className="text-xs md:text-sm text-gray-400 m-0 mt-1">
                           {faculty ? `${faculty.name} · ` : ''}<span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{semesterName || 'No semester set'}</span>
                         </p>
                       </div>
                     </div>
                     {!faculty && (
-                      <Link href="/settings" className="btn btn-outline" style={{ marginTop: '8px', fontSize: '12px', padding: '6px 16px', display: 'inline-flex', gap: '6px' }}>
+                      <Link href="/settings" className="btn btn-outline w-max" style={{ marginTop: '8px', fontSize: '12px', padding: '6px 16px', display: 'inline-flex', gap: '6px' }}>
                         ⚙️ Setup Profile
                       </Link>
                     )}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                    <span style={{ background: pkg.gradient, border: `1px solid ${isPremium ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700, color: isPremium ? '#a5b4fc' : 'var(--clr-text-3)' }}>
+                  <div className="flex flex-row md:flex-col items-center md:items-end w-full md:w-auto justify-between md:justify-start gap-3 mt-2 md:mt-0">
+                    <span className="whitespace-nowrap flex-shrink-0" style={{ background: pkg.gradient, border: `1px solid ${isPremium ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700, color: isPremium ? '#a5b4fc' : 'var(--clr-text-3)' }}>
                       {pkg.label}
                     </span>
                     {user.packageType !== 'ELITE_AI' && user.role !== 'ADMIN' && (
-                      <button className="btn btn-primary" style={{ fontSize: '12px', padding: '7px 16px' }} onClick={() => window.location.href = '/pricing'}>
+                      <button className="btn btn-primary flex-1 md:flex-none w-full md:w-auto justify-center" style={{ fontSize: '13px', padding: '8px 20px' }} onClick={() => window.location.href = '/pricing'}>
                         💎 Upgrade
                       </button>
                     )}
@@ -289,7 +289,7 @@ export default function DashboardPage() {
               </motion.div>
 
               {/* ── Stats Grid ── */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-8">
                 {[
                   { label: 'Notes Available', value: totalNotes, icon: '📄', color: '#6366f1', glow: 'rgba(99,102,241,0.25)' },
                   { label: 'Past Papers', value: totalPapers, icon: '📝', color: '#06b6d4', glow: 'rgba(6,182,212,0.25)' },
@@ -303,16 +303,17 @@ export default function DashboardPage() {
                     style={{
                       background: `linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))`,
                       border: `1px solid ${s.color}30`,
-                      borderRadius: '16px', padding: '20px 22px',
+                      borderRadius: '16px', padding: '16px 20px',
                       boxShadow: `0 4px 20px ${s.glow}`,
                       transition: 'all 0.25s ease',
+                      display: 'flex', flexDirection: 'column',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--clr-text-3)' }}>{s.label}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--clr-text-3)' }}>{s.label}</span>
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>{s.icon}</div>
                     </div>
-                    <div style={{ fontSize: '40px', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+                    <div style={{ fontSize: '36px', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
                   </motion.div>
                 ))}
               </div>
@@ -357,17 +358,16 @@ export default function DashboardPage() {
                           }}
                         >
                           {/* Subject Header Strip */}
-                          <div style={{
-                            padding: '14px 22px',
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3" style={{
+                            padding: '16px 20px',
                             background: `linear-gradient(90deg, ${accentColor}18, transparent)`,
                             borderBottom: `1px solid ${accentColor}20`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px',
                           }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '6px', background: `${accentColor}22`, color: accentColor, border: `1px solid ${accentColor}40`, letterSpacing: '0.05em' }}>
+                            <div className="flex items-start sm:items-center gap-3">
+                              <span style={{ fontSize: '12px', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: `${accentColor}22`, color: accentColor, border: `1px solid ${accentColor}40`, letterSpacing: '0.05em' }}>
                                 {sub.code}
                               </span>
-                              <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--clr-text-1)' }}>{sub.title}</span>
+                              <span style={{ fontWeight: 700, fontSize: '16px', color: 'var(--clr-text-1)', lineHeight: 1.3 }}>{sub.title}</span>
                             </div>
                             <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600 }}>
                               {total === 0 ? 'No resources yet' : `${total} resource${total !== 1 ? 's' : ''}`}
