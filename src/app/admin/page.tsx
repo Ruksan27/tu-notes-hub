@@ -2151,20 +2151,65 @@ function UploadTab() {
   const [sheetFiles, setSheetFiles] = useState<File[]>([])
   const [extractText, setExtractText] = useState(true)
 
-  // Auto-SEO Generator State for Upload Section
-  const [showSeoBox, setShowSeoBox] = useState(false)
-  const [seoCodeSnippet, setSeoCodeSnippet] = useState('')
-  const [seoKeywordsList, setSeoKeywordsList] = useState<string[]>([])
+  // AI Valuation State
+  const [projectPrice, setProjectPrice] = useState<string>('3500')
+  const [evaluatingPrice, setEvaluatingPrice] = useState(false)
+  const [aiValuationResult, setAiValuationResult] = useState<any>(null)
+  const [hasReportPdf, setHasReportPdf] = useState(true)
+  const [hasDocumentation, setHasDocumentation] = useState(true)
+  const [hasDemoVideo, setHasDemoVideo] = useState(false)
+  const [hasSqlScript, setHasSqlScript] = useState(true)
 
-  // MCQ State
-  const [mcqYear, setMcqYear] = useState<string>(new Date().getFullYear().toString())
-  const [mcqExamType, setMcqExamType] = useState('BOARD_EXAM')
-  const [mcqItems, setMcqItems] = useState([
-    { question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }
-  ])
-  const [savingMcqs, setSavingMcqs] = useState(false)
-  const [mcqImageFiles, setMcqImageFiles] = useState<File[]>([])
-  const [mcqImageGenerating, setMcqImageGenerating] = useState(false)
+  async function handleEvaluateProjectPrice() {
+    if (!noteTitle && !noteDescription) {
+      toast.error('Please enter a Title or Description first!')
+      return
+    }
+
+    setEvaluatingPrice(true)
+    toast.loading('🤖 AI is evaluating project complexity & calculating fair price...', { toastId: 'eval-price' })
+
+    try {
+      const selectedFaculty = faculties.find(f => f.id === facultyId)
+      const selectedSemester = semesters.find(s => s.id === semesterId)
+      const selectedSubject = subjects.find(s => s.id === subjectId)
+
+      const res = await fetch('/api/ai/project-valuation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: noteTitle,
+          description: noteDescription,
+          projectType: noteType,
+          category: selectedFaculty?.name,
+          subcategory: selectedSemester?.name,
+          technologies: selectedSubject?.title,
+          sourceDriveLink: driveLink,
+          hasReportPdf,
+          hasDocumentation,
+          hasDemoVideo,
+          hasSqlScript
+        })
+      })
+
+      const data = await res.json()
+      toast.dismiss('eval-price')
+
+      if (res.ok && data.appraisal) {
+        setAiValuationResult(data.appraisal)
+        setProjectPrice(String(data.appraisal.calculatedPriceNpr))
+        toast.success(`✨ Fair Price Calculated: Rs. ${data.appraisal.calculatedPriceNpr} (${data.appraisal.complexityGrade})`)
+      } else {
+        toast.error(data.error || 'Failed to evaluate price')
+      }
+    } catch (err: any) {
+      toast.dismiss('eval-price')
+      toast.error(err.message || 'Network error during valuation')
+    } finally {
+      setEvaluatingPrice(false)
+    }
+  }
+
 
   async function handleGenerateMcqsFromImage() {
     if (!subjectId) { toast.error('Please select a subject first'); return }
@@ -3109,7 +3154,138 @@ function UploadTab() {
                     </div>
                   ) : null}
                 </div>
+              {/* 🤖 AI PROJECT FAIR PRICING & COMPLEXITY APPRAISAL CARD */}
+              {(noteType === 'PROJECT' || noteType === 'PROJECT_WORK') && (
+                <div style={{ background: 'linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.08))', border: '1px solid rgba(14,165,233,0.3)', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '22px' }}>🤖</span>
+                      <div>
+                        <h4 style={{ margin: 0, fontWeight: 800, color: '#38bdf8', fontSize: '15px' }}>
+                          AI Project Complexity & Fair Price Evaluator
+                        </h4>
+                        <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
+                          Student-friendly pricing bounded strictly between <strong>Rs. 1,500 (1.5k)</strong> and <strong>Rs. 9,999 (10k)</strong>.
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleEvaluateProjectPrice}
+                      disabled={evaluatingPrice}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        border: 'none',
+                        cursor: evaluatingPrice ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 14px rgba(14,165,233,0.35)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {evaluatingPrice ? (
+                        <><span className="spinner" style={{ width: '14px', height: '14px' }} /> Evaluating...</>
+                      ) : (
+                        '✨ Run Fair AI Pricing'
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Drive Deliverables Checklist for AI Context */}
+                  <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px 16px', borderRadius: '10px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--clr-text-2)' }}>
+                      <input type="checkbox" checked={hasReportPdf} onChange={e => setHasReportPdf(e.target.checked)} style={{ cursor: 'pointer' }} />
+                      📄 Report PDF/Word Included
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--clr-text-2)' }}>
+                      <input type="checkbox" checked={hasDocumentation} onChange={e => setHasDocumentation(e.target.checked)} style={{ cursor: 'pointer' }} />
+                      📘 Setup Guide Included
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--clr-text-2)' }}>
+                      <input type="checkbox" checked={hasSqlScript} onChange={e => setHasSqlScript(e.target.checked)} style={{ cursor: 'pointer' }} />
+                      🗄️ SQL DB Dump Included
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--clr-text-2)' }}>
+                      <input type="checkbox" checked={hasDemoVideo} onChange={e => setHasDemoVideo(e.target.checked)} style={{ cursor: 'pointer' }} />
+                      🎥 Demo Video Link Included
+                    </label>
+                  </div>
+
+                  {/* AI Valuation Result Card */}
+                  {aiValuationResult && (
+                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '12px', padding: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{
+                            padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 900,
+                            background: aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED' ? 'rgba(236,72,153,0.2)' : 'rgba(14,165,233,0.2)',
+                            color: aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED' ? '#f472b6' : '#38bdf8',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                          }}>
+                            GRADE: {aiValuationResult.complexityGrade}
+                          </span>
+                          <span style={{ fontSize: '14px', fontWeight: 800, color: '#34d399' }}>
+                            Calculated Price: Rs. {aiValuationResult.calculatedPriceNpr}
+                          </span>
+                          <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
+                            (Fair Range: Rs. {aiValuationResult.suggestedRange?.min} - Rs. {aiValuationResult.suggestedRange?.max})
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setProjectPrice(String(aiValuationResult.calculatedPriceNpr))}
+                          style={{ fontSize: '11px', background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)', padding: '4px 10px', borderRadius: '6px', fontWeight: 800, cursor: 'pointer' }}
+                        >
+                          ✅ Apply AI Price (Rs. {aiValuationResult.calculatedPriceNpr})
+                        </button>
+                      </div>
+
+                      {/* Justification List */}
+                      {aiValuationResult.justificationList && aiValuationResult.justificationList.length > 0 && (
+                        <div style={{ marginTop: '8px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--clr-text-3)', display: 'block', marginBottom: '4px' }}>
+                            💡 Why this price? (Calculation Breakdown):
+                          </span>
+                          <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.6 }}>
+                            {aiValuationResult.justificationList.map((reason: string, idx: number) => (
+                              <li key={idx}>{reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {/* Manual Editable Price Input */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>
+                      💰 Selling Price (NPR) * — <span style={{ color: '#6ee7b7' }}>Editable (You can type any custom price)</span>
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 800, color: '#38bdf8' }}>NPR Rs.</span>
+                      <input
+                        className="input-field"
+                        type="number"
+                        min="1500"
+                        max="9999"
+                        required
+                        value={projectPrice}
+                        onChange={e => setProjectPrice(e.target.value)}
+                        placeholder="e.g. 3500"
+                        style={{ fontSize: '14px', fontWeight: 800, color: '#6ee7b7', width: '200px' }}
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
+
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 {!isSolutionBook && <div>

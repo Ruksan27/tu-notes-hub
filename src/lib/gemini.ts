@@ -183,7 +183,7 @@ export async function callGemini(
     }
   }
 
-  console.warn(`[Nvidia AI] All models failed. Falling back to Groq AI...`)
+  console.warn(`[Groq AI] All models failed. Falling back to HuggingFace...`)
 
   // 3. Groq fallback
   try {
@@ -194,6 +194,16 @@ export async function callGemini(
     throw new Error('All AI providers failed. Please try again later.')
   }
 }
+
+// Dedicated Multi-Provider Helper for High Reliability AI Tasks
+export async function callMultiProviderAI(
+  prompt: string,
+  systemInstruction?: string,
+  images?: { base64: string; mimeType: string }[]
+): Promise<string> {
+  return callGemini(prompt, systemInstruction, images)
+}
+
 
 // Fetch available Groq models dynamically
 async function getGroqModels(apiKey: string): Promise<string[]> {

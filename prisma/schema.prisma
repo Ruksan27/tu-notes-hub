@@ -281,6 +281,11 @@ model ProjectItem {
   organicViews       Int            @default(0)
   searchClicks       Int            @default(0)
 
+  // AI Appraisal Metrics
+  aiCalculatedPrice  Int?
+  aiComplexityGrade  String?
+  aiValuationJson    String?        @db.LongText
+
   status             String         @default("ACTIVE") // PENDING | ACTIVE | INACTIVE | REJECTED | CHANGES_REQUESTED
   createdAt          DateTime       @default(now())
   
