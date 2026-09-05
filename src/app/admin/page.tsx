@@ -2151,6 +2151,21 @@ function UploadTab() {
   const [sheetFiles, setSheetFiles] = useState<File[]>([])
   const [extractText, setExtractText] = useState(true)
 
+  // Auto-SEO Generator State for Upload Section
+  const [showSeoBox, setShowSeoBox] = useState(false)
+  const [seoCodeSnippet, setSeoCodeSnippet] = useState('')
+  const [seoKeywordsList, setSeoKeywordsList] = useState<string[]>([])
+
+  // MCQ State
+  const [mcqYear, setMcqYear] = useState<string>(new Date().getFullYear().toString())
+  const [mcqExamType, setMcqExamType] = useState('BOARD_EXAM')
+  const [mcqItems, setMcqItems] = useState<any[]>([
+    { question: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }
+  ])
+  const [savingMcqs, setSavingMcqs] = useState(false)
+  const [mcqImageFiles, setMcqImageFiles] = useState<File[]>([])
+  const [mcqImageGenerating, setMcqImageGenerating] = useState(false)
+
   // AI Valuation State
   const [projectPrice, setProjectPrice] = useState<string>('3500')
   const [evaluatingPrice, setEvaluatingPrice] = useState(false)
@@ -2299,7 +2314,7 @@ function UploadTab() {
   }
 
   function updateMcqOption(qi: number, oi: number, val: string) {
-    setMcqItems(prev => prev.map((item, idx) => idx === qi ? { ...item, options: item.options.map((o, k) => k === oi ? val : o) } : item))
+    setMcqItems(prev => prev.map((item, idx) => idx === qi ? { ...item, options: item.options.map((o: string, k: number) => k === oi ? val : o) } : item))
   }
 
   useEffect(() => {
@@ -3154,6 +3169,8 @@ function UploadTab() {
                     </div>
                   ) : null}
                 </div>
+              )}
+
               {/* 🤖 AI PROJECT FAIR PRICING & COMPLEXITY APPRAISAL CARD */}
               {(noteType === 'PROJECT' || noteType === 'PROJECT_WORK') && (
                 <div style={{ background: 'linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.08))', border: '1px solid rgba(14,165,233,0.3)', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -3448,7 +3465,7 @@ function UploadTab() {
                       <input className="input-field" placeholder="e.g. Which of the following is an OOP concept?" value={mcq.question} onChange={e => updateMcqItem(qi, 'question', e.target.value)} required style={{ fontSize: '13px' }} />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      {mcq.options.map((opt, oi) => (
+                      {mcq.options.map((opt: string, oi: number) => (
                         <div key={oi}>
                           <input className="input-field" placeholder={`Option ${String.fromCharCode(65 + oi)}`} value={opt} onChange={e => updateMcqOption(qi, oi, e.target.value)} style={{ fontSize: '12px' }} />
                         </div>
