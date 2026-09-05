@@ -34,7 +34,32 @@ interface Faculty {
   visible?: boolean
 }
 
+function getShortFacultyName(name: string) {
+  if (!name) return ''
+  return name
+    .replace('Bachelor of Computer Application', 'BCA (Comp. App)')
+    .replace('B.Sc. Computer Science & Information Technology', 'B.Sc. CSIT')
+    .replace('Bachelor of Business Administration', 'BBA (Business Admin)')
+    .replace('Bachelor of Business Management', 'BBM (Business Mgmt)')
+    .replace('Bachelor of Business Studies', 'BBS (Business Studies)')
+    .replace('Bachelor of Information Management', 'BIM (Info Mgmt)')
+    .replace('Bachelor of Information Technology', 'BIT (Info Tech)')
+    .replace('Bachelor of Hotel Management', 'BHM (Hotel Mgmt)')
+    .replace('Bachelor of Engineering (Computer)', 'BE Computer')
+    .replace('B.Sc. (General Science)', 'B.Sc. Science')
+    .replace('B.Ed. (General Education)', 'B.Ed. Education')
+    .replace('B.Sc. Agriculture', 'B.Sc. Agri')
+    .replace('B.Sc. Forestry', 'B.Sc. Forestry')
+    .replace('B.Sc. Nursing / Allied Health', 'B.Sc. Nursing')
+    .replace('B.Tech (Food Technology)', 'B.Tech Food')
+    .replace('B.V.Sc. & AH (Veterinary Science)', 'B.V.Sc. Vet')
+    .replace('BA LLB (Integrated Law)', 'BA LLB Law')
+    .replace('Bachelor of Architecture', 'B.Arch')
+    .replace('Bachelor of Arts', 'BA Arts')
+}
+
 export default function AdminPage() {
+
   const [user, setUser] = useState<{ role: string; name: string; email: string; packageType: string } | null>(null)
   const [tab, setTab] = useState<AdminTab>('overview')
   const [payments, setPayments] = useState<Payment[]>([])
@@ -929,7 +954,7 @@ function ManageMaterialsTab() {
               <option value="">— Choose Faculty —</option>
               {faculties.map(f => (
                 <option key={f.id} value={f.id}>
-                  {f.icon} {f.name}
+                  {f.icon} {getShortFacultyName(f.name)}
                 </option>
               ))}
             </select>
@@ -946,11 +971,16 @@ function ManageMaterialsTab() {
             <select className="input-field w-full max-w-full" value={subjectId} onChange={e => setSubjectId(e.target.value)} disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
               <option value="">— Choose Subject —</option>
               <option value="FULL_SEMESTER" style={{ fontWeight: 'bold' }}>— Full Semester Guide (All Subjects) —</option>
-              {subjects.map(s => <option key={s.id} value={s.id}>[{s.code}] {s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()}</option>)}
+              {subjects.map(s => {
+                const clean = s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()
+                const display = clean.length > 28 ? clean.slice(0, 26) + '...' : clean
+                return <option key={s.id} value={s.id}>[{s.code}] {display}</option>
+              })}
             </select>
           </div>
         </div>
       </div>
+
 
 
       {/* Results */}
