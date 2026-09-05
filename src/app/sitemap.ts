@@ -158,11 +158,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   })
 
+  // 6. Blogs & Articles
+  const staticBlogs: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/blogs`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    }
+  ]
+  
+  const blogs = await prisma.blog.findMany({
+    where: { isPublished: true },
+    select: { slug: true, updatedAt: true }
+  })
+
+  const blogRoutes: MetadataRoute.Sitemap = blogs.map((blog) => ({
+    url: `${baseUrl}/blogs/${blog.slug}`,
+    lastModified: blog.updatedAt,
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }))
+
   return [
     ...staticPages,
+    ...staticBlogs,
     ...facultyRoutes,
     ...projectRoutes,
     ...noteRoutes,
     ...paperRoutes,
+    ...blogRoutes,
   ]
 }

@@ -9,10 +9,11 @@ import AdminSellersTab from '@/components/admin/AdminSellersTab'
 import AdminPricingTab from '@/components/admin/AdminPricingTab'
 import AdminSeoTab from '@/components/admin/AdminSeoTab'
 import AdminBackupTab from '@/components/admin/AdminBackupTab'
+import AdminBlogTab from '@/components/admin/AdminBlogTab'
 import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
 import MarkdownPaperViewer from '@/components/MarkdownPaperViewer'
 import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'semesters' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'semesters' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup' | 'blogs'
 
 interface Payment {
   id: string
@@ -131,6 +132,7 @@ export default function AdminPage() {
   const navItems: { id: AdminTab; icon: string; label: string }[] = [
     { id: 'overview',  icon: '📊', label: 'Overview' },
     { id: 'seo',       icon: '🔍', label: 'SEO Dashboard' },
+    { id: 'blogs',     icon: '📝', label: 'Blogs & Articles' },
     { id: 'users',     icon: '👥', label: 'Users & Plans' },
     { id: 'payments',  icon: '💳', label: 'Verify Payments' },
     { id: 'sellers',   icon: '🛍️', label: 'Seller Applications' },
@@ -314,6 +316,12 @@ export default function AdminPage() {
             {tab === 'seo' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <AdminSeoTab onNavigateTab={(t) => setTab(t)} />
+              </motion.div>
+            )}
+
+            {tab === 'blogs' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <AdminBlogTab />
               </motion.div>
             )}
 

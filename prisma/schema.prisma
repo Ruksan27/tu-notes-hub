@@ -386,3 +386,21 @@ model Testimonial {
   status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
   createdAt DateTime @default(now())
 }
+
+model Blog {
+  id           String   @id @default(uuid())
+  title        String
+  slug         String   @unique
+  thumbnailUrl String?
+  content      String   @db.LongText // HTML content from Rich Text Editor
+  excerpt      String?  @db.Text
+  metaTitle    String?
+  metaDesc     String?  @db.Text
+  keywords     String?
+  author       String   @default("TU Notes Hub")
+  views        Int      @default(0)
+  isPublished  Boolean  @default(true)
+  fileUrl      String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
