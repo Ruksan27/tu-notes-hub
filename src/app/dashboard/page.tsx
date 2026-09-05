@@ -1082,7 +1082,7 @@ function AIChatPanel({ report }: { report: any }) {
         className="hide-on-print"
         onClick={() => setIsOpen(true)}
         style={{
-          position: 'fixed', bottom: '10px', right: '20px', width: '140px', height: '140px',
+          position: 'fixed', bottom: '24px', right: '24px', width: '70px', height: '70px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', zIndex: 100,
         }}

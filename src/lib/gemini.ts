@@ -24,65 +24,54 @@ function getNextApiKey(): string {
   return key
 }
 
-// Call Gemini REST API directly — supports both AIzaSy... (query param) and AQ... (Bearer token) keys
-async function callGeminiREST(
-  apiKey: string,
+// Call Nvidia REST API (OpenAI Compatible)
+async function callNvidia(
   modelName: string,
-  contents: any[],
-  systemInstruction?: string,
+  messages: any[],
   timeoutMs = 45_000
 ): Promise<string> {
-  const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`
-
-  const body: any = { contents }
-  if (systemInstruction) {
-    body.systemInstruction = { parts: [{ text: systemInstruction }] }
+  const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY
+  if (!NVIDIA_API_KEY) {
+    console.warn('[Nvidia] NVIDIA_API_KEY is not set in environment variables.')
+    return ''
   }
+  const baseUrl = `https://integrate.api.nvidia.com/v1/chat/completions`
 
-  // Try both approaches for every key: first as ?key= param (works for all AI Studio keys),
-  // then as Bearer token (fallback for OAuth tokens)
-  const attempts = [
-    { url: `${baseUrl}?key=${apiKey}`, headers: { 'Content-Type': 'application/json' } as Record<string, string> },
-    { url: baseUrl, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` } as Record<string, string> },
-  ]
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
 
-  for (const attempt of attempts) {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), timeoutMs)
-    try {
-      const res = await fetch(attempt.url, {
-        method: 'POST',
-        headers: attempt.headers,
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      })
-      clearTimeout(timer)
+  try {
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${NVIDIA_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: messages,
+      }),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
 
-      if (res.ok) {
-        const data = await res.json()
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-        if (text) return text
-      } else {
-        const errBody = await res.text()
-        const attemptType = attempt.headers['Authorization'] ? 'Bearer' : '?key='
-        console.warn(`[Gemini REST] ${modelName} ${attemptType} → ${res.status}: ${errBody.substring(0, 200)}`)
-        const err: any = new Error(`Gemini REST ${res.status}: ${errBody.substring(0, 150)}`)
-        err.status = res.status
-        // Only retry with Bearer if it's auth error and we haven't tried Bearer yet
-        if (res.status === 401 || res.status === 403) continue
-        throw err
-      }
-    } catch (e: any) {
-      clearTimeout(timer)
-      if (e.status === 401 || e.status === 403) continue
-      throw e
+    if (res.ok) {
+      const data = await res.json()
+      const text = data?.choices?.[0]?.message?.content ?? ''
+      if (text) return text
+    } else {
+      const errBody = await res.text()
+      console.warn(`[Nvidia] ${modelName} → ${res.status}: ${errBody.substring(0, 200)}`)
+      const err: any = new Error(`Nvidia ${res.status}: ${errBody.substring(0, 150)}`)
+      err.status = res.status
+      throw err
     }
+  } catch (e: any) {
+    clearTimeout(timer)
+    throw e
   }
 
-  // Both attempts failed with auth error
-  const err: any = new Error(`Gemini key auth failed for model ${modelName}`)
-  err.status = 401
-  throw err
+  return ''
 }
 
 export async function callGemini(
@@ -90,58 +79,53 @@ export async function callGemini(
   systemInstruction?: string,
   images?: { base64: string, mimeType: string }[]
 ): Promise<string> {
-  if (API_KEYS.length === 0) {
-    console.warn('[Gemini] No GEMINI_API_KEY set in environment variables.')
-    return ''
-  }
-
-  // Current working Gemini models (Sept 2026) — old models decommissioned
+  
+  // Use Nvidia's top models from the dashboard
   const MODELS_TO_TRY = [
-    'gemini-3.6-flash',        // Primary — recommended by Google API
-    'gemini-3.5-flash-lite',   // Secondary — lighter/faster
+    'deepseek-ai/deepseek-v4-pro-0813',         // Fast and capable for coding/logic
+    'nvidia/nemotron-3-ultra-550b-a55b',        // Heaviest and most powerful fallback
+    'moonshotai/kimi-k3',                       // Multimodal/vision and long context
+    'nvidia/nemotron-3.5-lightning-30b-a3b'     // Fastest fallback
   ]
 
-  // Build contents once
-  const contents: any[] = []
-  const parts: any[] = []
+  // Build OpenAI-compatible messages array
+  const messages: any[] = []
+  
+  if (systemInstruction) {
+    messages.push({ role: 'system', content: systemInstruction })
+  }
+
+  const userContent: any[] = []
   if (images && images.length > 0) {
     for (const img of images) {
-      parts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } })
+      userContent.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:${img.mimeType};base64,${img.base64}`
+        }
+      })
     }
   }
-  parts.push({ text: prompt })
-  contents.push({ role: 'user', parts })
+  userContent.push({ type: 'text', text: prompt })
+  
+  messages.push({ role: 'user', content: userContent })
 
   let lastError: any = null
 
   for (const modelName of MODELS_TO_TRY) {
-    // Try each key for each model
-    for (let k = 0; k < API_KEYS.length; k++) {
-      const apiKey = getNextApiKey()
-      if (!apiKey) break
-
-      try {
-        console.log(`[Gemini AI] Trying model: ${modelName} (key #${k + 1})`)
-        const text = await callGeminiREST(apiKey, modelName, contents, systemInstruction)
-        if (text) return text
-      } catch (error: any) {
-        lastError = error
-        const status = error?.status ?? 0
-        if (status === 404 || status === 400) {
-          console.warn(`[Gemini] ${modelName} key#${k+1} → ${status}. Trying next key...`)
-          continue
-        }
-        if (status === 401 || status === 403) {
-          console.warn(`[Gemini] ${modelName} key#${k+1} → Auth failed (${status}). Trying next key...`)
-          continue
-        }
-        console.warn(`[Gemini Model ${modelName} Failed (${status}): ${error?.message?.substring(0, 80)}]`)
-        break // non-retriable errors: skip to next model
-      }
+    try {
+      console.log(`[Nvidia AI] Trying model: ${modelName}`)
+      const text = await callNvidia(modelName, messages)
+      if (text) return text
+    } catch (error: any) {
+      lastError = error
+      const status = error?.status ?? 0
+      console.warn(`[Nvidia Model ${modelName} Failed (${status}): ${error?.message?.substring(0, 80)}]`)
+      continue 
     }
   }
 
-  console.warn(`[Gemini AI] All models failed. Falling back to Groq AI...`)
+  console.warn(`[Nvidia AI] All models failed. Falling back to Groq AI...`)
 
   // Groq fallback
   try {

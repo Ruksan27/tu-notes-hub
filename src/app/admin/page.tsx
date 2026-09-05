@@ -2210,7 +2210,7 @@ function UploadTab() {
         // Filter out generated MCQs that already exist in the list (case-insensitive check)
         const existingQuestions = new Set(prev.map(p => (p.question || '').toLowerCase().trim()))
         const uniqueNewMcqs = allGeneratedMcqs.filter(
-          newMcq => !existingQuestions.has((newMcq.question || '').toLowerCase().trim())
+          (newMcq: any) => !existingQuestions.has((newMcq.question || '').toLowerCase().trim())
         )
 
         // If there was only 1 empty item initially, replace it. Otherwise append.

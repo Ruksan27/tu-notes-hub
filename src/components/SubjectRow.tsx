@@ -605,7 +605,7 @@ export default function SubjectRow({
                                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {isImg ? '🖼️' : isPdf ? '📄' : '📝'} {file.name || `File ${fi + 1}`}
                                   </span>
-                                  <span style={{ fontSize: '10px', color: 'var(--clr-primary-h)', fontWeight: 600, shrink: 0 }}>View ↗</span>
+                                  <span style={{ fontSize: '10px', color: 'var(--clr-primary-h)', fontWeight: 600, flexShrink: 0 }}>View ↗</span>
                                 </a>
                               )
                             })}

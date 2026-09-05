@@ -294,9 +294,9 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
                 <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
               </div>
               <div style={{
-                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
-                borderRadius: '2px 12px 12px 12px', padding: '8px',
-                display: 'flex', gap: '8px', alignItems: 'center',
+                display: 'flex', alignItems: 'center',
+                transform: 'scale(0.5)', transformOrigin: 'left center',
+                margin: '-20px 0 -20px -20px'
               }}>
                 <CustomLoader />
               </div>
@@ -392,10 +392,9 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
                 <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
               </div>
               <div style={{
-                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
-                borderRadius: '2px 12px 12px 12px', padding: '0px 8px',
-                display: 'flex', gap: '8px', alignItems: 'center',
-                transform: 'scale(0.8)', transformOrigin: 'left center'
+                display: 'flex', alignItems: 'center',
+                transform: 'scale(0.5)', transformOrigin: 'left center',
+                margin: '-20px 0 -20px -20px'
               }}>
                 <CustomLoader />
               </div>

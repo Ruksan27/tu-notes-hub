@@ -189,7 +189,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ sub
       const qLines = wrapText(`${qNum}${mcq.question}`, fontTimesBold, 10.5, 500)
 
       // Estimate required height for question + options + explanation
-      const estHeight = (qLines.length * 14) + (mcq.options.length * 20) + (mcq.explanation ? 30 : 0) + 20
+      const optionsArray = Array.isArray(mcq.options) ? (mcq.options as string[]) : []
+      const estHeight = (qLines.length * 14) + (optionsArray.length * 20) + (mcq.explanation ? 30 : 0) + 20
       if (y - estHeight < 70) {
         currentPage = addPageWithWatermarks()
         y = 790
@@ -203,8 +204,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ sub
       y -= 2
 
       // Draw Options
-      for (let idx = 0; idx < mcq.options.length; idx++) {
-        const optText = `${String.fromCharCode(97 + idx)}) ${mcq.options[idx]}`
+      for (let idx = 0; idx < optionsArray.length; idx++) {
+        const optText = `${String.fromCharCode(97 + idx)}) ${optionsArray[idx]}`
         const optLines = wrapText(optText, fontTimes, 10, 480)
         const isCorrect = mcq.correctOption === idx
 
