@@ -81,7 +81,7 @@ export async function GET(req: Request) {
     const safeTitle = blog.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()
     const filename = `${safeTitle}_tunoteshub.pdf`
 
-    return new NextResponse(watermarkedPdfBytes, {
+    return new NextResponse(Buffer.from(watermarkedPdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

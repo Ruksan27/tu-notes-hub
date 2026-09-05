@@ -87,7 +87,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   // Fetch Related Articles (Simple keyword matching or just recent ones)
   const keywordsArr = blog.keywords?.split(',').map(k => k.trim()).filter(Boolean) || []
-  let relatedBlogs = []
+  let relatedBlogs: any[] = []
   if (keywordsArr.length > 0) {
     relatedBlogs = await prisma.blog.findMany({
       where: {

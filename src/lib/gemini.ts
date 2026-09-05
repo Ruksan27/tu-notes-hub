@@ -74,18 +74,76 @@ async function callNvidia(
   return ''
 }
 
+async function callOfficialGemini(
+  prompt: string,
+  systemInstruction?: string,
+  images?: { base64: string; mimeType: string }[]
+): Promise<string> {
+  const apiKey = getNextApiKey()
+  if (!apiKey) return ''
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
+
+  const contents: any[] = []
+  const parts: any[] = []
+
+  if (images && images.length > 0) {
+    for (const img of images) {
+      parts.push({
+        inlineData: {
+          mimeType: img.mimeType,
+          data: img.base64
+        }
+      })
+    }
+  }
+  parts.push({ text: prompt })
+  contents.push({ role: 'user', parts })
+
+  const requestBody: any = { contents }
+  if (systemInstruction) {
+    requestBody.systemInstruction = {
+      parts: [{ text: systemInstruction }]
+    }
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    })
+    if (res.ok) {
+      const data = await res.json()
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+      if (text) return text
+    }
+  } catch (e) {
+    console.warn('[Official Gemini API Failed]', e)
+  }
+  return ''
+}
+
 export async function callGemini(
   prompt: string,
   systemInstruction?: string,
   images?: { base64: string, mimeType: string }[]
 ): Promise<string> {
+
+  // 1. Try Official Gemini API first if API key is present
+  try {
+    const geminiText = await callOfficialGemini(prompt, systemInstruction, images)
+    if (geminiText) return geminiText
+  } catch (err) {
+    console.warn('[Official Gemini call failed, falling back to Nvidia/Groq]:', err)
+  }
   
-  // Use Nvidia's top models from the dashboard
+  // 2. Use real, verified Nvidia Nim models
   const MODELS_TO_TRY = [
-    'deepseek-ai/deepseek-v4-pro-0813',         // Fast and capable for coding/logic
-    'nvidia/nemotron-3-ultra-550b-a55b',        // Heaviest and most powerful fallback
-    'moonshotai/kimi-k3',                       // Multimodal/vision and long context
-    'nvidia/nemotron-3.5-lightning-30b-a3b'     // Fastest fallback
+    'meta/llama-3.3-70b-instruct',
+    'nvidia/llama-3.1-nemotron-70b-instruct',
+    'deepseek-ai/deepseek-r1',
+    'qwen/qwen2.5-72b-instruct'
   ]
 
   // Build OpenAI-compatible messages array
@@ -127,7 +185,7 @@ export async function callGemini(
 
   console.warn(`[Nvidia AI] All models failed. Falling back to Groq AI...`)
 
-  // Groq fallback
+  // 3. Groq fallback
   try {
     return await callGroq(prompt, systemInstruction, images)
   } catch (groqErr) {

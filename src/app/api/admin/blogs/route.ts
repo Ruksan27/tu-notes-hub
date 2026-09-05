@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const data = await req.json()
-    const { title, slug, thumbnailUrl, content, excerpt, metaTitle, metaDesc, keywords, author, isPublished } = data
+    const { title, slug, thumbnailUrl, content, excerpt, metaTitle, metaDesc, keywords, author, isPublished, fileUrl } = data
 
     if (!title || !slug || !content) {
       return NextResponse.json({ error: 'Title, slug, and content are required' }, { status: 400 })
@@ -41,7 +41,8 @@ export async function POST(req: Request) {
         metaDesc,
         keywords,
         author: author || 'TU Notes Hub',
-        isPublished: isPublished ?? true
+        isPublished: isPublished ?? false,
+        fileUrl: fileUrl || null
       }
     })
 
