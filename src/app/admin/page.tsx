@@ -4110,176 +4110,364 @@ function SiteSettingsTab() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h2 className="text-3xl font-bold mb-2">⚙️ Site Settings</h2>
-      <p style={{ color: 'var(--clr-text-2)', marginBottom: '32px' }}>Manage platform-wide settings and content.</p>
-
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0', flexWrap: 'wrap' }}>
-        {(['GENERAL', 'TESTIMONIALS', 'ABOUT', 'RULES'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setActiveTab(t)}
-            className={`btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
-            style={{ borderRadius: '8px', padding: '10px 20px', fontSize: '13px', minWidth: '160px', marginBottom: '8px' }}
-          >
-            {t === 'GENERAL' ? '⚙️ General Settings' : t === 'TESTIMONIALS' ? '💬 Testimonials' : t === 'ABOUT' ? '📖 About Info' : '⚖️ Platform Rules'}
-          </button>
-        ))}
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} style={{ width: '100%', paddingBottom: '60px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '30px', fontWeight: 900, margin: 0, color: 'var(--clr-text-1)', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          ⚙️ Site Settings
+        </h2>
+        <p style={{ color: 'var(--clr-text-3)', fontSize: '14px', margin: '6px 0 0 0' }}>
+          Manage platform-wide contact information, social links, payment QR code, and platform rules.
+        </p>
       </div>
 
+      {/* ── Sleek Glass Tab Navigation Bar ── */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
+        {[
+          { id: 'GENERAL',      icon: '⚙️', label: 'General Settings' },
+          { id: 'TESTIMONIALS', icon: '💬', label: 'Testimonials' },
+          { id: 'ABOUT',        icon: '📖', label: 'About Info' },
+          { id: 'RULES',        icon: '⚖️', label: 'Platform Rules' },
+        ].map(t => {
+          const isActive = activeTab === t.id
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setActiveTab(t.id as any)}
+              style={{
+                borderRadius: '12px',
+                padding: '12px 22px',
+                fontSize: '13px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.25s ease-in-out',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: isActive 
+                  ? 'linear-gradient(135deg, #0ea5e9, #06b6d4)' 
+                  : 'rgba(255, 255, 255, 0.02)',
+                color: isActive ? '#ffffff' : 'var(--clr-text-2)',
+                border: isActive 
+                  ? '1.5px solid #38bdf8' 
+                  : '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: isActive ? '0 8px 20px rgba(14, 165, 233, 0.35)' : 'none'
+              }}
+            >
+              <span>{t.icon}</span>
+              <span>{t.label}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* ── GENERAL SETTINGS (Full Page Width Grid) ── */}
       {activeTab === 'GENERAL' && (
-        <div className="glass-card" style={{ padding: '36px', maxWidth: '600px' }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-            <div className="spinner" style={{ width: '32px', height: '32px' }} />
-          </div>
-        ) : (
-          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
-                💬 WhatsApp Contact Link
-              </label>
-              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '10px', lineHeight: 1.5 }}>
-                Direct admin contact link for WhatsApp chat. Use format: <code style={{ color: '#a5b4fc' }}>https://wa.me/977XXXXXXXXXX</code>
-              </p>
-              <input
-                type="url"
-                required
-                className="input-field"
-                placeholder="https://wa.me/9779800000000"
-                value={whatsappLink}
-                onChange={e => setWhatsappLink(e.target.value)}
-              />
-              {whatsappLink && (
-                <a
-                  href={whatsappLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '13px', color: '#6ee7b7', textDecoration: 'underline' }}
+        <div style={{ width: '100%' }}>
+          {loading ? (
+            <div className="glass-card" style={{ display: 'flex', justifyContent: 'center', padding: '60px', borderRadius: '20px' }}>
+              <div className="spinner" style={{ width: '36px', height: '36px' }} />
+            </div>
+          ) : (
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+              
+              {/* 2-Column Responsive Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '24px', width: '100%' }}>
+                
+                {/* ── COLUMN 1: Contact Channels & QR Code ── */}
+                <div 
+                  className="glass-card" 
+                  style={{ 
+                    padding: '32px', 
+                    borderRadius: '20px', 
+                    border: '1px solid rgba(255, 255, 255, 0.08)', 
+                    background: 'rgba(15, 23, 42, 0.65)',
+                    backdropFilter: 'blur(16px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '22px'
+                  }}
                 >
-                  ↗ Test Link
-                </a>
-              )}
-            </div>
+                  <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px' }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>📞</span> Direct Contact Channels
+                    </h3>
+                    <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Phone, Email, WhatsApp, and Payment Info</span>
+                  </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
-                📞 Contact Phone Number
-              </label>
-              <input
-                type="text"
-                required
-                className="input-field"
-                placeholder="9767776999"
-                value={contactPhone}
-                onChange={e => setContactPhone(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
-                ✉️ Contact Email
-              </label>
-              <input
-                type="email"
-                required
-                className="input-field"
-                placeholder="tunoteshub@gmail.com"
-                value={contactEmail}
-                onChange={e => setContactEmail(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
-                📘 Facebook Profile Link
-              </label>
-              <input
-                type="url"
-                className="input-field"
-                placeholder="https://facebook.com/yourpage"
-                value={facebookLink}
-                onChange={e => setFacebookLink(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
-                🎵 TikTok Profile Link
-              </label>
-              <input
-                type="url"
-                className="input-field"
-                placeholder="https://tiktok.com/@yourusername"
-                value={tiktokLink}
-                onChange={e => setTiktokLink(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
-                📸 Instagram Profile Link
-              </label>
-              <input
-                type="url"
-                className="input-field"
-                placeholder="https://instagram.com/yourusername"
-                value={instagramLink}
-                onChange={e => setInstagramLink(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
-                🐱 GitHub Profile Link
-              </label>
-              <input
-                type="url"
-                className="input-field"
-                placeholder="https://github.com/yourusername"
-                value={githubLink}
-                onChange={e => setGithubLink(e.target.value)}
-              />
-            </div>
-
-            <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px' }}>
-                📷 Payment QR Code
-              </label>
-              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '10px', lineHeight: 1.5 }}>
-                Upload your eSewa, Khalti, or Mobile Banking QR code. Buyers will scan this QR to pay for projects.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ position: 'relative', border: '2px dashed rgba(99,102,241,0.25)', borderRadius: '12px', padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', cursor: 'pointer' }}>
+                  {/* WhatsApp Link */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                      💬 WhatsApp Contact Link
+                    </label>
+                    <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginBottom: '8px' }}>
+                      Format: <code style={{ color: '#a5b4fc', background: 'rgba(99,102,241,0.1)', padding: '2px 6px', borderRadius: '4px' }}>https://wa.me/977XXXXXXXXXX</code>
+                    </p>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                      type="url"
+                      required
+                      className="input-field"
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        borderRadius: '12px',
+                        padding: '13px 16px',
+                        color: '#fff',
+                        fontSize: '13px'
+                      }}
+                      placeholder="https://wa.me/9779800000000"
+                      value={whatsappLink}
+                      onChange={e => setWhatsappLink(e.target.value)}
                     />
-                    <span style={{ fontSize: '24px', display: 'block', marginBottom: '4px' }}>📸</span>
-                    <span style={{ fontSize: '13px', color: 'var(--clr-text-2)', fontWeight: 600 }}>
-                      {paymentQrFile ? paymentQrFile.name : 'Click to upload QR Image'}
-                    </span>
+                    {whatsappLink && (
+                      <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '12px', color: '#34d399', fontWeight: 700, textDecoration: 'underline' }}
+                      >
+                        ↗ Test Link
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Contact Phone */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
+                      📞 Contact Phone Number
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      className="input-field"
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        borderRadius: '12px',
+                        padding: '13px 16px',
+                        color: '#fff',
+                        fontSize: '13px'
+                      }}
+                      placeholder="9767776999"
+                      value={contactPhone}
+                      onChange={e => setContactPhone(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Contact Email */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
+                      ✉️ Contact Email Address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      className="input-field"
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        borderRadius: '12px',
+                        padding: '13px 16px',
+                        color: '#fff',
+                        fontSize: '13px'
+                      }}
+                      placeholder="tunoteshub@gmail.com"
+                      value={contactEmail}
+                      onChange={e => setContactEmail(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Payment QR Code */}
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '18px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                      📷 Payment QR Code Image
+                    </label>
+                    <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginBottom: '12px' }}>
+                      Upload eSewa, Khalti, or Mobile Banking QR image for user checkouts.
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '180px' }}>
+                        <div style={{ position: 'relative', border: '2px dashed rgba(99,102,241,0.3)', borderRadius: '12px', padding: '20px 14px', textAlign: 'center', background: 'rgba(0,0,0,0.2)', cursor: 'pointer' }}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                          />
+                          <span style={{ fontSize: '24px', display: 'block', marginBottom: '4px' }}>📸</span>
+                          <span style={{ fontSize: '12px', color: 'var(--clr-text-2)', fontWeight: 700 }}>
+                            {paymentQrFile ? paymentQrFile.name : 'Click to Upload QR'}
+                          </span>
+                        </div>
+                      </div>
+                      {(paymentQrUrl || paymentQrFile) && (
+                        <div style={{ width: '100px', height: '100px', position: 'relative', background: '#fff', borderRadius: '12px', padding: '6px', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 20px rgba(0,0,0,0.3)' }}>
+                          <img src={paymentQrUrl!} alt="QR Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                {(paymentQrUrl || paymentQrFile) && (
-                  <div style={{ width: '120px', height: '120px', position: 'relative', background: '#fff', borderRadius: '12px', padding: '8px', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
-                    {/* Use standard img tag for blob URLs to avoid Next/Image host config issues during preview */}
-                    <img src={paymentQrUrl!} alt="QR Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                  </div>
-                )}
-              </div>
-            </div>
 
-            <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
-              <button type="submit" disabled={saving} className="btn btn-primary">
-                {saving ? <><div className="spinner" style={{ width: '16px', height: '16px' }} /> Saving…</> : '💾 Save Settings'}
-              </button>
-            </div>
-          </form>
-        )}
+                {/* ── COLUMN 2: Social Media Handles & Tips ── */}
+                <div 
+                  className="glass-card" 
+                  style={{ 
+                    padding: '32px', 
+                    borderRadius: '20px', 
+                    border: '1px solid rgba(255, 255, 255, 0.08)', 
+                    background: 'rgba(15, 23, 42, 0.65)',
+                    backdropFilter: 'blur(16px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '22px'
+                  }}
+                >
+                  <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px' }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>🌐</span> Social Media Handles
+                    </h3>
+                    <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Footer & profile links displayed to students</span>
+                  </div>
+
+                  {/* Facebook */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
+                      📘 Facebook Profile Link
+                    </label>
+                    <input
+                      type="url"
+                      className="input-field"
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        borderRadius: '12px',
+                        padding: '13px 16px',
+                        color: '#fff',
+                        fontSize: '13px'
+                      }}
+                      placeholder="https://facebook.com/yourpage"
+                      value={facebookLink}
+                      onChange={e => setFacebookLink(e.target.value)}
+                    />
+                  </div>
+
+                  {/* TikTok */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
+                      🎵 TikTok Profile Link
+                    </label>
+                    <input
+                      type="url"
+                      className="input-field"
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        borderRadius: '12px',
+                        padding: '13px 16px',
+                        color: '#fff',
+                        fontSize: '13px'
+                      }}
+                      placeholder="https://tiktok.com/@yourusername"
+                      value={tiktokLink}
+                      onChange={e => setTiktokLink(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Instagram */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
+                      📸 Instagram Profile Link
+                    </label>
+                    <input
+                      type="url"
+                      className="input-field"
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        borderRadius: '12px',
+                        padding: '13px 16px',
+                        color: '#fff',
+                        fontSize: '13px'
+                      }}
+                      placeholder="https://instagram.com/yourusername"
+                      value={instagramLink}
+                      onChange={e => setInstagramLink(e.target.value)}
+                    />
+                  </div>
+
+                  {/* GitHub */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
+                      🐱 GitHub Profile Link
+                    </label>
+                    <input
+                      type="url"
+                      className="input-field"
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        borderRadius: '12px',
+                        padding: '13px 16px',
+                        color: '#fff',
+                        fontSize: '13px'
+                      }}
+                      placeholder="https://github.com/yourusername"
+                      value={githubLink}
+                      onChange={e => setGithubLink(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Information Tip Box */}
+                  <div style={{ background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6, 182, 212, 0.25)', borderRadius: '12px', padding: '16px', marginTop: 'auto' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#67e8f9', fontWeight: 800, fontSize: '13px', marginBottom: '4px' }}>
+                      ⚡ Quick Sync Information
+                    </div>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--clr-text-3)', lineHeight: 1.5 }}>
+                      Saving these settings will automatically update footer contact icons, whatsapp floating widgets, and payment modal details site-wide.
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Submit Button Bar */}
+              <div className="glass-card" style={{ padding: '20px 28px', borderRadius: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', background: 'rgba(15, 23, 42, 0.65)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <button 
+                  type="submit" 
+                  disabled={saving} 
+                  style={{
+                    padding: '14px 36px',
+                    borderRadius: '12px',
+                    background: saving ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '14px',
+                    border: 'none',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 8px 20px rgba(14, 165, 233, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}
+                >
+                  {saving ? (
+                    <><div className="spinner" style={{ width: '16px', height: '16px' }} /> Saving Settings…</>
+                  ) : (
+                    '💾 Save Settings'
+                  )}
+                </button>
+              </div>
+
+            </form>
+          )}
         </div>
       )}
 
