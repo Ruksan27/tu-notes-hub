@@ -344,7 +344,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
         {/* ═══════════════════════════════════════════════
             RIGHT COLUMN (30%) — Sticky Pricing Sidebar
             ═══════════════════════════════════════════════ */}
-        <div className="project-right-col" style={{ position: 'sticky', top: '88px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="project-right-col" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ background: 'linear-gradient(160deg, rgba(14,12,32,0.98), rgba(8,6,20,0.98))', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '14px', padding: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
             {/* Price section */}
 
