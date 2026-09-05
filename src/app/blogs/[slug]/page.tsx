@@ -199,6 +199,25 @@ export default async function BlogPostPage({ params }: Props) {
             {/* Social Share Buttons */}
             <SocialShare title={blog.title} text={blog.excerpt || ''} slug={blog.slug} />
 
+            {/* Attached PDF Download */}
+            {blog.fileUrl && (
+              <div style={{ marginTop: '32px', padding: '24px', background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(6,182,212,0.05))', borderRadius: '16px', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h4 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '4px' }}>Download Attached Notes</h4>
+                  <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', margin: 0 }}>This PDF is safely watermarked with TU Notes Hub logo.</p>
+                </div>
+                <a 
+                  href={`/api/download-watermarked?blogId=${blog.id}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #06b6d4)', fontWeight: 700 }}
+                >
+                  📥 Download PDF
+                </a>
+              </div>
+            )}
+
           </article>
 
           {/* Sticky Sidebar: Table of Contents */}

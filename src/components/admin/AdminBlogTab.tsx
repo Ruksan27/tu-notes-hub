@@ -16,6 +16,7 @@ type Blog = {
   keywords: string | null
   author: string
   isPublished: boolean
+  fileUrl: string | null
   createdAt: string
   views: number
 }
@@ -37,7 +38,8 @@ export default function AdminBlogTab() {
     metaDesc: '',
     keywords: '',
     author: 'TU Notes Hub',
-    isPublished: true
+    isPublished: true,
+    fileUrl: ''
   })
 
   // AI Chat State
@@ -73,7 +75,8 @@ export default function AdminBlogTab() {
       metaDesc: blog.metaDesc || '',
       keywords: blog.keywords || '',
       author: blog.author,
-      isPublished: blog.isPublished
+      isPublished: blog.isPublished,
+      fileUrl: blog.fileUrl || ''
     })
     setShowForm(true)
   }
@@ -163,7 +166,7 @@ export default function AdminBlogTab() {
         {!showForm && (
           <button className="btn btn-primary" onClick={() => {
             setEditingId(null)
-            setFormData({ title: '', slug: '', thumbnailUrl: '', content: '', excerpt: '', metaTitle: '', metaDesc: '', keywords: '', author: 'TU Notes Hub', isPublished: true })
+            setFormData({ title: '', slug: '', thumbnailUrl: '', content: '', excerpt: '', metaTitle: '', metaDesc: '', keywords: '', author: 'TU Notes Hub', isPublished: true, fileUrl: '' })
             setShowForm(true)
           }}>
             + Create New Blog
@@ -219,6 +222,12 @@ export default function AdminBlogTab() {
             <div>
               <label className="admin-label">Short Excerpt (For SEO & Previews)</label>
               <textarea className="admin-input" rows={3} value={formData.excerpt} onChange={e => setFormData({ ...formData, excerpt: e.target.value })} />
+            </div>
+
+            <div style={{ padding: '16px', background: 'rgba(99,102,241,0.05)', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <label className="admin-label">Attachment File URL (PDF Only)</label>
+              <input type="text" className="admin-input" placeholder="https://tunoteshub.com/sample.pdf" value={formData.fileUrl} onChange={e => setFormData({ ...formData, fileUrl: e.target.value })} />
+              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', display: 'block', marginTop: '4px' }}>If provided, a download button will appear. The PDF will be dynamically watermarked when downloaded.</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>

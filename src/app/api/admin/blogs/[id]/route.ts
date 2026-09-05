@@ -5,7 +5,7 @@ export async function PUT(req: Request, context: any) {
   const { id } = await context.params
   try {
     const data = await req.json()
-    const { title, slug, thumbnailUrl, content, excerpt, metaTitle, metaDesc, keywords, author, isPublished } = data
+    const { title, slug, thumbnailUrl, content, excerpt, metaTitle, metaDesc, keywords, author, isPublished, fileUrl } = data
 
     // Handle slug collision, ignoring self
     let uniqueSlug = slug
@@ -29,7 +29,8 @@ export async function PUT(req: Request, context: any) {
         metaDesc,
         keywords,
         author,
-        isPublished
+        isPublished,
+        fileUrl: fileUrl || null
       }
     })
 
