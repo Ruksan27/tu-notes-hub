@@ -221,123 +221,190 @@ export default function PricingPlans() {
 
   return (
     <div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        /* ── Pricing Page Mobile Styles ── */
+        .pricing-hero {
+          position: relative;
+          padding: 60px 20px 36px;
+          overflow: hidden;
+          text-align: center;
+        }
+        @media (max-width: 640px) {
+          .pricing-hero { padding: 44px 16px 28px; }
+        }
+
+        /* Plan cards grid */
+        .pricing-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 20px;
+          max-width: 1080px;
+          margin: 0 auto;
+          align-items: start;
+        }
+        @media (max-width: 760px) {
+          .pricing-cards-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+        }
+
+        /* Plan card itself */
+        .pricing-card-inner {
+          padding: 24px 20px;
+          height: 100%;
+        }
+        @media (max-width: 640px) {
+          .pricing-card-inner { padding: 20px 16px; }
+        }
+
+        /* Plan header on mobile: side by side */
+        .pricing-card-header {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-bottom: 18px;
+        }
+        .pricing-card-header-info { flex: 1; }
+
+        /* Features list compact on mobile */
+        .pricing-features-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+        @media (max-width: 640px) {
+          .pricing-features-list { gap: 8px; margin-bottom: 16px; }
+        }
+        .pricing-feature-item {
+          display: flex;
+          gap: 9px;
+          align-items: flex-start;
+          font-size: 13.5px;
+        }
+        @media (max-width: 640px) {
+          .pricing-feature-item { font-size: 13px; }
+        }
+
+        /* Comparison table mobile */
+        .pricing-compare-wrap {
+          overflow-x: auto;
+          border-radius: 16px;
+          border: 1px solid var(--clr-border);
+          -webkit-overflow-scrolling: touch;
+        }
+        .pricing-compare-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 480px;
+        }
+
+        /* Payment methods */
+        .payment-methods-wrap {
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          flex-wrap: wrap;
+          margin-bottom: 24px;
+        }
+        @media (max-width: 480px) {
+          .payment-methods-wrap {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+      `}} />
+
       {/* ── Hero ── */}
-      <div style={{ position: 'relative', padding: '80px 24px 40px', overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute', top: '-50%', left: '50%', transform: 'translateX(-50%)',
-          width: '700px', height: '500px',
-          background: 'radial-gradient(ellipse, rgba(99,102,241,0.1) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-        <div className="container text-center" style={{ position: 'relative', maxWidth: '720px' }}>
-          <div className="badge badge-elite" style={{ marginBottom: '20px', display: 'inline-flex', padding: '6px 16px', fontSize: '12px' }}>
+      <div className="pricing-hero">
+        <div style={{ position: 'absolute', top: '-50%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(99,102,241,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', maxWidth: '680px', margin: '0 auto' }}>
+          <div className="badge badge-elite" style={{ marginBottom: '16px', display: 'inline-flex', padding: '5px 14px', fontSize: '11px' }}>
             💎 Simple & Transparent Pricing
           </div>
-          <h1 style={{ fontSize: 'clamp(34px, 5vw, 58px)', lineHeight: 1.1, marginBottom: '20px', fontFamily: 'var(--font-display)' }}>
-            Plans Built for<br />
+          <h1 style={{ fontSize: 'clamp(28px, 6vw, 52px)', lineHeight: 1.1, marginBottom: '14px', fontFamily: 'var(--font-display)', fontWeight: 900 }}>
+            Plans Built for{' '}
             <span className="text-gradient">Every TU Student</span>
           </h1>
-          <p style={{ color: 'var(--clr-text-2)', fontSize: '17px', lineHeight: 1.7, maxWidth: '540px', margin: '0 auto 12px' }}>
+          <p style={{ color: 'var(--clr-text-2)', fontSize: 'clamp(14px, 3vw, 16px)', lineHeight: 1.7, maxWidth: '500px', margin: '0 auto' }}>
             Start free. Upgrade when you need more. Pay with eSewa, Khalti, or Fonepay — no cards needed.
           </p>
         </div>
       </div>
 
       {/* ── Plan Cards ── */}
-      <div className="container" style={{ padding: '0 24px 64px' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '24px',
-          maxWidth: '1080px',
-          margin: '0 auto',
-          alignItems: 'start',
-        }}>
+      <div style={{ padding: '8px 16px 52px' }}>
+        <div className="pricing-cards-grid">
           {plans.map((plan) => (
             <div key={plan.id} style={{
               position: 'relative',
               borderRadius: '20px',
               padding: plan.popular ? '2px' : '0',
               background: plan.popular ? plan.gradient : 'transparent',
-              boxShadow: plan.popular ? `0 0 60px ${plan.glow}` : 'none',
+              boxShadow: plan.popular ? `0 0 50px ${plan.glow}` : 'none',
             }}>
               {plan.popular && (
                 <div style={{
-                  position: 'absolute',
-                  top: '-14px',
-                  left: '50%',
+                  position: 'absolute', top: '-13px', left: '50%',
                   transform: 'translateX(-50%)',
-                  background: plan.gradient,
-                  color: '#fff',
-                  padding: '5px 20px',
-                  borderRadius: '999px',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  letterSpacing: '0.5px',
-                  whiteSpace: 'nowrap',
-                  zIndex: 1,
+                  background: plan.gradient, color: '#fff',
+                  padding: '4px 18px', borderRadius: '999px',
+                  fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px',
+                  whiteSpace: 'nowrap', zIndex: 1,
                 }}>🔥 MOST POPULAR</div>
               )}
 
-              <div style={{
+              <div className="pricing-card-inner" style={{
                 background: 'var(--clr-bg-700)',
                 borderRadius: plan.popular ? '18px' : '20px',
                 border: plan.popular ? 'none' : '1px solid var(--clr-border)',
-                padding: '32px 28px',
-                height: '100%',
               }}>
-                {/* Plan header */}
-                <div style={{ marginBottom: '24px' }}>
+                {/* ── Card Header: icon + name side by side ── */}
+                <div className="pricing-card-header">
                   <div style={{
-                    width: '52px', height: '52px',
-                    borderRadius: '14px',
+                    width: '48px', height: '48px', flexShrink: 0,
+                    borderRadius: '13px',
                     background: plan.popular ? plan.gradient : `${plan.color}20`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '24px', marginBottom: '16px',
+                    fontSize: '22px',
                     border: `1px solid ${plan.color}30`,
                   }}>{plan.emoji}</div>
-                  <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
-                    {plan.audience}
-                  </p>
-                  <h2 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '4px' }}>{plan.name}</h2>
-                  <p style={{ color: 'var(--clr-text-3)', fontSize: '14px' }}>{plan.tagline}</p>
+                  <div className="pricing-card-header-info">
+                    <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '2px' }}>
+                      {plan.audience}
+                    </p>
+                    <h2 style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, marginBottom: '2px', lineHeight: 1.2 }}>{plan.name}</h2>
+                    <p style={{ color: 'var(--clr-text-3)', fontSize: '12px', lineHeight: 1.3 }}>{plan.tagline}</p>
+                  </div>
                 </div>
 
-
-                {/* Price */}
+                {/* ── Price block ── */}
                 <div style={{
-                  background: plan.popular ? `${plan.color}15` : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${plan.color}25`,
+                  background: plan.popular ? `${plan.color}12` : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${plan.color}22`,
                   borderRadius: '12px',
-                  padding: '16px 20px',
-                  marginBottom: '24px',
+                  padding: '14px 16px',
+                  marginBottom: '20px',
                 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-
-                    {/* Original Price (if discount exists) */}
-                    {plan.originalPrice && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="badge badge-elite" style={{ fontSize: '10px', padding: '2px 6px', background: '#f59e0b', color: '#000', border: 'none' }}>
-                          SAVE {Math.round((1 - parseInt(plan.price.replace(/\D/g, '')) / parseInt(plan.originalPrice.replace(/\D/g, ''))) * 100)}%
-                        </span>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-3)', textDecoration: 'line-through' }}>
-                          {plan.originalPrice}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Current Price & Note */}
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '40px', fontWeight: 900, color: plan.color, fontFamily: 'var(--font-display)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
-                        {plan.price}
+                  {plan.originalPrice && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '9px', fontWeight: 800, background: '#f59e0b', color: '#000', padding: '2px 6px', borderRadius: '4px' }}>
+                        SAVE {Math.round((1 - parseInt(plan.price.replace(/\D/g, '')) / parseInt(plan.originalPrice.replace(/\D/g, ''))) * 100)}%
                       </span>
-                      <span style={{ color: 'var(--clr-text-3)', fontSize: '14px', whiteSpace: 'nowrap' }}>/ {plan.priceNote}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--clr-text-3)', textDecoration: 'line-through' }}>
+                        {plan.originalPrice}
+                      </span>
                     </div>
-
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 'clamp(30px, 7vw, 40px)', fontWeight: 900, color: plan.color, fontFamily: 'var(--font-display)', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                      {plan.price}
+                    </span>
+                    <span style={{ color: 'var(--clr-text-3)', fontSize: '13px', whiteSpace: 'nowrap' }}>/ {plan.priceNote}</span>
                   </div>
-
                   {plan.validity && (
-                    <p style={{ color: plan.color, fontSize: '13px', fontWeight: 600, marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <p style={{ color: plan.color, fontSize: '12px', fontWeight: 600, marginTop: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       📅 {plan.validity}
                     </p>
                   )}
@@ -346,57 +413,46 @@ export default function PricingPlans() {
                   )}
                 </div>
 
-                {/* Features */}
-                <ul style={{ listStyle: 'none', marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '11px' }}>
+                {/* ── Features list ── */}
+                <ul className="pricing-features-list" style={{ listStyle: 'none' }}>
                   {plan.features.map((f) => (
-                    <li key={f.text} style={{
-                      display: 'flex', gap: '10px', alignItems: 'flex-start',
-                      fontSize: '14px',
+                    <li key={f.text} className="pricing-feature-item" style={{
                       color: f.avail ? 'var(--clr-text-2)' : 'var(--clr-text-3)',
                     }}>
                       <span style={{
                         flexShrink: 0, marginTop: '1px',
                         color: f.avail ? (plan.popular ? plan.color : 'var(--clr-success)') : '#374151',
-                        fontWeight: 700,
-                        fontSize: '16px',
+                        fontWeight: 700, fontSize: '15px',
                       }}>
                         {f.avail ? '✓' : '✗'}
                       </span>
                       <span>
-                        <span style={{ marginRight: '6px' }}>{f.icon}</span>
+                        <span style={{ marginRight: '5px' }}>{f.icon}</span>
                         {f.text}
                       </span>
                     </li>
                   ))}
                 </ul>
 
-                {/* CTA */}
+                {/* ── CTA button ── */}
                 <button
                   onClick={() => handlePlanClick(plan)}
                   style={{
                     width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '14px',
-                    borderRadius: '12px',
-                    fontWeight: 700,
-                    fontSize: '15px',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s ease',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: '8px', padding: '13px 16px',
+                    borderRadius: '12px', fontWeight: 700,
+                    fontSize: 'clamp(13px, 3.5vw, 15px)',
+                    cursor: 'pointer', transition: 'all 0.25s ease',
+                    minHeight: '48px',
                     ...(plan.ctaStyle === 'primary' ? {
-                      background: plan.gradient,
-                      color: '#fff',
-                      border: 'none',
+                      background: plan.gradient, color: '#fff', border: 'none',
                       boxShadow: `0 6px 24px ${plan.glow}`,
                     } : plan.ctaStyle === 'accent' ? {
-                      background: `${plan.color}20`,
-                      color: plan.color,
-                      border: `1.5px solid ${plan.color}50`,
+                      background: `${plan.color}18`, color: plan.color,
+                      border: `1.5px solid ${plan.color}45`,
                     } : {
-                      background: 'rgba(255,255,255,0.05)',
-                      color: 'var(--clr-text-2)',
+                      background: 'rgba(255,255,255,0.04)', color: 'var(--clr-text-2)',
                       border: '1.5px solid var(--clr-border)',
                     }),
                   }}
@@ -410,16 +466,16 @@ export default function PricingPlans() {
       </div>
 
       {/* ── Comparison Table ── */}
-      <div className="container" style={{ padding: '0 24px 64px' }}>
-        <h2 className="text-center" style={{ fontSize: 'clamp(24px,3.5vw,38px)', marginBottom: '40px' }}>
+      <div style={{ padding: '0 16px 52px' }}>
+        <h2 className="text-center" style={{ fontSize: 'clamp(20px, 4vw, 34px)', marginBottom: '28px' }}>
           Full Feature <span className="text-gradient">Comparison</span>
         </h2>
 
-        <div style={{ overflowX: 'auto', borderRadius: '16px', border: '1px solid var(--clr-border)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '540px' }}>
+        <div className="pricing-compare-wrap" style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <table className="pricing-compare-table">
             <thead>
               <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <th style={{ padding: '16px 20px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: 'var(--clr-text-3)', borderBottom: '1px solid var(--clr-border)' }}>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--clr-text-3)', borderBottom: '1px solid var(--clr-border)', whiteSpace: 'nowrap' }}>
                   Feature
                 </th>
                 {[
@@ -428,8 +484,8 @@ export default function PricingPlans() {
                   { label: '🤖 Elite AI', color: '#6366f1' },
                 ].map((col) => (
                   <th key={col.label} style={{
-                    padding: '16px 20px', textAlign: 'center', fontSize: '14px', fontWeight: 700,
-                    color: col.color, borderBottom: '1px solid var(--clr-border)',
+                    padding: '14px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 700,
+                    color: col.color, borderBottom: '1px solid var(--clr-border)', whiteSpace: 'nowrap',
                   }}>{col.label}</th>
                 ))}
               </tr>
@@ -437,16 +493,16 @@ export default function PricingPlans() {
             <tbody>
               {comparisons.map((row, i) => (
                 <tr key={row.feature} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
-                  <td style={{ padding: '14px 20px', fontSize: '14px', color: 'var(--clr-text-2)', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--clr-text-2)', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                     {row.feature}
                   </td>
-                  <td style={{ padding: '14px 20px', textAlign: 'center', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <td style={{ padding: '12px 12px', textAlign: 'center', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                     <CheckMark val={row.free} />
                   </td>
-                  <td style={{ padding: '14px 20px', textAlign: 'center', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <td style={{ padding: '12px 12px', textAlign: 'center', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                     <CheckMark val={row.semester} />
                   </td>
-                  <td style={{ padding: '14px 20px', textAlign: 'center', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <td style={{ padding: '12px 12px', textAlign: 'center', borderBottom: i < comparisons.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                     <CheckMark val={row.elite} />
                   </td>
                 </tr>
@@ -457,28 +513,29 @@ export default function PricingPlans() {
       </div>
 
       {/* ── Payment Methods ── */}
-      <div className="container" style={{ padding: '0 24px 64px', maxWidth: '720px' }}>
+      <div style={{ padding: '0 16px 60px', maxWidth: '680px', margin: '0 auto' }}>
         <div style={{
           background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(6,182,212,0.05))',
-          border: '1px solid var(--clr-border-h)',
+          border: '1px solid rgba(99,102,241,0.2)',
           borderRadius: '20px',
-          padding: '36px',
+          padding: 'clamp(20px, 5vw, 36px)',
           textAlign: 'center',
         }}>
-          <h3 style={{ fontSize: '22px', marginBottom: '8px' }}>💳 How to Pay?</h3>
-          <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.7 }}>
-            We accept QR-based payments. Scan the QR, pay, and submit your transaction ID along with screenshot — your account gets activated within 1-2 hours.
+          <h3 style={{ fontSize: 'clamp(18px, 4vw, 22px)', marginBottom: '8px' }}>💳 How to Pay?</h3>
+          <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.7 }}>
+            Scan the QR, pay, submit your transaction ID — account gets activated within 1-2 hours.
           </p>
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '24px' }}>
+          <div className="payment-methods-wrap">
             {['📱 eSewa', '💜 Khalti', '🏦 Fonepay', '🔵 ConnectIPS'].map((method) => (
               <div key={method} style={{
-                padding: '10px 20px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid var(--clr-border)',
+                padding: '10px 16px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '10px',
-                fontSize: '14px',
+                fontSize: '13.5px',
                 fontWeight: 600,
                 color: 'var(--clr-text-2)',
+                textAlign: 'center',
               }}>{method}</div>
             ))}
           </div>

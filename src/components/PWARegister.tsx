@@ -13,35 +13,33 @@ export default function PWARegister() {
   const [isInstalled, setIsInstalled] = useState(false)
   const [showPrompt, setShowPrompt] = useState(false)
   const [showInstructions, setShowInstructions] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [platform, setPlatform] = useState<{ isIOS: boolean; isSafari: boolean }>({ isIOS: false, isSafari: false })
 
   useEffect(() => {
-    // Detect if already installed / standalone
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as Navigator & { standalone?: boolean }).standalone === true
     setIsInstalled(standalone)
 
-    // Detect platform
     const ua = window.navigator.userAgent
     const isIOS = /iPad|iPhone|iPod/.test(ua)
     const isSafari = /^((?!chrome|android).)*safari/i.test(ua)
+    const mobile = window.innerWidth < 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
     setPlatform({ isIOS, isSafari })
+    setIsMobile(mobile)
 
-    // Check offline/online status
     const updateOnlineStatus = () => setIsOnline(navigator.onLine)
     updateOnlineStatus()
 
-    // Listen for install events
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault()
       setDeferredPrompt(event as BeforeInstallPromptEvent)
-      
-      // Only show if not dismissed recently
       const dismissedTime = localStorage.getItem('pwa-prompt-dismissed')
       const oneWeek = 7 * 24 * 60 * 60 * 1000
       if (!dismissedTime || Date.now() - Number(dismissedTime) > oneWeek) {
-        setShowPrompt(true)
+        // Delay to not interrupt immediately
+        setTimeout(() => setShowPrompt(true), 3000)
       }
     }
 
@@ -56,28 +54,23 @@ export default function PWARegister() {
     window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
     window.addEventListener('appinstalled', onAppInstalled)
 
-    // Show fallback install guidance for iOS/Safari after a short delay
     if (!standalone) {
       const dismissedTime = localStorage.getItem('pwa-prompt-dismissed')
       const oneWeek = 7 * 24 * 60 * 60 * 1000
       if (!dismissedTime || Date.now() - Number(dismissedTime) > oneWeek) {
-        // Delay showing to not interrupt user immediately
         const timer = setTimeout(() => {
-          // If deferredPrompt hasn't fired (e.g. on iOS or older Safari)
           if (!deferredPrompt && (isIOS || isSafari)) {
             setShowPrompt(true)
           }
-        }, 6000)
+        }, 7000)
         return () => clearTimeout(timer)
       }
     }
 
-    // Only register service worker in production
     if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error)
     }
 
-    // In development, unregister any existing service workers to prevent reload loops
     if (process.env.NODE_ENV === 'development' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         registrations.forEach((r) => r.unregister())
@@ -102,7 +95,6 @@ export default function PWARegister() {
       }
       setDeferredPrompt(null)
     } else {
-      // Toggle instructions overlay for iOS or other custom platforms
       setShowInstructions(true)
     }
   }
@@ -116,102 +108,259 @@ export default function PWARegister() {
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes slideUpIn {
+          from { opacity: 0; transform: translateY(100%); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideRightIn {
+          from { opacity: 0; transform: translateX(40px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .pwa-prompt-mobile {
+          animation: slideUpIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pwa-prompt-desktop {
+          animation: slideRightIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+      `}} />
+
       {/* ── Offline Banner ── */}
       {!isOnline && (
-        <div
-          className="glass-card"
-          style={{
-            position: 'fixed',
-            left: '50%',
-            bottom: '24px',
-            transform: 'translateX(-50%)',
-            zIndex: 1300,
-            width: 'min(480px, calc(100vw - 32px))',
-            padding: '14px 20px',
-            display: 'flex',
-            gap: '16px',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 10px 30px rgba(239,68,68,0.2)',
-            border: '1px solid rgba(239,68,68,0.4)',
-            background: 'rgba(13,15,26,0.95)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '20px' }}>📶</span>
+        <div style={{
+          position: 'fixed',
+          left: '50%',
+          bottom: isMobile ? '72px' : '24px',
+          transform: 'translateX(-50%)',
+          zIndex: 1300,
+          width: 'min(420px, calc(100vw - 24px))',
+          padding: '12px 16px',
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 10px 30px rgba(239,68,68,0.2)',
+          border: '1px solid rgba(239,68,68,0.4)',
+          background: 'rgba(13,15,26,0.97)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '14px',
+          animation: 'slideUpIn 0.35s cubic-bezier(0.16,1,0.3,1)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '18px' }}>📶</span>
             <div>
-              <strong style={{ display: 'block', fontSize: '14px', color: '#fca5a5' }}>Offline Mode</strong>
-              <span style={{ color: 'var(--clr-text-2)', fontSize: '12px' }}>
-                Cached pages and papers will still work.
+              <strong style={{ display: 'block', fontSize: '13px', color: '#fca5a5' }}>You&apos;re Offline</strong>
+              <span style={{ color: 'var(--clr-text-2)', fontSize: '11.5px' }}>
+                Cached notes & pages still work.
               </span>
             </div>
           </div>
           <button
-            className="btn btn-outline btn-sm"
-            style={{ borderColor: 'rgba(239,68,68,0.3)', color: '#fca5a5' }}
             type="button"
             onClick={() => window.location.reload()}
+            style={{
+              flexShrink: 0,
+              padding: '7px 14px',
+              borderRadius: '8px',
+              background: 'rgba(239,68,68,0.15)',
+              border: '1px solid rgba(239,68,68,0.35)',
+              color: '#fca5a5',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
           >
             Retry
           </button>
         </div>
       )}
 
-      {/* ── Install Prompt Banner ── */}
-      {showPrompt && isOnline && !showInstructions && (
+      {/* ── Install Prompt: MOBILE (bottom sheet style) ── */}
+      {showPrompt && isOnline && !showInstructions && isMobile && (
         <div
-          className="glass-card"
+          className="pwa-prompt-mobile"
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1200,
+            background: 'rgba(13, 15, 26, 0.98)',
+            backdropFilter: 'blur(24px)',
+            borderTop: '1px solid rgba(99,102,241,0.35)',
+            borderRadius: '20px 20px 0 0',
+            padding: '20px 20px 32px',
+            boxShadow: '0 -16px 60px rgba(0,0,0,0.6), 0 -4px 0 rgba(99,102,241,0.3)',
+          }}
+        >
+          {/* Drag handle */}
+          <div style={{ width: '40px', height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', margin: '0 auto 16px' }} />
+
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '14px' }}>
+            {/* App Icon */}
+            <div style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '13px',
+              background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '26px',
+              flexShrink: 0,
+              boxShadow: '0 6px 20px rgba(99,102,241,0.4)',
+            }}>
+              🎓
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--clr-text-1)', fontFamily: 'var(--font-display)' }}>
+                TU Notes Hub
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '2px' }}>
+                tunoteshub.com
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleDismiss}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: 'none',
+                color: 'var(--clr-text-3)',
+                cursor: 'pointer',
+                fontSize: '14px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          <p style={{ color: 'var(--clr-text-2)', fontSize: '13.5px', lineHeight: 1.55, marginBottom: '18px' }}>
+            Add to your home screen for faster access to free notes, past papers & AI predictions — works offline too!
+          </p>
+
+          {/* Feature pills */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '18px' }}>
+            {['⚡ Instant Access', '📴 Works Offline', '🤖 AI Predictor', '📚 Free Notes'].map(f => (
+              <span key={f} style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '4px 10px',
+                borderRadius: '999px',
+                background: 'rgba(99,102,241,0.12)',
+                border: '1px solid rgba(99,102,241,0.25)',
+                color: '#a5b4fc',
+              }}>
+                {f}
+              </span>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              style={{
+                flex: 1,
+                padding: '14px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                border: 'none',
+                color: '#fff',
+                fontSize: '15px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: '0 6px 20px rgba(99,102,241,0.4)',
+              }}
+            >
+              📲 Install App
+            </button>
+            <button
+              type="button"
+              onClick={handleDismiss}
+              style={{
+                padding: '14px 18px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'var(--clr-text-3)',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Not Now
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Install Prompt: DESKTOP (bottom-right card) ── */}
+      {showPrompt && isOnline && !showInstructions && !isMobile && (
+        <div
+          className="pwa-prompt-desktop"
           style={{
             position: 'fixed',
             right: '24px',
             bottom: '24px',
             zIndex: 1200,
-            width: 'min(380px, calc(100vw - 48px))',
+            width: '340px',
             padding: '20px',
             display: 'grid',
-            gap: '16px',
-            boxShadow: 'var(--shadow-glow), 0 20px 40px rgba(0,0,0,0.6)',
-            background: 'rgba(13,15,26,0.95)',
-            border: '1px solid var(--clr-border-h)',
-            animation: 'fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            gap: '14px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.3)',
+            background: 'rgba(13,15,26,0.97)',
+            backdropFilter: 'blur(24px)',
+            border: '1px solid rgba(99,102,241,0.3)',
+            borderRadius: '18px',
           }}
         >
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-              <div className="badge badge-elite" style={{ background: 'var(--grad-brand)', color: '#fff', fontSize: '11px', padding: '3px 8px', borderRadius: '4px', fontWeight: 600 }}>
-                INSTALL APP
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'linear-gradient(135deg,#6366f1,#06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
+                🎓
               </div>
-              <button 
-                type="button" 
-                onClick={handleDismiss} 
-                style={{ background: 'transparent', border: 'none', color: 'var(--clr-text-3)', cursor: 'pointer', fontSize: '16px', padding: '0 4px', transition: 'color 0.2s' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--clr-text-1)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--clr-text-3)'}
-              >
-                ✕
-              </button>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)' }}>TU Notes Hub</div>
+                <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>Install for offline access</div>
+              </div>
             </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px', fontFamily: 'var(--font-display)' }}>
-              Add TU Notes Hub to your screen
-            </h3>
-            <p style={{ color: 'var(--clr-text-2)', fontSize: '12.5px', lineHeight: 1.5 }}>
-              Access study notes, past papers, and AI predictions instantly. Works offline!
-            </p>
+            <button
+              type="button"
+              onClick={handleDismiss}
+              style={{ background: 'transparent', border: 'none', color: 'var(--clr-text-3)', cursor: 'pointer', fontSize: '16px', padding: '0 2px' }}
+            >
+              ✕
+            </button>
           </div>
+
+          <p style={{ color: 'var(--clr-text-2)', fontSize: '12.5px', lineHeight: 1.55, margin: 0 }}>
+            Access notes, past papers & AI predictions instantly — works offline too!
+          </p>
+
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
-              className="btn btn-primary btn-sm" 
-              type="button" 
+            <button
+              className="btn btn-primary btn-sm"
+              type="button"
               onClick={handleInstallClick}
               style={{ flex: 1, justifyContent: 'center' }}
             >
-              Install
+              📲 Install
             </button>
-            <button 
-              className="btn btn-outline btn-sm" 
-              type="button" 
+            <button
+              className="btn btn-outline btn-sm"
+              type="button"
               onClick={handleDismiss}
-              style={{ flex: 1, justifyContent: 'center', borderColor: 'var(--clr-border)', color: 'var(--clr-text-2)' }}
+              style={{ flex: 1, justifyContent: 'center', borderColor: 'rgba(255,255,255,0.1)', color: 'var(--clr-text-3)' }}
             >
               Maybe Later
             </button>
@@ -226,8 +375,8 @@ export default function PWARegister() {
             position: 'fixed',
             inset: 0,
             zIndex: 1400,
-            background: 'rgba(5, 7, 13, 0.8)',
-            backdropFilter: 'blur(10px)',
+            background: 'rgba(5,7,13,0.85)',
+            backdropFilter: 'blur(12px)',
             display: 'grid',
             placeItems: 'center',
             padding: '20px',
@@ -236,78 +385,87 @@ export default function PWARegister() {
           onClick={() => setShowInstructions(false)}
         >
           <div
-            className="glass-card"
             style={{
-              width: 'min(440px, 100%)',
+              width: 'min(420px, 100%)',
               padding: '24px',
-              background: 'var(--clr-bg-800)',
-              boxShadow: 'var(--shadow-glow), 0 24px 48px rgba(0,0,0,0.8)',
-              border: '1px solid var(--clr-border-h)',
+              background: 'rgba(18,21,38,0.98)',
+              borderRadius: '20px',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.8)',
+              border: '1px solid rgba(99,102,241,0.35)',
+              backdropFilter: 'blur(20px)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 700, fontFamily: 'var(--font-display)' }}>
-                How to Install
+              <h3 style={{ fontSize: '18px', fontWeight: 800, fontFamily: 'var(--font-display)', margin: 0 }}>
+                📲 How to Install
               </h3>
-              <button 
-                type="button" 
-                onClick={() => setShowInstructions(false)} 
-                style={{ background: 'transparent', border: 'none', color: 'var(--clr-text-3)', cursor: 'pointer', fontSize: '20px' }}
+              <button
+                type="button"
+                onClick={() => setShowInstructions(false)}
+                style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: 'var(--clr-text-2)', cursor: 'pointer', fontSize: '14px', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 ✕
               </button>
             </div>
-            
-            <div style={{ display: 'grid', gap: '16px', color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.6 }}>
+
+            <div style={{ display: 'grid', gap: '14px', color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.6 }}>
               {platform.isIOS ? (
                 <>
-                  <p>Safari browser requires a manual addition to the home screen on iOS devices:</p>
-                  <div style={{ background: 'var(--clr-bg-700)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--clr-border)' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-                      <span style={{ fontSize: '24px', background: 'rgba(99,102,241,0.1)', padding: '6px', borderRadius: '6px' }}>📤</span>
-                      <span>1. Tap the <strong>Share</strong> button in the Safari bottom toolbar.</span>
+                  <p style={{ margin: 0, color: 'var(--clr-text-2)' }}>Add TU Notes Hub to your iPhone home screen in 2 steps:</p>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', display: 'grid', gap: '14px' }}>
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '22px', background: 'rgba(99,102,241,0.1)', padding: '8px', borderRadius: '10px', flexShrink: 0 }}>📤</span>
+                      <span>Tap the <strong>Share</strong> button at the bottom of Safari</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '24px', background: 'rgba(6,182,212,0.1)', padding: '6px', borderRadius: '6px' }}>➕</span>
-                      <span>2. Scroll down and select <strong>&quot;Add to Home Screen&quot;</strong>.</span>
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '22px', background: 'rgba(6,182,212,0.1)', padding: '8px', borderRadius: '10px', flexShrink: 0 }}>➕</span>
+                      <span>Select <strong>&quot;Add to Home Screen&quot;</strong> from the list</span>
                     </div>
                   </div>
                 </>
               ) : (
                 <>
-                  <p>Follow these steps to add the app to your home screen or desktop:</p>
-                  <div style={{ background: 'var(--clr-bg-700)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--clr-border)' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-                      <span style={{ fontSize: '20px' }}>⋮</span>
-                      <span>1. Open your browser settings menu (top-right corner).</span>
+                  <p style={{ margin: 0, color: 'var(--clr-text-2)' }}>Install TU Notes Hub as an app on your device:</p>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', display: 'grid', gap: '14px' }}>
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '22px', background: 'rgba(99,102,241,0.1)', padding: '8px', borderRadius: '10px', flexShrink: 0 }}>⋮</span>
+                      <span>Open browser menu (top-right corner)</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '20px' }}>🖥️</span>
-                      <span>2. Click <strong>&quot;Install TU Notes Hub&quot;</strong> or <strong>&quot;Add to Home Screen&quot;</strong>.</span>
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '22px', background: 'rgba(6,182,212,0.1)', padding: '8px', borderRadius: '10px', flexShrink: 0 }}>📲</span>
+                      <span>Tap <strong>&quot;Install TU Notes Hub&quot;</strong> or <strong>&quot;Add to Home Screen&quot;</strong></span>
                     </div>
                   </div>
                 </>
               )}
-              
-              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', textAlign: 'center', marginTop: '8px' }}>
-                Once added, you can open it as a standalone app directly from your home screen.
+
+              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', textAlign: 'center', margin: 0 }}>
+                Opens as a native app from your home screen. Works offline!
               </p>
             </div>
 
             <button
-              className="btn btn-primary btn-md"
               type="button"
               onClick={() => setShowInstructions(false)}
-              style={{ width: '100%', justifyContent: 'center', marginTop: '20px' }}
+              style={{
+                width: '100%',
+                marginTop: '18px',
+                padding: '13px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                border: 'none',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
             >
-              Got It
+              Got It ✓
             </button>
           </div>
         </div>
       )}
-
     </>
   )
 }
-
