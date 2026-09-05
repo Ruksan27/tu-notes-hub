@@ -2151,6 +2151,11 @@ function UploadTab() {
   const [sheetFiles, setSheetFiles] = useState<File[]>([])
   const [extractText, setExtractText] = useState(true)
 
+  // Auto-SEO Generator State for Upload Section
+  const [showSeoBox, setShowSeoBox] = useState(false)
+  const [seoCodeSnippet, setSeoCodeSnippet] = useState('')
+  const [seoKeywordsList, setSeoKeywordsList] = useState<string[]>([])
+
   // MCQ State
   const [mcqYear, setMcqYear] = useState<string>(new Date().getFullYear().toString())
   const [mcqExamType, setMcqExamType] = useState('BOARD_EXAM')
@@ -2632,242 +2637,302 @@ function UploadTab() {
       }
 
       const uploadApiEndpoint = (contentType as string) === 'SOLUTION_BOOK' ? '/api/upload/solution-book' : '/api/upload'
-      const saveRes = await fetch(uploadApiEndpoint, {
+
+      const sr = await fetch(uploadApiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       })
-      const saveData = await saveRes.json()
-
-      if (saveRes.ok) {
-        toast.dismiss('upload-progress'); toast.success(saveData.message || 'Uploaded successfully! 🎉')
-        setNoteTitle(''); setNoteDescription(''); setAuthor('')
-        setNoteFile(null); setPaperFile(null)
+      const sd = await sr.json()
+      toast.dismiss('upload-progress')
+      if (sr.ok) {
+        toast.success(sd.message || 'Material published! 🎉')
+        setNoteTitle('')
+        setNoteDescription('')
+        setAuthor('')
+        setNoteFile(null)
+        setPaperFile(null)
       } else {
-        toast.dismiss('upload-progress'); toast.error(saveData.error || 'Failed to save to database')
+        toast.error(sd.error || 'Failed to save material')
       }
-    } catch (err) {
-      console.error('[UPLOAD ERROR]', err)
+    } catch (err: any) {
       toast.dismiss('upload-progress')
-      toast.error('Upload failed — please try again')
+      toast.error(err.message || 'An error occurred during upload')
     } finally {
-      toast.dismiss('upload-progress')
       setUploading(false)
     }
   }
 
-
   const typeOptions = [
-    { type: 'NOTE',          icon: '📄', label: 'Study Note' },
-    { type: 'PAST_PAPER',    icon: '📝', label: 'Past Paper' },
-    { type: 'CHEATSHEET',    icon: '📋', label: 'Cheatsheet' },
-    { type: 'SOLUTION_BOOK', icon: '📚', label: 'Solution Book' },
-    { type: 'MCQ',           icon: '✅', label: 'MCQ Questions' },
+    { type: 'NOTE',          icon: '📄', label: 'Study Note', desc: 'Handwritten & PDF notes' },
+    { type: 'PAST_PAPER',    icon: '📝', label: 'Past Paper', desc: 'TU Exam Board papers' },
+    { type: 'CHEATSHEET',    icon: '📋', label: 'Cheatsheet', desc: 'Quick exam revision' },
+    { type: 'SOLUTION_BOOK', icon: '📚', label: 'Solution Book', desc: 'Full semester guide' },
+    { type: 'MCQ',           icon: '✅', label: 'MCQ Questions', desc: 'Practice test sets' },
   ]
 
   const isSolutionBook = contentType === 'SOLUTION_BOOK'
   const isMcq = contentType === 'MCQ'
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: '850px', margin: '0 auto', paddingBottom: '60px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-        <div style={{ padding: '16px', background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(6,182,212,0.2))', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '16px', display: 'flex' }}>
-          <span style={{ fontSize: '28px' }}>📤</span>
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '60px' }}>
+      
+      {/* ── Sleek Header Banner ── */}
+      <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.05))', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '20px', padding: '24px 32px', marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: '0 8px 20px rgba(99,102,241,0.3)' }}>
+            📤
+          </div>
+          <div>
+            <h2 style={{ fontSize: '26px', fontWeight: 900, margin: 0, color: 'var(--clr-text-1)', letterSpacing: '-0.5px' }}>
+              Publish Study Material
+            </h2>
+            <p style={{ color: 'var(--clr-text-3)', fontSize: '13px', margin: '4px 0 0 0' }}>
+              Upload handwritten notes, solution books, past papers, or MCQs directly to Cloudinary & Google Drive.
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Publish Material</h2>
-          <p style={{ color: 'var(--clr-text-3)', fontSize: '14px', marginTop: '4px' }}>Add new study notes, solution books, past papers, or cheatsheets to the platform.</p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: '#34d399', fontWeight: 700 }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span>
+          Cloud Sync Ready
         </div>
       </div>
 
       <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-        {/* Step 1: Material Type */}
-        <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #6366f1' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <div style={{ background: '#6366f1', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>1</div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Material Type</h3>
-          </div>
-            {isSolutionBook && (
-              <div style={{ marginTop: '8px', padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.25)', borderRadius: '10px', fontSize: '13px', color: '#67e8f9' }}>
-                📚 <strong>Solution Book:</strong> Select a specific subject (e.g. <em>Numerical Methods</em>) to display it inside that subject only. Choose <em>"Full Semester Guide"</em> to display it at the top for all subjects.
-              </div>
-            )}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
-              {typeOptions.map((item) => (
-                <button
-                  key={item.type} type="button"
-                  onClick={() => setContentType(item.type as any)}
-                  className="flex flex-col items-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all"
-                  style={{
-                    background: contentType === item.type ? 'linear-gradient(135deg, #6366f1, #06b6d4)' : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${contentType === item.type ? 'transparent' : 'var(--clr-border)'}`,
-                    color: contentType === item.type ? '#fff' : 'var(--clr-text-2)',
-                    boxShadow: contentType === item.type ? '0 4px 15px rgba(99,102,241,0.3)' : 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span className="text-xl">{item.icon}</span>
-                  {item.label}
-                </button>
-              ))}
+        {/* ── STEP 1: MATERIAL TYPE SELECTOR (Grid Card) ── */}
+        <div className="glass-card" style={{ padding: '24px 28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
+            <div style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '13px', boxShadow: '0 4px 10px rgba(99,102,241,0.4)' }}>1</div>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)' }}>Choose Material Category</h3>
+              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Select the type of content you are publishing today.</span>
             </div>
+          </div>
+
+          {isSolutionBook && (
+            <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.25)', borderRadius: '10px', fontSize: '12px', color: '#67e8f9' }}>
+              📚 <strong>Solution Book:</strong> Select a specific subject to pin inside that subject, or choose <em>"Full Semester Guide"</em> to display at the top for all subjects.
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+            {typeOptions.map((item) => (
+              <button
+                key={item.type} 
+                type="button"
+                onClick={() => setContentType(item.type as any)}
+                style={{
+                  background: contentType === item.type ? 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(6,182,212,0.25))' : 'rgba(255,255,255,0.02)',
+                  border: `1.5px solid ${contentType === item.type ? '#6366f1' : 'rgba(255,255,255,0.06)'}`,
+                  borderRadius: '12px',
+                  padding: '16px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease-in-out',
+                  boxShadow: contentType === item.type ? '0 6px 20px rgba(99,102,241,0.25)' : 'none',
+                  textAlign: 'center'
+                }}
+              >
+                <span style={{ fontSize: '24px' }}>{item.icon}</span>
+                <div>
+                  <span style={{ fontSize: '14px', fontWeight: 800, color: contentType === item.type ? '#fff' : 'var(--clr-text-1)', display: 'block' }}>{item.label}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--clr-text-3)', display: 'block', marginTop: '2px' }}>{item.desc}</span>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Step 2: File Source */}
-        {contentType !== 'CHEATSHEET' && contentType !== 'MCQ' && (
-          <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #06b6d4' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <div style={{ background: '#06b6d4', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>2</div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>File Source</h3>
+        {/* ── STEP 2 & STEP 3: COURSE LOCATION & FILE SOURCE (2 Column Layout) ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' }}>
+          
+          {/* Course Location Card */}
+          <div className="glass-card" style={{ padding: '24px 28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
+              <div style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '13px', boxShadow: '0 4px 10px rgba(16,185,129,0.3)' }}>2</div>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)' }}>Course Location</h3>
+                <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Faculty, Semester & Subject target.</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-                {[{ v: 'FILE', icon: '📁', label: 'Upload File (Max 10MB)' }, { v: 'DRIVE', icon: '🔗', label: 'Google Drive Link' }].map(s => (
-                  <button key={s.v} type="button" onClick={() => setSourceType(s.v as any)}
-                    style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', transition: 'all 0.2s',
-                      background: sourceType === s.v ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${sourceType === s.v ? 'rgba(99,102,241,0.5)' : 'var(--clr-border)'}`,
-                      color: sourceType === s.v ? 'var(--clr-primary-h)' : 'var(--clr-text-2)',
-                    }}>
-                    <span>{s.icon}</span> {s.label}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: facultyId === 'bca' ? '1fr 1fr' : '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Faculty *</label>
+                  <select className="input-field" value={facultyId} onChange={e => setFacultyId(e.target.value)} required style={{ cursor: 'pointer', fontSize: '13px' }}>
+                    <option value="">— Choose Faculty —</option>
+                    {faculties.map(f => <option key={f.id} value={f.id}>{f.icon} {f.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Semester / Year *</label>
+                  <select className="input-field" value={semesterId} onChange={e => setSemesterId(e.target.value)} required disabled={!facultyId} style={{ cursor: facultyId ? 'pointer' : 'not-allowed', fontSize: '13px' }}>
+                    <option value="">— Choose Period —</option>
+                    {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {facultyId === 'bca' && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Syllabus Version</label>
+                  <select className="input-field" value={syllabusFilter} onChange={e => setSyllabusFilter(e.target.value as any)} style={{ cursor: 'pointer', fontSize: '13px' }}>
+                    <option value="all">🌐 All (Both Syllabuses)</option>
+                    <option value="new">✨ New Syllabus (2080+)</option>
+                    <option value="old">📜 Old Syllabus (2074)</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Subject Dropdown */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--clr-text-3)' }}>
+                    Subject {contentType === 'SOLUTION_BOOK' ? '(Optional)' : '*'}
+                  </label>
+                  {semesterId && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const rawTitle = prompt('Enter Subject Title (e.g. Computer Graphics):')
+                        if (!rawTitle) return
+                        const code = prompt('Enter Subject Code (e.g. CACS305):')
+                        if (!code) return
+                        
+                        let title = rawTitle
+                        if (syllabusFilter === 'old' && !title.includes('(Old Syllabus)')) title += ' (Old Syllabus)'
+                        if (syllabusFilter === 'new' && !title.includes('(New Syllabus)')) title += ' (New Syllabus)'
+
+                        try {
+                          const res = await fetch('/api/admin/subjects', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title, code, semesterId })
+                          })
+                          if (res.ok) {
+                            toast.success('Subject added!')
+                            fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => { setSubjects(d.subjects || []); setSubjectId(d.subjects[d.subjects.length - 1]?.id || '') })
+                          } else {
+                            const err = await res.json()
+                            toast.error(err.error || 'Failed to add subject')
+                          }
+                        } catch (e) { toast.error('Network error') }
+                      }}
+                      style={{ fontSize: '11px', background: 'rgba(99,102,241,0.2)', color: '#818cf8', border: 'none', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer', fontWeight: 700 }}
+                    >
+                      + Add New Subject
+                    </button>
+                  )}
+                </div>
+
+                <select
+                  className="input-field"
+                  value={subjectId}
+                  onChange={e => setSubjectId(e.target.value)}
+                  required={contentType !== 'SOLUTION_BOOK'}
+                  disabled={!semesterId}
+                  style={{ cursor: semesterId ? 'pointer' : 'not-allowed', fontSize: '13px' }}
+                >
+                  <option value="">
+                    {contentType === 'SOLUTION_BOOK' ? '— Full Semester Guide (All Subjects) —' : '— Choose Subject —'}
+                  </option>
+                  {subjects
+                    .filter(s => {
+                      if (syllabusFilter === 'new') return s.title.includes('New Syllabus') || s.code.startsWith('BCA ')
+                      if (syllabusFilter === 'old') return s.title.includes('Old Syllabus') || !s.code.startsWith('BCA ')
+                      return true
+                    })
+                    .map(s => (
+                      <option key={s.id} value={s.id}>
+                        [{s.code}] {s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* File Source Card */}
+          {contentType !== 'CHEATSHEET' && contentType !== 'MCQ' && (
+            <div className="glass-card" style={{ padding: '24px 28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
+                <div style={{ background: 'linear-gradient(135deg, #06b6d4, #0891b2)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '13px', boxShadow: '0 4px 10px rgba(6,182,212,0.3)' }}>3</div>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)' }}>File Storage Source</h3>
+                  <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Cloudinary direct upload or Google Drive.</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                {[{ v: 'FILE', icon: '📁', label: 'Upload Local File', hint: 'Cloudinary (Max 10MB)' }, { v: 'DRIVE', icon: '🔗', label: 'Google Drive Link', hint: 'Unlimited File Size' }].map(s => (
+                  <button 
+                    key={s.v} 
+                    type="button" 
+                    onClick={() => setSourceType(s.v as any)}
+                    style={{ 
+                      padding: '12px', 
+                      borderRadius: '10px', 
+                      cursor: 'pointer', 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      alignItems: 'center', 
+                      gap: '4px',
+                      justifyContent: 'center', 
+                      transition: 'all 0.2s',
+                      background: sourceType === s.v ? 'rgba(6,182,212,0.15)' : 'rgba(255,255,255,0.02)',
+                      border: `1.5px solid ${sourceType === s.v ? '#06b6d4' : 'rgba(255,255,255,0.06)'}`,
+                      color: sourceType === s.v ? '#67e8f9' : 'var(--clr-text-2)',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>{s.icon}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700 }}>{s.label}</span>
+                    <span style={{ fontSize: '10px', color: 'var(--clr-text-3)' }}>{s.hint}</span>
                   </button>
                 ))}
               </div>
+
               {sourceType === 'DRIVE' && (
-                <div style={{ marginTop: '10px', padding: '10px 14px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', fontSize: '12px', color: '#fcd34d' }}>
-                  ⚠️ Make sure the file is shared as <strong>"Anyone with the link can view"</strong> in Google Drive.
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>🔗 Google Drive Share Link</label>
+                  <input
+                    className="input-field"
+                    type="url"
+                    placeholder="https://drive.google.com/file/d/xxxxxxxxxx/view?usp=sharing"
+                    value={driveLink}
+                    onChange={e => setDriveLink(e.target.value)}
+                    required
+                    style={{ fontSize: '13px' }}
+                  />
+                  {driveLink && parseDriveLink(driveLink) && (
+                    <p style={{ marginTop: '6px', fontSize: '11px', color: '#6ee7b7' }}>
+                      ✅ Valid Drive link — File ID: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>{parseDriveLink(driveLink)}</code>
+                    </p>
+                  )}
+                  {driveLink && !parseDriveLink(driveLink) && (
+                    <p style={{ marginTop: '6px', fontSize: '11px', color: '#fca5a5' }}>❌ Invalid link. Paste full share link from Google Drive.</p>
+                  )}
                 </div>
               )}
             </div>
-        )}
-
-        {/* Step 3: Location Details */}
-        <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #10b981' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <div style={{ background: '#10b981', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>3</div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Course Location</h3>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: facultyId === 'bca' ? 'repeat(auto-fit, minmax(180px, 1fr))' : '1fr 1fr', gap: '16px' }}>
-            <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Faculty</label>
-              <select className="input-field" value={facultyId} onChange={e => setFacultyId(e.target.value)} required style={{ cursor: 'pointer' }}>
-                <option value="">— Choose Faculty —</option>
-                {faculties.map(f => <option key={f.id} value={f.id}>{f.icon} {f.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Semester / Year</label>
-              <select className="input-field" value={semesterId} onChange={e => setSemesterId(e.target.value)} required disabled={!facultyId} style={{ cursor: facultyId ? 'pointer' : 'not-allowed' }}>
-                <option value="">— Choose Period —</option>
-                {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-            {facultyId === 'bca' && (
-              <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Syllabus Version</label>
-                <select className="input-field" value={syllabusFilter} onChange={e => setSyllabusFilter(e.target.value as any)} style={{ cursor: 'pointer' }}>
-                  <option value="all">🌐 All (Both Syllabuses)</option>
-                  <option value="new">✨ New Syllabus (2080+)</option>
-                  <option value="old">📜 Old Syllabus (2074)</option>
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Subject Field */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
-              <label className="block text-sm font-semibold" style={{ color: 'var(--clr-text-2)' }}>
-                Subject {contentType === 'SOLUTION_BOOK' ? '(Optional for Solution Books)' : ''}
-              </label>
-              {semesterId && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const rawTitle = prompt('Enter Subject Title (e.g. Computer Graphics):')
-                    if (!rawTitle) return
-                    const code = prompt('Enter Subject Code (e.g. CACS305):')
-                    if (!code) return
-                    
-                    let title = rawTitle
-                    if (syllabusFilter === 'old' && !title.includes('(Old Syllabus)')) title += ' (Old Syllabus)'
-                    if (syllabusFilter === 'new' && !title.includes('(New Syllabus)')) title += ' (New Syllabus)'
-
-                    try {
-                      const res = await fetch('/api/admin/subjects', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title, code, semesterId })
-                      })
-                      if (res.ok) {
-                        toast.success('Subject added!')
-                        fetch(`/api/admin/subjects?semesterId=${semesterId}`).then(r => r.json()).then(d => { setSubjects(d.subjects || []); setSubjectId(d.subjects[d.subjects.length - 1]?.id || '') })
-                      } else {
-                        const err = await res.json()
-                        toast.error(err.error || 'Failed to add subject')
-                      }
-                    } catch (e) { toast.error('Network error') }
-                  }}
-                  style={{ fontSize: '12px', background: 'var(--grad-brand)', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}
-                >
-                  + Add Subject
-                </button>
-              )}
-            </div>
-            <select
-              className="input-field"
-              value={subjectId}
-              onChange={e => setSubjectId(e.target.value)}
-              required={contentType !== 'SOLUTION_BOOK'}
-              disabled={!semesterId}
-              style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}
-            >
-              <option value="">
-                {contentType === 'SOLUTION_BOOK' ? '— Full Semester Guide (All Subjects) —' : '— Choose Subject —'}
-              </option>
-              {subjects
-                .filter(s => {
-                  if (syllabusFilter === 'new') return s.title.includes('New Syllabus') || s.code.startsWith('BCA ')
-                  if (syllabusFilter === 'old') return s.title.includes('Old Syllabus') || !s.code.startsWith('BCA ')
-                  return true
-                })
-                .map(s => (
-                  <option key={s.id} value={s.id}>
-                    [{s.code}] {s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()}
-                  </option>
-                ))}
-            </select>
-          </div>
-
-          {/* Google Drive Link Input */}
-          {sourceType === 'DRIVE' && contentType !== 'CHEATSHEET' && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>🔗 Google Drive Share Link</label>
-              <input
-                className="input-field"
-                type="url"
-                placeholder="https://drive.google.com/file/d/xxxxxxxxxx/view?usp=sharing"
-                value={driveLink}
-                onChange={e => setDriveLink(e.target.value)}
-                required
-              />
-              {driveLink && parseDriveLink(driveLink) && (
-                <p style={{ marginTop: '6px', fontSize: '12px', color: '#6ee7b7' }}>
-                  ✅ Valid Drive link — File ID: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>{parseDriveLink(driveLink)}</code>
-                </p>
-              )}
-              {driveLink && !parseDriveLink(driveLink) && (
-                <p style={{ marginTop: '6px', fontSize: '12px', color: '#fca5a5' }}>❌ Invalid link. Paste the full share link from Google Drive.</p>
-              )}
-            </motion.div>
           )}
+
         </div>
 
-        {/* Step 4: Metadata & Properties */}
-        <div className="glass-card" style={{ padding: '28px', borderLeft: '4px solid #f59e0b' }}>
+        {/* ── STEP 4: MATERIAL DETAILS & METADATA (Full Width Card) ── */}
+        <div className="glass-card" style={{ padding: '28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <div style={{ background: '#f59e0b', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>4</div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Material Details</h3>
+            <div style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '13px', boxShadow: '0 4px 10px rgba(245,158,11,0.3)' }}>4</div>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)' }}>Material Details & Publishing Properties</h3>
+              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Title, description, access tier, and attachments.</span>
+            </div>
           </div>
 
           {/* NOTE Fields */}
@@ -2878,7 +2943,7 @@ function UploadTab() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <label className="block text-sm font-semibold" style={{ color: 'var(--clr-text-2)' }}>
-                    {isSolutionBook ? 'Solution Book Title' : noteType === 'PROJECT' ? 'Project Title' : noteType === 'LAB_WORK' ? 'Lab Work Title' : 'Note Title'}
+                    {isSolutionBook ? 'Solution Book Title *' : noteType === 'PROJECT' ? 'Project Title *' : noteType === 'LAB_WORK' ? 'Lab Work Title *' : 'Note Title *'}
                   </label>
                   <button
                     type="button"
@@ -2891,21 +2956,41 @@ function UploadTab() {
                       const semName = selectedSemester ? selectedSemester.name : ''
                       const subName = selectedSubject ? `${selectedSubject.title} (${selectedSubject.code})` : ''
 
-                      if (contentType === 'SOLUTION_BOOK') {
-                        setNoteTitle(`TU ${facName} ${semName} Complete Solution Book & Guide PDF (2081/2082)`)
-                        setNoteDescription(`Complete chapterwise solution book and semester guide for TU ${facName} ${semName}. Covers model questions, syllabus solutions, and past exam papers.`)
-                        toast.success('✨ Rank #1 SEO Title & Description auto-filled!')
-                        return
-                      }
+                      let generatedTitle = ''
+                      let generatedDesc = ''
 
-                      if (!selectedSubject) {
+                      if (contentType === 'SOLUTION_BOOK') {
+                        generatedTitle = `TU ${facName} ${semName} Complete Solution Book & Guide PDF (2081/2082)`
+                        generatedDesc = `Complete chapterwise solution book and semester guide for TU ${facName} ${semName}. Covers model questions, syllabus solutions, and past exam papers.`
+                      } else if (selectedSubject) {
+                        generatedTitle = `${facName} ${semName} ${subName} Complete Notes PDF Download (TU Updated 2026)`
+                        generatedDesc = `Download free ${facName} ${semName} ${subName} handwritten study notes, chapterwise solutions, and past exam question answers on TU Notes Hub.`
+                      } else {
                         toast.error('Please select Faculty, Semester, and Subject first!')
                         return
                       }
 
-                      setNoteTitle(`${facName} ${semName} ${subName} Complete Notes PDF Download (TU Updated 2026)`)
-                      setNoteDescription(`Download free ${facName} ${semName} ${subName} handwritten study notes, chapterwise solutions, and past exam question answers on TU Notes Hub.`)
-                      toast.success('✨ Rank #1 SEO Title & Description auto-filled!')
+                      setNoteTitle(generatedTitle)
+                      setNoteDescription(generatedDesc)
+
+                      const cleanSubSlug = (selectedSubject?.title || 'notes')
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/(^-|-$)+/g, '')
+
+                      const kws = [
+                        `${(facultyId || 'bca').toLowerCase()} ${semName.toLowerCase()} ${cleanSubSlug} notes`,
+                        `tu ${cleanSubSlug} pdf download nepal`,
+                        `${(facultyId || 'bca').toLowerCase()} ${cleanSubSlug} old questions solution tu`,
+                        `tribhuvan university ${cleanSubSlug} syllabus`
+                      ]
+                      setSeoKeywordsList(kws)
+
+                      const snippet = `export const metadata: Metadata = {\n  title: '${generatedTitle}',\n  description: '${generatedDesc}',\n  keywords: [\n${kws.map(k => `    "${k}"`).join(',\n')}\n  ],\n  alternates: {\n    canonical: 'https://tunoteshub.com/notes/${(facultyId || 'bca').toLowerCase()}/${cleanSubSlug}',\n  },\n}`
+                      
+                      setSeoCodeSnippet(snippet)
+                      setShowSeoBox(true)
+                      toast.success('✨ Rank #1 Auto-SEO Package Generated!')
                     }}
                     style={{
                       fontSize: '12px',
@@ -2913,15 +2998,16 @@ function UploadTab() {
                       color: '#fff',
                       border: 'none',
                       borderRadius: '6px',
-                      padding: '4px 10px',
+                      padding: '5px 12px',
                       fontWeight: 700,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '4px',
+                      gap: '6px',
+                      boxShadow: '0 2px 10px rgba(99,102,241,0.3)'
                     }}
                   >
-                    ✨ Auto-SEO Generate
+                    ✨ Auto-SEO Generator
                   </button>
                 </div>
                 <input
@@ -2937,8 +3023,9 @@ function UploadTab() {
                   onChange={e => setNoteTitle(e.target.value)}
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>
                   {noteType === 'PROJECT' ? 'Project Description (Abstract & Features)' : 'Description (optional)'}
                 </label>
                 <textarea
@@ -2953,6 +3040,32 @@ function UploadTab() {
                   onChange={e => setNoteDescription(e.target.value)}
                 />
               </div>
+
+              {/* ✨ LIVE AUTO-SEO METADATA CODE BOX */}
+              {showSeoBox && seoCodeSnippet && (
+                <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px', padding: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '16px' }}>⚡</span>
+                      <h4 style={{ fontSize: '13px', fontWeight: 800, color: '#818cf8', margin: 0 }}>Next.js Page Metadata Code (Google Rank #1)</h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(seoCodeSnippet)
+                        toast.success('📋 Next.js Metadata Code copied to clipboard!')
+                      }}
+                      style={{ fontSize: '11px', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700 }}
+                    >
+                      📋 Copy Metadata Code
+                    </button>
+                  </div>
+
+                  <pre style={{ background: '#090d16', padding: '12px', borderRadius: '8px', fontSize: '11px', fontFamily: 'monospace', color: '#e2e8f0', overflowX: 'auto', margin: 0, border: '1px solid rgba(255,255,255,0.05)' }}>
+                    {seoCodeSnippet}
+                  </pre>
+                </div>
+              )}
 
               {/* Project Restriction Banner */}
               {noteType === 'PROJECT' && subjectId && (
@@ -2987,23 +3100,21 @@ function UploadTab() {
                               Existing: <strong style={{ color: 'var(--clr-text-2)' }}>{projectRestriction.existingProjects[0].title}</strong>
                             </p>
                           )}
-                          <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
-                            BCA 4th, 5th & 7th semester allows only 1 project per subject.
-                          </p>
                         </>
                       ) : (
                         <p style={{ fontSize: '13px', color: '#6ee7b7' }}>
-                          ✅ No project limit for this semester. ({projectRestriction.projectCount} project(s) already uploaded)
+                          ✅ No project limit for this semester.
                         </p>
                       )}
                     </div>
                   ) : null}
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 {!isSolutionBook && <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Format</label>
-                  <select className="input-field" value={noteType} onChange={e => setNoteType(e.target.value)} style={{ cursor: 'pointer' }}>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Format</label>
+                  <select className="input-field" value={noteType} onChange={e => setNoteType(e.target.value)} style={{ cursor: 'pointer', fontSize: '13px' }}>
                     <option value="PDF_BOOK">📚 PDF Book</option>
                     <option value="HANDWRITTEN">✍️ Handwritten</option>
                     <option value="SLIDES_PPT">🖥️ Slides/PPTX</option>
@@ -3016,23 +3127,25 @@ function UploadTab() {
                   </select>
                 </div>}
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Access Tier</label>
-                  <select className="input-field" value={isPremium} onChange={e => setIsPremium(e.target.value)} style={{ cursor: 'pointer' }}>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Access Tier</label>
+                  <select className="input-field" value={isPremium} onChange={e => setIsPremium(e.target.value)} style={{ cursor: 'pointer', fontSize: '13px' }}>
                     <option value="false">🔓 Free for All</option>
                     <option value="true">💎 Premium Only</option>
                   </select>
                 </div>
               </div>
+
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author / Credit (optional)</label>
-                <input className="input-field" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} />
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Author / Credit (optional)</label>
+                <input className="input-field" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} style={{ fontSize: '13px' }} />
               </div>
-              {sourceType === 'FILE' && <FileDropZone label="Document (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
+
+              {sourceType === 'FILE' && <FileDropZone label="Document File (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
               {sourceType === 'FILE' && noteFile && ['jpg', 'jpeg', 'png'].includes(noteFile.name.split('.').pop()?.toLowerCase() || '') && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <input type="checkbox" id="extractTextNote" checked={extractText} onChange={e => setExtractText(e.target.checked)} style={{ cursor: 'pointer', width: '18px', height: '18px' }} />
                   <label htmlFor="extractTextNote" style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
-                    <strong>Convert to Text (OCR)</strong> - Extract text for SEO and readability. Uncheck if the image is mostly diagrams/figures.
+                    <strong>Convert to Text (OCR)</strong> - Extract text for SEO and readability. Uncheck if mostly diagrams.
                   </label>
                 </div>
               )}
@@ -3046,12 +3159,12 @@ function UploadTab() {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Year</label>
-                  <input className="input-field" type="number" required value={paperYear} onChange={e => setPaperYear(e.target.value)} />
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Exam Year</label>
+                  <input className="input-field" type="number" required value={paperYear} onChange={e => setPaperYear(e.target.value)} style={{ fontSize: '13px' }} />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Category</label>
-                  <select className="input-field" value={examType} onChange={e => setExamType(e.target.value)} style={{ cursor: 'pointer' }}>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Exam Category</label>
+                  <select className="input-field" value={examType} onChange={e => setExamType(e.target.value)} style={{ cursor: 'pointer', fontSize: '13px' }}>
                     <option value="BOARD_EXAM">🎓 Board Exam</option>
                     <option value="INTERNAL_EXAM">🏫 Internal Exam</option>
                     <option value="BACK_PAPER">🔄 Back Paper</option>
@@ -3059,14 +3172,6 @@ function UploadTab() {
                 </div>
               </div>
               {sourceType === 'FILE' && <FileDropZone label="Question Paper (PDF / Images)" accept=".pdf,.jpg,.jpeg,.png" file={paperFile} onFile={setPaperFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
-              {sourceType === 'FILE' && paperFile && ['jpg', 'jpeg', 'png'].includes(paperFile.name.split('.').pop()?.toLowerCase() || '') && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <input type="checkbox" id="extractTextPaper" checked={extractText} onChange={e => setExtractText(e.target.checked)} style={{ cursor: 'pointer', width: '18px', height: '18px' }} />
-                  <label htmlFor="extractTextPaper" style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
-                    <strong>Convert to Text (OCR)</strong> - Extract text for SEO and readability. Uncheck if the image is mostly diagrams/figures.
-                  </label>
-                </div>
-              )}
             </motion.div>
           )}
 
@@ -3076,21 +3181,21 @@ function UploadTab() {
               style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Cheatsheet Title</label>
-                <input className="input-field" placeholder="e.g. .NET Quick Revision Cheatsheet" required value={sheetTitle} onChange={e => setSheetTitle(e.target.value)} />
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Cheatsheet Title *</label>
+                <input className="input-field" placeholder="e.g. .NET Quick Revision Cheatsheet" required value={sheetTitle} onChange={e => setSheetTitle(e.target.value)} style={{ fontSize: '13px' }} />
               </div>
               <MultiFileDropZone 
                 label="Attach Files (PDF, Images, Word, Docs, etc.)" 
                 accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.doc,.pptx,.ppt,.txt" 
                 files={sheetFiles} 
                 onFiles={setSheetFiles} 
-                hint="Select multiple documents or photos to attach to this cheatsheet" 
+                hint="Select multiple documents or photos to attach" 
               />
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Markdown Content / Description (Optional)</label>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Markdown Content / Description</label>
                 <textarea
                   className="input-field"
-                  placeholder={'# Cheatsheet Title\n- Key concept\n- **Important term**\n\n## Section\n- Point 1'}
+                  placeholder={'# Cheatsheet Title\n- Key concept\n- **Important term**'}
                   style={{ minHeight: '140px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: 1.6 }}
                   value={sheetContent}
                   onChange={e => setSheetContent(e.target.value)}
@@ -3101,15 +3206,15 @@ function UploadTab() {
 
           {/* MCQ Fields */}
           {contentType === 'MCQ' && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Year</label>
-                  <input className="input-field" type="number" required value={mcqYear} onChange={e => setMcqYear(e.target.value)} />
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Exam Year</label>
+                  <input className="input-field" type="number" required value={mcqYear} onChange={e => setMcqYear(e.target.value)} style={{ fontSize: '13px' }} />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Category</label>
-                  <select className="input-field" value={mcqExamType} onChange={e => setMcqExamType(e.target.value)} style={{ cursor: 'pointer' }}>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Exam Category</label>
+                  <select className="input-field" value={mcqExamType} onChange={e => setMcqExamType(e.target.value)} style={{ cursor: 'pointer', fontSize: '13px' }}>
                     <option value="BOARD_EXAM">🎓 Board Exam</option>
                     <option value="INTERNAL_EXAM">🏫 Internal Exam</option>
                     <option value="BACK_PAPER">🔄 Back Paper</option>
@@ -3117,26 +3222,22 @@ function UploadTab() {
                 </div>
               </div>
 
-              <div style={{ padding: '12px 16px', background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', fontSize: '13px', color: '#6ee7b7' }}>
-                ✅ Add multiple MCQs at once. Each question needs 4 options and a correct answer. Explanation is optional.
-              </div>
-
               {/* AI Image Upload Section */}
-              <div style={{ background: 'linear-gradient(135deg, rgba(217,70,239,0.05), rgba(99,102,241,0.05))', border: '1px solid rgba(217,70,239,0.2)', borderRadius: '14px', padding: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <div style={{ background: 'linear-gradient(135deg, rgba(217,70,239,0.08), rgba(99,102,241,0.08))', border: '1px solid rgba(217,70,239,0.3)', borderRadius: '14px', padding: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                   <span style={{ fontSize: '20px' }}>✨</span>
                   <div>
-                    <h4 style={{ margin: 0, fontWeight: 700, color: '#e879f9' }}>AI Magic: Extract from Question Paper</h4>
-                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--clr-text-3)' }}>Upload a photo of a question paper to automatically generate MCQs from it.</p>
+                    <h4 style={{ margin: 0, fontWeight: 800, color: '#e879f9' }}>AI Vision OCR: Extract MCQs from Photo</h4>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--clr-text-3)' }}>Upload a photo of a question paper to extract questions automatically.</p>
                   </div>
                 </div>
                 
                 <MultiFileDropZone 
-                  label="Question Paper — Photos, PDF or Word (JPG, PNG, PDF, DOCX)" 
-                  accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.doc" 
+                  label="Question Paper Photos (JPG, PNG, PDF)" 
+                  accept=".jpg,.jpeg,.png,.webp,.pdf" 
                   files={mcqImageFiles} 
                   onFiles={setMcqImageFiles} 
-                  hint="Select multiple files — all pages of the same paper together" 
+                  hint="Select photos of paper pages" 
                 />
 
                 {mcqImageFiles.length > 0 && (
@@ -3145,79 +3246,85 @@ function UploadTab() {
                     onClick={handleGenerateMcqsFromImage}
                     disabled={mcqImageGenerating || !subjectId}
                     style={{ 
-                      marginTop: '16px', width: '100%', padding: '12px', borderRadius: '10px', fontWeight: 700, border: 'none', cursor: (mcqImageGenerating || !subjectId) ? 'not-allowed' : 'pointer',
+                      marginTop: '14px', width: '100%', padding: '12px', borderRadius: '10px', fontWeight: 800, border: 'none', cursor: (mcqImageGenerating || !subjectId) ? 'not-allowed' : 'pointer',
                       background: 'linear-gradient(135deg, #d946ef, #6366f1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                     }}
                   >
                     {mcqImageGenerating ? (
-                      <><span className="spinner" style={{ width: '16px', height: '16px' }}/> Processing {mcqImageFiles.length} Image(s) & Generating MCQs...</>
+                      <><span className="spinner" style={{ width: '16px', height: '16px' }}/> Processing Images & Generating MCQs...</>
                     ) : (
                       <>✨ Auto-Generate MCQs from {mcqImageFiles.length} Photo(s)</>
                     )}
                   </button>
                 )}
-                {!subjectId && mcqImageFiles.length > 0 && (
-                  <p style={{ marginTop: '8px', fontSize: '12px', color: '#fca5a5', textAlign: 'center' }}>⚠️ Please select a subject above first.</p>
-                )}
               </div>
               
-              <hr style={{ border: 'none', borderTop: '1px dashed rgba(255,255,255,0.1)', margin: '10px 0' }} />
-
               {mcqItems.map((mcq, qi) => (
-                <div key={qi} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-primary-h)' }}>Question {qi + 1}</span>
+                <div key={qi} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '18px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--clr-primary-h)' }}>Question {qi + 1}</span>
                     {mcqItems.length > 1 && (
-                      <button type="button" onClick={() => removeMcqItem(qi)} style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer' }}>✕ Remove</button>
+                      <button type="button" onClick={() => removeMcqItem(qi)} style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', padding: '3px 10px', fontSize: '11px', cursor: 'pointer' }}>✕ Remove</button>
                     )}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
-                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Question Text</label>
-                      <input className="input-field" placeholder="e.g. Which of the following is a feature of OOP?" value={mcq.question} onChange={e => updateMcqItem(qi, 'question', e.target.value)} required />
+                      <input className="input-field" placeholder="e.g. Which of the following is an OOP concept?" value={mcq.question} onChange={e => updateMcqItem(qi, 'question', e.target.value)} required style={{ fontSize: '13px' }} />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                       {mcq.options.map((opt, oi) => (
                         <div key={oi}>
-                          <label className="block text-sm font-semibold mb-1" style={{ color: oi === mcq.correctOption ? 'var(--clr-success)' : 'var(--clr-text-3)', fontSize: '11px' }}>
-                            Option {String.fromCharCode(65 + oi)} {oi === mcq.correctOption ? '✓ Correct' : ''}
-                          </label>
-                          <input className="input-field" placeholder={`Option ${String.fromCharCode(65 + oi)}`} value={opt} onChange={e => updateMcqOption(qi, oi, e.target.value)}
-                            style={{ borderColor: oi === mcq.correctOption ? 'rgba(34,197,94,0.5)' : undefined }}
-                          />
+                          <input className="input-field" placeholder={`Option ${String.fromCharCode(65 + oi)}`} value={opt} onChange={e => updateMcqOption(qi, oi, e.target.value)} style={{ fontSize: '12px' }} />
                         </div>
                       ))}
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Correct Answer</label>
-                        <select className="input-field" value={mcq.correctOption} onChange={e => updateMcqItem(qi, 'correctOption', parseInt(e.target.value))} style={{ cursor: 'pointer' }}>
-                          {['A', 'B', 'C', 'D'].map((l, i) => <option key={i} value={i}>Option {l}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Explanation (optional)</label>
-                        <input className="input-field" placeholder="Brief explanation for the answer" value={mcq.explanation} onChange={e => updateMcqItem(qi, 'explanation', e.target.value)} />
-                      </div>
                     </div>
                   </div>
                 </div>
               ))}
-              <button type="button" onClick={addMcqItem}
-                style={{ background: 'rgba(99,102,241,0.1)', border: '1px dashed rgba(99,102,241,0.5)', borderRadius: '10px', padding: '14px', fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', cursor: 'pointer', width: '100%' }}
-              >
+              <button type="button" onClick={addMcqItem} style={{ background: 'rgba(99,102,241,0.1)', border: '1px dashed rgba(99,102,241,0.5)', borderRadius: '10px', padding: '12px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-primary-h)', cursor: 'pointer', width: '100%' }}>
                 + Add Another Question
               </button>
             </motion.div>
           )}
         </div>
 
-        <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '12px', padding: '18px', fontSize: '16px', borderRadius: '12px', letterSpacing: '0.5px', background: isMcq ? 'linear-gradient(135deg, #10b981, #059669)' : undefined }} disabled={uploading || savingMcqs}>
-          {(uploading || savingMcqs) ? <><span className="spinner" /> {isMcq ? 'Saving MCQs...' : 'Processing Upload...'}</>
-            : isMcq ? `✅ Save ${mcqItems.length} MCQ(s) to Database`
-            : isSolutionBook ? '📚 Publish Solution Book'
-            : sourceType === 'DRIVE' ? '🔗 Save Drive Link & Publish'
-            : '📤 Upload & Publish Material'}
+        {/* ── SUBMIT BUTTON ── */}
+        <button
+          type="submit"
+          disabled={uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)}
+          style={{
+            padding: '16px 32px',
+            borderRadius: '14px',
+            background: (uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload))
+              ? 'rgba(255,255,255,0.1)'
+              : 'linear-gradient(135deg, #6366f1, #06b6d4)',
+            color: '#fff',
+            fontWeight: 800,
+            fontSize: '15px',
+            border: 'none',
+            cursor: (uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)) ? 'not-allowed' : 'pointer',
+            boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            transition: 'all 0.2s ease-in-out'
+          }}
+        >
+          {(uploading || savingMcqs) ? (
+            <>
+              <span className="spinner" style={{ width: '18px', height: '18px' }} />
+              Publishing...
+            </>
+          ) : isMcq ? (
+            '💾 Save All MCQs'
+          ) : isSolutionBook ? (
+            '📚 Publish Solution Book'
+          ) : sourceType === 'DRIVE' ? (
+            '🔗 Save Drive Link & Publish'
+          ) : (
+            '📤 Upload & Publish Material'
+          )}
         </button>
       </form>
     </motion.div>
