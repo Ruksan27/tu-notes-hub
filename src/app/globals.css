@@ -1041,10 +1041,20 @@ video { pointer-events: none; -webkit-user-drag: none; }
   align-items: start;
 }
 
+@media (max-width: 1024px) {
+  .semester-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .ads-sidebar-column {
+    display: none !important;
+  }
+}
+
 .subjects-column {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
 }
 
 .ads-sidebar-column {
@@ -1591,9 +1601,11 @@ nextjs-portal,
     grid-template-columns: repeat(2, 1fr);
   }
 }
+/* NOTE: Always keep 2-column on mobile for Daraz-like layout */
 @media (max-width: 600px) {
   .project-card-grid {
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
   }
 }
 

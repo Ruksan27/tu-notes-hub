@@ -41,26 +41,26 @@ function getAdConfig(type: AdType): AdConfig {
 function AdPlaceholder({ type }: { type: AdType }) {
   if (type === 'leaderboard' || type === 'banner') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', width: '100%', padding: '12px 16px', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 200px' }}>
-          <span style={{ fontSize: '24px', flexShrink: 0 }}>🎓</span>
-          <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px 12px', boxSizing: 'border-box', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+          <span style={{ fontSize: '20px', flexShrink: 0 }}>🎓</span>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <span style={{
-              fontSize: '8.5px', background: 'var(--clr-primary-h)', color: '#fff',
-              padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '2px', fontWeight: 700
+              fontSize: '8px', background: 'var(--clr-primary-h)', color: '#fff',
+              padding: '1px 5px', borderRadius: '3px', display: 'inline-block', marginBottom: '2px', fontWeight: 700
             }}>[ Google AdSense ]</span>
-            <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-primary-h)', margin: 0 }}>
-              Need a Study Boost? Upgrade to Elite Pass!
+            <h4 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--clr-primary-h)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Upgrade to Elite Pass!
             </h4>
-            <p style={{ fontSize: '11px', color: 'var(--clr-text-2)', margin: 0 }}>
-              Ad-free downloads · AI Predictions · Full PDF Solutions
+            <p style={{ fontSize: '10px', color: 'var(--clr-text-2)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Ad-free downloads · AI Predictions
             </p>
           </div>
         </div>
         <a href="/pricing" style={{
-          flexShrink: 0, padding: '7px 16px', borderRadius: '6px',
-          background: 'var(--grad-brand)', color: '#fff', fontSize: '12px', fontWeight: 700,
-          textDecoration: 'none', whiteSpace: 'nowrap', margin: '0 auto',
+          flexShrink: 0, padding: '6px 12px', borderRadius: '6px',
+          background: 'var(--grad-brand)', color: '#ffffff', fontSize: '11px', fontWeight: 700,
+          textDecoration: 'none', whiteSpace: 'nowrap',
         }}>
           Upgrade →
         </a>
@@ -200,34 +200,44 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
     ...style,
   }
 
-  const insStyle: React.CSSProperties = { display: 'block', width: '100%', minHeight: '80px' }
-
   return (
     <div className="tu-display-unit" style={containerStyle}>
-      {/* "Sponsored" label */}
-      <p style={{
-        fontSize: '8.5px', color: 'var(--clr-text-3)', textTransform: 'uppercase',
-        letterSpacing: '1.2px', marginBottom: '4px', fontWeight: 700, textAlign: 'center',
+      <div style={{
+        width: '100%',
+        maxWidth: '100%',
+        minHeight: '80px',
+        background: 'rgba(22, 24, 40, 0.6)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(99, 102, 241, 0.2)',
+        borderRadius: '14px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
+        ...style,
       }}>
-        Sponsored Advertisement
-      </p>
-
-      <div style={boxStyle}>
         {/* Real Google AdSense <ins> tag */}
         <ins
           className="adsbygoogle"
-          style={insStyle}
+          style={{ display: 'block', width: '100%', minHeight: '80px' }}
           data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? 'ca-pub-YOUR_PUBLISHER_ID'}
           data-ad-slot={slot}
           data-ad-format="auto"
           data-full-width-responsive="true"
         />
 
-        {/* Dev/adblocker placeholder — relative layout to prevent overlap */}
+        {/* Fallback Banner when AdSense is loading/not filled */}
         <div style={{
           width: '100%',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          background: `linear-gradient(135deg, ${cfg.accentColor.replace('0.3', '0.04')}, rgba(6,182,212,0.04))`,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.05) 100%)',
           boxSizing: 'border-box',
           overflow: 'hidden',
         }}>

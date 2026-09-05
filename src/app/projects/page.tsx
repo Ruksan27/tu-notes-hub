@@ -51,23 +51,305 @@ export default function ProjectsPage() {
   })
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--clr-bg-900)', paddingBottom: '80px' }}>
-      {/* ── HERO SECTION ── */}
-      <section style={{
-        background: 'linear-gradient(180deg, rgba(99,102,241,0.08) 0%, transparent 100%)',
-        borderBottom: '1px solid var(--clr-border)',
-        padding: '72px 24px 56px',
-        textAlign: 'center',
-      }}>
-        <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--clr-bg-900)', paddingBottom: '100px' }}>
+      <style>{`
+        /* ─── Projects Page Styles ─── */
+        .proj-hero {
+          background: linear-gradient(180deg, rgba(99,102,241,0.1) 0%, rgba(6,182,212,0.03) 60%, transparent 100%);
+          border-bottom: 1px solid rgba(255,255,255,0.07);
+          padding: 60px 20px 40px;
+          text-align: center;
+        }
+        @media (max-width: 640px) {
+          .proj-hero { padding: 44px 16px 28px; }
+        }
+
+        .proj-stats-row {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          max-width: 480px;
+          margin: 0 auto;
+        }
+
+        /* ─── Search bar + filter pills ─── */
+        .proj-controls {
+          max-width: 100%;
+          padding: 20px 20px 0;
+        }
+        @media (max-width: 640px) {
+          .proj-controls { padding: 14px 12px 0; }
+        }
+        .proj-search-wrap {
+          position: relative;
+          max-width: 560px;
+          margin-bottom: 14px;
+        }
+        .proj-search-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--clr-text-3);
+          font-size: 15px;
+          pointer-events: none;
+        }
+        .proj-filters-wrap {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          width: 100%;
+        }
+        @media (max-width: 760px) {
+          .proj-filters-wrap {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-x !important;
+            padding-bottom: 10px !important;
+            scrollbar-width: none !important;
+          }
+          .proj-filters-wrap::-webkit-scrollbar { display: none !important; }
+        }
+        .proj-filter-btn {
+          flex-shrink: 0;
+          padding: 7px 16px;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: 600;
+          border: 1px solid rgba(99,102,241,0.2);
+          background: rgba(255,255,255,0.03);
+          color: var(--clr-text-2);
+          cursor: pointer;
+          transition: all 0.18s;
+          white-space: nowrap;
+        }
+        .proj-filter-btn.active {
+          background: rgba(99,102,241,0.25);
+          border-color: rgba(99,102,241,0.55);
+          color: #c4b5fd;
+        }
+
+        /* ─── Layout: main content + sidebar ─── */
+        .proj-layout {
+          display: grid;
+          grid-template-columns: 1fr 300px;
+          gap: 28px;
+          padding: 24px 20px 0;
+          align-items: start;
+          max-width: 1600px;
+        }
+        @media (max-width: 1100px) {
+          .proj-layout {
+            grid-template-columns: 1fr;
+          }
+          .proj-sidebar { display: none !important; }
+        }
+        @media (max-width: 640px) {
+          .proj-layout { padding: 16px 10px 0; gap: 20px; }
+        }
+
+        /* ─── Daraz-style product card grid ─── */
+        .proj-card-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+        }
+        @media (max-width: 1400px) {
+          .proj-card-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 1100px) {
+          .proj-card-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 760px) {
+          .proj-card-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+        }
+        @media (max-width: 360px) {
+          .proj-card-grid { gap: 8px !important; }
+        }
+
+        /* ─── Individual card ─── */
+        .proj-card {
+          background: rgba(22, 24, 40, 0.85);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 14px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s;
+          cursor: pointer;
+        }
+        .proj-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(99,102,241,0.4);
+          box-shadow: 0 12px 36px rgba(99,102,241,0.18);
+        }
+        @media (max-width: 760px) {
+          .proj-card { border-radius: 10px; }
+        }
+
+        /* card thumbnail */
+        .proj-card-thumb {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 4 / 3;
+          background: rgba(255,255,255,0.03);
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        @media (max-width: 760px) {
+          .proj-card-thumb { aspect-ratio: 3 / 2; }
+        }
+
+        /* card body */
+        .proj-card-body {
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          flex: 1;
+        }
+        @media (max-width: 760px) {
+          .proj-card-body { padding: 9px 10px 10px; gap: 6px; }
+        }
+
+        .proj-card-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+        .proj-card-tag {
+          font-size: 9px;
+          font-weight: 700;
+          padding: 2px 7px;
+          border-radius: 999px;
+          background: rgba(99,102,241,0.12);
+          color: #a5b4fc;
+          border: 1px solid rgba(99,102,241,0.2);
+        }
+
+        .proj-card-title {
+          font-family: var(--font-display);
+          font-weight: 700;
+          font-size: 14px;
+          color: var(--clr-text-1);
+          line-height: 1.3;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        @media (max-width: 760px) {
+          .proj-card-title { font-size: 12.5px; }
+        }
+
+        .proj-card-type {
+          font-size: 11px;
+          color: var(--clr-text-3);
+          font-weight: 500;
+        }
+        @media (max-width: 760px) {
+          .proj-card-type { font-size: 10px; }
+        }
+
+        /* Price area */
+        .proj-card-price-row {
+          display: flex;
+          align-items: baseline;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-top: auto;
+        }
+        .proj-card-price {
+          font-family: var(--font-display);
+          font-size: 17px;
+          font-weight: 800;
+          color: #34d399;
+        }
+        @media (max-width: 760px) {
+          .proj-card-price { font-size: 14px; }
+        }
+        .proj-card-original {
+          font-size: 11px;
+          color: rgba(255,255,255,0.3);
+          text-decoration: line-through;
+        }
+        @media (max-width: 760px) {
+          .proj-card-original { font-size: 10px; }
+        }
+        .proj-card-discount {
+          font-size: 10px;
+          font-weight: 800;
+          color: #f87171;
+          background: rgba(239,68,68,0.12);
+          border-radius: 4px;
+          padding: 1px 5px;
+        }
+
+        /* CTA Button */
+        .proj-card-cta {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 10px;
+          background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+          border-radius: 8px;
+          color: #ffffff !important;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none !important;
+          transition: opacity 0.2s, transform 0.15s;
+          min-height: 40px;
+          box-sizing: border-box;
+        }
+        .proj-card-cta:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
+        @media (max-width: 760px) {
+          .proj-card-cta { font-size: 11.5px; padding: 9px; min-height: 36px; border-radius: 7px; }
+        }
+
+        /* Discount badge on thumbnail */
+        .proj-discount-badge {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: linear-gradient(135deg, #ef4444, #ec4899);
+          color: #fff;
+          font-size: 9px;
+          font-weight: 800;
+          padding: 3px 8px;
+          border-radius: 999px;
+          box-shadow: 0 2px 8px rgba(239,68,68,0.45);
+          z-index: 2;
+        }
+
+        /* Mobile inline ad */
+        .proj-mobile-ad {
+          display: none;
+        }
+        @media (max-width: 1100px) {
+          .proj-mobile-ad { display: block; margin: 20px 0; }
+        }
+      `}</style>
+
+      {/* ── HERO ── */}
+      <section className="proj-hero">
+        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
           <motion.div
-            initial={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              display: 'inline-flex', alignItems: 'center', gap: '7px',
               background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)',
-              borderRadius: '999px', padding: '6px 16px', marginBottom: '24px',
-              fontSize: '12px', fontWeight: 700, color: '#a5b4fc',
+              borderRadius: '999px', padding: '5px 14px', marginBottom: '20px',
+              fontSize: '11px', fontWeight: 700, color: '#a5b4fc',
               textTransform: 'uppercase', letterSpacing: '1px',
             }}
           >
@@ -75,15 +357,15 @@ export default function ProjectsPage() {
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(32px, 6vw, 56px)',
+              fontSize: 'clamp(28px, 6vw, 50px)',
               fontWeight: 900,
               lineHeight: 1.1,
-              marginBottom: '20px',
+              marginBottom: '14px',
               color: 'var(--clr-text-1)',
             }}
           >
@@ -99,262 +381,184 @@ export default function ProjectsPage() {
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            style={{ color: 'var(--clr-text-2)', fontSize: '17px', lineHeight: 1.7, marginBottom: '36px' }}
+            style={{
+              color: 'var(--clr-text-2)',
+              fontSize: 'clamp(14px, 3.5vw, 16px)',
+              lineHeight: 1.6,
+              marginBottom: '28px',
+            }}
           >
-            Explore ready-to-run projects with full source code, documentation, and setup guides.
-            Perfect for learning, college assignments, or launching your next product.
+            Ready-to-run projects with full source code, docs & setup guides.
           </motion.p>
 
-          {/* Stats row — 3 columns single row on mobile */}
+          {/* Stats */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '12px',
-              maxWidth: '560px',
-              margin: '0 auto',
-            }}
+            transition={{ delay: 0.15 }}
+            className="proj-stats-row"
           >
             {[
-              { label: 'Projects', value: projects.length + '+' },
+              { label: 'Projects', value: projects.length ? `${projects.length}+` : '10+' },
               { label: 'Technologies', value: '10+' },
-              { label: 'Students Helped', value: '100+' },
+              { label: 'Helped', value: '100+' },
             ].map(s => (
-              <div key={s.label} style={{ textAlign: 'center', padding: '4px' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px, 4.5vw, 32px)', fontWeight: 800, color: 'var(--clr-text-1)', lineHeight: 1.2 }}>{s.value}</div>
-                <div style={{ fontSize: 'clamp(9.5px, 2.4vw, 12px)', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px', whiteSpace: 'nowrap' }}>{s.label}</div>
+              <div key={s.label} style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 5vw, 34px)', fontWeight: 800, color: 'var(--clr-text-1)', lineHeight: 1.1 }}>{s.value}</div>
+                <div style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '3px' }}>{s.label}</div>
               </div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      <div style={{ maxWidth: '100%', padding: '48px 4% 0' }}>
-        <div className="semester-layout-grid">
-          {/* Left Column: Projects, search, filters */}
-          <div className="subjects-column">
-            {/* ── Search & Filter Bar ── */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              style={{ marginBottom: '36px' }}
+      {/* ── SEARCH + FILTERS ── */}
+      <div className="proj-controls">
+        <div className="proj-search-wrap">
+          <span className="proj-search-icon">🔍</span>
+          <input
+            className="input-field"
+            placeholder="Search projects, technologies..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ paddingLeft: '40px' }}
+          />
+        </div>
+
+        <div className="proj-filters-wrap">
+          {TECH_FILTERS.map(f => (
+            <button
+              key={f}
+              className={`proj-filter-btn${filter === f ? ' active' : ''}`}
+              onClick={() => setFilter(f)}
             >
-              {/* Search */}
-              <div style={{ position: 'relative', marginBottom: '20px', maxWidth: '480px' }}>
-                <span style={{
-                  position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
-                  color: 'var(--clr-text-3)', fontSize: '16px', pointerEvents: 'none',
-                }}>🔍</span>
-                <input
-                  className="input-field"
-                  placeholder="Search projects, technologies..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  style={{ paddingLeft: '42px' }}
-                />
-              </div>
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
 
-              {/* Filter chips */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {TECH_FILTERS.map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    style={{
-                      padding: '6px 16px',
-                      borderRadius: '999px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      border: `1px solid ${filter === f ? 'rgba(99,102,241,0.5)' : 'rgba(99,102,241,0.15)'}`,
-                      background: filter === f ? 'rgba(99,102,241,0.18)' : 'transparent',
-                      color: filter === f ? '#a5b4fc' : 'var(--clr-text-2)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
+      {/* ── MAIN LAYOUT ── */}
+      <div className="proj-layout">
+        {/* Left: cards */}
+        <div>
+          {/* Mobile ad above grid */}
+          <div className="proj-mobile-ad">
+            <AdUnit type="banner" slot="projects-mobile-top" />
+          </div>
+
+          {/* Grid */}
+          {loading ? (
+            <div className="proj-card-grid">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="skeleton" style={{ height: '280px', borderRadius: '12px' }} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '72px 0', color: 'var(--clr-text-3)' }}>
+              <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔍</div>
+              <p style={{ fontSize: '17px', fontWeight: 600, color: 'var(--clr-text-2)', marginBottom: '6px' }}>No projects found</p>
+              <p style={{ fontSize: '13px' }}>
+                {search ? 'Try a different term or ' : ''}
+                <button onClick={() => { setFilter('All'); setSearch('') }} style={{ background: 'none', border: 'none', color: 'var(--clr-primary-h)', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
+                  clear filters
+                </button>
+              </p>
+            </div>
+          ) : (
+            <div className="proj-card-grid">
+              {filtered.map((project, idx) => {
+                const discountedPrice = Math.round(project.originalPrice * (1 - project.discountPercentage / 100))
+
+                return (
+                  <motion.div
+                    key={project.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(idx * 0.05, 0.35) }}
+                    className="proj-card"
                   >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
+                    {/* Thumbnail */}
+                    <div className="proj-card-thumb">
+                      {project.thumbnailUrl ? (
+                        <Image
+                          src={project.thumbnailUrl}
+                          alt={project.title}
+                          fill
+                          unoptimized
+                          priority={idx < 6}
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(6,182,212,0.1))' }}>
+                          <span style={{ fontSize: '40px', opacity: 0.4 }}>💻</span>
+                        </div>
+                      )}
+                      {/* Bottom gradient */}
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50px', background: 'linear-gradient(transparent, rgba(13,15,26,0.9))' }} />
+                      {/* Discount badge */}
+                      {project.discountPercentage > 0 && (
+                        <div className="proj-discount-badge">
+                          -{project.discountPercentage}%
+                        </div>
+                      )}
+                    </div>
 
-            {/* ── Results ── */}
-            {loading ? (
-              <div className="project-card-grid">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="skeleton" style={{ height: '380px', borderRadius: '16px' }} />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--clr-text-3)' }}>
-                <div style={{ fontSize: '56px', marginBottom: '16px' }}>🔍</div>
-                <p style={{ fontSize: '18px', fontWeight: 600, color: 'var(--clr-text-2)', marginBottom: '8px' }}>No projects found</p>
-                <p style={{ fontSize: '14px' }}>
-                  {search ? 'Try a different search term or ' : ''}<button onClick={() => { setFilter('All'); setSearch('') }} style={{ background: 'none', border: 'none', color: 'var(--clr-primary-h)', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>clear filters</button>
-                </p>
-              </div>
-            ) : (
-              <div className="project-card-grid">
-                {filtered.map((project, idx) => {
-                  const discountedPrice = Math.round(project.originalPrice * (1 - project.discountPercentage / 100))
-                  const savedAmt = Math.round(project.originalPrice * project.discountPercentage / 100)
-
-                  return (
-                    <motion.div
-                      key={project.id}
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: Math.min(idx * 0.06, 0.4) }}
-                      style={{
-                        background: 'rgba(30, 32, 50, 0.35)',
-                        backdropFilter: 'blur(16px)',
-                        border: '1px solid rgba(255, 255, 255, 0.06)',
-                        borderRadius: '18px',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        transition: 'border-color 0.3s, box-shadow 0.3s, transform 0.2s',
-                        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
-                      }}
-                      whileHover={{ 
-                        scale: 1.02, 
-                        borderColor: 'rgba(99,102,241,0.35)',
-                        boxShadow: '0 12px 40px rgba(99,102,241,0.22)' 
-                      }}
-                    >
-                      {/* Thumbnail */}
-                      <div style={{ position: 'relative', height: '175px', background: 'rgba(255,255,255,0.02)', flexShrink: 0, overflow: 'hidden' }}>
-                        {project.thumbnailUrl ? (
-                          <Image
-                            src={project.thumbnailUrl}
-                            alt={project.title}
-                            fill
-                            unoptimized
-                            priority={idx < 4}
-                            style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
-                          />
-                        ) : (
-                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '56px', opacity: 0.15 }}>💻</span>
-                          </div>
+                    {/* Body */}
+                    <div className="proj-card-body">
+                      {/* Tech tags */}
+                      <div className="proj-card-tags">
+                        {project.technologies.split(',').slice(0, 2).map(tech => (
+                          <span key={tech} className="proj-card-tag">{tech.trim()}</span>
+                        ))}
+                        {project.technologies.split(',').length > 2 && (
+                          <span className="proj-card-tag" style={{ opacity: 0.6 }}>
+                            +{project.technologies.split(',').length - 2}
+                          </span>
                         )}
+                      </div>
 
-                        {/* Gradient overlay */}
-                        <div style={{
-                          position: 'absolute', bottom: 0, left: 0, right: 0, height: '60px',
-                          background: 'linear-gradient(transparent, rgba(13,15,26,0.95))',
-                        }} />
+                      {/* Title */}
+                      <div className="proj-card-title">{project.title}</div>
 
-                        {/* Discount badge */}
+                      {/* Type */}
+                      <div className="proj-card-type">full project</div>
+
+                      {/* Price */}
+                      <div className="proj-card-price-row">
+                        <span className="proj-card-price">Rs. {discountedPrice}</span>
                         {project.discountPercentage > 0 && (
-                          <div style={{
-                            position: 'absolute', top: '12px', right: '12px',
-                            background: 'linear-gradient(135deg, #ef4444, #ec4899)',
-                            color: '#fff', fontSize: '10px', fontWeight: 800,
-                            padding: '3px 9px', borderRadius: '999px',
-                            boxShadow: '0 4px 12px rgba(239,68,68,0.4)',
-                          }}>
-                            {project.discountPercentage}% OFF
-                          </div>
+                          <>
+                            <span className="proj-card-original">Rs. {project.originalPrice}</span>
+                            <span className="proj-card-discount">-{project.discountPercentage}%</span>
+                          </>
                         )}
                       </div>
 
-                      {/* Content */}
-                      <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {/* Tech tags */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                          {project.technologies.split(',').slice(0, 3).map(tech => (
-                            <span key={tech} style={{
-                              fontSize: '9.5px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px',
-                              background: 'rgba(99,102,241,0.08)', color: '#a5b4fc',
-                              border: '1px solid rgba(99,102,241,0.18)',
-                            }}>
-                              {tech.trim()}
-                            </span>
-                          ))}
-                          {project.technologies.split(',').length > 3 && (
-                            <span style={{ fontSize: '9.5px', color: 'var(--clr-text-3)', padding: '2px 4px' }}>
-                              +{project.technologies.split(',').length - 3} more
-                            </span>
-                          )}
-                        </div>
+                      {/* CTA */}
+                      <Link href={`/projects/${getProjectSlug(project)}`} className="proj-card-cta">
+                        View Details →
+                      </Link>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          )}
 
-                        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16.5px', color: 'var(--clr-text-1)', lineHeight: 1.3 }}>
-                          {project.title}
-                        </h3>
-
-                        <p style={{ fontSize: '12.5px', color: 'var(--clr-text-2)', lineHeight: 1.5, opacity: 0.85, flex: 1 }}>
-                          {project.description.slice(0, 100)}{project.description.length > 100 ? '…' : ''}
-                        </p>
-
-                        {/* Price block */}
-                        <div style={{
-                          background: 'rgba(99, 102, 241, 0.05)',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(99, 102, 241, 0.15)',
-                          padding: '10px 14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          marginTop: '4px',
-                        }}>
-                          <div>
-                            {project.discountPercentage > 0 && (
-                              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through', marginBottom: '1px' }}>
-                                Rs. {project.originalPrice}
-                              </div>
-                            )}
-                            <div style={{ fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 800, color: '#34d399' }}>
-                              Rs. {discountedPrice}
-                            </div>
-                          </div>
-                          {project.discountPercentage > 0 && (
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: '9px', color: 'var(--clr-text-3)' }}>You save</div>
-                              <div style={{ fontSize: '13px', fontWeight: 700, color: '#fca5a5' }}>Rs. {savedAmt}</div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* CTA */}
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '2px' }}>
-                          <Link
-                            href={`/projects/${getProjectSlug(project)}`}
-                            style={{
-                              flex: 1,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                              padding: '10px',
-                              background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-                              borderRadius: '10px',
-                              fontWeight: 700, fontSize: '13.5px', color: '#fff',
-                              textDecoration: 'none',
-                              transition: 'all 0.2s ease',
-                              boxShadow: '0 4px 16px rgba(99,102,241,0.25)',
-                            }}
-                          >
-                            View Details →
-                          </Link>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )
-                })}
-              </div>
-            )}
+          {/* Mobile ad below grid */}
+          <div className="proj-mobile-ad">
+            <AdUnit type="inline" slot="projects-mobile-bottom" />
           </div>
+        </div>
 
-          {/* Right Column: Ads */}
-          <div className="ads-sidebar-column">
-            <AdUnit type="sidebar" slot="projects-sidebar-1" />
-            <AdUnit type="sidebar" slot="projects-sidebar-2" />
-          </div>
+        {/* Right: Sidebar Ads (desktop only) */}
+        <div className="proj-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'sticky', top: '80px' }}>
+          <AdUnit type="sidebar" slot="projects-sidebar-1" />
+          <AdUnit type="sidebar" slot="projects-sidebar-2" />
         </div>
       </div>
     </main>
