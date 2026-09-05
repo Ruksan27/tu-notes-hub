@@ -502,18 +502,33 @@ video { pointer-events: none; -webkit-user-drag: none; }
 
 /* Mobile (≤768px) — GLOBAL RULES */
 @media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+  }
+
   /* Layout */
-  .container { padding: 0 14px; }
-  .section { padding: 40px 0; }
+  .container { padding: 0 16px; max-width: 100%; }
+  .section { padding: 36px 0; }
 
   /* Typography scaling */
-  h1 { font-size: clamp(22px, 6vw, 38px) !important; }
-  h2 { font-size: clamp(18px, 5vw, 28px) !important; }
-  h3 { font-size: clamp(16px, 4vw, 22px) !important; }
+  h1 { font-size: clamp(22px, 6vw, 36px) !important; }
+  h2 { font-size: clamp(18px, 5vw, 26px) !important; }
+  h3 { font-size: clamp(15px, 4vw, 20px) !important; }
 
-  /* Grids → single column */
-  .grid-auto  { grid-template-columns: 1fr 1fr; }
+  /* Grids → responsive columns */
+  .grid-auto  { grid-template-columns: 1fr; gap: 16px; }
   .stat-grid  { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Touch buttons */
+  .btn {
+    min-height: 42px;
+    touch-action: manipulation;
+    justify-content: center;
+  }
+  .btn-sm {
+    min-height: 36px;
+  }
 
   /* Sidebar layout: stack vertically */
   .sidebar-layout {
@@ -534,6 +549,7 @@ video { pointer-events: none; -webkit-user-drag: none; }
     background: rgba(13,15,26,0.9) !important;
     overflow-x: auto;
     white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
   }
   .sidebar > *:not(hr) {
     display: inline-flex !important;
@@ -552,13 +568,13 @@ video { pointer-events: none; -webkit-user-drag: none; }
   }
 
   /* Tables: horizontal scroll */
-  .table-wrap { overflow-x: auto; }
-  .table-wrap table { min-width: 560px; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-wrap table { min-width: 500px; }
   .table-wrap th,
   .table-wrap td { padding: 10px 12px; font-size: 13px; }
 
   /* Page header */
-  .page-header { padding: 24px 0 20px; margin-bottom: 20px; }
+  .page-header { padding: 20px 0 16px; margin-bottom: 16px; }
 
   /* Buttons: full width on mobile where stacked */
   .btn-lg { padding: 12px 20px; font-size: 14px; }
@@ -571,7 +587,7 @@ video { pointer-events: none; -webkit-user-drag: none; }
 
   /* Stat cards */
   .stat-card { padding: 16px; }
-  .stat-value { font-size: 28px; }
+  .stat-value { font-size: 26px; }
 }
 
 /* Small Mobile (≤480px) */
@@ -601,18 +617,18 @@ video { pointer-events: none; -webkit-user-drag: none; }
   }
 
   /* Section spacing */
-  .section { padding: 28px 0; }
-  .page-header { padding: 16px 0; margin-bottom: 16px; }
+  .section { padding: 24px 0; }
+  .page-header { padding: 14px 0; margin-bottom: 14px; }
 
   /* stat-grid 2-col stays on very small too */
   .stat-grid { grid-template-columns: 1fr 1fr; }
 
   /* Buttons */
-  .btn { font-size: 13px; padding: 9px 16px; }
-  .btn-lg { padding: 11px 18px; font-size: 13px; }
+  .btn { font-size: 13px; padding: 9px 16px; min-height: 40px; }
+  .btn-lg { padding: 11px 18px; font-size: 13px; min-height: 44px; }
 
   /* Modals: full width */
-  .adblocker-modal { padding: 28px 20px; }
+  .adblocker-modal { padding: 24px 16px; }
 }
 
 

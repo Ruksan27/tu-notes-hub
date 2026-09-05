@@ -1,14 +1,41 @@
 {
-  "name": "TU Notes Hub",
+  "name": "TU Notes Hub – Free Notes, Past Papers & AI Predictions",
   "short_name": "TU Notes",
   "description": "Free notes, past papers & AI exam predictions for Tribhuvan University students.",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "scope": "/",
   "background_color": "#080a12",
   "theme_color": "#6366f1",
   "orientation": "portrait-primary",
-  "categories": ["education", "productivity"],
+  "categories": ["education", "productivity", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Faculties & Notes",
+      "short_name": "Faculties",
+      "url": "/faculties",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Past Year Papers",
+      "short_name": "Past Papers",
+      "url": "/past-papers",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI Exam Predictor",
+      "short_name": "AI Predictor",
+      "url": "/ai-predictor",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Projects Marketplace",
+      "short_name": "Projects",
+      "url": "/projects",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
