@@ -131,17 +131,25 @@ export default async function HomePage() {
       </section>
 
       {/* ── Stats ─────────────────────────────────── */}
-      <section style={{ padding: '40px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)' }}>
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '40px' }}>
+      <section style={{ padding: '24px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)' }}>
+        <div className="container home-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
           {dynamicStats.map((s) => (
-            <div key={s.label} className="text-center">
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: '42px', fontWeight: 800, background: 'var(--grad-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-1px' }}>
+            <div key={s.label} className="text-center" style={{ padding: '8px 4px' }}>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px, 5vw, 40px)', fontWeight: 800, background: 'var(--grad-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-1px', margin: 0 }}>
                 {s.value}
               </p>
-              <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginTop: '8px', fontWeight: 600 }}>{s.label}</p>
+              <p style={{ color: 'var(--clr-text-2)', fontSize: 'clamp(11.5px, 3vw, 14px)', marginTop: '4px', fontWeight: 600, margin: 0 }}>{s.label}</p>
             </div>
           ))}
         </div>
+        <style>{`
+          @media (max-width: 640px) {
+            .home-stats-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 16px 12px !important;
+            }
+          }
+        `}</style>
       </section>
  
       {/* ── Faculties Grid ────────────────────────── */}
