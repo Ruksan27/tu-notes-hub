@@ -2180,7 +2180,7 @@ function UploadTab() {
         formData.append('signature', signature)
         formData.append('folder', sf)
 
-        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
           method: 'POST',
           body: formData
         })

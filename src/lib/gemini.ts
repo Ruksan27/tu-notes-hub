@@ -1,11 +1,11 @@
 // src/lib/gemini.ts
-import { GoogleGenAI } from '@google/genai'
 
 function getValidKeys() {
   const keys = [
     process.env.GEMINI_KEY_1,
     process.env.GEMINI_KEY_2,
     process.env.GEMINI_KEY_3,
+    process.env.GEMINI_KEY_4,
     process.env.GEMINI_API_KEY,
     process.env.NEXT_PUBLIC_GEMINI_API_KEY,
   ].filter(Boolean) as string[]
@@ -24,6 +24,67 @@ function getNextApiKey(): string {
   return key
 }
 
+// Call Gemini REST API directly — supports both AIzaSy... (query param) and AQ... (Bearer token) keys
+async function callGeminiREST(
+  apiKey: string,
+  modelName: string,
+  contents: any[],
+  systemInstruction?: string,
+  timeoutMs = 45_000
+): Promise<string> {
+  const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`
+
+  const body: any = { contents }
+  if (systemInstruction) {
+    body.systemInstruction = { parts: [{ text: systemInstruction }] }
+  }
+
+  // Try both approaches for every key: first as ?key= param (works for all AI Studio keys),
+  // then as Bearer token (fallback for OAuth tokens)
+  const attempts = [
+    { url: `${baseUrl}?key=${apiKey}`, headers: { 'Content-Type': 'application/json' } as Record<string, string> },
+    { url: baseUrl, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` } as Record<string, string> },
+  ]
+
+  for (const attempt of attempts) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const res = await fetch(attempt.url, {
+        method: 'POST',
+        headers: attempt.headers,
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+      clearTimeout(timer)
+
+      if (res.ok) {
+        const data = await res.json()
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+        if (text) return text
+      } else {
+        const errBody = await res.text()
+        const attemptType = attempt.headers['Authorization'] ? 'Bearer' : '?key='
+        console.warn(`[Gemini REST] ${modelName} ${attemptType} → ${res.status}: ${errBody.substring(0, 200)}`)
+        const err: any = new Error(`Gemini REST ${res.status}: ${errBody.substring(0, 150)}`)
+        err.status = res.status
+        // Only retry with Bearer if it's auth error and we haven't tried Bearer yet
+        if (res.status === 401 || res.status === 403) continue
+        throw err
+      }
+    } catch (e: any) {
+      clearTimeout(timer)
+      if (e.status === 401 || e.status === 403) continue
+      throw e
+    }
+  }
+
+  // Both attempts failed with auth error
+  const err: any = new Error(`Gemini key auth failed for model ${modelName}`)
+  err.status = 401
+  throw err
+}
+
 export async function callGemini(
   prompt: string,
   systemInstruction?: string,
@@ -34,18 +95,22 @@ export async function callGemini(
     return ''
   }
 
-  // Using verified working Gemini model IDs (Sept 2025+)
-  const MODELS_TO_TRY = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']
-  const TIMEOUT_MS = 45_000
+  // Current working Gemini models (Sept 2026) — old models decommissioned
+  const MODELS_TO_TRY = [
+    'gemini-3.6-flash',        // Primary — recommended by Google API
+    'gemini-3.5-flash-lite',   // Secondary — lighter/faster
+  ]
 
   // Build contents once
   const contents: any[] = []
+  const parts: any[] = []
   if (images && images.length > 0) {
     for (const img of images) {
-      contents.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } })
+      parts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } })
     }
   }
-  contents.push(prompt)
+  parts.push({ text: prompt })
+  contents.push({ role: 'user', parts })
 
   let lastError: any = null
 
@@ -57,34 +122,21 @@ export async function callGemini(
 
       try {
         console.log(`[Gemini AI] Trying model: ${modelName} (key #${k + 1})`)
-        const genAI = new GoogleGenAI({ apiKey })
-
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(Object.assign(new Error('Gemini request timed out'), { status: 503, _isTimeout: true })), TIMEOUT_MS)
-        )
-
-        const response = await Promise.race([
-          genAI.models.generateContent({
-            model: modelName,
-            contents,
-            ...(systemInstruction ? { config: { systemInstruction } } : {}),
-          }),
-          timeoutPromise,
-        ])
-
-        const text = response?.text ?? ''
+        const text = await callGeminiREST(apiKey, modelName, contents, systemInstruction)
         if (text) return text
       } catch (error: any) {
         lastError = error
-        const status = error?.status ?? error?.error?.code ?? 0
-        const msg = error?.message?.substring(0, 80) ?? ''
-        // If 404, this key/model combo doesn't work — try next key
-        if (status === 404) {
-          console.warn(`[Gemini] ${modelName} key#${k+1} → 404. Trying next key...`)
+        const status = error?.status ?? 0
+        if (status === 404 || status === 400) {
+          console.warn(`[Gemini] ${modelName} key#${k+1} → ${status}. Trying next key...`)
           continue
         }
-        console.warn(`[Gemini Model ${modelName} Failed (${status}): ${msg}]`)
-        break // non-404 errors: skip to next model
+        if (status === 401 || status === 403) {
+          console.warn(`[Gemini] ${modelName} key#${k+1} → Auth failed (${status}). Trying next key...`)
+          continue
+        }
+        console.warn(`[Gemini Model ${modelName} Failed (${status}): ${error?.message?.substring(0, 80)}]`)
+        break // non-retriable errors: skip to next model
       }
     }
   }
@@ -145,10 +197,10 @@ export async function callGroq(
 
   // Discover available models dynamically
   const allModels = await getGroqModels(apiKey)
-  const modelsToTry = hasImages
-    ? allModels.filter(m => m.includes('vision') || m.includes('scout') || m.includes('kimi'))
-        .concat(['llama-3.2-11b-vision-preview']).slice(0, 3)
-    : allModels.filter(m => !m.includes('vision') && !m.includes('whisper')).slice(0, 6)
+  // For vision tasks, prefer vision-capable models from dynamic list
+  const modelsToTry = hasImages 
+    ? allModels.filter(m => m.includes('vision') || m.includes('scout') || m.includes('maverick')).slice(0, 3)
+    : allModels.filter(m => !m.includes('vision') && !m.includes('whisper') && !m.includes('tts')).slice(0, 6)
 
   const messages: any[] = []
   if (systemInstruction) {
@@ -195,6 +247,88 @@ export async function callGroq(
     } catch (e) {
       console.warn(`[Groq Model ${model} Exception]:`, e)
     }
+  }
+
+  console.warn(`[Groq AI] All models failed. Falling back to HuggingFace...`)
+
+  // HuggingFace Fallback (Specifically for Vision/OCR)
+  try {
+    const hfRes = await callHuggingFace(prompt, images)
+    if (hfRes) return hfRes
+  } catch(e) {
+    console.error('HuggingFace fallback also failed:', e)
+  }
+
+  return ''
+}
+
+async function callHuggingFace(
+  prompt: string,
+  images?: { base64: string, mimeType: string }[]
+): Promise<string> {
+  const apiKey = process.env.HF_API_KEY
+  if (!apiKey) return ''
+
+  // Filter valid images (Hugging Face supports basic images)
+  const validImages = images?.filter(img => 
+    img.mimeType.startsWith('image/')
+  )
+  const hasImages = validImages && validImages.length > 0
+  
+  if (!hasImages) return '' // We only use HF for Vision tasks for now
+
+  // Default to Qwen2.5-VL-72B-Instruct, fallback to 7B if it fails
+  const models = ['Qwen/Qwen2.5-VL-72B-Instruct', 'Qwen/Qwen2-VL-7B-Instruct']
+  
+  let lastError: any = null
+
+  for (const model of models) {
+    try {
+      console.log(`[HuggingFace AI] Trying model: ${model}`)
+      
+      const contentParts: any[] = [{ type: 'text', text: prompt }]
+      for (const img of validImages) {
+        contentParts.push({
+          type: 'image_url',
+          image_url: { url: `data:${img.mimeType};base64,${img.base64}` }
+        })
+      }
+
+      const response = await fetch('https://api-inference.huggingface.co/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: contentParts
+            }
+          ],
+          max_tokens: 2000
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const resText = data.choices?.[0]?.message?.content ?? ''
+        if (resText) return resText
+      } else {
+        const errText = await response.text()
+        console.warn(`[HF Model ${model} ${response.status}]:`, errText)
+        lastError = new Error(`HF API Error: ${response.status} ${errText}`)
+      }
+    } catch (e: any) {
+      console.warn(`[HF Model ${model} Exception]:`, e)
+      lastError = e
+    }
+  }
+  
+  if (lastError?.cause?.code === 'ENOTFOUND') {
+    throw new Error('Network Error: Cannot connect to HuggingFace API (DNS resolution failed). Please check your internet connection or DNS settings.')
   }
 
   return ''
@@ -403,5 +537,10 @@ Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra te
 
   const raw = await callGemini(prompt, undefined, images)
   const cleaned = raw.replace(/```json|```/g, '').trim()
+  
+  if (!cleaned) {
+    throw new Error('AI returned an empty response. Please check API keys or try again.')
+  }
+  
   return JSON.parse(cleaned)
 }

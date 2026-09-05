@@ -76,11 +76,19 @@ export default function DownloadPage() {
       if (parts.length === 2) {
         // Layer 1: Diagonal faint watermark in the center (Copy Protection)
         const diagonalWatermark = `l_text:Arial_100_bold:TU%20Notes%20Hub/co_black,o_12,a_-45/fl_layer_apply,g_center`
-        // Layer 2: Small website link at the bottom right (Subtle Branding)
-        const footerLink = `l_text:Arial_22:tunoteshub.com/co_black,o_50/fl_layer_apply,g_south_east,x_15,y_15`
+        // Layer 2: Small website link at the bottom right
+        const footerLink = `l_text:Arial_22:tunoteshub.com/co_black,o_60/fl_layer_apply,g_south_east,x_15,y_15`
+        
+        // Layer 3: QR Code
+        const targetNoteId = getNoteTargetId(params)
+        const targetUrl = `https://tunoteshub.com/download/${targetNoteId}`
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(targetUrl)}`
+        // Cloudinary requires Base64URL encoding for fetched URLs
+        const b64Url = btoa(qrApiUrl).replace(/\+/g, '-').replace(/\//g, '_')
+        const qrLayer = `l_fetch:${b64Url}/c_scale,w_100/fl_layer_apply,g_south_east,x_15,y_45`
         
         // Pass filename to fl_attachment so the browser saves it with this name
-        return `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${footerLink}/${parts[1]}`
+        return `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${qrLayer}/${footerLink}/${parts[1]}`
       }
     }
     
@@ -561,20 +569,36 @@ export default function DownloadPage() {
 
         {/* Sidebar Ads Column */}
         {!isPaid && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '24px',
+            position: 'sticky',
+            top: '80px',
+            maxHeight: 'calc(100vh - 100px)',
+            overflowY: 'auto',
+            paddingBottom: '20px',
+            scrollbarWidth: 'none', // Hide scrollbar for cleaner look
+            msOverflowStyle: 'none'
+          }}>
+            <style>{`
+              div::-webkit-scrollbar { display: none; }
+            `}</style>
             
             <div className="glass-card" style={{ padding: '20px', background: 'rgba(99,102,241,0.05)', borderColor: 'rgba(99,102,241,0.2)' }}>
               <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '8px' }}>💎 Upgrade to Elite</h4>
               <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5 }}>
-                Tired of waiting? Get instant direct downloads, access all AI prediction models, and unlock full solutions offline.
+                Tired of ads? Get instant direct downloads, access all AI prediction models, and unlock full solutions offline.
               </p>
               <a href="/pricing" className="btn btn-outline btn-sm" style={{ width: '100%', marginTop: '12px', justifyContent: 'center', border: '1px solid rgba(99,102,241,0.4)', color: '#fff' }}>
-                Unlock Now
+                Unlock Premium
               </a>
             </div>
 
             <AdUnit type="sidebar" slot="download-sidebar-banner-1" />
             <AdUnit type="sidebar" slot="download-sidebar-banner-2" />
+            {/* Added 3rd Ad for maximum revenue on long documents */}
+            <AdUnit type="sidebar" slot="download-sidebar-banner-3" />
           </div>
         )}
 

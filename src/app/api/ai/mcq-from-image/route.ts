@@ -27,7 +27,12 @@ export async function POST(req: NextRequest) {
 
     // Fetch all files from Cloudinary and convert to base64
     const imagesData = await Promise.all(imageUrls.map(async (url: string) => {
-      const res = await fetch(url)
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': '*/*'
+        }
+      })
       if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`)
       const arrayBuffer = await res.arrayBuffer()
       const base64 = Buffer.from(arrayBuffer).toString('base64')
@@ -39,8 +44,9 @@ export async function POST(req: NextRequest) {
       else if (lower.endsWith('.webp')) mimeType = 'image/webp'
       else if (lower.endsWith('.gif')) mimeType = 'image/gif'
       else if (lower.endsWith('.pdf') || lower.includes('/pdf')) mimeType = 'application/pdf'
-      else if (lower.endsWith('.docx')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      else if (lower.endsWith('.doc')) mimeType = 'application/msword'
+      else if (lower.endsWith('.docx') || lower.endsWith('.doc')) {
+        throw new Error('Word documents (.doc, .docx) are not directly supported by Gemini AI. Please convert them to PDF or Image first.')
+      }
       // Fallback: check the actual content-type from Cloudinary
       else {
         const ct = res.headers.get('content-type') || ''

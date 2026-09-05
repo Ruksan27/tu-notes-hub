@@ -334,10 +334,37 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
           </div>
 
           {/* RIGHT COLUMN: ADS SIDEBAR */}
-          <div className="ads-sidebar-column" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {!isPaid && (
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '24px',
+            position: 'sticky',
+            top: '80px',
+            maxHeight: 'calc(100vh - 100px)',
+            overflowY: 'auto',
+            paddingBottom: '20px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}>
+            <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+
+            <div className="glass-card" style={{ padding: '20px', background: 'rgba(99,102,241,0.05)', borderColor: 'rgba(99,102,241,0.2)' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '8px' }}>💎 Upgrade to Elite</h4>
+              <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5 }}>
+                Tired of ads? Get instant direct access, all AI prediction models, and unlock full solutions offline.
+              </p>
+              <a href="/pricing" className="btn btn-outline btn-sm" style={{ width: '100%', marginTop: '12px', justifyContent: 'center', border: '1px solid rgba(99,102,241,0.4)', color: '#fff' }}>
+                Unlock Premium
+              </a>
+            </div>
+
             <AdUnit type="sidebar" slot="solution-book-sidebar-1" />
             <AdUnit type="sidebar" slot="solution-book-sidebar-2" />
+            {/* 3rd Ad added for maximum visibility on long solutions */}
+            <AdUnit type="sidebar" slot="solution-book-sidebar-3" />
           </div>
+        )}
 
         </div>
 

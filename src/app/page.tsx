@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import nextDynamic from 'next/dynamic'
+import AdUnit from '@/components/ads/AdUnit'
 
 // Dynamically import heavy client components to reduce initial JS payload
 const AnimatedText = nextDynamic(() => import('@/components/AnimatedText').then(mod => mod.AnimatedText))
@@ -188,6 +189,10 @@ export default async function HomePage() {
               .home-faculties-grid { grid-template-columns: 1fr !important; }
             }
           `}</style>
+
+          <div style={{ marginTop: '48px' }}>
+            <AdUnit type="inline" slot="home-after-faculties" />
+          </div>
         </div>
       </section>
 
@@ -217,6 +222,10 @@ export default async function HomePage() {
             <Link href="/pricing" className="btn btn-primary btn-lg">
               🚀 Upgrade Now — {isOffer ? 'Offer:' : 'Starting'} {semesterPlanPrice} only
             </Link>
+          </div>
+          
+          <div style={{ marginTop: '40px' }}>
+            <AdUnit type="leaderboard" slot="home-after-premium" />
           </div>
         </div>
       </section>

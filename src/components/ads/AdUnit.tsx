@@ -27,19 +27,19 @@ function getAdConfig(type: AdType): AdConfig {
   switch (type) {
     case 'leaderboard':
     case 'banner':
-      // 728×90 — Leaderboard
-      return { width: 728, height: 90, fixedSize: true, accentColor: 'rgba(6,182,212,0.3)' }
+      // Responsive leaderboard (allows 728x90, 970x90, 970x250 etc depending on screen)
+      return { width: '100%', height: 90, fixedSize: false, accentColor: 'rgba(6,182,212,0.3)' }
     case 'medium-rectangle':
     case 'sidebar':
-      // 300×250 — Medium Rectangle (gold standard)
-      return { width: 300, height: 250, fixedSize: true, accentColor: 'rgba(99,102,241,0.3)' }
+      // Responsive sidebar (allows 300x250, 336x280, 300x600 etc)
+      return { width: '100%', height: 250, fixedSize: false, accentColor: 'rgba(99,102,241,0.3)' }
     case 'large-rectangle':
-      // 336×280 — Large Rectangle (inside content)
-      return { width: 336, height: 280, fixedSize: true, accentColor: 'rgba(139,92,246,0.3)' }
+      // Responsive content ad
+      return { width: '100%', height: 280, fixedSize: false, accentColor: 'rgba(139,92,246,0.3)' }
     case 'inline':
     default:
-      // Fluid responsive
-      return { width: '100%', height: 250, fixedSize: false, accentColor: 'rgba(6,182,212,0.2)' }
+      // Fluid responsive (In-article / In-feed)
+      return { width: '100%', height: 'auto', fixedSize: false, accentColor: 'rgba(6,182,212,0.2)' }
   }
 }
 
@@ -178,10 +178,10 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
 
   const cfg = getAdConfig(type)
   const w = typeof cfg.width === 'number' ? `${cfg.width}px` : cfg.width
-  const h = typeof cfg.height === 'number' ? `${cfg.height}px` : `${cfg.height}px`
+  const h = typeof cfg.height === 'number' ? `${cfg.height}px` : cfg.height
 
   const containerStyle: React.CSSProperties = {
-    margin: '0 auto',
+    margin: '16px auto',
     width: w,
     display: 'flex',
     flexDirection: 'column',
@@ -191,7 +191,8 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
 
   const boxStyle: React.CSSProperties = {
     width: w,
-    height: h,
+    height: cfg.fixedSize ? h : 'auto',
+    minHeight: h,
     background: 'rgba(255,255,255,0.02)',
     border: `1px dashed ${cfg.accentColor}`,
     borderRadius: '10px',
@@ -200,8 +201,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    overflow: 'hidden',
-    ...(!cfg.fixedSize && { width: '100%', minHeight: h }),
+    ...(!cfg.fixedSize && { width: '100%' }),
     ...style,
   }
 
@@ -210,7 +210,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
     : { display: 'block', width: '100%', height: '100%' }
 
   return (
-    <div className="adsbox google-ads-wrapper" style={containerStyle}>
+    <div className="tu-display-unit" style={containerStyle}>
       {/* "Sponsored" label */}
       <p style={{
         fontSize: '8.5px', color: 'var(--clr-text-3)', textTransform: 'uppercase',
