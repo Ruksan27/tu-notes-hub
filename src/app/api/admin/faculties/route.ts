@@ -7,7 +7,10 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const faculties = await prisma.faculty.findMany({
-    orderBy: { name: 'asc' },
+    orderBy: [
+      { visible: 'desc' },
+      { name: 'asc' },
+    ],
     include: {
       semesters: { orderBy: { order: 'asc' } },
     },

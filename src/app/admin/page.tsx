@@ -3362,10 +3362,15 @@ function FacultiesTab() {
     }
   }
 
-  const filtered = faculties.filter(f =>
-    f.name.toLowerCase().includes(search.toLowerCase()) ||
-    f.id.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = faculties
+    .filter(f =>
+      f.name.toLowerCase().includes(search.toLowerCase()) ||
+      f.id.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (!!a.visible === !!b.visible) return a.name.localeCompare(b.name)
+      return a.visible ? -1 : 1
+    })
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
