@@ -1,6 +1,5 @@
 'use client'
 // src/components/ads/AdUnit.tsx – Responsive Google AdSense Component
-// Standard Google AdSense ad sizes & responsive fallbacks
 
 import React, { useEffect, useState } from 'react'
 
@@ -12,140 +11,93 @@ interface AdUnitProps {
   style?: React.CSSProperties
 }
 
-interface AdConfig {
-  width: number | string
-  height: number | string
-  fixedSize: boolean   // true → fixed px dimensions, false → fluid
-  accentColor: string
-}
-
-function getAdConfig(type: AdType): AdConfig {
-  switch (type) {
-    case 'leaderboard':
-    case 'banner':
-      return { width: '100%', height: 'auto', fixedSize: false, accentColor: 'rgba(6,182,212,0.3)' }
-    case 'medium-rectangle':
-    case 'sidebar':
-      return { width: '100%', height: 'auto', fixedSize: false, accentColor: 'rgba(99,102,241,0.3)' }
-    case 'large-rectangle':
-      return { width: '100%', height: 'auto', fixedSize: false, accentColor: 'rgba(139,92,246,0.3)' }
-    case 'inline':
-    default:
-      return { width: '100%', height: 'auto', fixedSize: false, accentColor: 'rgba(6,182,212,0.2)' }
-  }
-}
-
-// ──────────────────────────────────────────────
-// Placeholder content shown when AdSense is blocked / dev mode
-// ──────────────────────────────────────────────
+// Placeholder content shown when AdSense is blocked / dev mode / unfilled
 function AdPlaceholder({ type }: { type: AdType }) {
   if (type === 'leaderboard' || type === 'banner') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px 12px', boxSizing: 'border-box', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-          <span style={{ fontSize: '20px', flexShrink: 0 }}>🎓</span>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <span style={{
-              fontSize: '8px', background: 'var(--clr-primary-h)', color: '#fff',
-              padding: '1px 5px', borderRadius: '3px', display: 'inline-block', marginBottom: '2px', fontWeight: 700
-            }}>[ Google AdSense ]</span>
-            <h4 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--clr-primary-h)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full p-4 sm:px-6 sm:py-3.5 box-border">
+        <div className="flex items-center gap-3.5 min-w-0 text-center sm:text-left">
+          <span className="text-2xl shrink-0">🎓</span>
+          <div className="min-w-0">
+            <div className="flex items-center justify-center sm:justify-start gap-2 mb-0.5">
+              <span className="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded">
+                Google AdSense
+              </span>
+            </div>
+            <h4 className="text-sm font-bold text-white truncate m-0">
               Upgrade to Elite Pass!
             </h4>
-            <p style={{ fontSize: '10px', color: 'var(--clr-text-2)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Ad-free downloads · AI Predictions
+            <p className="text-xs text-slate-400 truncate m-0">
+              Ad-free downloads · AI Exam Predictions · Instant Access
             </p>
           </div>
         </div>
-        <a href="/pricing" style={{
-          flexShrink: 0, padding: '6px 12px', borderRadius: '6px',
-          background: 'var(--grad-brand)', color: '#ffffff', fontSize: '11px', fontWeight: 700,
-          textDecoration: 'none', whiteSpace: 'nowrap',
-        }}>
-          Upgrade →
+        <a 
+          href="/pricing" 
+          className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-white text-xs font-bold no-underline shadow-md hover:opacity-90 transition-all"
+        >
+          Upgrade Now →
         </a>
       </div>
     )
   }
 
-  if (type === 'medium-rectangle' || type === 'sidebar') {
+  if (type === 'medium-rectangle' || type === 'sidebar' || type === 'large-rectangle') {
     return (
-      <div style={{ textAlign: 'center', padding: '14px', width: '100%', boxSizing: 'border-box' }}>
-        <span style={{ fontSize: '32px', display: 'block', marginBottom: '6px' }}>💡</span>
-        <span style={{
-          fontSize: '8.5px', background: 'var(--clr-primary-h)', color: '#fff',
-          padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '6px', fontWeight: 700
-        }}>[ Google AdSense ]</span>
-        <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-accent)', marginBottom: '6px' }}>
+      <div className="text-center p-5 w-full box-border flex flex-col items-center justify-center">
+        <span className="text-3xl block mb-2">💡</span>
+        <span className="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded mb-2 inline-block">
+          Google AdSense
+        </span>
+        <h4 className="text-base font-bold text-white mb-1">
           TU Notes Hub
         </h4>
-        <p style={{ fontSize: '11.5px', color: 'var(--clr-text-2)', lineHeight: 1.5, margin: '0 0 12px' }}>
-          Best lecture notes, cheatsheets &amp; question banks for TU faculties.
+        <p className="text-xs text-slate-400 leading-relaxed mb-3 max-w-xs">
+          Best lecture notes, cheatsheets &amp; solved past papers for TU faculties.
         </p>
-        <a href="/pricing" style={{
-          display: 'inline-block', padding: '7px 16px', borderRadius: '6px',
-          background: 'var(--grad-brand)', color: '#fff', fontSize: '12px', fontWeight: 700,
-          textDecoration: 'none', boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
-        }}>
-          Learn More
+        <a 
+          href="/pricing" 
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-white text-xs font-bold no-underline shadow-md hover:opacity-90 transition-all"
+        >
+          Learn More →
         </a>
       </div>
     )
   }
 
-  if (type === 'large-rectangle') {
-    return (
-      <div style={{ textAlign: 'center', padding: '14px', width: '100%', boxSizing: 'border-box' }}>
-        <span style={{ fontSize: '32px', display: 'block', marginBottom: '6px' }}>📚</span>
-        <span style={{
-          fontSize: '8.5px', background: '#7c3aed', color: '#fff',
-          padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '6px', fontWeight: 700
-        }}>[ Google AdSense ]</span>
-        <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
-          Exam Prep Made Easy
-        </h4>
-        <p style={{ fontSize: '11.5px', color: 'var(--clr-text-2)', lineHeight: 1.5, margin: '0 0 12px' }}>
-          AI MCQs · Solved Past Papers · Chapter-wise Notes.
-        </p>
-        <a href="/pricing" style={{
-          display: 'inline-block', padding: '8px 18px', borderRadius: '6px',
-          background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff',
-          fontSize: '12px', fontWeight: 700, textDecoration: 'none',
-        }}>
-          Get Full Access
-        </a>
-      </div>
-    )
-  }
-
-  // inline / fallback
+  // inline / fallback (Telegram & updates banner)
   return (
-    <div style={{ textAlign: 'center', padding: '14px', width: '100%', boxSizing: 'border-box' }}>
-      <span style={{ fontSize: '30px', display: 'block', marginBottom: '4px' }}>📱</span>
-      <span style={{
-        fontSize: '8.5px', background: 'var(--clr-primary-h)', color: '#fff',
-        padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '6px', fontWeight: 700
-      }}>[ Google AdSense Slot ]</span>
-      <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '4px' }}>
-        Join our Telegram Group
-      </h4>
-      <p style={{ fontSize: '11.5px', color: 'var(--clr-text-3)', margin: '0 0 10px', lineHeight: 1.4 }}>
-        Get instant notifications on TU results &amp; exam updates.
-      </p>
-      <a href="https://t.me/tunoteshub" target="_blank" rel="noopener noreferrer" style={{
-        fontSize: '12px', color: '#67e8f9', fontWeight: 700, display: 'inline-block',
-        border: '1px solid rgba(6,182,212,0.4)', padding: '6px 16px', borderRadius: '6px',
-        textDecoration: 'none', background: 'rgba(6,182,212,0.08)'
-      }}>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3.5 w-full p-4 sm:px-6 sm:py-4 box-border">
+      <div className="flex items-center gap-3.5 min-w-0 text-center sm:text-left">
+        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-xl shrink-0">
+          📱
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+            <span className="text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded">
+              Google AdSense Slot
+            </span>
+          </div>
+          <h4 className="text-sm sm:text-base font-bold text-white m-0 leading-tight">
+            Join our Official Telegram Group
+          </h4>
+          <p className="text-xs text-slate-400 m-0 mt-0.5">
+            Get instant notifications on TU exam schedules, routine updates &amp; results.
+          </p>
+        </div>
+      </div>
+      <a 
+        href="https://t.me/tunoteshub" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="shrink-0 px-4 py-2.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 text-xs font-bold no-underline transition-all shadow-sm"
+      >
         Join Group →
       </a>
     </div>
   )
 }
 
-// ──────────────────────────────────────────────
-// Main AdUnit
-// ──────────────────────────────────────────────
 export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitProps) {
   const [isPaidUser, setIsPaidUser] = useState(false)
 
@@ -170,77 +122,24 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
 
   if (isPaidUser) return null
 
-  const cfg = getAdConfig(type)
-
-  const containerStyle: React.CSSProperties = {
-    margin: '16px auto',
-    width: '100%',
-    maxWidth: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    boxSizing: 'border-box',
-    overflow: 'hidden',
-  }
-
-  const boxStyle: React.CSSProperties = {
-    width: '100%',
-    maxWidth: '100%',
-    minHeight: '80px',
-    background: 'rgba(255,255,255,0.02)',
-    border: `1px dashed ${cfg.accentColor}`,
-    borderRadius: '12px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    boxSizing: 'border-box',
-    ...style,
-  }
-
   return (
-    <div className="tu-display-unit" style={containerStyle}>
-      <div style={{
-        width: '100%',
-        maxWidth: '100%',
-        minHeight: '80px',
-        background: 'rgba(22, 24, 40, 0.6)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(99, 102, 241, 0.2)',
-        borderRadius: '14px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
-        ...style,
-      }}>
+    <div className="tu-display-unit my-4 w-full flex justify-center">
+      <div 
+        className="w-full max-w-5xl bg-slate-900/70 backdrop-blur-md border border-indigo-500/20 rounded-2xl overflow-hidden relative shadow-lg"
+        style={style}
+      >
         {/* Real Google AdSense <ins> tag */}
         <ins
           className="adsbygoogle"
-          style={{ display: 'block', width: '100%', minHeight: '80px' }}
-          data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? 'ca-pub-YOUR_PUBLISHER_ID'}
+          style={{ display: 'block', width: '100%', position: 'absolute', inset: 0, opacity: 0, zIndex: 1, pointerEvents: 'auto' }}
+          data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? 'ca-pub-8555533919324648'}
           data-ad-slot={slot}
           data-ad-format="auto"
           data-full-width-responsive="true"
         />
 
         {/* Fallback Banner when AdSense is loading/not filled */}
-        <div style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.05) 100%)',
-          boxSizing: 'border-box',
-          overflow: 'hidden',
-        }}>
+        <div className="w-full relative z-0 bg-gradient-to-r from-indigo-500/5 via-slate-900/40 to-cyan-500/5">
           <AdPlaceholder type={type} />
         </div>
       </div>

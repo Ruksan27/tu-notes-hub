@@ -386,11 +386,11 @@ export default function CartPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', textAlign: 'left' }}>
                     <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
                       <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} required style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
-                      <span>I Agree to the <Link href="/terms" target="_blank" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Terms of Service</Link></span>
+                      <span>I Agree to the <Link href="/terms" target="_blank" className="font-bold text-blue-400 underline underline-offset-4 decoration-blue-400 hover:text-blue-300 transition-colors">Terms of Service</Link></span>
                     </label>
                     <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
                       <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} required style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
-                      <span>I Agree to the <Link href="/privacy" target="_blank" style={{ color: 'var(--clr-primary-h)', textDecoration: 'underline' }}>Privacy Policy</Link></span>
+                      <span>I Agree to the <Link href="/privacy" target="_blank" className="font-bold text-blue-400 underline underline-offset-4 decoration-blue-400 hover:text-blue-300 transition-colors">Privacy Policy</Link></span>
                     </label>
                   </div>
 

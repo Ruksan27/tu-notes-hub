@@ -170,11 +170,11 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
                   <div className="flex flex-col gap-2.5 text-left mb-4">
                     <label className="flex gap-2 items-center cursor-pointer text-sm text-slate-300">
                       <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} required className="cursor-pointer w-4 h-4" />
-                      <span>I Agree to the <Link href="/terms" target="_blank" className="text-indigo-400 underline">Terms of Service</Link></span>
+                      <span>I Agree to the <Link href="/terms" target="_blank" className="font-bold text-blue-400 underline underline-offset-4 decoration-blue-400 hover:text-blue-300 transition-colors">Terms of Service</Link></span>
                     </label>
                     <label className="flex gap-2 items-center cursor-pointer text-sm text-slate-300">
                       <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} required className="cursor-pointer w-4 h-4" />
-                      <span>I Agree to the <Link href="/privacy" target="_blank" className="text-indigo-400 underline">Privacy Policy</Link></span>
+                      <span>I Agree to the <Link href="/privacy" target="_blank" className="font-bold text-blue-400 underline underline-offset-4 decoration-blue-400 hover:text-blue-300 transition-colors">Privacy Policy</Link></span>
                     </label>
                   </div>
                 </div>

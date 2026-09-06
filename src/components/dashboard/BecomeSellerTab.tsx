@@ -238,7 +238,7 @@ export default function BecomeSellerTab({ user }: { user: User }) {
                   {acceptedTerms[0] && <Check className="w-3 h-3 stroke-[3]" />}
                 </div>
                 <span className="text-xs sm:text-sm font-medium">
-                  I have read and agree to the <a href="/seller-policy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-amber-400 underline underline-offset-4 hover:text-amber-300">TU Notes Seller Rules & Regulations</a>
+                  I have read and agree to the <a href="/seller-policy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-blue-400 underline underline-offset-4 decoration-blue-400 hover:text-blue-300 transition-colors">TU Notes Seller Rules & Regulations</a>
                 </span>
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function BecomeSellerTab({ user }: { user: User }) {
                   {acceptedTerms[1] && <Check className="w-3 h-3 stroke-[3]" />}
                 </div>
                 <span className="text-xs sm:text-sm font-medium">
-                  I agree to the platform <a href="/terms" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-indigo-400 underline underline-offset-4 hover:text-indigo-300">Terms of Service</a> & <a href="/privacy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-indigo-400 underline underline-offset-4 hover:text-indigo-300">Privacy Policy</a>
+                  I agree to the platform <a href="/terms" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-blue-400 underline underline-offset-4 decoration-blue-400 hover:text-blue-300 transition-colors">Terms of Service</a> & <a href="/privacy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-blue-400 underline underline-offset-4 decoration-blue-400 hover:text-blue-300 transition-colors">Privacy Policy</a>
                 </span>
               </div>
             </div>

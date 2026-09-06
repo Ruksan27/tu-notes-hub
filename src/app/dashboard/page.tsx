@@ -803,15 +803,19 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
           </div>
 
           {/* Feature hints */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[var(--clr-border)]">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3.5 pt-5 mt-2 border-t border-white/10">
             {[
-              { icon: Brain, text: 'Topic Probability' },
-              { icon: Sparkles, text: 'Exam Questions' },
-              { icon: Zap, text: 'Quick Study Points' },
-              { icon: FileText, text: 'PDF Export' },
+              { icon: Brain, text: 'Topic Probability', color: 'from-blue-500/15 to-indigo-500/15 text-blue-400 border-blue-500/30' },
+              { icon: Sparkles, text: 'Exam Questions', color: 'from-purple-500/15 to-pink-500/15 text-purple-300 border-purple-500/30' },
+              { icon: Zap, text: 'Quick Study Points', color: 'from-amber-500/15 to-orange-500/15 text-amber-300 border-amber-500/30' },
+              { icon: FileText, text: 'PDF Export', color: 'from-cyan-500/15 to-teal-500/15 text-cyan-300 border-cyan-500/30' },
             ].map(f => (
-              <div key={f.text} className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/[0.02] border border-[var(--clr-border)] text-xs text-[var(--clr-text-2)] font-semibold truncate">
-                <f.icon className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> <span className="truncate">{f.text}</span>
+              <div 
+                key={f.text} 
+                className={`flex-1 min-w-[130px] sm:min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r ${f.color} border text-xs sm:text-sm font-bold shadow-sm hover:scale-[1.02] transition-all duration-200`}
+              >
+                <f.icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{f.text}</span>
               </div>
             ))}
           </div>

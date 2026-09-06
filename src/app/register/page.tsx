@@ -36,27 +36,31 @@ function CustomDropdown({ id, label, placeholder, options, value, onChange, disa
 
   return (
     <div ref={ref} className="relative">
-      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{label}</label>
+      <label style={{ display: 'block', color: 'var(--clr-text-2)', fontSize: '13px', marginBottom: '6px' }}>{label}</label>
       <button
         type="button"
         id={id}
         disabled={disabled}
         onClick={() => !disabled && setOpen(p => !p)}
-        className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl text-sm transition-all outline-none border ${
-          open ? 'border-indigo-500/60 bg-indigo-500/5' : 'border-white/10 bg-white/[0.04]'
-        } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-white/20'}`}
+        className="input-field"
+        style={{
+          display: 'flex', alignItems: 'center', justifyBetween: 'space-between', width: '100%',
+          cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
+          borderColor: open ? 'var(--clr-primary)' : undefined,
+          boxShadow: open ? '0 0 0 3px rgba(99,102,241,0.15)' : undefined
+        }}
       >
-        <span className="flex-1 text-left leading-snug">
+        <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {selected ? (
             <>
-              {selected.sublabel && <span className="font-extrabold text-indigo-400 mr-1.5">{selected.sublabel}</span>}
-              <span className="text-white font-semibold">{selected.label}</span>
+              {selected.sublabel && <span style={{ fontWeight: 800, color: 'var(--clr-primary-h)', marginRight: '6px' }}>{selected.sublabel}</span>}
+              <span style={{ color: 'var(--clr-text-1)', fontWeight: 600 }}>{selected.label}</span>
             </>
           ) : (
-            <span className="text-slate-500">{placeholder}</span>
+            <span style={{ color: 'var(--clr-text-3)' }}>{placeholder}</span>
           )}
         </span>
-        <span className={`text-slate-500 text-xs transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}>▼</span>
+        <span style={{ color: 'var(--clr-text-3)', fontSize: '12px', transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none', flexShrink: 0 }}>▼</span>
       </button>
 
       {open && (
@@ -64,13 +68,13 @@ function CustomDropdown({ id, label, placeholder, options, value, onChange, disa
           {/* Backdrop */}
           <div className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
           {/* Bottom Sheet */}
-          <div className="fixed bottom-0 left-0 right-0 z-[9999] bg-[#12131f] rounded-t-3xl border-t border-white/10 shadow-[0_-20px_60px_rgba(0,0,0,0.7)] max-h-[75vh] flex flex-col">
+          <div className="fixed bottom-0 left-0 right-0 z-[9999] bg-[#0d0f17] rounded-t-3xl border-t border-[var(--clr-border)] shadow-[0_-20px_60px_rgba(0,0,0,0.8)] max-h-[75vh] flex flex-col">
             {/* Handle bar */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 bg-white/20 rounded-full" />
             </div>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
-              <span className="text-base font-extrabold text-white">{label}</span>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--clr-border)]">
+              <span className="text-base font-extrabold text-[var(--clr-text-1)]">{label}</span>
               <button type="button" onClick={() => setOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/8 text-slate-300 hover:bg-white/15 transition-all text-sm">✕</button>
             </div>
             <div className="overflow-y-auto flex-1 py-2" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
@@ -79,16 +83,16 @@ function CustomDropdown({ id, label, placeholder, options, value, onChange, disa
                   key={opt.value}
                   type="button"
                   onClick={() => { onChange(opt.value); setOpen(false) }}
-                  className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-all border-l-[3px] ${
+                  className={`w-full flex items-center gap-3 px-5 py-3.5 text-left transition-all border-l-[3px] ${
                     opt.value === value
-                      ? 'bg-indigo-500/12 border-indigo-500 text-white'
-                      : 'border-transparent hover:bg-white/5 text-slate-300'
+                      ? 'bg-indigo-500/12 border-indigo-500 text-white font-bold'
+                      : 'border-transparent hover:bg-white/5 text-slate-300 font-medium'
                   }`}
                 >
                   {opt.sublabel && (
-                    <span className="shrink-0 text-[11px] font-extrabold px-2 py-1 rounded-lg bg-indigo-500/15 text-indigo-300">{opt.sublabel}</span>
+                    <span className="shrink-0 text-[11px] font-extrabold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">{opt.sublabel}</span>
                   )}
-                  <span className={`text-sm font-${opt.value === value ? 'bold' : 'medium'} leading-snug flex-1`}>{opt.label}</span>
+                  <span className="text-sm leading-snug flex-1">{opt.label}</span>
                   {opt.value === value && <span className="text-indigo-400 text-base shrink-0">✓</span>}
                 </button>
               ))}
@@ -100,9 +104,6 @@ function CustomDropdown({ id, label, placeholder, options, value, onChange, disa
   )
 }
 // ─────────────────────────────────────────────────────────────────────────────
-
-const LABEL_CLS = 'block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2'
-const INPUT_CLS = 'w-full bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-white outline-none focus:border-indigo-500/60 focus:bg-indigo-500/5 transition-all placeholder:text-slate-600'
 
 export default function RegisterPage() {
   const [step, setStep] = useState<Step>('FORM')
@@ -176,212 +177,177 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-68px)] flex items-start sm:items-center justify-center bg-[#0a0c10] px-4 py-10 sm:py-16">
-      {/* Background glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[80vw] max-w-xl h-64 bg-indigo-500/15 blur-[100px] pointer-events-none rounded-full" />
-
-      <div className="relative z-10 w-full max-w-[440px]">
-
-        {/* Card */}
-        <div className="bg-slate-900/80 border border-white/8 rounded-3xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl overflow-hidden">
-
-          {/* Top gradient accent */}
-          <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500" />
-
-          <div className="p-6 sm:p-8">
-
-            {/* Header */}
-            <div className="flex flex-col items-center text-center mb-7">
-              <div className="mb-4 relative">
-                <div className="absolute inset-0 bg-indigo-500/30 blur-xl rounded-full scale-150" />
-                <Image src="/logo.png" alt="TU Notes Hub" width={60} height={60} priority className="relative z-10 object-contain drop-shadow-lg" />
-              </div>
-
-              {step === 'FORM' ? (
-                <>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-1.5">Create Account</h1>
-                  <p className="text-sm text-slate-400">Join thousands of TU students 🎓</p>
-                </>
-              ) : (
-                <>
-                  <h1 className="text-2xl font-extrabold text-white tracking-tight mb-1.5">Verify Email</h1>
-                  <p className="text-sm text-slate-400">OTP sent to <span className="text-indigo-400 font-semibold">{formData.email}</span></p>
-                </>
-              )}
-            </div>
-
-            {/* ── FORM STEP ── */}
-            {step === 'FORM' ? (
-              <form onSubmit={handleRegister} className="flex flex-col gap-4">
-
-                {/* Name */}
-                <div>
-                  <label className={LABEL_CLS} htmlFor="reg-name">Full Name</label>
-                  <input id="reg-name" className={INPUT_CLS} placeholder="Hari Prasad Sharma" required
-                    value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className={LABEL_CLS} htmlFor="reg-email">Email Address</label>
-                  <input id="reg-email" className={INPUT_CLS} type="email" placeholder="hari@gmail.com" required
-                    value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label className={LABEL_CLS} htmlFor="reg-password">Password</label>
-                  <div className="relative">
-                    <input id="reg-password" className={INPUT_CLS + ' pr-12'} type={showPassword ? 'text' : 'password'} placeholder="At least 8 characters" required minLength={8}
-                      value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
-                    <button type="button" tabIndex={-1} onClick={() => setShowPassword(p => !p)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-sm transition-colors select-none">
-                      {showPassword ? '🙈' : '👁'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Faculty */}
-                <CustomDropdown id="reg-faculty" label="Faculty" placeholder="Select your Faculty"
-                  options={facultyOptions} value={formData.facultyId}
-                  onChange={v => setFormData({ ...formData, facultyId: v, semesterOrder: '', courseType: 'NEW' })} />
-
-                {/* Course Type (BCA only) */}
-                {formData.facultyId && hasOldNewCourse && (
-                  <div>
-                    <label className={LABEL_CLS}>Course Type</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { value: 'NEW', title: '✨ New Course', desc: '2080+', color: 'indigo' },
-                        { value: 'OLD', title: '📖 Old Course', desc: 'Before 2080', color: 'amber' },
-                      ].map(opt => {
-                        const active = formData.courseType === opt.value
-                        return (
-                          <button key={opt.value} type="button"
-                            onClick={() => setFormData({ ...formData, courseType: opt.value as 'NEW' | 'OLD', semesterOrder: '' })}
-                            className={`relative flex flex-col items-center gap-1 py-4 px-3 rounded-2xl border-2 transition-all font-bold text-sm ${
-                              active
-                                ? opt.color === 'indigo'
-                                  ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
-                                  : 'border-amber-500 bg-amber-500/10 text-amber-300'
-                                : 'border-white/10 bg-white/[0.02] text-slate-400 hover:border-white/20'
-                            }`}
-                          >
-                            {active && <span className={`absolute top-2 right-2.5 text-xs font-black ${opt.color === 'indigo' ? 'text-indigo-400' : 'text-amber-400'}`}>✓</span>}
-                            <span>{opt.title}</span>
-                            <span className="text-[10px] font-normal opacity-60">{opt.desc}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Semester */}
-                <CustomDropdown id="reg-semester" label="Semester / Year"
-                  placeholder={formData.facultyId ? 'Select your Semester' : 'Select Faculty first'}
-                  options={semesterOptions} value={formData.semesterOrder}
-                  onChange={v => setFormData({ ...formData, semesterOrder: v })}
-                  disabled={!formData.facultyId} />
-
-                {/* Terms */}
-                <div className="flex flex-col gap-2.5 p-4 bg-white/[0.02] rounded-2xl border border-white/5">
-                  {[
-                    { id: 'chk-terms', checked: agreeTerms, set: setAgreeTerms, href: '/terms', label: 'Terms of Service' },
-                    { id: 'chk-privacy', checked: agreePrivacy, set: setAgreePrivacy, href: '/privacy', label: 'Privacy Policy' },
-                  ].map(item => (
-                    <label key={item.id} htmlFor={item.id} className="flex items-center gap-3 cursor-pointer group">
-                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-                        item.checked ? 'bg-indigo-500 border-indigo-500' : 'border-white/20 group-hover:border-white/40'
-                      }`}>
-                        {item.checked && <span className="text-white text-xs font-black">✓</span>}
-                      </div>
-                      <input id={item.id} type="checkbox" className="sr-only" checked={item.checked} onChange={e => item.set(e.target.checked)} required />
-                      <span className="text-xs text-slate-400">
-                        I agree to the{' '}
-                        <Link href={item.href} target="_blank" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2 font-semibold">{item.label}</Link>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-
-                {/* Submit */}
-                <button id="reg-submit" type="submit" disabled={loading}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-cyan-400 text-white font-extrabold py-4 rounded-2xl text-sm hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-60 disabled:translate-y-0 flex items-center justify-center gap-2 mt-1"
-                >
-                  {loading ? (
-                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Sending OTP…</>
-                  ) : (
-                    '📧 Create Account & Send OTP'
-                  )}
-                </button>
-
-                <p className="text-center text-xs text-slate-500 mt-1">
-                  Already have an account?{' '}
-                  <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors">Sign in</Link>
-                </p>
-              </form>
-
-            ) : (
-              /* ── OTP STEP ── */
-              <form onSubmit={handleVerify} className="flex flex-col gap-4">
-
-                {/* OTP Info box */}
-                <div className="bg-indigo-500/8 border border-indigo-500/20 rounded-2xl p-4 text-center">
-                  <div className="text-3xl mb-2">📬</div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    We sent a <span className="text-white font-bold">6-digit OTP</span> to<br />
-                    <span className="text-indigo-400 font-semibold">{formData.email}</span><br />
-                    Check your inbox (and spam folder)
-                  </p>
-                </div>
-
-                {/* OTP Input */}
-                <div>
-                  <label className={LABEL_CLS} htmlFor="otp-input">Enter OTP</label>
-                  <input
-                    id="otp-input"
-                    className="w-full bg-white/[0.04] border-2 border-white/10 focus:border-indigo-500 rounded-2xl px-4 py-5 text-center text-4xl font-black text-white tracking-[16px] outline-none transition-all font-mono placeholder:text-slate-700 placeholder:tracking-widest"
-                    placeholder="••••••"
-                    maxLength={6}
-                    required
-                    inputMode="numeric"
-                    value={otp}
-                    onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  />
-                  {/* Progress dots */}
-                  <div className="flex justify-center gap-2 mt-3">
-                    {[0,1,2,3,4,5].map(i => (
-                      <div key={i} className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                        i < otp.length ? 'bg-indigo-500 scale-110' : 'bg-white/10'
-                      }`} />
-                    ))}
-                  </div>
-                </div>
-
-                <button id="otp-submit" type="submit" disabled={loading || otp.length < 6}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-cyan-400 text-white font-extrabold py-4 rounded-2xl text-sm hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-40 disabled:translate-y-0 flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Verifying…</>
-                  ) : (
-                    '✅ Verify & Activate Account'
-                  )}
-                </button>
-
-                <button type="button" onClick={() => setStep('FORM')}
-                  className="w-full py-3 rounded-2xl border border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/8 hover:text-white text-sm font-semibold transition-all">
-                  ← Back to Register
-                </button>
-              </form>
-            )}
-          </div>
+    <div className="flex-center" style={{ minHeight: 'calc(100vh - 64px)', padding: '40px 16px' }}>
+      <div className="glass-card" style={{ width: '100%', maxWidth: '460px', padding: '44px 36px' }}>
+        
+        {/* Header */}
+        <div className="text-center" style={{ marginBottom: '28px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎓</div>
+          {step === 'FORM' ? (
+            <>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', marginBottom: '8px' }}>Create Account</h1>
+              <p style={{ color: 'var(--clr-text-2)', fontSize: '14px' }}>Join thousands of TU students 🎓</p>
+            </>
+          ) : (
+            <>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', marginBottom: '8px' }}>Verify Email</h1>
+              <p style={{ color: 'var(--clr-text-2)', fontSize: '14px' }}>OTP sent to <span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{formData.email}</span></p>
+            </>
+          )}
         </div>
 
-        {/* Bottom note */}
-        <p className="text-center text-xs text-slate-600 mt-5">
-          🔒 Your data is secure and never shared with third parties.
-        </p>
+        {/* ── FORM STEP ── */}
+        {step === 'FORM' ? (
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            {/* Name */}
+            <div>
+              <label style={{ display: 'block', color: 'var(--clr-text-2)', fontSize: '13px', marginBottom: '6px' }}>Full Name</label>
+              <input id="reg-name" className="input-field" placeholder="Hari Prasad Sharma" required
+                value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label style={{ display: 'block', color: 'var(--clr-text-2)', fontSize: '13px', marginBottom: '6px' }}>Email Address</label>
+              <input id="reg-email" className="input-field" type="email" placeholder="hari@gmail.com" required
+                value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label style={{ display: 'block', color: 'var(--clr-text-2)', fontSize: '13px', marginBottom: '6px' }}>Password</label>
+              <div className="relative">
+                <input id="reg-password" className="input-field" type={showPassword ? 'text' : 'password'} placeholder="At least 8 characters" required minLength={8}
+                  style={{ paddingRight: '44px' }}
+                  value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                <button type="button" tabIndex={-1} onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-sm transition-colors select-none">
+                  {showPassword ? '🙈' : '👁'}
+                </button>
+              </div>
+            </div>
+
+            {/* Faculty */}
+            <CustomDropdown id="reg-faculty" label="Faculty" placeholder="Select your Faculty"
+              options={facultyOptions} value={formData.facultyId}
+              onChange={v => setFormData({ ...formData, facultyId: v, semesterOrder: '', courseType: 'NEW' })} />
+
+            {/* Course Type (BCA only) */}
+            {formData.facultyId && hasOldNewCourse && (
+              <div>
+                <label style={{ display: 'block', color: 'var(--clr-text-2)', fontSize: '13px', marginBottom: '6px' }}>Course Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'NEW', title: '✨ New Course', desc: '2080+' },
+                    { value: 'OLD', title: '📖 Old Course', desc: 'Before 2080' },
+                  ].map(opt => {
+                    const active = formData.courseType === opt.value
+                    return (
+                      <button key={opt.value} type="button"
+                        onClick={() => setFormData({ ...formData, courseType: opt.value as 'NEW' | 'OLD', semesterOrder: '' })}
+                        style={{
+                          padding: '12px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--clr-border)',
+                          background: active ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.03)',
+                          borderColor: active ? 'var(--clr-primary)' : 'var(--clr-border)',
+                          color: active ? 'var(--clr-primary-h)' : 'var(--clr-text-2)',
+                          fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px'
+                        }}
+                      >
+                        <span>{opt.title}</span>
+                        <span style={{ fontSize: '11px', opacity: 0.6, fontWeight: 400 }}>{opt.desc}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Semester */}
+            <CustomDropdown id="reg-semester" label="Semester / Year"
+              placeholder={formData.facultyId ? 'Select your Semester' : 'Select Faculty first'}
+              options={semesterOptions} value={formData.semesterOrder}
+              onChange={v => setFormData({ ...formData, semesterOrder: v })}
+              disabled={!formData.facultyId} />
+
+            {/* Terms */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
+              {[
+                { id: 'chk-terms', checked: agreeTerms, set: setAgreeTerms, href: '/terms', label: 'Terms of Service' },
+                { id: 'chk-privacy', checked: agreePrivacy, set: setAgreePrivacy, href: '/privacy', label: 'Privacy Policy' },
+              ].map(item => (
+                <label key={item.id} htmlFor={item.id} className="flex items-center gap-3 cursor-pointer group select-none">
+                  <input id={item.id} type="checkbox" className="w-4 h-4 cursor-pointer accent-indigo-500" checked={item.checked} onChange={e => item.set(e.target.checked)} required />
+                  <span className="text-xs text-slate-300">
+                    I agree to the{' '}
+                    <Link href={item.href} target="_blank" className="font-bold text-blue-400 underline underline-offset-4 decoration-blue-400 hover:text-blue-300 transition-colors">{item.label}</Link>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {/* Submit */}
+            <button id="reg-submit" type="submit" className="btn btn-primary" style={{ marginTop: '8px', justifyContent: 'center', width: '100%' }} disabled={loading}>
+              {loading ? (
+                <><span className="spinner" /> Sending OTP…</>
+              ) : (
+                '📧 Create Account & Send OTP'
+              )}
+            </button>
+
+            <p className="text-center" style={{ color: 'var(--clr-text-3)', fontSize: '13px', marginTop: '4px' }}>
+              Already have an account?{' '}
+              <Link href="/login" style={{ color: 'var(--clr-primary-h)', fontWeight: 700 }}>Sign in</Link>
+            </p>
+
+            <p className="text-center" style={{ color: 'var(--clr-text-3)', fontSize: '12px', marginTop: '4px' }}>
+              🔒 Your data is secure and never shared with third parties.
+            </p>
+          </form>
+
+        ) : (
+          /* ── OTP STEP ── */
+          <form onSubmit={handleVerify} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 'var(--radius-sm)', padding: '16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📬</div>
+              <p style={{ fontSize: '13px', color: 'var(--clr-text-2)', lineHeight: 1.6 }}>
+                We sent a <strong style={{ color: '#fff' }}>6-digit OTP</strong> to<br />
+                <span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{formData.email}</span><br />
+                Check your inbox (and spam folder)
+              </p>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', color: 'var(--clr-text-2)', fontSize: '13px', marginBottom: '6px' }}>Enter OTP Code</label>
+              <input
+                id="otp-input"
+                className="input-field"
+                style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '10px', fontWeight: 800, padding: '14px' }}
+                placeholder="••••••"
+                maxLength={6}
+                required
+                inputMode="numeric"
+                value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              />
+            </div>
+
+            <button id="otp-submit" type="submit" className="btn btn-primary" style={{ justifyContent: 'center', width: '100%' }} disabled={loading || otp.length < 6}>
+              {loading ? (
+                <><span className="spinner" /> Verifying…</>
+              ) : (
+                '✅ Verify & Activate Account'
+              )}
+            </button>
+
+            <button type="button" onClick={() => setStep('FORM')} className="btn btn-outline" style={{ justifyContent: 'center', width: '100%' }}>
+              ← Back to Register
+            </button>
+          </form>
+        )}
+
       </div>
     </div>
   )
