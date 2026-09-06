@@ -311,6 +311,30 @@ export async function callGroq(
     console.error('HuggingFace fallback also failed:', e)
   }
 
+  // ULTIMATE FALLBACK: Pollinations AI (100% Free, No API Key required for Text)
+  if (!hasImages) {
+    console.log('[Pollinations AI] Trying ultimate free fallback...')
+    try {
+      const pRes = await fetch('https://text.pollinations.ai/openai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          model: 'openai', // Use 'openai' for the default working model
+        })
+      });
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        const pText = pData.choices?.[0]?.message?.content;
+        if (pText) return pText;
+      } else {
+        console.warn(`[Pollinations AI] Error: ${pRes.status} ${await pRes.text()}`)
+      }
+    } catch (e) {
+      console.warn('[Pollinations AI] Exception:', e)
+    }
+  }
+
   return ''
 }
 
