@@ -35,6 +35,17 @@ export async function POST(req: NextRequest) {
         status: 'PENDING', // Admin needs to approve it
       },
     })
+
+    // Notify Admin
+    await prisma.notification.create({
+      data: {
+        type: 'TESTIMONIAL',
+        title: 'New Testimonial Submitted',
+        message: `${name} has submitted a ${rating}-star testimonial.`,
+        link: '/admin?tab=settings' // Assuming testimonials are managed in settings
+      }
+    })
+
     return NextResponse.json({ success: true, data: testimonial })
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })

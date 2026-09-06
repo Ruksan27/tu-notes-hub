@@ -45,6 +45,16 @@ export async function POST(req: NextRequest) {
       console.error('Failed to send confirmation email:', e)
     }
 
+    // Notify Admin
+    await prisma.notification.create({
+      data: {
+        type: 'ORDER',
+        title: 'New Project Order',
+        message: `${user.name} placed an order for "${project.title}" (Rs. ${amount}).`,
+        link: '/admin?tab=projects' 
+      }
+    })
+
     return NextResponse.json({ success: true, orderId: order.id })
   } catch (error) {
     console.error('[PROJECT_ORDER_POST]', error)

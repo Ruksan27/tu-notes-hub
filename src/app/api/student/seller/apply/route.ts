@@ -51,6 +51,16 @@ export async function POST(req: NextRequest) {
       }
     })
 
+    // Notify Admin
+    await prisma.notification.create({
+      data: {
+        type: 'SELLER_APP',
+        title: 'New Seller Application',
+        message: `${user.name} applied to become a seller.`,
+        link: '/admin?tab=sellers'
+      }
+    })
+
     return NextResponse.json({ success: true, profile: sellerProfile })
 
   } catch (error) {

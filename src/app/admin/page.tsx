@@ -10,6 +10,7 @@ import AdminPricingTab from '@/components/admin/AdminPricingTab'
 import AdminSeoTab from '@/components/admin/AdminSeoTab'
 import AdminBackupTab from '@/components/admin/AdminBackupTab'
 import AdminBlogTab from '@/components/admin/AdminBlogTab'
+import AdminNotifications from '@/components/admin/AdminNotifications'
 import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
 import MarkdownPaperViewer from '@/components/MarkdownPaperViewer'
 import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
@@ -289,17 +290,19 @@ export default function AdminPage() {
           </div>
 
           {/* Right profile area */}
-          <div className="admin-user-menu" ref={dropRef}>
-            <button className="admin-user-trigger" onClick={() => setDropOpen(!dropOpen)}>
-              <div className="nav-avatar" style={{ width: '36px', height: '36px', fontSize: '15px' }}>{user.name[0].toUpperCase()}</div>
-              <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
-                <span className="text-sm font-semibold block" style={{ color: 'var(--clr-text-1)', lineHeight: 1.2 }}>{user.name}</span>
-                <span className="text-xs block" style={{ color: 'var(--clr-text-3)', fontSize: '10.5px' }}>Administrator</span>
-              </div>
-              <span style={{ fontSize: '10px', opacity: 0.5, marginLeft: '8px', color: 'var(--clr-text-3)' }}>▼</span>
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <AdminNotifications onNavigate={setTab} />
+            <div className="admin-user-menu" ref={dropRef}>
+              <button className="admin-user-trigger" onClick={() => setDropOpen(!dropOpen)}>
+                <div className="nav-avatar" style={{ width: '36px', height: '36px', fontSize: '15px' }}>{user.name[0].toUpperCase()}</div>
+                <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+                  <span className="text-sm font-semibold block" style={{ color: 'var(--clr-text-1)', lineHeight: 1.2 }}>{user.name}</span>
+                  <span className="text-xs block" style={{ color: 'var(--clr-text-3)', fontSize: '10.5px' }}>Administrator</span>
+                </div>
+                <span style={{ fontSize: '10px', opacity: 0.5, marginLeft: '8px', color: 'var(--clr-text-3)' }}>▼</span>
+              </button>
 
-            {dropOpen && (
+              {dropOpen && (
               <div className="nav-dropdown" style={{ top: 'calc(100% + 6px)', right: 0 }}>
                 <div className="nav-drop-header">
                   <p style={{ fontWeight: 600, color: 'var(--clr-text-1)', fontSize: '14px' }}>{user.name}</p>
@@ -321,6 +324,7 @@ export default function AdminPage() {
                 </button>
               </div>
             )}
+          </div>
           </div>
         </header>
 

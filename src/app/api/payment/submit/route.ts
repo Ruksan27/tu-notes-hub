@@ -64,6 +64,16 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Notify Admin
+    await prisma.notification.create({
+      data: {
+        type: 'PAYMENT',
+        title: 'New Payment Pending',
+        message: `${user.name} submitted a payment of Rs. ${PACKAGE_PRICES[packageType]} for ${packageType}.`,
+        link: '/admin?tab=payments'
+      }
+    })
+
     return NextResponse.json({
       message: 'Payment submitted! Admin will verify within 24 hours and activate your plan.',
     })
