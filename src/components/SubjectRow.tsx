@@ -225,44 +225,61 @@ export default function SubjectRow({
       <div
         onClick={handleRowClick}
         style={{
-          padding: '18px 24px',
+          padding: '16px 20px',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '16px',
-          flexWrap: 'wrap',
-          background: activeTab ? 'rgba(99, 102, 241, 0.06)' : 'rgba(255, 255, 255, 0.01)',
+          flexDirection: 'column',
+          gap: '12px',
+          background: activeTab ? 'rgba(99, 102, 241, 0.06)' : 'rgba(255, 255, 255, 0.015)',
           cursor: 'pointer',
           transition: 'background 0.25s ease',
         }}
       >
-        {/* Subject Info */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span
-            style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              background: 'rgba(6, 182, 212, 0.12)',
-              color: 'var(--clr-accent)',
-              fontWeight: 700,
-              fontSize: '12px',
-              fontFamily: 'var(--font-display)',
-            }}
-          >
-            {subject.code}
-          </span>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--clr-text-1)' }}>
-            {subject.title
-              .replace(/\s*\(Old Syllabus\)/gi, '')
-              .replace(/\s*\(New Syllabus\)/gi, '')
-              .replace(/\s*\(Old\)/gi, '')
-              .replace(/\s*\(New\)/gi, '')}
-          </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+          {/* Subject Info */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1 }}>
+            <span
+              style={{
+                padding: '5px 10px',
+                borderRadius: '6px',
+                background: 'rgba(6, 182, 212, 0.12)',
+                color: 'var(--clr-accent)',
+                fontWeight: 700,
+                fontSize: '11px',
+                fontFamily: 'var(--font-display)',
+                whiteSpace: 'nowrap',
+                marginTop: '2px',
+              }}
+            >
+              {subject.code}
+            </span>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: 'var(--clr-text-1)', lineHeight: 1.4 }}>
+              {subject.title
+                .replace(/\s*\(Old Syllabus\)/gi, '')
+                .replace(/\s*\(New Syllabus\)/gi, '')
+                .replace(/\s*\(Old\)/gi, '')
+                .replace(/\s*\(New\)/gi, '')}
+            </h3>
+          </div>
+
+          {/* Expand Arrow */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '28px' }}>
+            <motion.span
+              animate={{ rotate: activeTab ? 180 : 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 26 }}
+              style={{
+                fontSize: '12px',
+                color: activeTab ? 'var(--clr-accent-h)' : 'var(--clr-text-3)',
+                display: 'inline-block',
+              }}
+            >
+              ▼
+            </motion.span>
+          </div>
         </div>
 
-        {/* Action Toggles & Expand Arrow */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {/* Action Toggles */}
+        {(notes.length > 0 || labWorks.length > 0 || projectWorks.length > 0 || projects.length > 0 || pastPapers.length > 0 || guides.length > 0 || syllabusFiles.length > 0 || solutionBooks.length > 0 || cheatsheets.length > 0 || mcqs.length > 0) && (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
             {notes.length > 0 && (
               <button
                 onClick={(e) => { e.stopPropagation(); toggleTab('notes') }}
@@ -277,7 +294,7 @@ export default function SubjectRow({
                 onClick={(e) => { e.stopPropagation(); toggleTab('labWork') }}
                 style={getPillStyle('labWork', labWorks.length)}
               >
-                🧪 Lab Work ({labWorks.length})
+                🧪 Lab ({labWorks.length})
               </button>
             )}
 
@@ -286,7 +303,7 @@ export default function SubjectRow({
                 onClick={(e) => { e.stopPropagation(); toggleTab('projectWork') }}
                 style={getPillStyle('projectWork', projectWorks.length)}
               >
-                📁 Project Work ({projectWorks.length})
+                📁 Proj Work ({projectWorks.length})
               </button>
             )}
 
@@ -304,7 +321,7 @@ export default function SubjectRow({
                 onClick={(e) => { e.stopPropagation(); toggleTab('pastPapers') }}
                 style={getPillStyle('pastPapers', pastPapers.length)}
               >
-                📝 Question Papers ({pastPapers.length})
+                📝 Papers ({pastPapers.length})
               </button>
             )}
 
@@ -313,7 +330,7 @@ export default function SubjectRow({
                 onClick={(e) => { e.stopPropagation(); toggleTab('guide') }}
                 style={getPillStyle('guide', guides.length)}
               >
-                📘 Books & Guides ({guides.length})
+                📘 Books ({guides.length})
               </button>
             )}
 
@@ -338,7 +355,7 @@ export default function SubjectRow({
                 onClick={(e) => { e.stopPropagation(); toggleTab('solutionBooks') }}
                 style={getPillStyle('solutionBooks', solutionBooks.length)}
               >
-                📘 Solution Book ({solutionBooks.length})
+                📘 Solution ({solutionBooks.length})
               </button>
             )}
 
@@ -375,19 +392,7 @@ export default function SubjectRow({
               </Link>
             )}
           </div>
-
-          <motion.span
-            animate={{ rotate: activeTab ? 180 : 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-            style={{
-              fontSize: '13px',
-              color: activeTab ? 'var(--clr-accent-h)' : 'var(--clr-text-3)',
-              display: 'inline-block',
-            }}
-          >
-            ▼
-          </motion.span>
-        </div>
+        )}
       </div>
 
       {/* Collapsible Accordion Panel with Premium Motion Animation */}

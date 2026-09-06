@@ -8,16 +8,7 @@ import FacultySemesterList from '@/components/FacultySemesterList'
 // Dynamic page (revalidate on every request in dev)
 export const revalidate = 0
 
-// Pre-render all faculty index paths to make them load instantly
-export async function generateStaticParams() {
-  const faculties = await prisma.faculty.findMany({
-    where: { visible: true },
-    select: { id: true }
-  })
-  return faculties.map((f) => ({
-    slug: f.id,
-  }))
-}
+
 
 interface Props { params: Promise<{ slug: string }> }
 
