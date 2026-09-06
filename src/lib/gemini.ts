@@ -144,7 +144,7 @@ export async function callGemini(
   let MODELS_TO_TRY: string[] = []
   const nvidiaKey = process.env.NVIDIA_API_KEY
   if (nvidiaKey) {
-    MODELS_TO_TRY = await getNvidiaModels(nvidiaKey, images && images.length > 0)
+    MODELS_TO_TRY = await getNvidiaModels(nvidiaKey, Boolean(images && images.length > 0))
   }
 
   // Build OpenAI-compatible messages array
