@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { toast } from 'react-toastify'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface Project {
   id: string
@@ -73,7 +74,7 @@ export default function SellerCenterTab({ user }: { user: User }) {
   const [screenshotPreviews, setScreenshotPreviews] = useState<(string | null)[]>([null, null, null, null])
   
   // Declaration Checkboxes
-  const [declarations, setDeclarations] = useState(new Array(11).fill(false))
+  const [agreeDeclaration, setAgreeDeclaration] = useState(false)
 
   const [saving, setSaving] = useState(false)
   const thumbInputRef = useRef<HTMLInputElement>(null)
@@ -169,15 +170,15 @@ export default function SellerCenterTab({ user }: { user: User }) {
     setThumbnailPreview(null)
     setScreenshots([null, null, null, null])
     setScreenshotPreviews([null, null, null, null])
-    setDeclarations(new Array(11).fill(false))
+    setAgreeDeclaration(false)
     setIsModalOpen(true)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    if (declarations.some(d => !d)) {
-      toast.error('You must accept all declarations before submitting.')
+    if (!agreeDeclaration) {
+      toast.error('You must accept the Seller Declaration before submitting.')
       return
     }
     if (!thumbnailFile) {
@@ -555,33 +556,24 @@ export default function SellerCenterTab({ user }: { user: User }) {
 
                 {/* Section K */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(165,180,252,0.2)', paddingBottom: '8px' }}>
-                    <h3 style={{ fontSize: '16px', color: '#a5b4fc', margin: 0 }}>Section K — Seller Declaration</h3>
-                    <button type="button" onClick={() => setDeclarations(new Array(11).fill(true))} className="btn btn-outline btn-sm" style={{ padding: '4px 10px', fontSize: '11px' }}>✓ Tick All</button>
-                  </div>
+                  <h3 style={{ fontSize: '16px', color: '#a5b4fc', marginBottom: '16px', borderBottom: '1px solid rgba(165,180,252,0.2)', paddingBottom: '8px' }}>Section K — Seller Declaration</h3>
+                  
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {[
-                      "I own or have the right to sell this project.",
-                      "The project description and features are accurate.",
-                      "The screenshots and demo represent the actual project.",
-                      "The technologies and requirements are accurate.",
-                      "The files in my provided Drive folder are the actual files intended for sale.",
-                      "The source code matches the project listing.",
-                      "I have removed passwords, API keys, tokens and other sensitive information from the submitted project.",
-                      "If I provide GitHub, the source repository is PRIVATE.",
-                      "I understand that TU Notes may download, inspect, verify and store the project files for marketplace delivery.",
-                      "I agree to the applicable 20–25% platform commission.",
-                      "I agree to TU Notes payment, delivery, refund and dispute policies."
-                    ].map((text, idx) => (
-                      <label key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '13px', color: 'var(--clr-text-2)', cursor: 'pointer' }}>
-                        <input type="checkbox" checked={declarations[idx]} onChange={e => {
-                          const newDecs = [...declarations]
-                          newDecs[idx] = e.target.checked
-                          setDeclarations(newDecs)
-                        }} style={{ marginTop: '3px' }} />
-                        {text}
-                      </label>
-                    ))}
+                    <label className="flex items-center gap-3 cursor-pointer group select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 cursor-pointer accent-indigo-500" 
+                        checked={agreeDeclaration} 
+                        onChange={e => setAgreeDeclaration(e.target.checked)} 
+                        required 
+                      />
+                      <span className="text-sm text-slate-300">
+                        I have read and agree to the{' '}
+                        <Link href="/seller-declaration" target="_blank" className="font-bold text-indigo-400 underline underline-offset-4 decoration-indigo-400/50 hover:text-indigo-300 transition-colors">
+                          Seller Declaration & Terms
+                        </Link>
+                      </span>
+                    </label>
                   </div>
                 </div>
 
