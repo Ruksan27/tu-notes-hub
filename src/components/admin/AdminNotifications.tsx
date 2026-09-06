@@ -74,6 +74,16 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (tab: a
     }
   }
 
+  async function clearAllNotifications() {
+    if (!window.confirm("Are you sure you want to clear all notifications?")) return;
+    try {
+      await fetch('/api/admin/notifications', { method: 'DELETE' })
+      setNotifications([])
+    } catch (e) {
+      console.error('Failed to clear notifications', e)
+    }
+  }
+
   const unreadCount = notifications.filter(n => !n.isRead).length
 
   function handleNotificationClick(n: Notification) {
@@ -171,14 +181,24 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (tab: a
           >
             <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--clr-border)' }}>
               <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: 'var(--clr-text-1)' }}>Notifications</h3>
-              {unreadCount > 0 && (
-                <button 
-                  onClick={markAllAsRead}
-                  style={{ background: 'none', border: 'none', color: 'var(--clr-primary)', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  Mark all as read
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={markAllAsRead}
+                    style={{ background: 'none', border: 'none', color: 'var(--clr-primary)', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button 
+                    onClick={clearAllNotifications}
+                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
 
             <div style={{ maxHeight: '350px', overflowY: 'auto' }}>

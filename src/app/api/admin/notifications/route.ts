@@ -40,3 +40,14 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 })
   }
 }
+
+export async function DELETE() {
+  try {
+    await prisma.notification.deleteMany({})
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting notifications:', error)
+    return NextResponse.json({ error: 'Failed to clear notifications' }, { status: 500 })
+  }
+}
+
