@@ -19,17 +19,47 @@ export async function GET(req: Request) {
       return new NextResponse('File not found for this blog', { status: 404 })
     }
 
-    // 1. Fetch the remote PDF
-    const pdfResponse = await fetch(blog.fileUrl)
+    // Validate and resolve fileUrl
+    const rawFileUrl = blog.fileUrl.trim()
+    let validUrl: string | null = null
+
+    if (rawFileUrl.startsWith('http://') || rawFileUrl.startsWith('https://')) {
+      try {
+        new URL(rawFileUrl)
+        validUrl = rawFileUrl
+      } catch {
+        validUrl = null
+      }
+    } else if (rawFileUrl.startsWith('/')) {
+      try {
+        const origin = new URL(req.url).origin
+        validUrl = new URL(rawFileUrl, origin).toString()
+      } catch {
+        validUrl = null
+      }
+    }
+
+    if (!validUrl) {
+      return new NextResponse('Attached file URL for this blog is invalid or not a URL', { status: 400 })
+    }
+
+    // 1. Fetch the remote PDF safely
+    let pdfResponse: Response
+    try {
+      pdfResponse = await fetch(validUrl)
+    } catch {
+      return new NextResponse('Could not reach or fetch the attached file URL', { status: 400 })
+    }
+
     if (!pdfResponse.ok) {
-      return new NextResponse('Failed to fetch the remote file', { status: 500 })
+      return new NextResponse('Failed to fetch the remote file from storage', { status: 500 })
     }
     
     // Check if it's a PDF (basic check)
     const contentType = pdfResponse.headers.get('content-type')
-    if (!contentType?.includes('application/pdf')) {
+    if (!contentType?.includes('application/pdf') && !validUrl.toLowerCase().endsWith('.pdf')) {
       // If it's not a PDF, we can't watermark it using pdf-lib. Just redirect to the raw file.
-      return NextResponse.redirect(blog.fileUrl)
+      return NextResponse.redirect(validUrl)
     }
 
     const pdfArrayBuffer = await pdfResponse.arrayBuffer()

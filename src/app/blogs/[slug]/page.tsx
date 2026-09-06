@@ -227,7 +227,7 @@ export default async function BlogPostPage({ params }: Props) {
             <SocialShare title={blog.title} text={blog.excerpt || ''} slug={blog.slug} />
 
             {/* Attached PDF Download */}
-            {blog.fileUrl && (
+            {blog.fileUrl && (blog.fileUrl.startsWith('http://') || blog.fileUrl.startsWith('https://') || blog.fileUrl.startsWith('/')) && (
               <div style={{ marginTop: '32px', padding: '24px', background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(6,182,212,0.05))', borderRadius: '16px', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
                   <h4 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '4px' }}>Download Attached Notes</h4>
