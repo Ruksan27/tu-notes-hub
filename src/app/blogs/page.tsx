@@ -36,7 +36,7 @@ export default async function BlogsPage() {
   const blogs = await getBlogs()
 
   return (
-    <main className="container" style={{ paddingTop: '80px', paddingBottom: '80px', minHeight: '100vh' }}>
+    <main className="container pt-3 sm:pt-20 pb-12 sm:pb-20 min-h-screen mx-auto px-4">
         
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '12px' }}>

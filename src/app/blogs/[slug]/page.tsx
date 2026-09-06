@@ -12,10 +12,39 @@ type Props = {
   params: Promise<{ slug: string }>
 }
 
-async function getBlog(slug: string) {
-  const blog = await prisma.blog.findUnique({
-    where: { slug, isPublished: true }
+async function getBlog(rawSlug: string) {
+  const decoded = decodeURIComponent(rawSlug).trim()
+  const slugified = decoded.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+  const unslugified = decoded.replace(/-/g, ' ')
+
+  // 1. Try finding blog by any slug variation, title, or ID
+  let blog = await prisma.blog.findFirst({
+    where: {
+      OR: [
+        { slug: rawSlug },
+        { slug: decoded },
+        { slug: slugified },
+        { slug: unslugified },
+        { title: decoded },
+        { title: unslugified },
+        { id: rawSlug },
+        { id: decoded },
+      ]
+    }
   })
+
+  // 2. Fallback partial match if exact match not found
+  if (!blog) {
+    blog = await prisma.blog.findFirst({
+      where: {
+        OR: [
+          { slug: { contains: slugified } },
+          { title: { contains: decoded } }
+        ]
+      }
+    })
+  }
+
   return blog
 }
 
@@ -139,7 +168,7 @@ export default async function BlogPostPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="container" style={{ paddingTop: '80px', paddingBottom: '80px', minHeight: '100vh', maxWidth: '1000px', margin: '0 auto' }}>
+      <main className="container pt-3 sm:pt-20 pb-12 sm:pb-20 min-h-screen max-w-[1000px] mx-auto px-4">
         
         <nav aria-label="Breadcrumb" style={{ marginBottom: '24px' }}>
           <ol style={{ display: 'flex', alignItems: 'center', gap: '8px', listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: 'var(--clr-text-3)' }}>

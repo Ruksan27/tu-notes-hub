@@ -22,11 +22,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Title, slug, and content are required' }, { status: 400 })
     }
 
+    const cleanSlug = (slug || title).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || 'blog'
+
     // Handle slug collision
-    let uniqueSlug = slug
+    let uniqueSlug = cleanSlug
     let counter = 1
     while (await prisma.blog.findUnique({ where: { slug: uniqueSlug } })) {
-      uniqueSlug = `${slug}-${counter}`
+      uniqueSlug = `${cleanSlug}-${counter}`
       counter++
     }
 

@@ -7,12 +7,14 @@ export async function PUT(req: Request, context: any) {
     const data = await req.json()
     const { title, slug, thumbnailUrl, content, excerpt, metaTitle, metaDesc, keywords, author, isPublished, fileUrl } = data
 
+    const cleanSlug = (slug || title).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || 'blog'
+
     // Handle slug collision, ignoring self
-    let uniqueSlug = slug
+    let uniqueSlug = cleanSlug
     let counter = 1
     let existing = await prisma.blog.findUnique({ where: { slug: uniqueSlug } })
     while (existing && existing.id !== id) {
-      uniqueSlug = `${slug}-${counter}`
+      uniqueSlug = `${cleanSlug}-${counter}`
       existing = await prisma.blog.findUnique({ where: { slug: uniqueSlug } })
       counter++
     }
