@@ -7,37 +7,42 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="container" style={{ padding: '60px 20px', maxWidth: '800px', margin: '0 auto' }}>
-      <div className="glass-card" style={{ padding: '48px', borderRadius: 'var(--radius-lg)' }}>
-        <h1 style={{ fontSize: '32px', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: '24px' }}>Terms of Service</h1>
-        <p style={{ color: 'var(--clr-text-3)', fontSize: '14px', marginBottom: '32px' }}>Last Updated: August 2026</p>
+    <div className="min-h-[85vh] py-10 sm:py-16 px-4 sm:px-6 flex items-center justify-center">
+      <div className="w-full max-w-3xl mx-auto bg-[#0f101d] border border-indigo-500/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 relative overflow-hidden">
+        
+        {/* Page Header */}
+        <div className="border-b border-white/10 pb-6">
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">Terms of Service</h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-2">Last Updated: August 2026</p>
+        </div>
 
-        <div className="prose" style={{ color: 'var(--clr-text-2)', lineHeight: 1.7, fontSize: '15px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <section>
-            <h2 style={{ color: 'var(--clr-text-1)', fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>1. Acceptance of Terms</h2>
-            <p>By accessing and using TU Notes Hub, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by these terms, please do not use this service.</p>
+        <div className="space-y-6 text-xs sm:text-sm text-slate-300 leading-relaxed">
+          <section className="space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-indigo-400">1. Acceptance of Terms</h2>
+            <p className="text-slate-300">By accessing and using TU Notes Hub, you accept and agree to be bound by the terms and provisions of this agreement.</p>
           </section>
 
-          <section>
-            <h2 style={{ color: 'var(--clr-text-1)', fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>2. Description of Service</h2>
-            <p>TU Notes Hub provides educational resources including notes, past papers, AI predictions, and a marketplace for students to buy and sell academic projects. The projects sold are intended for learning, reference, and educational purposes only.</p>
+          <section className="space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-indigo-400">2. Description of Service</h2>
+            <p className="text-slate-300">TU Notes Hub provides educational resources including notes, past papers, AI predictions, and a marketplace for students to buy and sell academic projects for educational purposes.</p>
           </section>
 
-          <section>
-            <h2 style={{ color: 'var(--clr-text-1)', fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>3. User Accounts</h2>
-            <p>You are responsible for maintaining the confidentiality of your account and password. You agree to accept responsibility for all activities that occur under your account.</p>
+          <section className="space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-indigo-400">3. User Accounts</h2>
+            <p className="text-slate-300">You are responsible for maintaining the confidentiality of your account credentials and agree to accept responsibility for all activities that occur under your account.</p>
           </section>
 
-          <section>
-            <h2 style={{ color: 'var(--clr-text-1)', fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>4. Intellectual Property</h2>
-            <p>Users retain ownership of the original projects they upload. By uploading a project to the marketplace, you grant TU Notes Hub the right to distribute and sell it to buyers on the platform according to your set terms.</p>
+          <section className="space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-indigo-400">4. Intellectual Property</h2>
+            <p className="text-slate-300">Users retain ownership of original projects they upload while granting TU Notes Hub distribution rights to deliver approved projects to buyers according to platform terms.</p>
           </section>
 
-          <section>
-            <h2 style={{ color: 'var(--clr-text-1)', fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>5. Limitation of Liability</h2>
-            <p>TU Notes Hub shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use our services or the projects purchased from the marketplace.</p>
+          <section className="space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-indigo-400">5. Limitation of Liability</h2>
+            <p className="text-slate-300">TU Notes Hub shall not be liable for any indirect, incidental, or consequential damages resulting from the use or inability to use our services.</p>
           </section>
         </div>
+
       </div>
     </div>
   )

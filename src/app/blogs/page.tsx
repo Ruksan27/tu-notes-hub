@@ -27,6 +27,11 @@ async function getBlogs() {
   })
 }
 
+function isValidImageUrl(url?: string | null): boolean {
+  if (!url) return false
+  return url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')
+}
+
 export default async function BlogsPage() {
   const blogs = await getBlogs()
 
@@ -52,10 +57,10 @@ export default async function BlogsPage() {
               <div className="glass-card" style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'transform 0.2s', padding: 0 }}>
                 {/* Thumbnail */}
                 <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', background: '#111' }}>
-                  {blog.thumbnailUrl ? (
-                    <Image src={blog.thumbnailUrl} alt={blog.title} fill style={{ objectFit: 'cover' }} />
+                  {isValidImageUrl(blog.thumbnailUrl) ? (
+                    <Image src={blog.thumbnailUrl!} alt={blog.title} fill style={{ objectFit: 'cover' }} unoptimized={!blog.thumbnailUrl!.startsWith('/') && !blog.thumbnailUrl!.includes('cloudinary.com')} />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--clr-text-3)' }}>No Image</div>
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--clr-text-3)', fontSize: '13px', fontWeight: 600 }}>📄 Blog Guide</div>
                   )}
                 </div>
 

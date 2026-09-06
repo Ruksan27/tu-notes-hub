@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'motion/react'
+import { motion } from 'framer-motion'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
+import { CheckCircle2, ShieldCheck, UserCheck, Sparkles, Upload, Check, AlertCircle } from 'lucide-react'
 
 interface User {
   id: string
@@ -30,22 +31,15 @@ export default function BecomeSellerTab({ user }: { user: User }) {
   const [picPreview, setPicPreview] = useState<string | null>(null)
   
   const termsList = [
-    "I have read and agree to the TU Notes Seller Rules & Regulations.",
-    "I confirm that I have the right to sell the project submitted by me.",
-    "I confirm that my project information, demo, screenshots and files are accurate.",
-    "I agree to the 20–25% platform commission.",
-    "I agree that all marketplace payments must be processed through TU Notes.",
-    "I agree to the platform's delivery, dispute, refund, review and payout policies.",
-    "I will not upload stolen, pirated, malicious, or unauthorized content.",
-    "I will not attempt to bypass TU Notes or deal directly with buyers outside the platform.",
-    "I understand that violating these rules may lead to project removal, payout hold, seller suspension, or account termination.",
-    "I understand that the source-code repository for the project must remain PRIVATE before and during the sale, unless TU Notes explicitly allows otherwise."
+    "I have read and agree to the TU Notes Seller Rules & Regulations",
+    "I agree to the platform Terms of Service & Privacy Policy"
   ]
 
-  const [acceptedTerms, setAcceptedTerms] = useState<boolean[]>(new Array(termsList.length).fill(false))
+  const [acceptedTerms, setAcceptedTerms] = useState<boolean[]>([false, false])
   const [submitting, setSubmitting] = useState(false)
 
-  const allTermsAccepted = acceptedTerms.every(Boolean)
+  const acceptedCount = acceptedTerms.filter(Boolean).length
+  const allTermsAccepted = acceptedCount === termsList.length
 
   function toggleTerm(index: number) {
     const newTerms = [...acceptedTerms]
@@ -84,7 +78,6 @@ export default function BecomeSellerTab({ user }: { user: User }) {
       const data = await res.json()
       if (res.ok) {
         toast.success('Seller application submitted successfully! 🚀')
-        // Give time for toast then reload to reflect PENDING state
         setTimeout(() => window.location.reload(), 1500)
       } else {
         toast.error(data.error || 'Failed to submit application.')
@@ -97,97 +90,198 @@ export default function BecomeSellerTab({ user }: { user: User }) {
   }
 
   return (
-    <div className="glass-card" style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
-      <h3 className="section-title text-center">🛍️ Become a Verified Seller</h3>
-      <p className="text-center" style={{ color: 'var(--clr-text-2)', marginBottom: '32px' }}>
-        Sell your projects, source codes, and study materials on TU Notes Hub. Provide your details and accept the seller policies to begin.
-      </p>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        
-        {/* Profile Details */}
+    <div className="glass-card p-6 sm:p-10 space-y-8 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-4 pb-6 border-b border-[var(--clr-border)]">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl shrink-0">
+          🛍️
+        </div>
         <div>
-          <h4 className="text-lg font-bold mb-4" style={{ color: 'var(--clr-primary-h)' }}>1. Professional Profile</h4>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div style={{ gridColumn: '1 / -1' }}>
-               <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Profile Picture / Avatar</label>
-               <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px dashed var(--clr-border)', overflow: 'hidden' }}>
-                    {picPreview ? (
-                      <img src={picPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-2xl">📸</div>
-                    )}
-                  </div>
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="input-field" style={{ flex: 1 }} />
-               </div>
-            </div>
+          <h3 className="text-xl sm:text-2xl font-black text-[var(--clr-text-1)] tracking-tight">Become a Verified Seller</h3>
+          <p className="text-xs sm:text-sm text-[var(--clr-text-2)] mt-1">
+            Sell your projects, source code, and study materials on TU Notes Hub.
+          </p>
+        </div>
+      </div>
 
+      <form onSubmit={handleSubmit} className="space-y-8">
+        
+        {/* Section 1: Professional Profile */}
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <span className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 text-xs font-black flex items-center justify-center border border-indigo-500/30">
+              1
+            </span>
+            <h4 className="text-base font-bold text-[var(--clr-text-1)]">Professional Profile</h4>
+          </div>
+          
+          {/* Avatar Upload */}
+          <div>
+            <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">Profile Picture / Avatar</label>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-[var(--clr-border)] flex items-center justify-center overflow-hidden shrink-0">
+                {picPreview ? (
+                  <img src={picPreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload className="w-6 h-6 text-[var(--clr-text-3)]" />
+                )}
+              </div>
+              <label className="btn btn-outline cursor-pointer text-xs">
+                <span>Choose Photo</span>
+                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>College / University</label>
-              <input required className="input-field" placeholder="e.g. Tribhuvan University" value={formData.college} onChange={e => setFormData({...formData, college: e.target.value})} />
+              <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">College / University *</label>
+              <input
+                required
+                className="input-field"
+                placeholder="e.g. Tribhuvan University"
+                value={formData.college}
+                onChange={e => setFormData({...formData, college: e.target.value})}
+              />
             </div>
             
             <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Years of Experience</label>
-              <input required className="input-field" placeholder="e.g. 2 Years" value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} />
+              <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">Years of Experience *</label>
+              <input
+                required
+                className="input-field"
+                placeholder="e.g. 2 Years"
+                value={formData.experience}
+                onChange={e => setFormData({...formData, experience: e.target.value})}
+              />
             </div>
 
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Skills & Frameworks (comma separated)</label>
-              <input required className="input-field" placeholder="e.g. Next.js, React, PHP, MySQL, Python" value={formData.skills} onChange={e => setFormData({...formData, skills: e.target.value})} />
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">Skills & Frameworks (comma separated) *</label>
+              <input
+                required
+                className="input-field"
+                placeholder="e.g. Next.js, React, PHP, MySQL, Python"
+                value={formData.skills}
+                onChange={e => setFormData({...formData, skills: e.target.value})}
+              />
             </div>
 
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Short Bio / About You</label>
-              <textarea required className="input-field" rows={3} placeholder="Tell buyers a bit about yourself and your expertise..." value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} />
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">Short Bio / About You *</label>
+              <textarea
+                required
+                rows={3}
+                className="input-field resize-none"
+                placeholder="Tell buyers a bit about yourself and your expertise..."
+                value={formData.bio}
+                onChange={e => setFormData({...formData, bio: e.target.value})}
+              />
             </div>
           </div>
         </div>
 
-        {/* Social Links */}
-        <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '24px' }}>
-          <h4 className="text-lg font-bold mb-4" style={{ color: 'var(--clr-primary-h)' }}>2. Social Links (Optional)</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        {/* Section 2: Social Links */}
+        <div className="space-y-4 pt-6 border-t border-[var(--clr-border)]">
+          <div className="flex items-center gap-3">
+            <span className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 text-xs font-black flex items-center justify-center border border-indigo-500/30">
+              2
+            </span>
+            <h4 className="text-base font-bold text-[var(--clr-text-1)]">Social Links (Optional)</h4>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div>
-               <label className="block text-sm font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>GitHub Profile</label>
+               <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">GitHub Profile</label>
                <input className="input-field" placeholder="https://github.com/..." value={formData.github} onChange={e => setFormData({...formData, github: e.target.value})} />
              </div>
              <div>
-               <label className="block text-sm font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>LinkedIn Profile</label>
+               <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">LinkedIn Profile</label>
                <input className="input-field" placeholder="https://linkedin.com/in/..." value={formData.linkedin} onChange={e => setFormData({...formData, linkedin: e.target.value})} />
              </div>
              <div>
-               <label className="block text-sm font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>YouTube Channel</label>
+               <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">YouTube Channel</label>
                <input className="input-field" placeholder="https://youtube.com/..." value={formData.youtube} onChange={e => setFormData({...formData, youtube: e.target.value})} />
              </div>
              <div>
-               <label className="block text-sm font-semibold mb-1" style={{ color: 'var(--clr-text-2)' }}>Instagram</label>
+               <label className="block text-xs font-bold text-[var(--clr-text-3)] mb-2 uppercase tracking-wider">Instagram</label>
                <input className="input-field" placeholder="https://instagram.com/..." value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} />
              </div>
           </div>
         </div>
 
-        {/* Terms and Conditions */}
-        <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '24px' }}>
-          <h4 className="text-lg font-bold mb-4" style={{ color: 'var(--clr-warning)' }}>3. Mandatory Rules & Regulations</h4>
-          
-          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {termsList.map((term, i) => (
-              <label key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', cursor: 'pointer' }}>
-                <input type="checkbox" checked={acceptedTerms[i]} onChange={() => toggleTerm(i)} style={{ marginTop: '4px', width: '18px', height: '18px', cursor: 'pointer' }} />
-                <span style={{ fontSize: '14px', color: 'var(--clr-text-1)', lineHeight: 1.5 }}>
-                  {term}
+        {/* Section 3: Rules & Regulations */}
+        <div className="space-y-4 pt-6 border-t border-[var(--clr-border)]">
+          <div className="flex items-center gap-3">
+            <span className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center border border-amber-500/30">
+              3
+            </span>
+            <div>
+              <h4 className="text-base font-bold text-[var(--clr-text-1)]">Mandatory Rules & Regulations</h4>
+              <p className="text-xs text-[var(--clr-text-2)]">Review and accept platform agreements to activate seller registration.</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <div
+              onClick={() => toggleTerm(0)}
+              className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 active:scale-[0.99] ${
+                acceptedTerms[0]
+                  ? 'bg-indigo-500/10 border-indigo-500/40 text-[var(--clr-text-1)]'
+                  : 'bg-white/[0.02] border-[var(--clr-border)] text-[var(--clr-text-2)] hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                  acceptedTerms[0] ? 'bg-indigo-500 border-indigo-400 text-white' : 'border-white/30 bg-white/5'
+                }`}>
+                  {acceptedTerms[0] && <Check className="w-3 h-3 stroke-[3]" />}
+                </div>
+                <span className="text-xs sm:text-sm font-medium">
+                  I have read and agree to the <a href="/seller-policy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-amber-400 underline underline-offset-4 hover:text-amber-300">TU Notes Seller Rules & Regulations</a>
                 </span>
-              </label>
-            ))}
+              </div>
+            </div>
+
+            <div
+              onClick={() => toggleTerm(1)}
+              className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 active:scale-[0.99] ${
+                acceptedTerms[1]
+                  ? 'bg-indigo-500/10 border-indigo-500/40 text-[var(--clr-text-1)]'
+                  : 'bg-white/[0.02] border-[var(--clr-border)] text-[var(--clr-text-2)] hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                  acceptedTerms[1] ? 'bg-indigo-500 border-indigo-400 text-white' : 'border-white/30 bg-white/5'
+                }`}>
+                  {acceptedTerms[1] && <Check className="w-3 h-3 stroke-[3]" />}
+                </div>
+                <span className="text-xs sm:text-sm font-medium">
+                  I agree to the platform <a href="/terms" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-indigo-400 underline underline-offset-4 hover:text-indigo-300">Terms of Service</a> & <a href="/privacy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="font-bold text-indigo-400 underline underline-offset-4 hover:text-indigo-300">Privacy Policy</a>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <button type="submit" disabled={!allTermsAccepted || submitting} className="btn btn-primary btn-lg" style={{ marginTop: '16px', justifyContent: 'center' }}>
-          {submitting ? <><span className="spinner" /> Processing...</> : '✅ Accept & Submit Application'}
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={!allTermsAccepted || submitting}
+          className={`w-full btn btn-lg btn-primary justify-center text-sm font-bold ${
+            !allTermsAccepted ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {submitting ? (
+            <><div className="spinner" style={{ width: '16px', height: '16px' }} /> Processing Application…</>
+          ) : allTermsAccepted ? (
+            <><CheckCircle2 className="w-5 h-5" /> Accept & Submit Seller Application</>
+          ) : (
+            <><AlertCircle className="w-4 h-4 text-amber-400" /> Accept all terms above to submit</>
+          )}
         </button>
+
       </form>
     </div>
   )

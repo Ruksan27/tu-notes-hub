@@ -8,42 +8,86 @@ export const metadata: Metadata = {
 
 export default function SellerPolicyPage() {
   return (
-    <div className="container" style={{ padding: '60px 20px', maxWidth: '800px', margin: '0 auto' }}>
-      <div className="glass-card" style={{ padding: '48px', borderRadius: 'var(--radius-lg)' }}>
-        <h1 style={{ fontSize: '32px', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: '24px' }}>Seller Policy & Verification</h1>
-        
-        <div className="prose" style={{ color: 'var(--clr-text-2)', lineHeight: 1.7, fontSize: '15px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-          
-          <section>
-            <h2 style={{ color: 'var(--clr-text-1)', fontSize: '22px', fontWeight: 700, marginBottom: '16px' }}>How Are Projects Verified?</h2>
-            <p>To ensure high quality and protect buyers, <strong>every single project uploaded to TU Notes Hub undergoes a manual review by our admins</strong> before it becomes visible in the marketplace.</p>
-            <ol style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-              <li><strong>Submission:</strong> The seller uploads the complete project zip (source code, DB, docs) to a Google Drive link and shares view access with us.</li>
-              <li><strong>Code Review:</strong> Our admins download and inspect the code to ensure it is not malicious, contains the promised features, and matches the screenshots/demo.</li>
-              <li><strong>Plagiarism Check:</strong> We verify that the project is not a direct, unmodified copy of a popular open-source repository (like a raw GitHub clone). Sellers must have built or significantly customized the project.</li>
-              <li><strong>Approval:</strong> Once verified, the project status changes to "APPROVED" and is published to the marketplace.</li>
-            </ol>
-          </section>
+    <div className="min-h-[85vh] py-10 sm:py-16 px-4 sm:px-6 flex items-center justify-center">
+      <div className="w-full max-w-3xl mx-auto bg-[#0f101d] border border-indigo-500/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 relative overflow-hidden">
+        {/* Glow decoration */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-indigo-500 to-purple-500" />
+        <div className="absolute -top-24 -right-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <section>
-            <h2 style={{ color: 'var(--clr-text-1)', fontSize: '22px', fontWeight: 700, marginBottom: '16px' }}>How Do Seller Payouts Work?</h2>
-            <p>We handle the payment processing so you don't have to deal with scammers or unverified payments.</p>
-            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-              <li><strong>Revenue Share:</strong> Sellers earn a flat <strong>85%</strong> of the final sale price. The remaining 15% covers our payment gateway fees, server costs, and admin verification efforts.</li>
-              <li><strong>Escrow Period:</strong> When a buyer purchases your project, the funds are held securely. After a 24-hour buyer protection window (to ensure they received the working code), the funds are cleared to your account balance.</li>
-              <li><strong>Payouts:</strong> You can request a payout to your eSewa or Khalti account. Payouts are processed weekly.</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 style={{ color: 'var(--clr-text-1)', fontSize: '22px', fontWeight: 700, marginBottom: '16px' }}>Seller Violations & Bans</h2>
-            <p>If a seller is caught selling severely broken code, refusing to help buyers with setup (if promised), or selling stolen intellectual property, their account will be permanently banned and any pending balance will be refunded to the affected buyers.</p>
-          </section>
-
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <Link href="/dashboard" className="btn btn-primary">Go to Seller Dashboard</Link>
+        {/* Page Header */}
+        <div className="border-b border-white/10 pb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold mb-3">
+            📜 Official Terms & Rules
           </div>
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">Seller Rules & Regulations</h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-2">Last Updated: August 2026 • Mandatory for all marketplace sellers</p>
         </div>
+
+        {/* Policy Sections */}
+        <div className="space-y-6">
+          
+          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">1</span>
+              Project Verification & Quality Control
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+              To protect buyers and maintain high platform quality, every submitted project is manually reviewed by TU Notes admins. Sellers must submit original or significantly modified source code accompanied by accurate descriptions, demo links/screenshots, and setup guides.
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">2</span>
+              Platform Revenue Share & Commission
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+              Sellers earn <strong className="text-emerald-400 font-extrabold">75%–80%</strong> of the sale price. A 20–25% platform commission covers secure payment processing, escrow protection, server bandwidth, and administrative verification. Payouts are processed weekly via eSewa, Khalti, or Bank Transfer.
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">3</span>
+              Off-Platform Deals & Direct Bypassing
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+              All transactions, communication, and file deliveries must strictly take place within TU Notes Hub. Attempting to deal directly with buyers outside the platform or bypassing platform fees is strictly forbidden.
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">4</span>
+              Private Code Repositories & Intellectual Property
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+              The source-code repository for listed projects MUST remain PRIVATE before and during the sale. Uploading stolen, pirated, or unauthorized third-party content will result in immediate removal and forfeiture of earnings.
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
+            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">5</span>
+              Violations & Account Suspension
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+              Violating these rules, submitting malicious code, or failing to deliver advertised features will lead to project removal, payout holds, seller badge revocation, or permanent account termination.
+            </p>
+          </div>
+
+        </div>
+
+        {/* Back Button */}
+        <div className="pt-4 border-t border-white/10 flex justify-center">
+          <Link
+            href="/dashboard"
+            className="w-full sm:w-auto text-center px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-sm transition-all shadow-xl shadow-indigo-600/25 active:scale-95"
+          >
+            ← Return to Dashboard
+          </Link>
+        </div>
+
       </div>
     </div>
   )

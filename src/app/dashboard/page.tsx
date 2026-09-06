@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { toast } from 'react-toastify'
 import { motion, useDragControls } from 'framer-motion'
+import { Sparkles, Brain, FileText, BookOpen, Clock, Plus, X, Send, Bot, Check, ChevronDown, Zap, HelpCircle, RefreshCw } from 'lucide-react'
 import { DashboardSkeleton } from '@/components/SkeletonLoader'
 import BecomeSellerTab from '@/components/dashboard/BecomeSellerTab'
 import SellerCenterTab from '@/components/dashboard/SellerCenterTab'
@@ -197,12 +198,6 @@ export default function DashboardPage() {
               <span className="text-lg">🏫</span> Browse Faculties
             </button>
             
-            {!faculty && (
-              <button onClick={() => router.push('/settings')} className="sidebar-item" style={{ color: 'var(--clr-warning)' }}>
-                <span className="text-lg">⚙️</span> Setup Profile
-              </button>
-            )}
-            
             {user.role === 'ADMIN' && (
               <button onClick={() => router.push('/admin')} className="sidebar-item" style={{ color: 'var(--clr-primary-h)' }}>
                 <span className="text-lg">⚙️</span> Admin Panel
@@ -269,11 +264,6 @@ export default function DashboardPage() {
                         </p>
                       </div>
                     </div>
-                    {!faculty && (
-                      <Link href="/settings" className="btn btn-outline w-max" style={{ marginTop: '8px', fontSize: '12px', padding: '6px 16px', display: 'inline-flex', gap: '6px' }}>
-                        ⚙️ Setup Profile
-                      </Link>
-                    )}
                   </div>
                   <div className="flex flex-row md:flex-col items-center md:items-end w-full md:w-auto justify-between md:justify-start gap-3 mt-2 md:mt-0">
                     <span className="whitespace-nowrap flex-shrink-0" style={{ background: pkg.gradient, border: `1px solid ${isPremium ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700, color: isPremium ? '#a5b4fc' : 'var(--clr-text-3)' }}>
@@ -702,71 +692,130 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="flex flex-col gap-6">
       {/* Form card — hidden once report is generated */}
       {!report && (
-        <div className="glass-card" style={{ padding: '32px' }}>
-          <h3 className="font-bold text-xl mb-2">Predict Exam Pattern</h3>
-          <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginBottom: '24px' }}>
-            Choose a subject and at least 2 past papers to generate an AI prediction report.
-          </p>
+        <div className="glass-card p-6 sm:p-8 space-y-6 max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-start gap-4 pb-4 border-b border-[var(--clr-border)]">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+              <Brain className="w-6 h-6" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h3 className="font-extrabold text-xl text-[var(--clr-text-1)]">Predict Exam Pattern</h3>
+                <span className="badge badge-elite text-[10px]">
+                  <Sparkles className="w-3 h-3" /> AI Engine
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-[var(--clr-text-2)]">
+                Select a subject and 2+ past papers to generate automated exam topic predictions.
+              </p>
+            </div>
+          </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label className="text-sm font-semibold block mb-2" style={{ color: 'var(--clr-text-2)' }}>Select Subject</label>
-            <select className="input-field" value={selectedSubjectId} onChange={(e) => setSelectedSubjectId(e.target.value)} style={{ cursor: 'pointer' }}>
+          {/* Subject Select */}
+          <div>
+            <label className="block text-xs font-bold text-[var(--clr-text-3)] uppercase tracking-wider mb-2 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-indigo-400" /> SELECT SUBJECT
+            </label>
+            <select
+              className="input-field cursor-pointer font-semibold"
+              value={selectedSubjectId}
+              onChange={(e) => setSelectedSubjectId(e.target.value)}
+            >
               <option value="">— Choose a subject —</option>
-              {subjects.map((s) => <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>)}
+              {subjects.map((s) => (
+                <option key={s.id} value={s.id}>[{s.code}] {s.title}</option>
+              ))}
             </select>
           </div>
 
+          {/* Paper Selector */}
           {currentSubject && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ marginBottom: '24px' }}>
-              <label className="text-sm font-semibold block mb-3" style={{ color: 'var(--clr-text-2)' }}>
-                Select Papers to Compare (min. 2)
-              </label>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <label className="block text-xs font-bold text-[var(--clr-text-3)] uppercase tracking-wider flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-indigo-400" /> SELECT PAST PAPERS
+                </label>
+                <span className="badge badge-semester text-[10px]">
+                  {selectedPaperIds.length} Selected
+                </span>
+              </div>
+
               {currentSubject.pastPapers.length === 0 ? (
-                <p className="text-sm px-4 py-3 rounded-lg" style={{ background: 'rgba(245,158,11,0.08)', color: 'var(--clr-warning)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
                   ⚠️ No past papers uploaded for this subject yet.
-                </p>
+                </div>
               ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                <div className="flex flex-wrap gap-2.5">
                   {currentSubject.pastPapers.map((paper) => {
                     const checked = selectedPaperIds.includes(paper.id)
                     return (
                       <button key={paper.id} type="button"
                         onClick={() => setSelectedPaperIds(p => p.includes(paper.id) ? p.filter(id => id !== paper.id) : [...p, paper.id])}
-                        style={{
-                          padding: '10px 18px', borderRadius: '10px', fontWeight: 600, fontSize: '14px',
-                          border: `2px solid ${checked ? 'var(--clr-primary)' : 'rgba(255,255,255,0.1)'}`,
-                          background: checked ? 'rgba(99,102,241,0.15)' : 'transparent',
-                          color: checked ? '#fff' : 'var(--clr-text-2)',
-                          cursor: 'pointer', transition: 'all 0.2s',
-                          boxShadow: checked ? '0 0 12px rgba(99,102,241,0.3)' : 'none',
-                        }}
+                        className={`btn btn-sm ${checked ? 'btn-primary' : 'btn-outline'}`}
                       >
-                        📅 {paper.year}
+                        <span>{checked ? '✓' : '＋'}</span>
+                        <span>{paper.year} Paper ({paper.examType.replace(/_/g, ' ')})</span>
                       </button>
                     )
                   })}
                 </div>
               )}
+
+              {selectedPaperIds.length > 0 && (
+                <p className="text-xs font-semibold mt-2 flex items-center gap-1.5">
+                  {selectedPaperIds.length >= 2
+                    ? <span className="text-emerald-400 flex items-center gap-1">✓ Ready for AI analysis ({selectedPaperIds.length} selected)</span>
+                    : <span className="text-amber-400 flex items-center gap-1">⚠️ Select at least 1 more paper to run analysis</span>
+                  }
+                </p>
+              )}
             </motion.div>
           )}
 
-          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-            <button className="btn btn-primary btn-lg" onClick={runAIAnalysis}
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <button
+              onClick={runAIAnalysis}
               disabled={loading || generatingMcqs || selectedPaperIds.length < 2}
-              style={{ flex: 1, justifyContent: 'center' }}
+              className="btn btn-lg btn-primary justify-center text-sm font-bold"
             >
-              {loading ? <><span className="spinner" /> Analyzing with AI...</> : `🤖 Run AI Analysis (${selectedPaperIds.length})`}
+              {loading ? (
+                <><div className="spinner" style={{ width: '16px', height: '16px' }} /> Analyzing with AI…</>
+              ) : (
+                <><Brain className="w-4 h-4" /> Run AI Analysis {selectedPaperIds.length > 0 ? `(${selectedPaperIds.length})` : ''}</>
+              )}
             </button>
-            <button className="btn btn-primary btn-lg" onClick={handleGenerateMcqs}
+
+            <button
+              onClick={handleGenerateMcqs}
               disabled={loading || generatingMcqs || selectedPaperIds.length < 2}
-              style={{ flex: 1, justifyContent: 'center', background: 'linear-gradient(135deg, #10b981, #059669)' }}
+              className="btn btn-lg btn-outline justify-center text-sm font-bold"
             >
-              {generatingMcqs ? <><span className="spinner" /> Generating MCQs...</> : `📝 Generate MCQs (${selectedPaperIds.length})`}
+              {generatingMcqs ? (
+                <><div className="spinner" style={{ width: '16px', height: '16px' }} /> Generating MCQs…</>
+              ) : (
+                <><FileText className="w-4 h-4" /> Generate MCQs {selectedPaperIds.length > 0 ? `(${selectedPaperIds.length})` : ''}</>
+              )}
             </button>
           </div>
+
+          {/* Feature hints */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[var(--clr-border)]">
+            {[
+              { icon: Brain, text: 'Topic Probability' },
+              { icon: Sparkles, text: 'Exam Questions' },
+              { icon: Zap, text: 'Quick Study Points' },
+              { icon: FileText, text: 'PDF Export' },
+            ].map(f => (
+              <div key={f.text} className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/[0.02] border border-[var(--clr-border)] text-xs text-[var(--clr-text-2)] font-semibold truncate">
+                <f.icon className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> <span className="truncate">{f.text}</span>
+              </div>
+            ))}
+          </div>
+
         </div>
       )}
 
@@ -960,8 +1009,19 @@ function AIChatPanel({ report }: { report: any }) {
   const [panelSize, setPanelSize] = useState({ width: 750, height: 500 })
 
   useEffect(() => {
-    setPanelSize({ width: 750, height: 500 })
-  }, [!!report])
+    const updateSize = () => {
+      if (typeof window !== 'undefined') {
+        const isMobile = window.innerWidth < 640
+        setPanelSize({
+          width: isMobile ? Math.min(360, window.innerWidth - 32) : 750,
+          height: isMobile ? Math.min(520, window.innerHeight - 100) : 500,
+        })
+      }
+    }
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
+  }, [report, isOpen])
 
   const handleResizeDrag = (e: React.MouseEvent, edges: string[]) => {
     e.preventDefault()
@@ -981,8 +1041,8 @@ function AIChatPanel({ report }: { report: any }) {
       if (edges.includes('top')) newH = startHeight - (ev.clientY - startY)
 
       setPanelSize({
-        width: Math.max(320, Math.min(newW, window.innerWidth - 40)),
-        height: Math.max(400, Math.min(newH, window.innerHeight - 40))
+        width: Math.max(300, Math.min(newW, window.innerWidth - 32)),
+        height: Math.max(380, Math.min(newH, window.innerHeight - 60))
       })
     }
 
@@ -1045,11 +1105,11 @@ function AIChatPanel({ report }: { report: any }) {
     setSessionId(`s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
   }
 
-  async function sendMessage() {
-    if (!input.trim() || sending) return
-    const userMsg = input.trim()
-    setInput('')
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
+  async function sendMessage(textToSend?: string) {
+    const queryText = textToSend || input
+    if (!queryText.trim() || sending) return
+    if (!textToSend) setInput('')
+    setMessages(prev => [...prev, { role: 'user', text: queryText.trim() }])
     setSending(true)
     try {
       const reportContext = report
@@ -1059,7 +1119,7 @@ function AIChatPanel({ report }: { report: any }) {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, sessionId, reportContext }),
+        body: JSON.stringify({ message: queryText.trim(), sessionId, reportContext }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -1082,230 +1142,209 @@ function AIChatPanel({ report }: { report: any }) {
         className="hide-on-print"
         onClick={() => setIsOpen(true)}
         style={{
-          position: 'fixed', bottom: '24px', right: '24px', width: '70px', height: '70px',
+          position: 'fixed', bottom: '20px', right: '20px', width: '60px', height: '60px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', zIndex: 100,
         }}
-        whileHover={{ scale: 1.05 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
       >
-        <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.6)', pointerEvents: 'none' }} />
+        <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-0.5 shadow-2xl shadow-purple-500/30 flex items-center justify-center">
+          <div className="w-full h-full rounded-full bg-[#0d0f19] flex items-center justify-center overflow-hidden">
+            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.5)', pointerEvents: 'none' }} />
+          </div>
+        </div>
       </motion.div>
     )
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-      className="hide-on-print"
-      drag
-      dragListener={false}
-      dragControls={dragControls}
-      dragMomentum={false}
-      style={{
-        display: 'flex', flexDirection: 'column',
-        height: `${panelSize.height}px`,
-        width: `${panelSize.width}px`,
-        minWidth: '320px',
-        maxWidth: '1000px',
-        minHeight: '400px',
-        maxHeight: '90vh',
-        background: '#0f111a',
-        border: '1px solid rgba(255,255,255,0.05)',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        position: 'relative', margin: '0 0 0 auto', zIndex: 10,
-        boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
-      }}
-    >
-      {/* ── Custom Resize Handles ── */}
-      <div onMouseDown={(e) => handleResizeDrag(e, ['left'])} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
-      <div onMouseDown={(e) => handleResizeDrag(e, ['right'])} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
-      <div onMouseDown={(e) => handleResizeDrag(e, ['top'])} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
-      <div onMouseDown={(e) => handleResizeDrag(e, ['bottom'])} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
-      
-      {/* Corners for simultaneous width/height resize */}
-      <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'right'])} style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
-      <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'left'])} style={{ position: 'absolute', bottom: 0, left: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
-      <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'left'])} style={{ position: 'absolute', top: 0, left: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
-      <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'right'])} style={{ position: 'absolute', top: 0, right: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
-
-      {/* Header */}
+    <>
+      {/* Mobile backdrop */}
       <div 
-        onPointerDown={(e) => dragControls.start(e)}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] sm:hidden"
+        onClick={() => setIsOpen(false)}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        className="hide-on-print fixed bottom-0 left-0 right-0 sm:bottom-5 sm:right-5 sm:left-auto z-[100] flex flex-col bg-[#0d0f19] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden"
+        drag
+        dragListener={false}
+        dragControls={dragControls}
+        dragMomentum={false}
         style={{
-          padding: '16px 20px',
-          background: '#151822',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
-          cursor: 'grab', touchAction: 'none'
+          height: `${panelSize.height}px`,
+          width: `${panelSize.width}px`,
+          maxWidth: 'calc(100vw - 24px)',
+          maxHeight: 'calc(100vh - 40px)',
+          boxShadow: '0 25px 60px rgba(0,0,0,0.85), 0 0 40px rgba(168,85,247,0.15)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '10px',
-            background: 'linear-gradient(135deg, #a855f7, #6366f1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 15px rgba(168,85,247,0.4)',
-          }}>
-            <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
-          </div>
-          <div>
-            <p style={{ fontWeight: 700, fontSize: '15px', margin: 0, color: '#fff', letterSpacing: '0.3px' }}>Scholar AI</p>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>
-              {report ? `Analyzing: ${report.subject}` : 'Your Academic Assistant'}
-            </p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={loadSessions} title="History" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'rgba(255,255,255,0.5)', transition: 'color 0.2s' }} onMouseEnter={e=>(e.currentTarget.style.color='#fff')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}>
-            🕒
-          </button>
-          <button onClick={startNewChat} title="New chat" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'rgba(255,255,255,0.5)', transition: 'color 0.2s' }} onMouseEnter={e=>(e.currentTarget.style.color='#fff')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}>
-            ➕
-          </button>
-          <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
-          <button onClick={() => setIsOpen(false)} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'rgba(255,255,255,0.5)', transition: 'color 0.2s' }} onMouseEnter={e=>(e.currentTarget.style.color='#fff')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}>
-            ✕
-          </button>
-        </div>
-      </div>
+        {/* Mobile top handle bar */}
+        <div className="w-10 h-1 bg-white/20 rounded-full mx-auto my-2 sm:hidden shrink-0" />
 
-      {/* History Panel */}
-      {showHistory && (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Past Sessions</p>
-          </div>
-          {sessions.length === 0 ? (
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '40px 0' }}>No chat history yet</p>
-          ) : sessions.map(s => (
-            <div key={s.session_id} onClick={() => loadSession(s.session_id)}
-              style={{ padding: '14px 16px', borderRadius: '12px', marginBottom: '8px', cursor: 'pointer', background: '#151822', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#1a1e2b'; e.currentTarget.style.borderColor = 'rgba(168,85,247,0.3)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#151822'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.03)'; }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.last_message || 'Chat session'}</p>
-                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{new Date(s.created_at).toLocaleDateString()}</p>
+        {/* ── Custom Resize Handles (desktop) ── */}
+        <div className="hidden sm:block" onMouseDown={(e) => handleResizeDrag(e, ['left'])} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '8px', cursor: 'ew-resize', zIndex: 50 }} />
+        <div className="hidden sm:block" onMouseDown={(e) => handleResizeDrag(e, ['right'])} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '8px', cursor: 'ew-resize', zIndex: 50 }} />
+        <div className="hidden sm:block" onMouseDown={(e) => handleResizeDrag(e, ['top'])} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '8px', cursor: 'ns-resize', zIndex: 50 }} />
+        <div className="hidden sm:block" onMouseDown={(e) => handleResizeDrag(e, ['bottom'])} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '8px', cursor: 'ns-resize', zIndex: 50 }} />
+        
+        {/* Corners */}
+        <div className="hidden sm:block" onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'right'])} style={{ position: 'absolute', bottom: 0, right: 0, width: '16px', height: '16px', cursor: 'nwse-resize', zIndex: 51 }} />
+
+        {/* Header */}
+        <div 
+          onPointerDown={(e) => dragControls.start(e)}
+          className="px-4 py-3 bg-[#151724] border-b border-white/5 flex items-center justify-between shrink-0 cursor-grab active:cursor-grabbing touch-none"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 p-0.5 shrink-0 shadow-lg shadow-purple-500/20">
+              <div className="w-full h-full rounded-[10px] bg-[#0d0f19] flex items-center justify-center overflow-hidden">
+                <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline className="w-full h-full object-contain scale-125 pointer-events-none" />
               </div>
-              <button onClick={e => deleteSession(s.session_id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: '14px', padding: '4px' }}>🗑️</button>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Messages */}
-      {!showHistory && (
-        <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {messages.length === 0 && !sending && (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '16px', padding: '20px' }}>
-               <div style={{
-                  width: '120px', height: '120px', borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
-                </div>
-              <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 500 }}>
-                {report ? `How can I help you with ${report.subject}?` : 'How can I help with your studies today?'}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-extrabold text-sm text-white tracking-tight leading-tight">Scholar AI</p>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              </div>
+              <p className="text-[11px] text-slate-400 truncate max-w-[140px] sm:max-w-[220px]">
+                {report ? `Analyzing: ${report.subject}` : 'Academic AI Assistant'}
               </p>
             </div>
-          )}
-          
-          {messages.map((msg, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: '12px' }}>
-              {msg.role === 'model' && (
-                <div style={{
-                  width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #a855f7, #6366f1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
-                </div>
-              )}
-              <div style={{
-                maxWidth: '85%',
-                padding: '14px 18px',
-                borderRadius: '16px',
-                background: msg.role === 'user' ? '#171e2e' : 'transparent',
-                border: msg.role === 'user' ? '1px solid rgba(139, 92, 246, 0.2)' : 'none',
-                color: 'rgba(255,255,255,0.9)',
-                fontSize: '14px', lineHeight: 1.6,
-                whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-              }}>
-                {msg.text}
-              </div>
-            </div>
-          ))}
-          
-          {sending && (
-             <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '12px' }}>
-               <div style={{
-                  width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #a855f7, #6366f1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)', pointerEvents: 'none' }} />
-                </div>
-               <div style={{
-                 padding: '16px',
-                 borderRadius: '16px',
-                 background: '#151822',
-                 border: '1px solid rgba(255,255,255,0.05)',
-                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                 width: '80px', height: '80px'
-               }}>
-                  <div style={{
-                    width: '40px', height: '40px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
-                    animation: 'pulse 1.5s infinite ease-in-out',
-                    filter: 'blur(8px)', opacity: 0.7
-                  }} />
-               </div>
-             </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      )}
+          </div>
 
-      {/* Input */}
-      {!showHistory && (
-        <div style={{ padding: '0 20px 20px', background: 'transparent' }}>
-          <div style={{
-            display: 'flex', gap: '10px', background: '#191d2b',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '24px', padding: '6px 6px 6px 16px', alignItems: 'center'
-          }}>
-            <textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-              placeholder="Ask about your syllabus, notes, or past papers..."
-              rows={1}
-              style={{
-                flex: 1, background: 'transparent', border: 'none',
-                color: 'rgba(255,255,255,0.9)',
-                fontSize: '14px', resize: 'none', outline: 'none', fontFamily: 'inherit',
-                padding: '8px 0', maxHeight: '100px'
-              }}
-            />
-            <button onClick={sendMessage} disabled={sending || !input.trim()}
-              style={{
-                background: sending ? 'transparent' : 'rgba(255,255,255,0.05)',
-                border: 'none', borderRadius: '50%', width: '36px', height: '36px',
-                cursor: sending || !input.trim() ? 'not-allowed' : 'pointer',
-                opacity: sending || !input.trim() ? 0.5 : 1,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'rgba(255,255,255,0.7)'
-              }}
-            >
-              {sending ? '⏳' : '➤'}
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={loadSessions} title="History" className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all text-xs flex items-center justify-center">
+              <Clock className="w-4 h-4" />
+            </button>
+            <button onClick={startNewChat} title="New chat" className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all text-xs flex items-center justify-center">
+              <Plus className="w-4 h-4" />
+            </button>
+            <div className="w-px h-4 bg-white/10 mx-1" />
+            <button onClick={() => setIsOpen(false)} title="Close" className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all text-xs flex items-center justify-center">
+              <X className="w-4 h-4" />
             </button>
           </div>
-          <p style={{ textAlign: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '8px', marginBottom: 0 }}>
-            Powered by Scholar AI
-          </p>
         </div>
-      )}
-    </motion.div>
+
+        {/* History Panel */}
+        {showHistory && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Past Sessions</p>
+              <button onClick={() => setShowHistory(false)} className="text-xs text-indigo-400 hover:underline">← Back to chat</button>
+            </div>
+            {sessions.length === 0 ? (
+              <p className="text-xs text-slate-500 text-center py-10">No chat history yet</p>
+            ) : sessions.map(s => (
+              <div key={s.session_id} onClick={() => loadSession(s.session_id)}
+                className="p-3 rounded-xl bg-[#151724] border border-white/5 hover:border-purple-500/30 flex items-center justify-between gap-3 cursor-pointer transition-all"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-slate-200 font-semibold truncate mb-0.5">{s.last_message || 'Chat session'}</p>
+                  <p className="text-[10px] text-slate-500">{new Date(s.created_at).toLocaleDateString()}</p>
+                </div>
+                <button onClick={e => deleteSession(s.session_id, e)} className="text-slate-500 hover:text-rose-400 text-xs p-1">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Messages */}
+        {!showHistory && (
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3.5 space-y-3.5">
+            {messages.length === 0 && !sending && (
+              <div className="h-full flex flex-col items-center justify-center text-center p-3">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center mb-3 shadow-lg shadow-purple-500/10 overflow-hidden">
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline className="w-full h-full object-contain scale-125 pointer-events-none" />
+                </div>
+                <p className="text-sm font-bold text-white leading-snug max-w-[260px]">
+                  {report ? `How can I help with ${report.subject}?` : 'How can I help with your studies today?'}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1 max-w-[240px]">
+                  Ask questions about your syllabus, notes, or exam preparation.
+                </p>
+
+                {/* Quick prompt chips */}
+                <div className="flex flex-wrap items-center justify-center gap-1.5 mt-4 max-w-xs">
+                  {[
+                    '📊 Predict exam topics',
+                    '📝 Generate 10 MCQs',
+                    '💡 Quick study summary',
+                  ].map((promptText) => (
+                    <button
+                      key={promptText}
+                      onClick={() => sendMessage(promptText.slice(2))}
+                      className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-purple-500/50 hover:bg-purple-500/10 text-slate-300 hover:text-white transition-all active:scale-95"
+                    >
+                      {promptText}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex items-start gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role === 'model' && (
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm mt-0.5 overflow-hidden">
+                    <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline className="w-full h-full object-contain scale-125 pointer-events-none" />
+                  </div>
+                )}
+                <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap break-words ${
+                  msg.role === 'user'
+                    ? 'bg-indigo-600/25 border border-indigo-500/40 text-indigo-100 rounded-tr-xs'
+                    : 'bg-white/[0.04] border border-white/8 text-slate-100 rounded-tl-xs shadow-md'
+                }`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            
+            {sending && (
+              <div className="flex items-start gap-2 justify-start">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shrink-0 mt-0.5 overflow-hidden">
+                  <video src="/Live%20chatbot.webm" autoPlay loop muted playsInline className="w-full h-full object-contain scale-125 pointer-events-none" />
+                </div>
+                <div className="px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/8 flex items-center gap-2 text-xs text-slate-400">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
+                  Analyzing…
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+
+        {/* Input Form */}
+        {!showHistory && (
+          <div className="p-3 bg-[#151724] border-t border-white/5 shrink-0">
+            <div className="flex items-center gap-2 bg-slate-900/90 border border-white/10 rounded-2xl px-3 py-1.5 focus-within:border-purple-500/50 transition-all">
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
+                placeholder="Ask about your syllabus, notes, or past papers..."
+                rows={1}
+                className="flex-1 bg-transparent border-none text-xs text-white placeholder:text-slate-500 outline-none resize-none py-1 max-h-20"
+              />
+              <button onClick={() => sendMessage()} disabled={sending || !input.trim()}
+                className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white disabled:opacity-30 disabled:bg-slate-800 disabled:cursor-not-allowed flex items-center justify-center transition-all shrink-0 shadow-md shadow-purple-500/20 active:scale-95"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <p className="text-[9px] text-center text-slate-500 mt-1">
+              Powered by Scholar AI • Optimized for Mobile
+            </p>
+          </div>
+        )}
+      </motion.div>
+    </>
   )
 }

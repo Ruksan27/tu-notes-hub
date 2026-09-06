@@ -2770,73 +2770,67 @@ function UploadTab() {
   const isMcq = contentType === 'MCQ'
 
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '60px' }}>
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[1100px] mx-auto pb-16">
       
       {/* ── Sleek Header Banner ── */}
-      <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.05))', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '20px', padding: '24px 32px', marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: '0 8px 20px rgba(99,102,241,0.3)' }}>
+      <div className="bg-gradient-to-br from-indigo-500/10 to-cyan-500/5 border border-indigo-500/20 rounded-[20px] p-6 sm:p-8 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/30 flex-shrink-0">
             📤
           </div>
           <div>
-            <h2 style={{ fontSize: '26px', fontWeight: 900, margin: 0, color: 'var(--clr-text-1)', letterSpacing: '-0.5px' }}>
+            <h2 className="text-2xl sm:text-[26px] font-black text-white m-0 tracking-tight">
               Publish Study Material
             </h2>
-            <p style={{ color: 'var(--clr-text-3)', fontSize: '13px', margin: '4px 0 0 0' }}>
+            <p className="text-sm text-slate-400 mt-1">
               Upload handwritten notes, solution books, past papers, or MCQs directly to Cloudinary & Google Drive.
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: '#34d399', fontWeight: 700 }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span>
+        <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl text-xs font-bold text-emerald-400 w-fit">
+          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
           Cloud Sync Ready
         </div>
       </div>
 
-      <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <form onSubmit={handleUpload} className="flex flex-col gap-6">
 
         {/* ── STEP 1: MATERIAL TYPE SELECTOR (Grid Card) ── */}
-        <div className="glass-card" style={{ padding: '24px 28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
-            <div style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '13px', boxShadow: '0 4px 10px rgba(99,102,241,0.4)' }}>1</div>
+        <div className="admin-card p-6 sm:p-7">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-sm shadow-md shadow-indigo-500/40">1</div>
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)' }}>Choose Material Category</h3>
-              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Select the type of content you are publishing today.</span>
+              <h3 className="text-base font-extrabold text-white m-0">Choose Material Category</h3>
+              <span className="text-xs text-slate-400">Select the type of content you are publishing today.</span>
             </div>
           </div>
 
           {isSolutionBook && (
-            <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.25)', borderRadius: '10px', fontSize: '12px', color: '#67e8f9' }}>
+            <div className="mb-5 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-sm text-cyan-200">
               📚 <strong>Solution Book:</strong> Select a specific subject to pin inside that subject, or choose <em>"Full Semester Guide"</em> to display at the top for all subjects.
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {typeOptions.map((item) => (
               <button
                 key={item.type} 
                 type="button"
                 onClick={() => setContentType(item.type as any)}
-                style={{
-                  background: contentType === item.type ? 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(6,182,212,0.25))' : 'rgba(255,255,255,0.02)',
-                  border: `1.5px solid ${contentType === item.type ? '#6366f1' : 'rgba(255,255,255,0.06)'}`,
-                  borderRadius: '12px',
-                  padding: '16px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease-in-out',
-                  boxShadow: contentType === item.type ? '0 6px 20px rgba(99,102,241,0.25)' : 'none',
-                  textAlign: 'center'
-                }}
+                className={`
+                  flex flex-col items-center justify-center gap-2.5 p-4 rounded-2xl transition-all duration-300 text-center
+                  ${contentType === item.type 
+                    ? 'bg-gradient-to-br from-indigo-500/25 to-cyan-500/25 border-[1.5px] border-indigo-500 shadow-lg shadow-indigo-500/25' 
+                    : 'bg-white/[0.03] hover:bg-white/[0.06] border-[1.5px] border-white/5 hover:border-white/10'}
+                `}
               >
-                <span style={{ fontSize: '24px' }}>{item.icon}</span>
+                <span className="text-3xl">{item.icon}</span>
                 <div>
-                  <span style={{ fontSize: '14px', fontWeight: 800, color: contentType === item.type ? '#fff' : 'var(--clr-text-1)', display: 'block' }}>{item.label}</span>
-                  <span style={{ fontSize: '11px', color: 'var(--clr-text-3)', display: 'block', marginTop: '2px' }}>{item.desc}</span>
+                  <span className={`text-sm font-extrabold block ${contentType === item.type ? 'text-white' : 'text-slate-300'}`}>
+                    {item.label}
+                  </span>
+                  <span className="text-[11px] text-slate-400 block mt-0.5">{item.desc}</span>
                 </div>
               </button>
             ))}
@@ -2844,33 +2838,32 @@ function UploadTab() {
         </div>
 
         {/* ── STEP 2 & STEP 3: COURSE LOCATION & FILE SOURCE (2 Column Layout) ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           
           {/* Course Location Card */}
-          <div className="glass-card" style={{ padding: '24px 28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
-              <div style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '13px', boxShadow: '0 4px 10px rgba(16,185,129,0.3)' }}>2</div>
+          <div className="admin-card p-6 sm:p-7 h-full">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-sm shadow-md shadow-emerald-500/40">2</div>
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)' }}>Course Location</h3>
-                <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Faculty, Semester & Subject target.</span>
+                <h3 className="text-base font-extrabold text-white m-0">Course Location</h3>
+                <span className="text-xs text-slate-400">Faculty, Semester & Subject target.</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            <div className="flex flex-col gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <div className="w-full min-w-0">
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Faculty *</label>
-                  <select className="input-field w-full max-w-full" value={facultyId} onChange={e => setFacultyId(e.target.value)} required style={{ cursor: 'pointer', fontSize: '13px' }}>
-                    <option value="">— Choose Faculty —</option>
-                    {faculties.map(f => <option key={f.id} value={f.id}>{f.icon} {getShortFacultyName(f.name)}</option>)}
-
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Faculty *</label>
+                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={facultyId} onChange={e => setFacultyId(e.target.value)} required>
+                    <option value="" className="bg-slate-900">— Choose Faculty —</option>
+                    {faculties.map(f => <option key={f.id} value={f.id} className="bg-slate-900">{f.icon} {getShortFacultyName(f.name)}</option>)}
                   </select>
                 </div>
                 <div className="w-full min-w-0">
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Semester / Year *</label>
-                  <select className="input-field w-full max-w-full" value={semesterId} onChange={e => setSemesterId(e.target.value)} required disabled={!facultyId} style={{ cursor: facultyId ? 'pointer' : 'not-allowed', fontSize: '13px' }}>
-                    <option value="">— Choose Period —</option>
-                    {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Semester / Year *</label>
+                  <select className={`w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all ${facultyId ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`} value={semesterId} onChange={e => setSemesterId(e.target.value)} required disabled={!facultyId}>
+                    <option value="" className="bg-slate-900">— Choose Period —</option>
+                    {semesters.map(s => <option key={s.id} value={s.id} className="bg-slate-900">{s.name}</option>)}
                   </select>
                 </div>
               </div>
@@ -2878,19 +2871,19 @@ function UploadTab() {
 
               {facultyId === 'bca' && (
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Syllabus Version</label>
-                  <select className="input-field" value={syllabusFilter} onChange={e => setSyllabusFilter(e.target.value as any)} style={{ cursor: 'pointer', fontSize: '13px' }}>
-                    <option value="all">🌐 All (Both Syllabuses)</option>
-                    <option value="new">✨ New Syllabus (2080+)</option>
-                    <option value="old">📜 Old Syllabus (2074)</option>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Syllabus Version</label>
+                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={syllabusFilter} onChange={e => setSyllabusFilter(e.target.value as any)}>
+                    <option value="all" className="bg-slate-900">🌐 All (Both Syllabuses)</option>
+                    <option value="new" className="bg-slate-900">✨ New Syllabus (2080+)</option>
+                    <option value="old" className="bg-slate-900">📜 Old Syllabus (2074)</option>
                   </select>
                 </div>
               )}
 
               {/* Subject Dropdown */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--clr-text-3)' }}>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 m-0">
                     Subject {contentType === 'SOLUTION_BOOK' ? '(Optional)' : '*'}
                   </label>
                   {semesterId && (
@@ -2921,22 +2914,21 @@ function UploadTab() {
                           }
                         } catch (e) { toast.error('Network error') }
                       }}
-                      style={{ fontSize: '11px', background: 'rgba(99,102,241,0.2)', color: '#818cf8', border: 'none', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer', fontWeight: 700 }}
+                      className="text-[10px] bg-indigo-500/20 text-indigo-400 border-none rounded-lg px-2.5 py-1.5 font-bold hover:bg-indigo-500/30 transition-all"
                     >
-                      + Add New Subject
+                      + Add Subject
                     </button>
                   )}
                 </div>
 
                 <select
-                  className="input-field"
+                  className={`w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all ${semesterId ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
                   value={subjectId}
                   onChange={e => setSubjectId(e.target.value)}
                   required={contentType !== 'SOLUTION_BOOK'}
                   disabled={!semesterId}
-                  style={{ cursor: semesterId ? 'pointer' : 'not-allowed', fontSize: '13px' }}
                 >
-                  <option value="">
+                  <option value="" className="bg-slate-900">
                     {contentType === 'SOLUTION_BOOK' ? '— Full Semester Guide (All Subjects) —' : '— Choose Subject —'}
                   </option>
                   {subjects
@@ -2946,7 +2938,7 @@ function UploadTab() {
                       return true
                     })
                     .map(s => (
-                      <option key={s.id} value={s.id}>
+                      <option key={s.id} value={s.id} className="bg-slate-900">
                         [{s.code}] {s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()}
                       </option>
                     ))}
@@ -2957,63 +2949,53 @@ function UploadTab() {
 
           {/* File Source Card */}
           {contentType !== 'CHEATSHEET' && contentType !== 'MCQ' && (
-            <div className="glass-card" style={{ padding: '24px 28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
-                <div style={{ background: 'linear-gradient(135deg, #06b6d4, #0891b2)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '13px', boxShadow: '0 4px 10px rgba(6,182,212,0.3)' }}>3</div>
+            <div className="admin-card p-6 sm:p-7 h-full">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-sm shadow-md shadow-cyan-500/40">3</div>
                 <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)' }}>File Storage Source</h3>
-                  <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Cloudinary direct upload or Google Drive.</span>
+                  <h3 className="text-base font-extrabold text-white m-0">File Storage Source</h3>
+                  <span className="text-xs text-slate-400">Cloudinary direct upload or Google Drive.</span>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-                {[{ v: 'FILE', icon: '📁', label: 'Upload Local File', hint: 'Cloudinary (Max 10MB)' }, { v: 'DRIVE', icon: '🔗', label: 'Google Drive Link', hint: 'Unlimited File Size' }].map(s => (
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                {[{ v: 'FILE', icon: '📁', label: 'Local File', hint: 'Max 10MB' }, { v: 'DRIVE', icon: '🔗', label: 'Drive Link', hint: 'Unlimited Size' }].map(s => (
                   <button 
                     key={s.v} 
                     type="button" 
                     onClick={() => setSourceType(s.v as any)}
-                    style={{ 
-                      padding: '12px', 
-                      borderRadius: '10px', 
-                      cursor: 'pointer', 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      alignItems: 'center', 
-                      gap: '4px',
-                      justifyContent: 'center', 
-                      transition: 'all 0.2s',
-                      background: sourceType === s.v ? 'rgba(6,182,212,0.15)' : 'rgba(255,255,255,0.02)',
-                      border: `1.5px solid ${sourceType === s.v ? '#06b6d4' : 'rgba(255,255,255,0.06)'}`,
-                      color: sourceType === s.v ? '#67e8f9' : 'var(--clr-text-2)',
-                      textAlign: 'center'
-                    }}
+                    className={`
+                      flex flex-col items-center justify-center gap-1 p-3.5 rounded-xl transition-all text-center
+                      ${sourceType === s.v 
+                        ? 'bg-cyan-500/15 border-[1.5px] border-cyan-500/60 shadow-md shadow-cyan-500/10' 
+                        : 'bg-white/[0.03] hover:bg-white/[0.06] border-[1.5px] border-white/5 hover:border-white/10'}
+                    `}
                   >
-                    <span style={{ fontSize: '18px' }}>{s.icon}</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700 }}>{s.label}</span>
-                    <span style={{ fontSize: '10px', color: 'var(--clr-text-3)' }}>{s.hint}</span>
+                    <span className="text-2xl mb-1">{s.icon}</span>
+                    <span className={`text-[13px] font-extrabold ${sourceType === s.v ? 'text-cyan-400' : 'text-slate-300'}`}>{s.label}</span>
+                    <span className="text-[10px] text-slate-500 block">{s.hint}</span>
                   </button>
                 ))}
               </div>
 
               {sourceType === 'DRIVE' && (
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>🔗 Google Drive Share Link</label>
+                <div className="mt-2">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400 flex items-center gap-1.5">🔗 Google Drive Share Link</label>
                   <input
-                    className="input-field"
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all"
                     type="url"
                     placeholder="https://drive.google.com/file/d/xxxxxxxxxx/view?usp=sharing"
                     value={driveLink}
                     onChange={e => setDriveLink(e.target.value)}
                     required
-                    style={{ fontSize: '13px' }}
                   />
                   {driveLink && parseDriveLink(driveLink) && (
-                    <p style={{ marginTop: '6px', fontSize: '11px', color: '#6ee7b7' }}>
-                      ✅ Valid Drive link — File ID: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>{parseDriveLink(driveLink)}</code>
+                    <p className="mt-2 text-[11px] text-emerald-400 flex items-center gap-1.5">
+                      ✅ Valid Drive link — File ID: <code className="bg-black/30 px-1.5 py-0.5 rounded text-emerald-300">{parseDriveLink(driveLink)}</code>
                     </p>
                   )}
                   {driveLink && !parseDriveLink(driveLink) && (
-                    <p style={{ marginTop: '6px', fontSize: '11px', color: '#fca5a5' }}>❌ Invalid link. Paste full share link from Google Drive.</p>
+                    <p className="mt-2 text-[11px] text-red-400 flex items-center gap-1.5">❌ Invalid link. Paste full share link from Google Drive.</p>
                   )}
                 </div>
               )}
@@ -3023,23 +3005,24 @@ function UploadTab() {
         </div>
 
         {/* ── STEP 4: MATERIAL DETAILS & METADATA (Full Width Card) ── */}
-        <div className="glass-card" style={{ padding: '28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <div style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '13px', boxShadow: '0 4px 10px rgba(245,158,11,0.3)' }}>4</div>
+        {/* ── STEP 4: MATERIAL DETAILS & METADATA (Full Width Card) ── */}
+        <div className="admin-card p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-sm shadow-md shadow-amber-500/40">4</div>
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)' }}>Material Details & Publishing Properties</h3>
-              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Title, description, access tier, and attachments.</span>
+              <h3 className="text-base font-extrabold text-white m-0">Material Details & Publishing Properties</h3>
+              <span className="text-xs text-slate-400">Title, description, access tier, and attachments.</span>
             </div>
           </div>
 
           {/* NOTE Fields */}
           {(contentType === 'NOTE' || contentType === 'SOLUTION_BOOK') && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+              className="flex flex-col gap-5"
             >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label className="block text-sm font-semibold" style={{ color: 'var(--clr-text-2)' }}>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 m-0">
                     {isSolutionBook ? 'Solution Book Title *' : noteType === 'PROJECT' ? 'Project Title *' : noteType === 'LAB_WORK' ? 'Lab Work Title *' : 'Note Title *'}
                   </label>
                   <button
@@ -3089,26 +3072,13 @@ function UploadTab() {
                       setShowSeoBox(true)
                       toast.success('✨ Rank #1 Auto-SEO Package Generated!')
                     }}
-                    style={{
-                      fontSize: '12px',
-                      background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '5px 12px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 2px 10px rgba(99,102,241,0.3)'
-                    }}
+                    className="text-[10px] bg-gradient-to-r from-indigo-500 to-cyan-500 text-white rounded-lg px-3 py-1.5 font-bold shadow-lg shadow-indigo-500/30 hover:opacity-90 transition-all flex items-center gap-1.5 border-none cursor-pointer"
                   >
                     ✨ Auto-SEO Generator
                   </button>
                 </div>
                 <input
-                  className="input-field"
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all"
                   placeholder={
                     isSolutionBook ? 'e.g. BCA Semester 4 Full Solution Book 2081'
                     : noteType === 'PROJECT' ? 'e.g. E-Commerce System with Recommendation Engine'
@@ -3122,17 +3092,16 @@ function UploadTab() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>
+                <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">
                   {noteType === 'PROJECT' ? 'Project Description (Abstract & Features)' : 'Description (optional)'}
                 </label>
                 <textarea
-                  className="input-field"
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all min-h-[80px]"
                   placeholder={
                     noteType === 'PROJECT'
                       ? 'Describe what this project does. List major features, technologies used, database system, etc.'
                       : 'What does this document cover?'
                   }
-                  style={{ minHeight: '80px', resize: 'vertical' }}
                   value={noteDescription}
                   onChange={e => setNoteDescription(e.target.value)}
                 />
@@ -3140,11 +3109,11 @@ function UploadTab() {
 
               {/* ✨ LIVE AUTO-SEO METADATA CODE BOX */}
               {showSeoBox && seoCodeSnippet && (
-                <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px', padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '16px' }}>⚡</span>
-                      <h4 style={{ fontSize: '13px', fontWeight: 800, color: '#818cf8', margin: 0 }}>Next.js Page Metadata Code (Google Rank #1)</h4>
+                <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">⚡</span>
+                      <h4 className="text-[13px] font-extrabold text-indigo-400 m-0">Next.js Page Metadata Code (Google Rank #1)</h4>
                     </div>
                     <button
                       type="button"
@@ -3152,13 +3121,13 @@ function UploadTab() {
                         navigator.clipboard.writeText(seoCodeSnippet)
                         toast.success('📋 Next.js Metadata Code copied to clipboard!')
                       }}
-                      style={{ fontSize: '11px', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700 }}
+                      className="text-[11px] bg-gradient-to-r from-indigo-500 to-cyan-500 text-white border-none px-3 py-1.5 rounded-lg cursor-pointer font-bold"
                     >
                       📋 Copy Metadata Code
                     </button>
                   </div>
 
-                  <pre style={{ background: '#090d16', padding: '12px', borderRadius: '8px', fontSize: '11px', fontFamily: 'monospace', color: '#e2e8f0', overflowX: 'auto', margin: 0, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <pre className="bg-[#090d16] p-3 rounded-lg text-[11px] font-mono text-slate-300 overflow-x-auto m-0 border border-white/5">
                     {seoCodeSnippet}
                   </pre>
                 </div>
@@ -3168,38 +3137,30 @@ function UploadTab() {
               {noteType === 'PROJECT' && subjectId && (
                 <div>
                   {checkingRestriction ? (
-                    <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', fontSize: '13px', color: 'var(--clr-text-3)' }}>
-                      <span className="spinner" style={{ width: '14px', height: '14px', marginRight: '8px' }} /> Checking project restrictions...
+                    <div className="px-4 py-3 bg-white/5 rounded-xl text-[13px] text-slate-400 flex items-center">
+                      <span className="spinner w-3.5 h-3.5 mr-2" /> Checking project restrictions...
                     </div>
                   ) : projectRestriction ? (
-                    <div style={{
-                      padding: '16px',
-                      borderRadius: '10px',
-                      background: projectRestriction.canUpload
-                        ? 'rgba(16, 185, 129, 0.07)'
-                        : 'rgba(239, 68, 68, 0.08)',
-                      border: `1px solid ${
-                        projectRestriction.canUpload
-                          ? 'rgba(16,185,129,0.3)'
-                          : 'rgba(239,68,68,0.3)'
-                      }`,
-                    }}>
+                    <div className={`
+                      p-4 rounded-xl border
+                      ${projectRestriction.canUpload ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30'}
+                    `}>
                       {projectRestriction.isRestricted ? (
                         <>
-                          <p style={{ fontWeight: 700, marginBottom: '6px', fontSize: '13px', color: projectRestriction.canUpload ? '#6ee7b7' : '#fca5a5' }}>
+                          <p className={`font-bold mb-1.5 text-[13px] ${projectRestriction.canUpload ? 'text-emerald-400' : 'text-red-400'}`}>
                             {projectRestriction.canUpload
                               ? `✅ BCA Sem ${semesterOrder}: Slot available (0/1 project uploaded)`
                               : `❌ BCA Sem ${semesterOrder}: Project limit reached (1/1)`
                             }
                           </p>
                           {!projectRestriction.canUpload && projectRestriction.existingProjects.length > 0 && (
-                            <p style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
-                              Existing: <strong style={{ color: 'var(--clr-text-2)' }}>{projectRestriction.existingProjects[0].title}</strong>
+                            <p className="text-xs text-slate-400">
+                              Existing: <strong className="text-slate-200">{projectRestriction.existingProjects[0].title}</strong>
                             </p>
                           )}
                         </>
                       ) : (
-                        <p style={{ fontSize: '13px', color: '#6ee7b7' }}>
+                        <p className="text-[13px] text-emerald-400">
                           ✅ No project limit for this semester.
                         </p>
                       )}
@@ -3210,15 +3171,15 @@ function UploadTab() {
 
               {/* 🤖 AI PROJECT FAIR PRICING & COMPLEXITY APPRAISAL CARD */}
               {(noteType === 'PROJECT' || noteType === 'PROJECT_WORK') && (
-                <div style={{ background: 'linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.08))', border: '1px solid rgba(14,165,233,0.3)', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '22px' }}>🤖</span>
+                <div className="bg-gradient-to-br from-sky-500/10 to-indigo-500/10 border border-sky-500/30 rounded-2xl p-5 flex flex-col gap-4">
+                  <div className="flex justify-between items-center flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[22px]">🤖</span>
                       <div>
-                        <h4 style={{ margin: 0, fontWeight: 800, color: '#38bdf8', fontSize: '15px' }}>
+                        <h4 className="m-0 font-extrabold text-sky-400 text-[15px]">
                           AI Project Complexity & Fair Price Evaluator
                         </h4>
-                        <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
+                        <span className="text-xs text-slate-400">
                           Student-friendly pricing bounded strictly between <strong>Rs. 1,500 (1.5k)</strong> and <strong>Rs. 9,999 (10k)</strong>.
                         </span>
                       </div>
@@ -3228,23 +3189,10 @@ function UploadTab() {
                       type="button"
                       onClick={handleEvaluateProjectPrice}
                       disabled={evaluatingPrice}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '10px',
-                        background: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
-                        color: '#fff',
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        border: 'none',
-                        cursor: evaluatingPrice ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 4px 14px rgba(14,165,233,0.35)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 text-white font-extrabold text-[13px] border-none shadow-lg shadow-sky-500/30 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
                     >
                       {evaluatingPrice ? (
-                        <><span className="spinner" style={{ width: '14px', height: '14px' }} /> Evaluating...</>
+                        <><span className="spinner w-3.5 h-3.5" /> Evaluating...</>
                       ) : (
                         '✨ Run Fair AI Pricing'
                       )}
@@ -3252,42 +3200,42 @@ function UploadTab() {
                   </div>
 
                   {/* Drive Deliverables Checklist for AI Context */}
-                  <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px 16px', borderRadius: '10px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--clr-text-2)' }}>
-                      <input type="checkbox" checked={hasReportPdf} onChange={e => setHasReportPdf(e.target.checked)} style={{ cursor: 'pointer' }} />
-                      📄 Report PDF/Word Included
+                  <div className="bg-black/20 p-3.5 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input type="checkbox" checked={hasReportPdf} onChange={e => setHasReportPdf(e.target.checked)} className="cursor-pointer" />
+                      📄 Report
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--clr-text-2)' }}>
-                      <input type="checkbox" checked={hasDocumentation} onChange={e => setHasDocumentation(e.target.checked)} style={{ cursor: 'pointer' }} />
-                      📘 Setup Guide Included
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input type="checkbox" checked={hasDocumentation} onChange={e => setHasDocumentation(e.target.checked)} className="cursor-pointer" />
+                      📘 Setup Guide
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--clr-text-2)' }}>
-                      <input type="checkbox" checked={hasSqlScript} onChange={e => setHasSqlScript(e.target.checked)} style={{ cursor: 'pointer' }} />
-                      🗄️ SQL DB Dump Included
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input type="checkbox" checked={hasSqlScript} onChange={e => setHasSqlScript(e.target.checked)} className="cursor-pointer" />
+                      🗄️ SQL DB Dump
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--clr-text-2)' }}>
-                      <input type="checkbox" checked={hasDemoVideo} onChange={e => setHasDemoVideo(e.target.checked)} style={{ cursor: 'pointer' }} />
-                      🎥 Demo Video Link Included
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input type="checkbox" checked={hasDemoVideo} onChange={e => setHasDemoVideo(e.target.checked)} className="cursor-pointer" />
+                      🎥 Video Link
                     </label>
                   </div>
 
                   {/* AI Valuation Result Card */}
                   {aiValuationResult && (
-                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '12px', padding: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{
-                            padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 900,
-                            background: aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED' ? 'rgba(236,72,153,0.2)' : 'rgba(14,165,233,0.2)',
-                            color: aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED' ? '#f472b6' : '#38bdf8',
-                            border: '1px solid rgba(255,255,255,0.1)'
-                          }}>
+                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/80 border border-sky-400/40 rounded-xl p-4">
+                      <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`
+                            px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-white/10
+                            ${aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED' 
+                              ? 'bg-pink-500/20 text-pink-400' 
+                              : 'bg-sky-500/20 text-sky-400'}
+                          `}>
                             GRADE: {aiValuationResult.complexityGrade}
                           </span>
-                          <span style={{ fontSize: '14px', fontWeight: 800, color: '#34d399' }}>
+                          <span className="text-sm font-extrabold text-emerald-400">
                             Calculated Price: Rs. {aiValuationResult.calculatedPriceNpr}
                           </span>
-                          <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>
+                          <span className="text-xs text-slate-400">
                             (Fair Range: Rs. {aiValuationResult.suggestedRange?.min} - Rs. {aiValuationResult.suggestedRange?.max})
                           </span>
                         </div>
@@ -3295,7 +3243,7 @@ function UploadTab() {
                         <button
                           type="button"
                           onClick={() => setProjectPrice(String(aiValuationResult.calculatedPriceNpr))}
-                          style={{ fontSize: '11px', background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)', padding: '4px 10px', borderRadius: '6px', fontWeight: 800, cursor: 'pointer' }}
+                          className="text-[11px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg font-extrabold cursor-pointer hover:bg-emerald-500/25 transition-all"
                         >
                           ✅ Apply AI Price (Rs. {aiValuationResult.calculatedPriceNpr})
                         </button>
@@ -3303,11 +3251,11 @@ function UploadTab() {
 
                       {/* Justification List */}
                       {aiValuationResult.justificationList && aiValuationResult.justificationList.length > 0 && (
-                        <div style={{ marginTop: '8px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--clr-text-3)', display: 'block', marginBottom: '4px' }}>
+                        <div className="mt-2">
+                          <span className="text-[11px] font-extrabold text-slate-400 block mb-1">
                             💡 Why this price? (Calculation Breakdown):
                           </span>
-                          <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.6 }}>
+                          <ul className="m-0 pl-4 text-xs text-slate-300 leading-relaxed list-disc">
                             {aiValuationResult.justificationList.map((reason: string, idx: number) => (
                               <li key={idx}>{reason}</li>
                             ))}
@@ -3319,13 +3267,13 @@ function UploadTab() {
 
                   {/* Manual Editable Price Input */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>
-                      💰 Selling Price (NPR) * — <span style={{ color: '#6ee7b7' }}>Editable (You can type any custom price)</span>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">
+                      💰 Selling Price (NPR) * — <span className="text-emerald-400">Editable (You can type any custom price)</span>
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 800, color: '#38bdf8' }}>NPR Rs.</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-extrabold text-sky-400">NPR Rs.</span>
                       <input
-                        className="input-field"
+                        className="w-full sm:w-[200px] bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-emerald-400 font-extrabold outline-none focus:border-cyan-400 focus:bg-black/40 transition-all"
                         type="number"
                         min="1500"
                         max="9999"
@@ -3333,7 +3281,6 @@ function UploadTab() {
                         value={projectPrice}
                         onChange={e => setProjectPrice(e.target.value)}
                         placeholder="e.g. 3500"
-                        style={{ fontSize: '14px', fontWeight: 800, color: '#6ee7b7', width: '200px' }}
                       />
                     </div>
                   </div>
@@ -3341,41 +3288,41 @@ function UploadTab() {
               )}
 
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {!isSolutionBook && <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Format</label>
-                  <select className="input-field" value={noteType} onChange={e => setNoteType(e.target.value)} style={{ cursor: 'pointer', fontSize: '13px' }}>
-                    <option value="PDF_BOOK">📚 PDF Book</option>
-                    <option value="HANDWRITTEN">✍️ Handwritten</option>
-                    <option value="SLIDES_PPT">🖥️ Slides/PPTX</option>
-                    <option value="SHORT_NOTES">📝 Short Notes</option>
-                    <option value="PROJECT_WORK">📁 Project Work</option>
-                    <option value="PROJECT">💻 Project</option>
-                    <option value="GUIDE">📘 Guide</option>
-                    <option value="LAB_WORK">🧪 Lab Work</option>
-                    <option value="SYLLABUS">📋 Syllabus</option>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Format</label>
+                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={noteType} onChange={e => setNoteType(e.target.value)}>
+                    <option value="PDF_BOOK" className="bg-slate-900">📚 PDF Book</option>
+                    <option value="HANDWRITTEN" className="bg-slate-900">✍️ Handwritten</option>
+                    <option value="SLIDES_PPT" className="bg-slate-900">🖥️ Slides/PPTX</option>
+                    <option value="SHORT_NOTES" className="bg-slate-900">📝 Short Notes</option>
+                    <option value="PROJECT_WORK" className="bg-slate-900">📁 Project Work</option>
+                    <option value="PROJECT" className="bg-slate-900">💻 Project</option>
+                    <option value="GUIDE" className="bg-slate-900">📘 Guide</option>
+                    <option value="LAB_WORK" className="bg-slate-900">🧪 Lab Work</option>
+                    <option value="SYLLABUS" className="bg-slate-900">📋 Syllabus</option>
                   </select>
                 </div>}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Access Tier</label>
-                  <select className="input-field" value={isPremium} onChange={e => setIsPremium(e.target.value)} style={{ cursor: 'pointer', fontSize: '13px' }}>
-                    <option value="false">🔓 Free for All</option>
-                    <option value="true">💎 Premium Only</option>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Access Tier</label>
+                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={isPremium} onChange={e => setIsPremium(e.target.value)}>
+                    <option value="false" className="bg-slate-900">🔓 Free for All</option>
+                    <option value="true" className="bg-slate-900">💎 Premium Only</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Author / Credit (optional)</label>
-                <input className="input-field" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} style={{ fontSize: '13px' }} />
+                <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Author / Credit (optional)</label>
+                <input className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} />
               </div>
 
               {sourceType === 'FILE' && <FileDropZone label="Document File (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
               {sourceType === 'FILE' && noteFile && ['jpg', 'jpeg', 'png'].includes(noteFile.name.split('.').pop()?.toLowerCase() || '') && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <input type="checkbox" id="extractTextNote" checked={extractText} onChange={e => setExtractText(e.target.checked)} style={{ cursor: 'pointer', width: '18px', height: '18px' }} />
-                  <label htmlFor="extractTextNote" style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--clr-text-2)' }}>
-                    <strong>Convert to Text (OCR)</strong> - Extract text for SEO and readability. Uncheck if mostly diagrams.
+                <div className="flex items-center gap-3 bg-white/[0.03] p-4 rounded-xl border border-white/10">
+                  <input type="checkbox" id="extractTextNote" checked={extractText} onChange={e => setExtractText(e.target.checked)} className="cursor-pointer w-4 h-4" />
+                  <label htmlFor="extractTextNote" className="cursor-pointer text-xs text-slate-300">
+                    <strong className="text-white">Convert to Text (OCR)</strong> - Extract text for SEO and readability. Uncheck if mostly diagrams.
                   </label>
                 </div>
               )}
@@ -3385,19 +3332,19 @@ function UploadTab() {
           {/* PAST_PAPER Fields */}
           {contentType === 'PAST_PAPER' && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+              className="flex flex-col gap-5"
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Exam Year</label>
-                  <input className="input-field" type="number" required value={paperYear} onChange={e => setPaperYear(e.target.value)} style={{ fontSize: '13px' }} />
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Exam Year</label>
+                  <input className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all" type="number" required value={paperYear} onChange={e => setPaperYear(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Exam Category</label>
-                  <select className="input-field" value={examType} onChange={e => setExamType(e.target.value)} style={{ cursor: 'pointer', fontSize: '13px' }}>
-                    <option value="BOARD_EXAM">🎓 Board Exam</option>
-                    <option value="INTERNAL_EXAM">🏫 Internal Exam</option>
-                    <option value="BACK_PAPER">🔄 Back Paper</option>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Exam Category</label>
+                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={examType} onChange={e => setExamType(e.target.value)}>
+                    <option value="BOARD_EXAM" className="bg-slate-900">🎓 Board Exam</option>
+                    <option value="INTERNAL_EXAM" className="bg-slate-900">🏫 Internal Exam</option>
+                    <option value="BACK_PAPER" className="bg-slate-900">🔄 Back Paper</option>
                   </select>
                 </div>
               </div>
@@ -3408,11 +3355,11 @@ function UploadTab() {
           {/* CHEATSHEET Fields */}
           {contentType === 'CHEATSHEET' && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+              className="flex flex-col gap-5"
             >
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Cheatsheet Title *</label>
-                <input className="input-field" placeholder="e.g. .NET Quick Revision Cheatsheet" required value={sheetTitle} onChange={e => setSheetTitle(e.target.value)} style={{ fontSize: '13px' }} />
+                <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Cheatsheet Title *</label>
+                <input className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all" placeholder="e.g. .NET Quick Revision Cheatsheet" required value={sheetTitle} onChange={e => setSheetTitle(e.target.value)} />
               </div>
               <MultiFileDropZone 
                 label="Attach Files (PDF, Images, Word, Docs, etc.)" 
@@ -3436,29 +3383,29 @@ function UploadTab() {
 
           {/* MCQ Fields */}
           {contentType === 'MCQ' && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Exam Year</label>
-                  <input className="input-field" type="number" required value={mcqYear} onChange={e => setMcqYear(e.target.value)} style={{ fontSize: '13px' }} />
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Exam Year</label>
+                  <input className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all" type="number" required value={mcqYear} onChange={e => setMcqYear(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Exam Category</label>
-                  <select className="input-field" value={mcqExamType} onChange={e => setMcqExamType(e.target.value)} style={{ cursor: 'pointer', fontSize: '13px' }}>
-                    <option value="BOARD_EXAM">🎓 Board Exam</option>
-                    <option value="INTERNAL_EXAM">🏫 Internal Exam</option>
-                    <option value="BACK_PAPER">🔄 Back Paper</option>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Exam Category</label>
+                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={mcqExamType} onChange={e => setMcqExamType(e.target.value)}>
+                    <option value="BOARD_EXAM" className="bg-slate-900">🎓 Board Exam</option>
+                    <option value="INTERNAL_EXAM" className="bg-slate-900">🏫 Internal Exam</option>
+                    <option value="BACK_PAPER" className="bg-slate-900">🔄 Back Paper</option>
                   </select>
                 </div>
               </div>
 
               {/* AI Image Upload Section */}
-              <div style={{ background: 'linear-gradient(135deg, rgba(217,70,239,0.08), rgba(99,102,241,0.08))', border: '1px solid rgba(217,70,239,0.3)', borderRadius: '14px', padding: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                  <span style={{ fontSize: '20px' }}>✨</span>
+              <div className="bg-gradient-to-br from-fuchsia-500/10 to-indigo-500/10 border border-fuchsia-500/30 rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl">✨</span>
                   <div>
-                    <h4 style={{ margin: 0, fontWeight: 800, color: '#e879f9' }}>AI Vision OCR: Extract MCQs from Photo</h4>
-                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--clr-text-3)' }}>Upload a photo of a question paper to extract questions automatically.</p>
+                    <h4 className="m-0 font-extrabold text-fuchsia-400">AI Vision OCR: Extract MCQs from Photo</h4>
+                    <p className="m-0 text-xs text-slate-400 mt-0.5">Upload a photo of a question paper to extract questions automatically.</p>
                   </div>
                 </div>
                 
@@ -3475,13 +3422,10 @@ function UploadTab() {
                     type="button" 
                     onClick={handleGenerateMcqsFromImage}
                     disabled={mcqImageGenerating || !subjectId}
-                    style={{ 
-                      marginTop: '14px', width: '100%', padding: '12px', borderRadius: '10px', fontWeight: 800, border: 'none', cursor: (mcqImageGenerating || !subjectId) ? 'not-allowed' : 'pointer',
-                      background: 'linear-gradient(135deg, #d946ef, #6366f1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                    }}
+                    className="mt-4 w-full p-3 rounded-xl font-extrabold border-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-gradient-to-br from-fuchsia-500 to-indigo-500 text-white flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/30 hover:opacity-90 transition-all"
                   >
                     {mcqImageGenerating ? (
-                      <><span className="spinner" style={{ width: '16px', height: '16px' }}/> Processing Images & Generating MCQs...</>
+                      <><span className="spinner w-4 h-4" /> Processing Images & Generating MCQs...</>
                     ) : (
                       <>✨ Auto-Generate MCQs from {mcqImageFiles.length} Photo(s)</>
                     )}
@@ -3490,28 +3434,28 @@ function UploadTab() {
               </div>
               
               {mcqItems.map((mcq, qi) => (
-                <div key={qi} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '18px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--clr-primary-h)' }}>Question {qi + 1}</span>
+                <div key={qi} className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[13px] font-extrabold text-indigo-400">Question {qi + 1}</span>
                     {mcqItems.length > 1 && (
-                      <button type="button" onClick={() => removeMcqItem(qi)} style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', padding: '3px 10px', fontSize: '11px', cursor: 'pointer' }}>✕ Remove</button>
+                      <button type="button" onClick={() => removeMcqItem(qi)} className="bg-red-500/10 text-red-400 border border-red-500/30 rounded-lg px-2.5 py-1 text-[11px] font-bold cursor-pointer hover:bg-red-500/20 transition-all">✕ Remove</button>
                     )}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className="flex flex-col gap-3">
                     <div>
-                      <input className="input-field" placeholder="e.g. Which of the following is an OOP concept?" value={mcq.question} onChange={e => updateMcqItem(qi, 'question', e.target.value)} required style={{ fontSize: '13px' }} />
+                      <input className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all" placeholder="e.g. Which of the following is an OOP concept?" value={mcq.question} onChange={e => updateMcqItem(qi, 'question', e.target.value)} required />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div className="grid grid-cols-2 gap-2">
                       {mcq.options.map((opt: string, oi: number) => (
                         <div key={oi}>
-                          <input className="input-field" placeholder={`Option ${String.fromCharCode(65 + oi)}`} value={opt} onChange={e => updateMcqOption(qi, oi, e.target.value)} style={{ fontSize: '12px' }} />
+                          <input className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all" placeholder={`Option ${String.fromCharCode(65 + oi)}`} value={opt} onChange={e => updateMcqOption(qi, oi, e.target.value)} />
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
               ))}
-              <button type="button" onClick={addMcqItem} style={{ background: 'rgba(99,102,241,0.1)', border: '1px dashed rgba(99,102,241,0.5)', borderRadius: '10px', padding: '12px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-primary-h)', cursor: 'pointer', width: '100%' }}>
+              <button type="button" onClick={addMcqItem} className="bg-indigo-500/10 border border-dashed border-indigo-500/50 rounded-xl p-3 text-[13px] font-bold text-indigo-400 cursor-pointer w-full hover:bg-indigo-500/20 transition-all">
                 + Add Another Question
               </button>
             </motion.div>
@@ -3522,28 +3466,16 @@ function UploadTab() {
         <button
           type="submit"
           disabled={uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)}
-          style={{
-            padding: '16px 32px',
-            borderRadius: '14px',
-            background: (uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload))
-              ? 'rgba(255,255,255,0.1)'
-              : 'linear-gradient(135deg, #6366f1, #06b6d4)',
-            color: '#fff',
-            fontWeight: 800,
-            fontSize: '15px',
-            border: 'none',
-            cursor: (uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)) ? 'not-allowed' : 'pointer',
-            boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            transition: 'all 0.2s ease-in-out'
-          }}
+          className={`
+            w-full p-4 rounded-xl font-extrabold text-[15px] text-white border-none shadow-xl flex items-center justify-center gap-2.5 transition-all
+            ${(uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)) 
+              ? 'bg-white/10 opacity-70 cursor-not-allowed shadow-none' 
+              : 'bg-gradient-to-br from-indigo-500 to-cyan-500 shadow-indigo-500/40 hover:shadow-indigo-500/60 cursor-pointer hover:scale-[1.01]'}
+          `}
         >
           {(uploading || savingMcqs) ? (
             <>
-              <span className="spinner" style={{ width: '18px', height: '18px' }} />
+              <span className="spinner w-[18px] h-[18px]" />
               Publishing...
             </>
           ) : isMcq ? (
@@ -3567,25 +3499,23 @@ function FileDropZone({ label, accept, file, onFile, hint, required }: {
 }) {
   return (
     <div>
-      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>{label}</label>
+      <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">{label}</label>
       <div
-        style={{
-          border: `2px dashed ${file ? 'var(--clr-primary)' : 'var(--clr-border)'}`,
-          borderRadius: '12px', padding: '28px',
-          textAlign: 'center', background: file ? 'rgba(99,102,241,0.05)' : 'rgba(255,255,255,0.01)',
-          position: 'relative', cursor: 'pointer', transition: 'all 0.2s',
-        }}
+        className={`
+          border-2 border-dashed rounded-xl p-7 text-center relative cursor-pointer transition-all duration-300
+          ${file ? 'border-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10' : 'border-white/20 bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/30'}
+        `}
       >
         <input
           type="file" accept={accept} required={required}
           onChange={e => onFile(e.target.files?.[0] || null)}
-          style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+          className="absolute inset-0 opacity-0 cursor-pointer"
         />
-        <div style={{ fontSize: '32px', marginBottom: '8px' }}>{file ? '✅' : '📂'}</div>
-        <p className="text-sm font-semibold" style={{ color: file ? 'var(--clr-primary-h)' : 'var(--clr-text-2)' }}>
+        <div className="text-3xl mb-2">{file ? '✅' : '📂'}</div>
+        <p className={`text-sm font-extrabold m-0 ${file ? 'text-indigo-400' : 'text-slate-300'}`}>
           {file ? file.name : 'Click to Browse File'}
         </p>
-        <p className="text-xs mt-1" style={{ color: 'var(--clr-text-3)' }}>{hint}</p>
+        <p className="text-[11px] text-slate-500 mt-1 m-0">{hint}</p>
       </div>
     </div>
   )
@@ -3596,14 +3526,12 @@ function MultiFileDropZone({ label, accept, files, onFiles, hint, required }: {
 }) {
   return (
     <div>
-      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>{label}</label>
+      <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">{label}</label>
       <div
-        style={{
-          border: `2px dashed ${files.length > 0 ? 'var(--clr-primary)' : 'var(--clr-border)'}`,
-          borderRadius: '12px', padding: '28px',
-          textAlign: 'center', background: files.length > 0 ? 'rgba(99,102,241,0.05)' : 'rgba(255,255,255,0.01)',
-          position: 'relative', cursor: 'pointer', transition: 'all 0.2s',
-        }}
+        className={`
+          border-2 border-dashed rounded-xl p-7 text-center relative cursor-pointer transition-all duration-300
+          ${files.length > 0 ? 'border-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10' : 'border-white/20 bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/30'}
+        `}
       >
         <input
           type="file" accept={accept} required={required} multiple
@@ -3612,18 +3540,18 @@ function MultiFileDropZone({ label, accept, files, onFiles, hint, required }: {
               onFiles(Array.from(e.target.files))
             }
           }}
-          style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+          className="absolute inset-0 opacity-0 cursor-pointer"
         />
-        <div style={{ fontSize: '32px', marginBottom: '8px' }}>{files.length > 0 ? '✅' : '📂'}</div>
-        <p className="text-sm font-semibold" style={{ color: files.length > 0 ? 'var(--clr-primary-h)' : 'var(--clr-text-2)' }}>
+        <div className="text-3xl mb-2">{files.length > 0 ? '✅' : '📂'}</div>
+        <p className={`text-sm font-extrabold m-0 ${files.length > 0 ? 'text-indigo-400' : 'text-slate-300'}`}>
           {files.length > 0 ? `${files.length} file(s) selected` : 'Click to Browse Files'}
         </p>
-        <p className="text-xs mt-1" style={{ color: 'var(--clr-text-3)' }}>{hint}</p>
+        <p className="text-[11px] text-slate-500 mt-1 m-0">{hint}</p>
         
         {files.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginTop: '12px' }}>
+          <div className="flex flex-wrap gap-1.5 justify-center mt-3">
             {files.map((f, i) => (
-              <span key={i} style={{ fontSize: '11px', background: 'rgba(99,102,241,0.1)', padding: '4px 8px', borderRadius: '4px', color: 'var(--clr-primary-h)' }}>
+              <span key={i} className="text-[10px] font-bold bg-indigo-500/20 px-2.5 py-1 rounded-md text-indigo-400">
                 {f.name}
               </span>
             ))}
@@ -4340,18 +4268,13 @@ function SiteSettingsTab() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} style={{ width: '100%', paddingBottom: '60px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '30px', fontWeight: 900, margin: 0, color: 'var(--clr-text-1)', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          ⚙️ Site Settings
-        </h2>
-        <p style={{ color: 'var(--clr-text-3)', fontSize: '14px', margin: '6px 0 0 0' }}>
-          Manage platform-wide contact information, social links, payment QR code, and platform rules.
-        </p>
-      </div>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-full pb-16">
+      <p style={{ color: 'var(--clr-text-3)', fontSize: '14px', margin: '-16px 0 20px 0' }}>
+        Manage platform-wide contact information, social links, payment QR code, and platform rules.
+      </p>
 
       {/* ── Sleek Glass Tab Navigation Bar ── */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-6 w-full max-w-full">
         {[
           { id: 'GENERAL',      icon: '⚙️', label: 'General Settings' },
           { id: 'TESTIMONIALS', icon: '💬', label: 'Testimonials' },
@@ -4364,19 +4287,11 @@ function SiteSettingsTab() {
               key={t.id}
               type="button"
               onClick={() => setActiveTab(t.id as any)}
+              className="flex-shrink-0 whitespace-nowrap px-6 py-3 rounded-2xl text-sm sm:text-base font-extrabold flex items-center gap-3 transition-all duration-200"
               style={{
-                borderRadius: '12px',
-                padding: '12px 22px',
-                fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                transition: 'all 0.25s ease-in-out',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
                 background: isActive 
                   ? 'linear-gradient(135deg, #0ea5e9, #06b6d4)' 
-                  : 'rgba(255, 255, 255, 0.02)',
+                  : 'rgba(255, 255, 255, 0.03)',
                 color: isActive ? '#ffffff' : 'var(--clr-text-2)',
                 border: isActive 
                   ? '1.5px solid #38bdf8' 
@@ -4393,148 +4308,98 @@ function SiteSettingsTab() {
 
       {/* ── GENERAL SETTINGS (Full Page Width Grid) ── */}
       {activeTab === 'GENERAL' && (
-        <div style={{ width: '100%' }}>
+        <div className="w-full max-w-full">
           {loading ? (
-            <div className="glass-card" style={{ display: 'flex', justifyContent: 'center', padding: '60px', borderRadius: '20px' }}>
+            <div className="glass-card flex justify-center p-12 rounded-2xl">
               <div className="spinner" style={{ width: '36px', height: '36px' }} />
             </div>
           ) : (
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+            <form onSubmit={handleSave} className="flex flex-col gap-5 w-full max-w-full">
               
-              {/* 2-Column Responsive Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '24px', width: '100%' }}>
+              {/* Unified Responsive Container */}
+              <div className="admin-card w-full flex flex-col gap-6 sm:gap-8">
                 
-                {/* ── COLUMN 1: Contact Channels & QR Code ── */}
-                <div 
-                  className="glass-card" 
-                  style={{ 
-                    padding: '32px', 
-                    borderRadius: '20px', 
-                    border: '1px solid rgba(255, 255, 255, 0.08)', 
-                    background: 'rgba(15, 23, 42, 0.65)',
-                    backdropFilter: 'blur(16px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '22px'
-                  }}
-                >
-                  <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px' }}>
-                    <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* ── Contact Channels & QR Code ── */}
+                <div className="w-full">
+                  <div className="border-b border-white/10 pb-3 mb-5">
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span>📞</span> Direct Contact Channels
                     </h3>
-                    <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Phone, Email, WhatsApp, and Payment Info</span>
+                    <span style={{ fontSize: '13px', color: 'var(--clr-text-3)' }}>Manage public contact information</span>
                   </div>
 
-                  {/* WhatsApp Link */}
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
-                      💬 WhatsApp Contact Link
-                    </label>
-                    <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginBottom: '8px' }}>
-                      Format: <code style={{ color: '#a5b4fc', background: 'rgba(99,102,241,0.1)', padding: '2px 6px', borderRadius: '4px' }}>https://wa.me/977XXXXXXXXXX</code>
-                    </p>
-                    <input
-                      type="url"
-                      required
-                      className="input-field"
-                      style={{
-                        width: '100%',
-                        background: 'rgba(0, 0, 0, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.09)',
-                        borderRadius: '12px',
-                        padding: '13px 16px',
-                        color: '#fff',
-                        fontSize: '13px'
-                      }}
-                      placeholder="https://wa.me/9779800000000"
-                      value={whatsappLink}
-                      onChange={e => setWhatsappLink(e.target.value)}
-                    />
-                    {whatsappLink && (
-                      <a
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '12px', color: '#34d399', fontWeight: 700, textDecoration: 'underline' }}
-                      >
-                        ↗ Test Link
-                      </a>
-                    )}
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* WhatsApp Link */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                        💬 WhatsApp Contact Link
+                      </label>
+                      <input
+                        type="url"
+                        required
+                        className="admin-input w-full"
+                        placeholder="https://wa.me/9779800000000"
+                        value={whatsappLink}
+                        onChange={e => setWhatsappLink(e.target.value)}
+                      />
+                    </div>
 
-                  {/* Contact Phone */}
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
-                      📞 Contact Phone Number
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="input-field"
-                      style={{
-                        width: '100%',
-                        background: 'rgba(0, 0, 0, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.09)',
-                        borderRadius: '12px',
-                        padding: '13px 16px',
-                        color: '#fff',
-                        fontSize: '13px'
-                      }}
-                      placeholder="9767776999"
-                      value={contactPhone}
-                      onChange={e => setContactPhone(e.target.value)}
-                    />
-                  </div>
+                    {/* Contact Phone */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                        📞 Contact Phone Number
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        className="admin-input w-full"
+                        placeholder="9767776999"
+                        value={contactPhone}
+                        onChange={e => setContactPhone(e.target.value)}
+                      />
+                    </div>
 
-                  {/* Contact Email */}
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
-                      ✉️ Contact Email Address
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      className="input-field"
-                      style={{
-                        width: '100%',
-                        background: 'rgba(0, 0, 0, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.09)',
-                        borderRadius: '12px',
-                        padding: '13px 16px',
-                        color: '#fff',
-                        fontSize: '13px'
-                      }}
-                      placeholder="tunoteshub@gmail.com"
-                      value={contactEmail}
-                      onChange={e => setContactEmail(e.target.value)}
-                    />
+                    {/* Contact Email */}
+                    <div className="md:col-span-2">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                        ✉️ Contact Email Address
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        className="admin-input w-full"
+                        placeholder="tunoteshub@gmail.com"
+                        value={contactEmail}
+                        onChange={e => setContactEmail(e.target.value)}
+                      />
+                    </div>
                   </div>
 
                   {/* Payment QR Code */}
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '18px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px', marginTop: '20px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
                       📷 Payment QR Code Image
                     </label>
-                    <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginBottom: '12px' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '16px' }}>
                       Upload eSewa, Khalti, or Mobile Banking QR image for user checkouts.
                     </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1, minWidth: '180px' }}>
-                        <div style={{ position: 'relative', border: '2px dashed rgba(99,102,241,0.3)', borderRadius: '12px', padding: '20px 14px', textAlign: 'center', background: 'rgba(0,0,0,0.2)', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div style={{ position: 'relative', border: '2px dashed rgba(99,102,241,0.4)', borderRadius: '16px', padding: '24px', textAlign: 'center', background: 'rgba(99,102,241,0.05)', cursor: 'pointer', transition: 'all 0.2s' }}>
                           <input
                             type="file"
                             accept="image/*"
                             onChange={handleFileChange}
                             style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
                           />
-                          <span style={{ fontSize: '24px', display: 'block', marginBottom: '4px' }}>📸</span>
-                          <span style={{ fontSize: '12px', color: 'var(--clr-text-2)', fontWeight: 700 }}>
-                            {paymentQrFile ? paymentQrFile.name : 'Click to Upload QR'}
+                          <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>📸</span>
+                          <span style={{ fontSize: '14px', color: 'var(--clr-text-1)', fontWeight: 700 }}>
+                            {paymentQrFile ? paymentQrFile.name : 'Click or Drag to Upload QR'}
                           </span>
                         </div>
                       </div>
                       {(paymentQrUrl || paymentQrFile) && (
-                        <div style={{ width: '100px', height: '100px', position: 'relative', background: '#fff', borderRadius: '12px', padding: '6px', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 20px rgba(0,0,0,0.3)' }}>
+                        <div style={{ width: '120px', height: '120px', position: 'relative', background: '#fff', borderRadius: '16px', padding: '8px', flexShrink: 0, border: '2px solid rgba(255,255,255,0.2)', boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}>
                           <img src={paymentQrUrl!} alt="QR Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </div>
                       )}
@@ -4542,121 +4407,75 @@ function SiteSettingsTab() {
                   </div>
                 </div>
 
-                {/* ── COLUMN 2: Social Media Handles & Tips ── */}
-                <div 
-                  className="glass-card" 
-                  style={{ 
-                    padding: '32px', 
-                    borderRadius: '20px', 
-                    border: '1px solid rgba(255, 255, 255, 0.08)', 
-                    background: 'rgba(15, 23, 42, 0.65)',
-                    backdropFilter: 'blur(16px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '22px'
-                  }}
-                >
-                  <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px' }}>
-                    <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* ── Social Media Handles ── */}
+                <div className="w-full" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '24px' }}>
+                  <div className="border-b border-white/10 pb-3 mb-5">
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--clr-text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span>🌐</span> Social Media Handles
                     </h3>
-                    <span style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Footer & profile links displayed to students</span>
+                    <span style={{ fontSize: '13px', color: 'var(--clr-text-3)' }}>Footer & profile links displayed to students</span>
                   </div>
 
-                  {/* Facebook */}
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
-                      📘 Facebook Profile Link
-                    </label>
-                    <input
-                      type="url"
-                      className="input-field"
-                      style={{
-                        width: '100%',
-                        background: 'rgba(0, 0, 0, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.09)',
-                        borderRadius: '12px',
-                        padding: '13px 16px',
-                        color: '#fff',
-                        fontSize: '13px'
-                      }}
-                      placeholder="https://facebook.com/yourpage"
-                      value={facebookLink}
-                      onChange={e => setFacebookLink(e.target.value)}
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Facebook */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                        📘 Facebook Profile
+                      </label>
+                      <input
+                        type="url"
+                        className="admin-input w-full"
+                        placeholder="https://facebook.com/yourpage"
+                        value={facebookLink}
+                        onChange={e => setFacebookLink(e.target.value)}
+                      />
+                    </div>
 
-                  {/* TikTok */}
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
-                      🎵 TikTok Profile Link
-                    </label>
-                    <input
-                      type="url"
-                      className="input-field"
-                      style={{
-                        width: '100%',
-                        background: 'rgba(0, 0, 0, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.09)',
-                        borderRadius: '12px',
-                        padding: '13px 16px',
-                        color: '#fff',
-                        fontSize: '13px'
-                      }}
-                      placeholder="https://tiktok.com/@yourusername"
-                      value={tiktokLink}
-                      onChange={e => setTiktokLink(e.target.value)}
-                    />
-                  </div>
+                    {/* TikTok */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                        🎵 TikTok Profile
+                      </label>
+                      <input
+                        type="url"
+                        className="admin-input w-full"
+                        placeholder="https://tiktok.com/@yourusername"
+                        value={tiktokLink}
+                        onChange={e => setTiktokLink(e.target.value)}
+                      />
+                    </div>
 
-                  {/* Instagram */}
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
-                      📸 Instagram Profile Link
-                    </label>
-                    <input
-                      type="url"
-                      className="input-field"
-                      style={{
-                        width: '100%',
-                        background: 'rgba(0, 0, 0, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.09)',
-                        borderRadius: '12px',
-                        padding: '13px 16px',
-                        color: '#fff',
-                        fontSize: '13px'
-                      }}
-                      placeholder="https://instagram.com/yourusername"
-                      value={instagramLink}
-                      onChange={e => setInstagramLink(e.target.value)}
-                    />
-                  </div>
+                    {/* Instagram */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                        📸 Instagram Profile
+                      </label>
+                      <input
+                        type="url"
+                        className="admin-input w-full"
+                        placeholder="https://instagram.com/yourusername"
+                        value={instagramLink}
+                        onChange={e => setInstagramLink(e.target.value)}
+                      />
+                    </div>
 
-                  {/* GitHub */}
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
-                      🐱 GitHub Profile Link
-                    </label>
-                    <input
-                      type="url"
-                      className="input-field"
-                      style={{
-                        width: '100%',
-                        background: 'rgba(0, 0, 0, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.09)',
-                        borderRadius: '12px',
-                        padding: '13px 16px',
-                        color: '#fff',
-                        fontSize: '13px'
-                      }}
-                      placeholder="https://github.com/yourusername"
-                      value={githubLink}
-                      onChange={e => setGithubLink(e.target.value)}
-                    />
+                    {/* GitHub */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                        🐱 GitHub Profile
+                      </label>
+                      <input
+                        type="url"
+                        className="admin-input w-full"
+                        placeholder="https://github.com/yourusername"
+                        value={githubLink}
+                        onChange={e => setGithubLink(e.target.value)}
+                      />
+                    </div>
                   </div>
 
                   {/* Information Tip Box */}
-                  <div style={{ background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6, 182, 212, 0.25)', borderRadius: '12px', padding: '16px', marginTop: 'auto' }}>
+                  <div style={{ background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6, 182, 212, 0.25)', borderRadius: '12px', padding: '16px', marginTop: '24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#67e8f9', fontWeight: 800, fontSize: '13px', marginBottom: '4px' }}>
                       ⚡ Quick Sync Information
                     </div>
@@ -4665,14 +4484,14 @@ function SiteSettingsTab() {
                     </p>
                   </div>
                 </div>
-
               </div>
 
               {/* Submit Button Bar */}
-              <div className="glass-card" style={{ padding: '20px 28px', borderRadius: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', background: 'rgba(15, 23, 42, 0.65)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="p-4 sm:px-6 rounded-2xl flex flex-col sm:flex-row justify-between sm:justify-end items-center bg-slate-900/65 border border-white/10 w-full max-w-full">
                 <button 
                   type="submit" 
                   disabled={saving} 
+                  className="w-full sm:w-auto"
                   style={{
                     padding: '14px 36px',
                     borderRadius: '12px',
@@ -4685,6 +4504,7 @@ function SiteSettingsTab() {
                     boxShadow: '0 8px 20px rgba(14, 165, 233, 0.35)',
                     display: 'inline-flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '10px'
                   }}
                 >
@@ -4702,8 +4522,8 @@ function SiteSettingsTab() {
       )}
 
       {activeTab === 'TESTIMONIALS' && (
-        <div className="glass-card" style={{ padding: '36px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="glass-card p-4 sm:p-6 rounded-2xl w-full max-w-full">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
             <div>
               <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>💬 Testimonials Management</h3>
               <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Approve testimonials to show them on the homepage marquee.</p>
@@ -4722,7 +4542,7 @@ function SiteSettingsTab() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {testimonials.map((t: any) => (
                 <div key={t.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                       <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '16px' }}>
                         {t.name[0]?.toUpperCase()}
@@ -4741,7 +4561,7 @@ function SiteSettingsTab() {
                     "{t.content}"
                   </p>
                   
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', flexWrap: 'wrap' }}>
                     {t.status !== 'APPROVED' && (
                       <button onClick={() => updateTestimonialStatus(t.id, 'APPROVED')} className="btn btn-sm" style={{ background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>
                         ✅ Approve
@@ -4764,87 +4584,123 @@ function SiteSettingsTab() {
       )}
 
       {activeTab === 'ABOUT' && (
-        <div className="glass-card" style={{ padding: '36px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="admin-card w-full max-w-full">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-white/10">
             <div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>📖 About Section Cards</h3>
-              <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Customize the mission and feature cards displayed on the About page.</p>
+              <h3 className="text-lg font-bold flex items-center gap-2 m-0 text-white">
+                <span>📖</span> About Section Cards
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Customize the mission and feature cards displayed on the About page.
+              </p>
             </div>
             <button
               onClick={() => setAboutItems(prev => [...prev, { id: String(Date.now()), emoji: '🎯', title: 'New Feature', description: 'Feature description' }])}
-              className="btn btn-primary btn-sm"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-black/20"
             >
-              ➕ Add New Card
+              <span>➕</span> Add New Card
             </button>
           </div>
 
           {aboutLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><div className="spinner" /></div>
+            <div className="flex justify-center p-10"><div className="spinner" /></div>
           ) : (
             <form onSubmit={handleSaveAbout}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
+              <div className="flex flex-col gap-5 mb-8">
                 {aboutItems.map((item, index) => (
-                  <div key={item.id} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
-                      <label style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>Emoji</label>
-                      <input
-                        type="text"
-                        className="input-field"
-                        style={{ width: '60px', textAlign: 'center', fontSize: '20px' }}
-                        value={item.emoji}
+                  <div key={item.id} className="group relative flex flex-col gap-4 bg-slate-900/40 border border-white/5 rounded-2xl p-4 sm:p-5 w-full hover:bg-slate-900/60 transition-all duration-300 shadow-sm">
+                    
+                    {/* Header Row: Emoji + Title + Delete */}
+                    <div className="flex items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+                      
+                      <div className="flex flex-1 items-center gap-3 w-full">
+                        {/* Emoji */}
+                        <div className="w-12 h-12 flex-shrink-0 relative">
+                          <input
+                            type="text"
+                            className="w-full h-full text-center text-xl bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-400 focus:bg-white/10 transition-all shadow-inner"
+                            value={item.emoji}
+                            onChange={e => {
+                              const updated = [...aboutItems]
+                              updated[index].emoji = e.target.value
+                              setAboutItems(updated)
+                            }}
+                            required
+                            title="Emoji"
+                          />
+                        </div>
+                        
+                        {/* Title */}
+                        <div className="flex-1 min-w-0">
+                          <input
+                            type="text"
+                            className="w-full bg-transparent border-none text-base sm:text-lg font-bold text-white outline-none placeholder:text-white/20 px-1"
+                            value={item.title}
+                            onChange={e => {
+                              const updated = [...aboutItems]
+                              updated[index].title = e.target.value
+                              setAboutItems(updated)
+                            }}
+                            required
+                            placeholder="Card Title (e.g. Our Mission)"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Delete Button */}
+                      <button
+                        type="button"
+                        onClick={() => setAboutItems(prev => prev.filter(a => a.id !== item.id))}
+                        className="flex-shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 hover:border-red-500 transition-all text-xs font-bold flex items-center gap-1.5"
+                        title="Delete Card"
+                      >
+                        <span className="hidden sm:inline">Delete</span>
+                        <span>🗑️</span>
+                      </button>
+                    </div>
+
+                    {/* Description */}
+                    <div className="w-full">
+                      <textarea
+                        className="w-full bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-300 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all shadow-inner resize-y min-h-[90px]"
+                        value={item.description}
                         onChange={e => {
                           const updated = [...aboutItems]
-                          updated[index].emoji = e.target.value
+                          updated[index].description = e.target.value
                           setAboutItems(updated)
                         }}
                         required
+                        placeholder="Brief description of the card..."
                       />
                     </div>
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '4px' }}>Card Title</label>
-                        <input
-                          type="text"
-                          className="input-field"
-                          value={item.title}
-                          onChange={e => {
-                            const updated = [...aboutItems]
-                            updated[index].title = e.target.value
-                            setAboutItems(updated)
-                          }}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '4px' }}>Description</label>
-                        <textarea
-                          className="input-field"
-                          style={{ height: '80px', resize: 'vertical' }}
-                          value={item.description}
-                          onChange={e => {
-                            const updated = [...aboutItems]
-                            updated[index].description = e.target.value
-                            setAboutItems(updated)
-                          }}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAboutItems(prev => prev.filter(a => a.id !== item.id))}
-                      className="btn btn-danger btn-sm"
-                      style={{ marginTop: '24px' }}
-                    >
-                      🗑️
-                    </button>
                   </div>
                 ))}
+                
+                {aboutItems.length === 0 && (
+                  <div className="text-center p-10 bg-white/[0.02] border border-white/[0.05] rounded-2xl border-dashed">
+                    <span className="text-4xl mb-3 block opacity-50">📭</span>
+                    <h4 className="text-white font-bold mb-1">No Cards Found</h4>
+                    <p className="text-slate-400 text-sm">You haven't added any about cards yet. Click the button above to create one.</p>
+                  </div>
+                )}
               </div>
 
-              <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
-                <button type="submit" disabled={aboutSaving} className="btn btn-primary">
-                  {aboutSaving ? 'Saving…' : '💾 Save About Cards'}
+              <div className="border-t border-white/10 pt-6 flex justify-end">
+                <button 
+                  type="submit" 
+                  disabled={aboutSaving} 
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-sm font-extrabold text-white transition-all flex items-center justify-center gap-2"
+                  style={{
+                    background: aboutSaving ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
+                    boxShadow: aboutSaving ? 'none' : '0 8px 20px rgba(14, 165, 233, 0.35)',
+                    cursor: aboutSaving ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {aboutSaving ? (
+                    <><div className="spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', opacity: 0.8 }} /> Saving Cards…</>
+                  ) : (
+                    '💾 Save About Cards'
+                  )}
                 </button>
               </div>
             </form>
@@ -4853,7 +4709,7 @@ function SiteSettingsTab() {
       )}
 
       {activeTab === 'RULES' && (
-        <div className="glass-card" style={{ padding: '36px' }}>
+        <div className="glass-card p-4 sm:p-6 rounded-2xl w-full max-w-full">
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>⚖️ Platform Rules & Regulations</h3>
             <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Customize guidelines for Buyers and Sellers shown on the About page.</p>
@@ -4863,7 +4719,7 @@ function SiteSettingsTab() {
             <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><div className="spinner" /></div>
           ) : (
             <form onSubmit={handleSaveRules}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '24px' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 w-full">
                 
                 {/* Buyer Rules Section */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -4948,7 +4804,7 @@ function SiteSettingsTab() {
               </div>
 
               <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '20px' }}>
-                <button type="submit" disabled={rulesSaving} className="btn btn-primary">
+                <button type="submit" disabled={rulesSaving} className="btn btn-primary w-full sm:w-auto">
                   {rulesSaving ? 'Saving…' : '💾 Save Platform Rules'}
                 </button>
               </div>
@@ -4959,3 +4815,4 @@ function SiteSettingsTab() {
     </motion.div>
   )
 }
+

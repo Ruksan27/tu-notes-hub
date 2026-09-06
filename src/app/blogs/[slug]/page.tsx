@@ -181,9 +181,9 @@ export default async function BlogPostPage({ params }: Props) {
               </div>
             </header>
 
-            {blog.thumbnailUrl && (
+            {blog.thumbnailUrl && (blog.thumbnailUrl.startsWith('/') || blog.thumbnailUrl.startsWith('http://') || blog.thumbnailUrl.startsWith('https://')) && (
               <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', borderRadius: '16px', overflow: 'hidden', marginBottom: '40px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <Image src={blog.thumbnailUrl} alt={blog.title} fill style={{ objectFit: 'cover' }} priority />
+                <Image src={blog.thumbnailUrl} alt={blog.title} fill style={{ objectFit: 'cover' }} priority unoptimized={!blog.thumbnailUrl.startsWith('/') && !blog.thumbnailUrl.includes('cloudinary.com')} />
               </div>
             )}
 
