@@ -1,4 +1,3 @@
-// src/app/api/upload/solution-book/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -6,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
-    if (!user || user.role !== 'ADMIN') {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'CHILD_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
       revalidatePath(`/faculty/${facultyId}`)
       revalidatePath(`/faculty/${facultyId}/${solutionBook.semester.order}-semester`)
       revalidatePath(`/faculty/${facultyId}/${solutionBook.semester.order}th-semester`)
-    } catch (e) {}
+    } catch (e) { }
 
     return NextResponse.json({ solutionBook, message: 'Solution book published successfully! 🎉' })
   } catch (error) {

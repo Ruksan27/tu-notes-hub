@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
+import bcrypt from 'bcryptjs'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +26,8 @@ export async function GET() {
         isEmailVerified: true,
         facultyId: true,
         semesterOrder: true,
+        adminFacultyId: true,
+        adminSemesterId: true,
         createdAt: true,
       },
     })
@@ -33,6 +36,46 @@ export async function GET() {
   } catch (error) {
     console.error('[ADMIN_USERS_GET]', error)
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
+  }
+}
+
+// Create new user (Child Admin or Student)
+export async function POST(req: Request) {
+  try {
+    const admin = await getCurrentUser()
+    if (!admin || admin.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { name, email, password, role, adminFacultyId, adminSemesterId } = await req.json()
+
+    if (!name || !email || !password) {
+      return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } })
+    if (existingUser) {
+      return NextResponse.json({ error: 'Email already exists' }, { status: 400 })
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: role || 'STUDENT',
+        isEmailVerified: true, // Auto-verify users created by admin
+        adminFacultyId: adminFacultyId || null,
+        adminSemesterId: adminSemesterId || null,
+      }
+    })
+
+    return NextResponse.json({ user, message: 'User created successfully! 🎉' })
+  } catch (error) {
+    console.error('[ADMIN_USERS_POST]', error)
+    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
   }
 }
 
@@ -45,7 +88,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json()
-    const { userId, name, email, role, packageType, months, facultyId, semesterOrder } = body
+    const { userId, name, email, role, packageType, months, facultyId, semesterOrder, adminFacultyId, adminSemesterId } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
@@ -54,7 +97,7 @@ export async function PUT(req: Request) {
     const updateData: any = {}
     if (name) updateData.name = name
     if (email) updateData.email = email
-    if (role) updateData.role = role as 'STUDENT' | 'ADMIN'
+    if (role) updateData.role = role as 'STUDENT' | 'ADMIN' | 'CHILD_ADMIN'
     
     // Allow clearing faculty or setting it
     if (facultyId !== undefined) {
@@ -64,6 +107,14 @@ export async function PUT(req: Request) {
     // Allow clearing semesterOrder or setting it
     if (semesterOrder !== undefined) {
       updateData.semesterOrder = semesterOrder === '' ? null : parseInt(semesterOrder)
+    }
+    
+    // Child Admin fields
+    if (adminFacultyId !== undefined) {
+      updateData.adminFacultyId = adminFacultyId === '' ? null : adminFacultyId
+    }
+    if (adminSemesterId !== undefined) {
+      updateData.adminSemesterId = adminSemesterId === '' ? null : adminSemesterId
     }
     
     if (packageType) {

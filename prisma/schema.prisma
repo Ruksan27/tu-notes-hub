@@ -11,6 +11,7 @@ datasource db {
 enum Role {
   STUDENT
   ADMIN
+  CHILD_ADMIN
 }
 
 enum Package {
@@ -61,6 +62,11 @@ model User {
   projectReviews        ProjectReview[]
   cart                  Cart?
   courseType            String    @default("NEW") // "NEW" or "OLD"
+  
+  // Admin Assignments (For CHILD_ADMIN)
+  adminFacultyId        String?
+  adminSemesterId       String?
+  
   createdAt             DateTime  @default(now())
 }
 

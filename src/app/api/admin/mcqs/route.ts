@@ -18,6 +18,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await import('@/lib/auth').then(m => m.getCurrentUser())
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'CHILD_ADMIN')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { subjectId, mcqs } = await req.json()
     if (!subjectId || !Array.isArray(mcqs)) {
       return NextResponse.json({ error: 'subjectId and array of mcqs are required' }, { status: 400 })
@@ -48,9 +53,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get('id')
-  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
   try {
+    const user = await import('@/lib/auth').then(m => m.getCurrentUser())
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const id = req.nextUrl.searchParams.get('id')
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
     await prisma.mCQ.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error: any) {

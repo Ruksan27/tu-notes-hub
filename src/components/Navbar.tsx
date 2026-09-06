@@ -209,7 +209,7 @@ export default function Navbar() {
                     <Link href="/dashboard?tab=profile" className="nav-drop-item">
                       <span>👤</span> Edit Profile
                     </Link>
-                    {user.role === 'ADMIN' && (
+                    {(user.role === 'ADMIN' || user.role === 'CHILD_ADMIN') && (
                       <Link href="/admin" className="nav-drop-item">
                         <span>⚙️</span> Admin Panel
                       </Link>
@@ -316,7 +316,7 @@ export default function Navbar() {
                   {user && cartCount > 0 && (pathname.startsWith('/projects') || pathname === '/cart') && (
                     <Link href="/cart" className="nav-mobile-link">🛒 My Cart ({cartCount})</Link>
                   )}
-                  {user.role === 'ADMIN' && (
+                  {(user.role === 'ADMIN' || user.role === 'CHILD_ADMIN') && (
                     <Link href="/admin" className="nav-mobile-link">⚙️ Admin Panel</Link>
                   )}
                   <button className="nav-mobile-link nav-mobile-danger" onClick={handleLogout}>

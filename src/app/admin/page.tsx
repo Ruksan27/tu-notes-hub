@@ -61,7 +61,7 @@ function getShortFacultyName(name: string) {
 
 export default function AdminPage() {
 
-  const [user, setUser] = useState<{ role: string; name: string; email: string; packageType: string } | null>(null)
+  const [user, setUser] = useState<{ role: string; name: string; email: string; packageType: string; adminFacultyId?: string; adminSemesterId?: string } | null>(null)
   const [tab, setTab] = useState<AdminTab>('overview')
   const [payments, setPayments] = useState<Payment[]>([])
   const [stats, setStats] = useState({ users: 0, payments: 0, pending: 0, revenue: 0 })
@@ -78,8 +78,11 @@ export default function AdminPage() {
     const stored = localStorage.getItem('tu_user')
     if (!stored) { router.push('/login'); return }
     const u = JSON.parse(stored)
-    if (u.role !== 'ADMIN') { router.push('/'); return }
+    if (u.role !== 'ADMIN' && u.role !== 'CHILD_ADMIN') { router.push('/'); return }
     setUser(u)
+    if (u.role === 'CHILD_ADMIN') {
+      setTab('upload')
+    }
     setLoading(false)
   }, [router])
 
@@ -155,7 +158,7 @@ export default function AdminPage() {
     )
   }
 
-  const navItems: { id: AdminTab; icon: string; label: string }[] = [
+  let navItems: { id: AdminTab; icon: string; label: string }[] = [
     { id: 'overview',  icon: '📊', label: 'Overview' },
     { id: 'seo',       icon: '🔍', label: 'SEO Dashboard' },
     { id: 'blogs',     icon: '📝', label: 'Blogs & Articles' },
@@ -171,6 +174,10 @@ export default function AdminPage() {
     { id: 'settings',  icon: '⚙️', label: 'Site Settings' },
     { id: 'backup',    icon: '💾', label: 'Data Backup' },
   ]
+
+  if (user?.role === 'CHILD_ADMIN') {
+    navItems = [{ id: 'upload', icon: '📤', label: 'Upload Materials' }]
+  }
 
   const statCards = [
     { label: 'Registered Students', value: stats.users,    icon: '👥', accent: '#818cf8' },
@@ -224,6 +231,7 @@ export default function AdminPage() {
             ))}
 
             {/* Projects Dropdown Menu */}
+            {user?.role !== 'CHILD_ADMIN' && (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <button
                 className={`sidebar-item${tab === 'projects' ? ' active' : ''}`}
@@ -258,6 +266,7 @@ export default function AdminPage() {
                 </button>
               </motion.div>
             </div>
+            )}
           </div>
         </div>
 
@@ -541,7 +550,7 @@ export default function AdminPage() {
 
 
             {/* ── Upload Tab ── */}
-            {tab === 'upload' && <UploadTab />}
+            {tab === 'upload' && <UploadTab user={user} />}
 
             {/* ── Pricing Plans Tab ── */}
             {tab === 'pricing' && (
@@ -1904,6 +1913,18 @@ function UsersTab() {
   const [loading, setLoading] = useState(true)
   const [faculties, setFaculties] = useState<any[]>([])
   const [semesters, setSemesters] = useState<any[]>([])
+  const [adminSemesters, setAdminSemesters] = useState<any[]>([])
+
+  // Create User State
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [newRole, setNewRole] = useState('STUDENT')
+  const [newAdminFacultyId, setNewAdminFacultyId] = useState('')
+  const [newAdminSemesterId, setNewAdminSemesterId] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [newAdminSemesters, setNewAdminSemesters] = useState<any[]>([])
 
   // Edit User State
   const [editingUser, setEditingUser] = useState<any | null>(null)
@@ -1912,6 +1933,8 @@ function UsersTab() {
   const [editRole, setEditRole] = useState('')
   const [editFacultyId, setEditFacultyId] = useState('')
   const [editSemesterOrder, setEditSemesterOrder] = useState<string | number>('')
+  const [editAdminFacultyId, setEditAdminFacultyId] = useState('')
+  const [editAdminSemesterId, setEditAdminSemesterId] = useState('')
   const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
@@ -1928,6 +1951,26 @@ function UsersTab() {
       .then(r => r.json())
       .then(d => setSemesters(d.semesters || []))
   }, [editFacultyId])
+
+  useEffect(() => {
+    if (!editAdminFacultyId) {
+      setAdminSemesters([])
+      return
+    }
+    fetch(`/api/admin/semesters?facultyId=${editAdminFacultyId}`)
+      .then(r => r.json())
+      .then(d => setAdminSemesters(d.semesters || []))
+  }, [editAdminFacultyId])
+
+  useEffect(() => {
+    if (!newAdminFacultyId) {
+      setNewAdminSemesters([])
+      return
+    }
+    fetch(`/api/admin/semesters?facultyId=${newAdminFacultyId}`)
+      .then(r => r.json())
+      .then(d => setNewAdminSemesters(d.semesters || []))
+  }, [newAdminFacultyId])
 
   async function fetchUsers() {
     try {
@@ -1981,6 +2024,44 @@ function UsersTab() {
     }
   }
 
+  async function handleCreateUser(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newName || !newEmail || !newPassword) return
+    setCreating(true)
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newName,
+          email: newEmail,
+          password: newPassword,
+          role: newRole,
+          adminFacultyId: newAdminFacultyId || null,
+          adminSemesterId: newAdminSemesterId || null,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || 'User created successfully! ✅')
+        setShowCreateModal(false)
+        setNewName('')
+        setNewEmail('')
+        setNewPassword('')
+        setNewRole('STUDENT')
+        setNewAdminFacultyId('')
+        setNewAdminSemesterId('')
+        fetchUsers()
+      } else {
+        toast.error(data.error || 'Failed to create user')
+      }
+    } catch {
+      toast.error('Failed to create user')
+    } finally {
+      setCreating(false)
+    }
+  }
+
   async function handleUpdateDetails(e: React.FormEvent) {
     e.preventDefault()
     if (!editingUser) return
@@ -1996,6 +2077,8 @@ function UsersTab() {
           role: editRole,
           facultyId: editFacultyId || null,
           semesterOrder: editSemesterOrder !== '' ? parseInt(String(editSemesterOrder)) : null,
+          adminFacultyId: editAdminFacultyId || null,
+          adminSemesterId: editAdminSemesterId || null,
         }),
       })
       const data = await res.json()
@@ -2020,6 +2103,8 @@ function UsersTab() {
     setEditRole(u.role || 'STUDENT')
     setEditFacultyId(u.facultyId || '')
     setEditSemesterOrder(u.semesterOrder !== null && u.semesterOrder !== undefined ? u.semesterOrder : '')
+    setEditAdminFacultyId(u.adminFacultyId || '')
+    setEditAdminSemesterId(u.adminSemesterId || '')
   }
 
   const filtered = users.filter(u =>
@@ -2036,7 +2121,7 @@ function UsersTab() {
             Manage registered students, grant premium access manually, and view active subscriptions.
           </p>
         </div>
-        <div>
+        <div style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
             className="input-field"
@@ -2045,10 +2130,75 @@ function UsersTab() {
             onChange={e => setSearch(e.target.value)}
             style={{ minWidth: '260px', padding: '8px 14px', borderRadius: '8px' }}
           />
+          <button className="primary-btn" onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+            ✨ Add User
+          </button>
         </div>
       </div>
 
       <div className="table-wrap">
+        {showCreateModal && (
+          <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h3 style={{ margin: '0 0 16px 0' }}>✨ Add New User</h3>
+              <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2">Name</label>
+                  <input type="text" className="input-field" value={newName} onChange={e => setNewName(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2">Email</label>
+                  <input type="email" className="input-field" value={newEmail} onChange={e => setNewEmail(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2">Password</label>
+                  <input type="password" className="input-field" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2">Role</label>
+                  <select className="input-field" value={newRole} onChange={e => setNewRole(e.target.value)}>
+                    <option value="STUDENT">Student</option>
+                    <option value="ADMIN">Super Admin</option>
+                    <option value="CHILD_ADMIN">Child Admin (Uploader)</option>
+                  </select>
+                </div>
+                
+                {newRole === 'CHILD_ADMIN' && (
+                  <div style={{ padding: '16px', background: 'rgba(99,102,241,0.1)', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.2)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--clr-primary-h)' }}>CHILD ADMIN PERMISSIONS</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-2">Assigned Faculty</label>
+                        <select className="input-field" value={newAdminFacultyId} onChange={e => setNewAdminFacultyId(e.target.value)} required>
+                          <option value="">-- Select --</option>
+                          {faculties.map(f => (
+                            <option key={f.id} value={f.id}>{f.icon} {f.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-2">Assigned Semester</label>
+                        <select className="input-field" value={newAdminSemesterId} onChange={e => setNewAdminSemesterId(e.target.value)} required disabled={!newAdminFacultyId}>
+                          <option value="">-- Select --</option>
+                          {newAdminSemesters.map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                  <button type="button" className="btn btn-sm" onClick={() => setShowCreateModal(false)} disabled={creating}>Cancel</button>
+                  <button type="submit" className="primary-btn" disabled={creating} style={{ padding: '8px 16px', borderRadius: '8px' }}>
+                    {creating ? 'Creating...' : 'Create User'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
         <table>
           <thead>
             <tr>
@@ -2076,8 +2226,8 @@ function UsersTab() {
                     </div>
                   </td>
                   <td>
-                    <span className={`badge ${u.role === 'ADMIN' ? 'badge-elite' : 'badge-low'}`}>
-                      {u.role}
+                    <span className={`badge ${u.role === 'ADMIN' ? 'badge-elite' : u.role === 'CHILD_ADMIN' ? 'badge-semester' : 'badge-low'}`}>
+                      {u.role === 'CHILD_ADMIN' ? 'UPLOADER' : u.role}
                     </span>
                   </td>
                   <td>
@@ -2139,7 +2289,8 @@ function UsersTab() {
                 <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>System Role</label>
                 <select className="input-field" value={editRole} onChange={e => setEditRole(e.target.value)}>
                   <option value="STUDENT">STUDENT</option>
-                  <option value="ADMIN">ADMIN</option>
+                  <option value="CHILD_ADMIN">CHILD_ADMIN (UPLOADER)</option>
+                  <option value="ADMIN">ADMIN (SUPER)</option>
                 </select>
               </div>
               <div>
@@ -2152,7 +2303,7 @@ function UsersTab() {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Semester / Year</label>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Semester / Year (Student)</label>
                 <select className="input-field" value={editSemesterOrder} onChange={e => setEditSemesterOrder(e.target.value)} disabled={!editFacultyId}>
                   <option value="">None / Not Selected</option>
                   {semesters.map(s => (
@@ -2160,6 +2311,31 @@ function UsersTab() {
                   ))}
                 </select>
               </div>
+
+              {editRole === 'CHILD_ADMIN' && (
+                <div style={{ background: 'rgba(6,182,212,0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(6,182,212,0.2)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h4 style={{ fontSize: '13px', margin: 0, color: 'var(--clr-text-1)', fontWeight: 700 }}>Upload Assignment (Child Admin)</h4>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Assigned Faculty</label>
+                    <select className="input-field" value={editAdminFacultyId} onChange={e => { setEditAdminFacultyId(e.target.value); setEditAdminSemesterId(''); }}>
+                      <option value="">None / Not Selected</option>
+                      {faculties.map(f => (
+                        <option key={f.id} value={f.id}>{f.icon} {f.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Assigned Semester / Year</label>
+                    <select className="input-field" value={editAdminSemesterId} onChange={e => setEditAdminSemesterId(e.target.value)} disabled={!editAdminFacultyId}>
+                      <option value="">None / Not Selected</option>
+                      {adminSemesters.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                 <button type="button" className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setEditingUser(null)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 2, justifyContent: 'center' }} disabled={updating}>
@@ -2176,7 +2352,7 @@ function UsersTab() {
 
 
 /* ── Upload Tab ── */
-function UploadTab() {
+function UploadTab({ user }: { user?: any }) {
   const [contentType, setContentType] = useState<'NOTE' | 'PAST_PAPER' | 'CHEATSHEET' | 'SOLUTION_BOOK' | 'MCQ'>('NOTE')
   const [sourceType, setSourceType] = useState<'FILE' | 'DRIVE'>('FILE')
   const [driveLink, setDriveLink] = useState('')
@@ -2378,13 +2554,23 @@ function UploadTab() {
   }
 
   useEffect(() => {
-    fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
-  }, [])
+    fetch('/api/admin/faculties').then(r => r.json()).then(d => {
+      setFaculties(d.faculties || [])
+      if (user?.role === 'CHILD_ADMIN' && user.adminFacultyId) {
+        setFacultyId(user.adminFacultyId)
+      }
+    })
+  }, [user])
 
   useEffect(() => {
     if (!facultyId) { setSemesters([]); setSemesterId(''); setSemesterOrder(0); return }
-    fetch(`/api/admin/semesters?facultyId=${facultyId}`).then(r => r.json()).then(d => setSemesters(d.semesters || []))
-  }, [facultyId])
+    fetch(`/api/admin/semesters?facultyId=${facultyId}`).then(r => r.json()).then(d => {
+      setSemesters(d.semesters || [])
+      if (user?.role === 'CHILD_ADMIN' && user.adminSemesterId) {
+        setSemesterId(user.adminSemesterId)
+      }
+    })
+  }, [facultyId, user])
 
   // Helper: extract Google Drive file ID from share link
   function parseDriveLink(link: string): string | null {
@@ -2879,14 +3065,14 @@ function UploadTab() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <div className="w-full min-w-0">
                   <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Faculty *</label>
-                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={facultyId} onChange={e => setFacultyId(e.target.value)} required>
+                  <select className={`w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all ${user?.role === 'CHILD_ADMIN' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} value={facultyId} onChange={e => setFacultyId(e.target.value)} required disabled={user?.role === 'CHILD_ADMIN'}>
                     <option value="" className="bg-slate-900">— Choose Faculty —</option>
                     {faculties.map(f => <option key={f.id} value={f.id} className="bg-slate-900">{f.icon} {getShortFacultyName(f.name)}</option>)}
                   </select>
                 </div>
                 <div className="w-full min-w-0">
                   <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Semester / Year *</label>
-                  <select className={`w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all ${facultyId ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`} value={semesterId} onChange={e => setSemesterId(e.target.value)} required disabled={!facultyId}>
+                  <select className={`w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all ${facultyId && user?.role !== 'CHILD_ADMIN' ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`} value={semesterId} onChange={e => setSemesterId(e.target.value)} required disabled={!facultyId || user?.role === 'CHILD_ADMIN'}>
                     <option value="" className="bg-slate-900">— Choose Period —</option>
                     {semesters.map(s => <option key={s.id} value={s.id} className="bg-slate-900">{s.name}</option>)}
                   </select>
@@ -3598,6 +3784,9 @@ function MultiFileDropZone({ label, accept, files, onFiles, hint, required }: {
 function FacultiesTab() {
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [search, setSearch] = useState('')
+  const [newFacultyName, setNewFacultyName] = useState('')
+  const [newFacultyIcon, setNewFacultyIcon] = useState('🎓')
+  const [addingFaculty, setAddingFaculty] = useState(false)
 
   // Semester visibility states
   const [selectedFacultyForSemesters, setSelectedFacultyForSemesters] = useState('')
@@ -3669,6 +3858,32 @@ function FacultiesTab() {
       return a.visible ? -1 : 1
     })
 
+  async function handleAddFaculty(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newFacultyName) return
+    setAddingFaculty(true)
+    try {
+      const res = await fetch('/api/admin/faculties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newFacultyName, icon: newFacultyIcon })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || 'Faculty added successfully!')
+        setNewFacultyName('')
+        setNewFacultyIcon('🎓')
+        fetch('/api/admin/faculties').then(r => r.json()).then(d => setFaculties(d.faculties || []))
+      } else {
+        toast.error(data.error || 'Failed to add faculty')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setAddingFaculty(false)
+    }
+  }
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -3709,6 +3924,33 @@ function FacultiesTab() {
             🔄 Reset: BCA Only
           </button>
         </div>
+      </div>
+
+      <div style={{ background: 'var(--clr-bg-2)', padding: '20px', borderRadius: '12px', border: '1px solid var(--clr-border)', marginBottom: '24px' }}>
+        <h4 style={{ margin: '0 0 16px 0', color: 'var(--clr-text-2)', fontSize: '14px' }}>✨ Add New Faculty</h4>
+        <form onSubmit={handleAddFaculty} style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            className="input-field"
+            placeholder="Faculty Name (e.g. B.Sc. CSIT)"
+            value={newFacultyName}
+            onChange={e => setNewFacultyName(e.target.value)}
+            required
+            style={{ flex: 1, minWidth: '200px', padding: '10px 14px', borderRadius: '8px' }}
+          />
+          <input
+            type="text"
+            className="input-field"
+            placeholder="Icon (e.g. 💻)"
+            value={newFacultyIcon}
+            onChange={e => setNewFacultyIcon(e.target.value)}
+            required
+            style={{ width: '100px', padding: '10px 14px', borderRadius: '8px', textAlign: 'center' }}
+          />
+          <button type="submit" className="primary-btn" disabled={addingFaculty} style={{ padding: '10px 24px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+            {addingFaculty ? 'Adding...' : '+ Add Faculty'}
+          </button>
+        </form>
       </div>
 
       <div className="table-wrap">
@@ -3841,6 +4083,9 @@ function SemestersTab() {
   const [selectedFaculty, setSelectedFaculty] = useState('bca')
   const [semesters, setSemesters] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [newSemName, setNewSemName] = useState('')
+  const [newSemOrder, setNewSemOrder] = useState('')
+  const [addingSem, setAddingSem] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/faculties')
@@ -3881,6 +4126,34 @@ function SemestersTab() {
     }
   }
 
+  async function handleAddSemester(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedFaculty || !newSemName || !newSemOrder) return
+    setAddingSem(true)
+    try {
+      const res = await fetch('/api/admin/semesters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newSemName, order: newSemOrder, facultyId: selectedFaculty })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || 'Semester added successfully!')
+        setNewSemName('')
+        setNewSemOrder('')
+        fetch(`/api/admin/semesters?facultyId=${selectedFaculty}`)
+          .then(r => r.json())
+          .then(d => setSemesters(d.semesters || []))
+      } else {
+        toast.error(data.error || 'Failed to add semester')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setAddingSem(false)
+    }
+  }
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div style={{ marginBottom: '24px' }}>
@@ -3906,6 +4179,35 @@ function SemestersTab() {
             ))}
           </select>
         </div>
+
+        {selectedFaculty && (
+          <div style={{ background: 'var(--clr-bg-2)', padding: '20px', borderRadius: '12px', border: '1px solid var(--clr-border)', marginBottom: '24px' }}>
+            <h4 style={{ margin: '0 0 16px 0', color: 'var(--clr-text-2)', fontSize: '14px' }}>✨ Add New Semester</h4>
+            <form onSubmit={handleAddSemester} style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Name (e.g. 1st Semester)"
+                value={newSemName}
+                onChange={e => setNewSemName(e.target.value)}
+                required
+                style={{ flex: 1, minWidth: '180px', padding: '10px 14px', borderRadius: '8px' }}
+              />
+              <input
+                type="number"
+                className="input-field"
+                placeholder="Order (e.g. 1)"
+                value={newSemOrder}
+                onChange={e => setNewSemOrder(e.target.value)}
+                required
+                style={{ width: '120px', padding: '10px 14px', borderRadius: '8px' }}
+              />
+              <button type="submit" className="primary-btn" disabled={addingSem} style={{ padding: '10px 24px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+                {addingSem ? 'Adding...' : '+ Add Semester'}
+              </button>
+            </form>
+          </div>
+        )}
 
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--clr-text-3)' }}>

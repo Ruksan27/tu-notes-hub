@@ -7,7 +7,7 @@ import { extractTextFromPdfUrl } from '@/lib/gemini'
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
-    if (!user || user.role !== 'ADMIN') {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'CHILD_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

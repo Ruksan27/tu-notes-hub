@@ -21,6 +21,8 @@ export async function GET() {
         packageType: true,
         facultyId: true,
         semesterOrder: true,
+        adminFacultyId: true,
+        adminSemesterId: true,
       }
     })
 

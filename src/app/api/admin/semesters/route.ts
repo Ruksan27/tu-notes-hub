@@ -96,3 +96,33 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: error.message || 'Failed to update visibility' }, { status: 500 })
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const user = await import('@/lib/auth').then(m => m.getCurrentUser())
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { name, order, facultyId } = await req.json()
+    if (!name || !order || !facultyId) {
+      return NextResponse.json({ error: 'Name, order, and facultyId are required' }, { status: 400 })
+    }
+
+    const semester = await prisma.semester.create({
+      data: {
+        name,
+        order: parseInt(order),
+        facultyId,
+        visible: true,
+        visibleNew: true,
+        visibleOld: true,
+      }
+    })
+
+    return NextResponse.json({ semester, message: 'Semester created successfully! 🎉' })
+  } catch (error) {
+    console.error('[SEMESTER_POST]', error)
+    return NextResponse.json({ error: 'Failed to create semester' }, { status: 500 })
+  }
+}

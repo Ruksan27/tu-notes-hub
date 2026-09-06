@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    if (!user.isEmailVerified) {
+    if (!user.isEmailVerified && user.role === 'STUDENT') {
       return NextResponse.json({ error: 'Please verify your email before logging in' }, { status: 403 })
     }
 
@@ -42,6 +42,9 @@ export async function POST(req: NextRequest) {
         packageType: user.packageType,
         facultyId: user.facultyId,
         semesterOrder: user.semesterOrder,
+        adminFacultyId: user.adminFacultyId,
+        adminSemesterId: user.adminSemesterId,
+        avatarUrl: user.avatarUrl,
       },
     })
   } catch (error) {
