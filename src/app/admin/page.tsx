@@ -3031,12 +3031,12 @@ function UploadTab() {
 
         {/* ── STEP 4: MATERIAL DETAILS & METADATA (Full Width Card) ── */}
         {/* ── STEP 4: MATERIAL DETAILS & METADATA (Full Width Card) ── */}
-        <div className="admin-card p-6 sm:p-8">
+        <div className="admin-card p-6 sm:p-8" style={{ background: 'var(--clr-bg-800)', border: '1px solid var(--clr-border)' }}>
           <div className="flex items-center gap-3 mb-6">
-            <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-sm shadow-md shadow-amber-500/40">4</div>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-sm shadow-md" style={{ background: 'var(--clr-primary)', color: '#fff' }}>4</div>
             <div>
-              <h3 className="text-base font-extrabold text-white m-0">Material Details & Publishing Properties</h3>
-              <span className="text-xs text-slate-400">Title, description, access tier, and attachments.</span>
+              <h3 className="text-base font-extrabold m-0" style={{ color: 'var(--clr-text-1)' }}>Material Details & Publishing Properties</h3>
+              <span className="text-xs" style={{ color: 'var(--clr-text-3)' }}>Title, description, access tier, and attachments.</span>
             </div>
           </div>
 
@@ -3047,7 +3047,7 @@ function UploadTab() {
             >
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 m-0">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider m-0" style={{ color: 'var(--clr-text-3)' }}>
                     {isSolutionBook ? 'Solution Book Title *' : noteType === 'PROJECT' ? 'Project Title *' : noteType === 'LAB_WORK' ? 'Lab Work Title *' : 'Note Title *'}
                   </label>
                   <button
@@ -3097,13 +3097,14 @@ function UploadTab() {
                       setShowSeoBox(true)
                       toast.success('✨ Rank #1 Auto-SEO Package Generated!')
                     }}
-                    className="text-[10px] bg-gradient-to-r from-indigo-500 to-cyan-500 text-white rounded-lg px-3 py-1.5 font-bold shadow-lg shadow-indigo-500/30 hover:opacity-90 transition-all flex items-center gap-1.5 border-none cursor-pointer"
+                    className="text-[10px] rounded-lg px-3 py-1.5 font-bold hover:opacity-90 transition-all flex items-center gap-1.5 border-none cursor-pointer btn"
+                    style={{ background: 'var(--clr-primary)', color: '#fff' }}
                   >
                     ✨ Auto-SEO Generator
                   </button>
                 </div>
                 <input
-                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all"
+                  className="input-field w-full"
                   placeholder={
                     isSolutionBook ? 'e.g. BCA Semester 4 Full Solution Book 2081'
                     : noteType === 'PROJECT' ? 'e.g. E-Commerce System with Recommendation Engine'
@@ -3117,11 +3118,11 @@ function UploadTab() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">
+                <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>
                   {noteType === 'PROJECT' ? 'Project Description (Abstract & Features)' : 'Description (optional)'}
                 </label>
                 <textarea
-                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all min-h-[80px]"
+                  className="input-field w-full min-h-[80px]"
                   placeholder={
                     noteType === 'PROJECT'
                       ? 'Describe what this project does. List major features, technologies used, database system, etc.'
@@ -3315,31 +3316,31 @@ function UploadTab() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {!isSolutionBook && <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Format</label>
-                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={noteType} onChange={e => setNoteType(e.target.value)}>
-                    <option value="PDF_BOOK" className="bg-slate-900">📚 PDF Book</option>
-                    <option value="HANDWRITTEN" className="bg-slate-900">✍️ Handwritten</option>
-                    <option value="SLIDES_PPT" className="bg-slate-900">🖥️ Slides/PPTX</option>
-                    <option value="SHORT_NOTES" className="bg-slate-900">📝 Short Notes</option>
-                    <option value="PROJECT_WORK" className="bg-slate-900">📁 Project Work</option>
-                    <option value="PROJECT" className="bg-slate-900">💻 Project</option>
-                    <option value="GUIDE" className="bg-slate-900">📘 Guide</option>
-                    <option value="LAB_WORK" className="bg-slate-900">🧪 Lab Work</option>
-                    <option value="SYLLABUS" className="bg-slate-900">📋 Syllabus</option>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Format</label>
+                  <select className="input-field w-full cursor-pointer" value={noteType} onChange={e => setNoteType(e.target.value)}>
+                    <option value="PDF_BOOK" style={{ background: 'var(--clr-bg-800)' }}>📚 PDF Book</option>
+                    <option value="HANDWRITTEN" style={{ background: 'var(--clr-bg-800)' }}>✍️ Handwritten</option>
+                    <option value="SLIDES_PPT" style={{ background: 'var(--clr-bg-800)' }}>🖥️ Slides/PPTX</option>
+                    <option value="SHORT_NOTES" style={{ background: 'var(--clr-bg-800)' }}>📝 Short Notes</option>
+                    <option value="PROJECT_WORK" style={{ background: 'var(--clr-bg-800)' }}>📁 Project Work</option>
+                    <option value="PROJECT" style={{ background: 'var(--clr-bg-800)' }}>💻 Project</option>
+                    <option value="GUIDE" style={{ background: 'var(--clr-bg-800)' }}>📘 Guide</option>
+                    <option value="LAB_WORK" style={{ background: 'var(--clr-bg-800)' }}>🧪 Lab Work</option>
+                    <option value="SYLLABUS" style={{ background: 'var(--clr-bg-800)' }}>📋 Syllabus</option>
                   </select>
                 </div>}
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Access Tier</label>
-                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={isPremium} onChange={e => setIsPremium(e.target.value)}>
-                    <option value="false" className="bg-slate-900">🔓 Free for All</option>
-                    <option value="true" className="bg-slate-900">💎 Premium Only</option>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Access Tier</label>
+                  <select className="input-field w-full cursor-pointer" value={isPremium} onChange={e => setIsPremium(e.target.value)}>
+                    <option value="false" style={{ background: 'var(--clr-bg-800)' }}>🔓 Free for All</option>
+                    <option value="true" style={{ background: 'var(--clr-bg-800)' }}>💎 Premium Only</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Author / Credit (optional)</label>
-                <input className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} />
+                <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Author / Credit (optional)</label>
+                <input className="input-field w-full" placeholder="e.g. Er. Ramesh Shrestha" value={author} onChange={e => setAuthor(e.target.value)} />
               </div>
 
               {sourceType === 'FILE' && <FileDropZone label="Document File (PDF, DOCX, PPTX, Images)" accept=".pdf,.docx,.doc,.pptx,.ppt,.jpg,.jpeg,.png" file={noteFile} onFile={setNoteFile} hint="Max 10 MB — uploads directly to Cloudinary" required />}
@@ -3491,12 +3492,15 @@ function UploadTab() {
         <button
           type="submit"
           disabled={uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)}
-          className={`
-            w-full p-4 rounded-xl font-extrabold text-[15px] text-white border-none shadow-xl flex items-center justify-center gap-2.5 transition-all
-            ${(uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)) 
-              ? 'bg-white/10 opacity-70 cursor-not-allowed shadow-none' 
-              : 'bg-gradient-to-br from-indigo-500 to-cyan-500 shadow-indigo-500/40 hover:shadow-indigo-500/60 cursor-pointer hover:scale-[1.01]'}
-          `}
+          className={`w-full p-4 rounded-xl font-extrabold text-[15px] flex items-center justify-center gap-2.5 transition-all btn`}
+          style={{
+            background: (uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)) 
+              ? 'rgba(255,255,255,0.1)' 
+              : 'var(--clr-primary)',
+            color: '#fff',
+            opacity: (uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)) ? 0.7 : 1,
+            cursor: (uploading || savingMcqs || (noteType === 'PROJECT' && projectRestriction !== null && !projectRestriction.canUpload)) ? 'not-allowed' : 'pointer'
+          }}
         >
           {(uploading || savingMcqs) ? (
             <>
@@ -3524,12 +3528,15 @@ function FileDropZone({ label, accept, file, onFile, hint, required }: {
 }) {
   return (
     <div>
-      <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">{label}</label>
+      <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>{label}</label>
       <div
         className={`
           border-2 border-dashed rounded-xl p-7 text-center relative cursor-pointer transition-all duration-300
-          ${file ? 'border-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10' : 'border-white/20 bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/30'}
         `}
+        style={{
+          background: file ? 'rgba(var(--clr-primary-rgb), 0.1)' : 'rgba(255,255,255,0.01)',
+          borderColor: file ? 'var(--clr-primary)' : 'rgba(255,255,255,0.2)'
+        }}
       >
         <input
           type="file" accept={accept} required={required}
@@ -3537,10 +3544,10 @@ function FileDropZone({ label, accept, file, onFile, hint, required }: {
           className="absolute inset-0 opacity-0 cursor-pointer"
         />
         <div className="text-3xl mb-2">{file ? '✅' : '📂'}</div>
-        <p className={`text-sm font-extrabold m-0 ${file ? 'text-indigo-400' : 'text-slate-300'}`}>
+        <p className="text-sm font-extrabold m-0" style={{ color: file ? 'var(--clr-primary)' : 'var(--clr-text-2)' }}>
           {file ? file.name : 'Click to Browse File'}
         </p>
-        <p className="text-[11px] text-slate-500 mt-1 m-0">{hint}</p>
+        <p className="text-[11px] mt-1 m-0" style={{ color: 'var(--clr-text-3)' }}>{hint}</p>
       </div>
     </div>
   )
