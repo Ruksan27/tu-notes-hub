@@ -410,3 +410,14 @@ model Blog {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // 'TESTIMONIAL', 'ORDER', 'SELLER_APP', 'PAYMENT', etc.
+  title     String
+  message   String?  @db.Text
+  link      String?  @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+

@@ -185,16 +185,15 @@ export default function ProjectsPage() {
             transition={{ delay: 0.15 }}
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '16px',
-              maxWidth: '440px',
+              maxWidth: '300px',
               margin: '0 auto'
             }}
           >
             {[
               { label: 'Projects', value: projects.length ? `${projects.length}+` : '10+' },
               { label: 'Technologies', value: '10+' },
-              { label: 'Helped', value: '100+' },
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{s.value}</div>
