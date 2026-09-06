@@ -60,7 +60,7 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
     'apple-mobile-web-app-title': 'TU Notes Hub',
     'google-adsense-account': 'ca-pub-8555533919324648',
   },
@@ -71,7 +71,7 @@ const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 
 const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat', display: 'swap' })
 
 export const viewport: Viewport = {
-  themeColor: '#6366f1',
+  themeColor: '#080a12',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,

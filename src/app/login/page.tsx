@@ -8,14 +8,23 @@ import { useRouter } from 'next/navigation'
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
+  const [redirectPath, setRedirectPath] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const redir = params.get('redirect')
+      if (redir) setRedirectPath(redir)
+    }
+
     fetch('/api/auth/me')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data && data.authenticated && data.user) {
-          window.location.href = data.user.role === 'ADMIN' ? '/admin' : '/dashboard'
+          const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+          const redir = params?.get('redirect')
+          window.location.href = redir || (data.user.role === 'ADMIN' ? '/admin' : '/dashboard')
         }
       })
       .catch(() => {})
@@ -34,13 +43,17 @@ export default function LoginPage() {
       if (!res.ok) { toast.error(data.error); return }
       localStorage.setItem('tu_user', JSON.stringify(data.user))
       toast.success(`Welcome back, ${data.user.name}! 👋`)
-      window.location.href = data.user.role === 'ADMIN' ? '/admin' : '/'
+      
+      const targetUrl = redirectPath || (data.user.role === 'ADMIN' ? '/admin' : '/')
+      window.location.href = targetUrl
     } catch (err: any) {
       toast.error('Network error. Is the server running?')
     } finally {
       setLoading(false)
     }
   }
+
+  const registerHref = redirectPath ? `/register?redirect=${encodeURIComponent(redirectPath)}` : '/register'
 
   return (
     <div className="flex-center" style={{ minHeight: 'calc(100vh - 64px)', padding: '40px 16px' }}>
@@ -69,7 +82,7 @@ export default function LoginPage() {
             {loading ? <><span className="spinner" /> Logging in...</> : '🚀 Login to TU Notes Hub'}
           </button>
           <p className="text-center" style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>
-            New student? <Link href="/register" style={{ color: 'var(--clr-primary-h)' }}>Create free account</Link>
+            New student? <Link href={registerHref} style={{ color: 'var(--clr-primary-h)' }}>Create free account</Link>
           </p>
         </form>
       </div>

@@ -118,11 +118,21 @@ export default function RegisterPage() {
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [redirectPath, setRedirectPath] = useState<string | null>(null)
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const redir = params.get('redirect')
+      if (redir) setRedirectPath(redir)
+    }
+
     fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
-      if (data?.authenticated && data?.user)
-        window.location.href = data.user.role === 'ADMIN' ? '/admin' : '/dashboard'
+      if (data?.authenticated && data?.user) {
+        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+        const redir = params?.get('redirect')
+        window.location.href = redir || (data.user.role === 'ADMIN' ? '/admin' : '/dashboard')
+      }
     }).catch(() => {})
   }, [])
 
@@ -172,7 +182,8 @@ export default function RegisterPage() {
       if (!res.ok) { toast.error(data.error); return }
       localStorage.setItem('tu_user', JSON.stringify(data.user))
       toast.success('Account verified! Welcome to TU Notes Hub 🎉')
-      window.location.href = '/'
+      const targetUrl = redirectPath || '/'
+      window.location.href = targetUrl
     } finally { setLoading(false) }
   }
 

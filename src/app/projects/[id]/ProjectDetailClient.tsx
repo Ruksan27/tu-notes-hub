@@ -542,7 +542,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
             {/* Checkout Action Buttons (Desktop) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
               <button
-                onClick={() => setIsCheckoutOpen(true)}
+                onClick={handleBuyNow}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -712,7 +712,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
         {/* Buy Now Button */}
         <button
-          onClick={() => setIsCheckoutOpen(true)}
+          onClick={handleBuyNow}
           style={{
             flex: 1,
             height: '44px',
