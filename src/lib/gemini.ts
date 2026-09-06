@@ -140,10 +140,10 @@ export async function callGemini(
   
   // 2. Use real, verified Nvidia Nim models
   const MODELS_TO_TRY = [
-    'meta/llama-3.3-70b-instruct',
-    'nvidia/llama-3.1-nemotron-70b-instruct',
-    'deepseek-ai/deepseek-r1',
-    'qwen/qwen2.5-72b-instruct'
+    'meta/llama-3.1-70b-instruct',
+    'meta/llama-3.1-8b-instruct',
+    'mistralai/mixtral-8x22b-instruct-v0.1',
+    'google/gemma-2-27b-it'
   ]
 
   // Build OpenAI-compatible messages array
