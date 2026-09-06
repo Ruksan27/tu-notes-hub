@@ -48,7 +48,7 @@ function CustomDropdown({ id, label, placeholder, options, value, onChange, disa
           cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
           borderColor: open ? 'var(--clr-primary)' : undefined,
           boxShadow: open ? '0 0 0 3px rgba(99,102,241,0.15)' : undefined
-        }}
+        }} // Fix: flex layout justification
       >
         <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {selected ? (
