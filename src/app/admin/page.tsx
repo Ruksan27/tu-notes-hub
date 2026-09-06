@@ -2862,7 +2862,8 @@ function UploadTab() {
                   <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Faculty *</label>
                   <select className="input-field w-full max-w-full" value={facultyId} onChange={e => setFacultyId(e.target.value)} required style={{ cursor: 'pointer', fontSize: '13px' }}>
                     <option value="">— Choose Faculty —</option>
-                    {faculties.map(f => <option key={f.id} value={f.id}>{f.icon} {f.name}</option>)}
+                    {faculties.map(f => <option key={f.id} value={f.id}>{f.icon} {getShortFacultyName(f.name)}</option>)}
+
                   </select>
                 </div>
                 <div className="w-full min-w-0">

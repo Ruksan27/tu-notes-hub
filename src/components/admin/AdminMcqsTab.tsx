@@ -2,7 +2,32 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 
+function getShortFacultyName(name: string) {
+  if (!name) return ''
+  return name
+    .replace('Bachelor of Computer Application', 'BCA (Comp. App)')
+    .replace('B.Sc. Computer Science & Information Technology', 'B.Sc. CSIT')
+    .replace('Bachelor of Business Administration', 'BBA (Business Admin)')
+    .replace('Bachelor of Business Management', 'BBM (Business Mgmt)')
+    .replace('Bachelor of Business Studies', 'BBS (Business Studies)')
+    .replace('Bachelor of Information Management', 'BIM (Info Mgmt)')
+    .replace('Bachelor of Information Technology', 'BIT (Info Tech)')
+    .replace('Bachelor of Hotel Management', 'BHM (Hotel Mgmt)')
+    .replace('Bachelor of Engineering (Computer)', 'BE Computer')
+    .replace('B.Sc. (General Science)', 'B.Sc. Science')
+    .replace('B.Ed. (General Education)', 'B.Ed. Education')
+    .replace('B.Sc. Agriculture', 'B.Sc. Agri')
+    .replace('B.Sc. Forestry', 'B.Sc. Forestry')
+    .replace('B.Sc. Nursing / Allied Health', 'B.Sc. Nursing')
+    .replace('B.Tech (Food Technology)', 'B.Tech Food')
+    .replace('B.V.Sc. & AH (Veterinary Science)', 'B.V.Sc. Vet')
+    .replace('BA LLB (Integrated Law)', 'BA LLB Law')
+    .replace('Bachelor of Architecture', 'B.Arch')
+    .replace('Bachelor of Arts', 'BA Arts')
+}
+
 export default function AdminMcqsTab() {
+
   const [faculties, setFaculties] = useState<any[]>([])
   const [semesters, setSemesters] = useState<any[]>([])
   const [subjects, setSubjects] = useState<any[]>([])
@@ -124,9 +149,10 @@ export default function AdminMcqsTab() {
           <select className="form-input w-full" value={selectedFaculty} onChange={e => setSelectedFaculty(e.target.value)}>
             <option value="">Select Faculty...</option>
             {faculties.map(f => (
-              <option key={f.id} value={f.id}>{f.name}</option>
+              <option key={f.id} value={f.id}>{f.icon ? f.icon + ' ' : ''}{getShortFacultyName(f.name)}</option>
             ))}
           </select>
+
         </div>
         <div>
           <label className="block text-sm mb-1 text-[var(--clr-text-2)]">Semester</label>
