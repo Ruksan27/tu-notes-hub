@@ -140,13 +140,12 @@ export async function callGemini(
     console.warn('[Official Gemini call failed, falling back to Nvidia/Groq]:', err)
   }
   
-  // 2. Use real, verified Nvidia Nim models
-  const MODELS_TO_TRY = [
-    'meta/llama-3.1-70b-instruct',
-    'meta/llama-3.1-8b-instruct',
-    'mistralai/mixtral-8x22b-instruct-v0.1',
-    'google/gemma-2-27b-it'
-  ]
+  // 2. Fetch active Nvidia models dynamically
+  let MODELS_TO_TRY: string[] = []
+  const nvidiaKey = process.env.NVIDIA_API_KEY
+  if (nvidiaKey) {
+    MODELS_TO_TRY = await getNvidiaModels(nvidiaKey, images && images.length > 0)
+  }
 
   // Build OpenAI-compatible messages array
   const messages: any[] = []
@@ -206,6 +205,40 @@ export async function callMultiProviderAI(
   return callGemini(prompt, systemInstruction, images)
 }
 
+
+// Fetch available Nvidia models dynamically
+async function getNvidiaModels(apiKey: string, hasImages: boolean): Promise<string[]> {
+  try {
+    const res = await fetch('https://integrate.api.nvidia.com/v1/models', {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    })
+    if (!res.ok) return []
+    const data = await res.json()
+    const ids: string[] = (data.data ?? []).map((m: any) => m.id)
+    
+    if (hasImages) {
+      const visionModels = ids.filter(id => id.includes('vision') || id.includes('vl-'))
+      if (visionModels.length > 0) return visionModels.slice(0, 3)
+    }
+
+    const preferred = [
+      'meta/llama-3.3-70b-instruct',
+      'meta/llama-3.1-405b-instruct',
+      'deepseek-ai/deepseek-r1',
+      'deepseek-ai/deepseek-coder-33b-instruct',
+      'nvidia/llama-3.1-nemotron-70b-instruct',
+      'google/gemma-2-27b-it',
+      'mistralai/mistral-large-2-instruct'
+    ]
+    const sorted = [
+      ...preferred.filter(p => ids.includes(p)),
+      ...ids.filter(id => !preferred.includes(id) && (id.includes('instruct') || id.includes('chat')) && !id.includes('vision'))
+    ]
+    return sorted.slice(0, 4)
+  } catch {
+    return []
+  }
+}
 
 // Fetch available Groq models dynamically
 async function getGroqModels(apiKey: string): Promise<string[]> {
