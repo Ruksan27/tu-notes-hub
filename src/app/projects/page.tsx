@@ -60,21 +60,12 @@ export default function ProjectsPage() {
           background: linear-gradient(180deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.03) 60%, transparent 100%);
           border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        @media (max-width: 640px) {
-          .projects-hero { padding: 32px 16px 24px; }
-        }
 
         .projects-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
           gap: 24px;
           width: 100%;
-        }
-        @media (max-width: 640px) {
-          .projects-grid {
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 16px;
-          }
         }
 
         .project-card {
@@ -97,6 +88,38 @@ export default function ProjectsPage() {
 
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ── Daraz Style 2-by-2 Mobile Grid ── */
+        @media (max-width: 640px) {
+          .projects-hero { padding: 28px 12px 20px; }
+          .projects-container { padding: 20px 10px !important; }
+          .projects-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+          .project-card {
+            border-radius: 12px !important;
+          }
+          .project-card-body {
+            padding: 10px 8px !important;
+          }
+          .project-card-desc {
+            display: none !important;
+          }
+          .project-card-title {
+            font-size: 13px !important;
+            line-height: 1.3 !important;
+            margin-bottom: 6px !important;
+          }
+          .project-card-price {
+            font-size: 14px !important;
+          }
+          .project-card-cta {
+            padding: 5px 8px !important;
+            font-size: 10.5px !important;
+            border-radius: 6px !important;
+          }
+        }
       `}} />
 
       {/* ── HERO SECTION ── */}
@@ -183,7 +206,7 @@ export default function ProjectsPage() {
       </section>
 
       {/* ── MAIN CONTENT CONTAINER ── */}
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '36px 20px' }}>
+      <div className="projects-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '36px 20px' }}>
         
         {/* Search & Filter Bar */}
         <div style={{ marginBottom: '36px' }}>
@@ -305,13 +328,13 @@ export default function ProjectsPage() {
                       {project.discountPercentage > 0 && (
                         <div style={{
                           position: 'absolute',
-                          top: '10px',
-                          right: '10px',
+                          top: '8px',
+                          right: '8px',
                           background: 'linear-gradient(135deg, #ef4444, #ec4899)',
                           color: '#fff',
-                          fontSize: '10.5px',
+                          fontSize: '10px',
                           fontWeight: 800,
-                          padding: '3px 8px',
+                          padding: '2px 6px',
                           borderRadius: '6px',
                           boxShadow: '0 4px 12px rgba(239,68,68,0.4)',
                           zIndex: 2
@@ -322,19 +345,19 @@ export default function ProjectsPage() {
                     </div>
 
                     {/* Body */}
-                    <div style={{ padding: '18px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div className="project-card-body" style={{ padding: '18px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                       {/* Tech Tags */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-                        {project.technologies.split(',').slice(0, 3).map(tech => (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                        {project.technologies.split(',').slice(0, 2).map(tech => (
                           <span 
                             key={tech}
                             style={{
-                              fontSize: '10px',
+                              fontSize: '9.5px',
                               fontWeight: 700,
                               textTransform: 'uppercase',
                               letterSpacing: '0.4px',
-                              padding: '2px 8px',
-                              borderRadius: '6px',
+                              padding: '2px 6px',
+                              borderRadius: '5px',
                               background: 'rgba(99,102,241,0.12)',
                               color: '#a5b4fc',
                               border: '1px solid rgba(99,102,241,0.2)'
@@ -346,41 +369,42 @@ export default function ProjectsPage() {
                       </div>
 
                       {/* Title */}
-                      <h2 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '8px', lineHeight: 1.35, color: '#fff' }}>
+                      <h2 className="project-card-title" style={{ fontSize: '16px', fontWeight: 800, marginBottom: '8px', lineHeight: 1.35, color: '#fff' }}>
                         {project.title}
                       </h2>
 
-                      {/* Short Description */}
-                      <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', lineHeight: 1.5, marginBottom: '16px', flex: 1 }}>
+                      {/* Short Description (Hidden on Mobile for Daraz style compact 2x2 grid) */}
+                      <p className="project-card-desc" style={{ fontSize: '13px', color: 'var(--clr-text-3)', lineHeight: 1.5, marginBottom: '16px', flex: 1 }}>
                         {project.description ? (project.description.length > 90 ? project.description.substring(0, 90) + '...' : project.description) : 'Full source code with complete documentation.'}
                       </p>
 
                       {/* Pricing & CTA Row */}
-                      <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
                         <div>
-                          <div style={{ fontSize: '9.5px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--clr-text-3)', letterSpacing: '0.5px' }}>Price</div>
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                            <span style={{ fontSize: '18px', fontWeight: 900, color: '#10b981' }}>
+                          <div style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--clr-text-3)', letterSpacing: '0.4px' }}>Price</div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', flexWrap: 'wrap' }}>
+                            <span className="project-card-price" style={{ fontSize: '17px', fontWeight: 900, color: '#10b981' }}>
                               Rs. {discountedPrice}
                             </span>
                             {project.discountPercentage > 0 && (
-                              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', textDecoration: 'line-through' }}>
+                              <span style={{ fontSize: '10px', color: 'var(--clr-text-3)', textDecoration: 'line-through' }}>
                                 Rs. {project.originalPrice}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div style={{
-                          padding: '8px 14px',
-                          borderRadius: '10px',
+                        <div className="project-card-cta" style={{
+                          padding: '7px 12px',
+                          borderRadius: '8px',
                           background: 'var(--grad-brand)',
                           color: '#fff',
-                          fontSize: '12px',
+                          fontSize: '11.5px',
                           fontWeight: 700,
-                          boxShadow: '0 4px 12px rgba(99,102,241,0.3)'
+                          boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
+                          whiteSpace: 'nowrap'
                         }}>
-                          View Details →
+                          View →
                         </div>
                       </div>
                     </div>

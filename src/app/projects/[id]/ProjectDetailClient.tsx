@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'react-toastify'
+import { getProjectSlug } from '@/lib/slugs'
 
 interface Project {
   id: string
@@ -68,14 +69,14 @@ function CountdownTimer({ endsAt }: { endsAt: Date }) {
   }, [endsAt])
   const pad = (n: number) => String(n).padStart(2, '0')
   return (
-    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center', margin: '10px 0' }}>
+    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center', margin: '6px 0' }}>
       {[{ v: time.d, l: 'Day' }, { v: time.h, l: 'Hr' }, { v: time.m, l: 'Min' }, { v: time.s, l: 'Sec' }].map(({ v, l }, i) => (
         <div key={l} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', fontWeight: 800, fontFamily: 'monospace', color: '#a5b4fc', background: 'rgba(99,102,241,0.15)', borderRadius: '8px', padding: '4px 8px', minWidth: '36px' }}>{pad(v)}</div>
+            <div style={{ fontSize: '18px', fontWeight: 800, fontFamily: 'monospace', color: '#a5b4fc', background: 'rgba(99,102,241,0.15)', borderRadius: '8px', padding: '3px 7px', minWidth: '34px' }}>{pad(v)}</div>
             <div style={{ fontSize: '9px', color: 'var(--clr-text-3)', marginTop: '2px' }}>{l}</div>
           </div>
-          {i < 3 && <span style={{ color: 'var(--clr-text-3)', fontWeight: 700, marginBottom: '14px' }}>:</span>}
+          {i < 3 && <span style={{ color: 'var(--clr-text-3)', fontWeight: 700, marginBottom: '12px' }}>:</span>}
         </div>
       ))}
     </div>
@@ -136,7 +137,9 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
   const developerName = project.sellerId ? (project.user?.name || 'Seller') : 'TU Notes Hub'
   const isAdmin = !project.sellerId
 
-
+  const developerHref = project.sellerId && project.user?.id
+    ? `/projects/developer/${project.user.id}`
+    : '/projects'
 
   const handleAddToCart = useCallback(async () => {
     setCartLoading(true)
@@ -194,7 +197,9 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
     finally { setIsSubmitting(false) }
   }
 
-  const buyMessage = encodeURIComponent(`Hi! I want to buy the project "${project.title}" listed on TU Notes Hub. Price: Rs. ${finalPrice}. Please confirm availability.`)
+  // Pre-filled WhatsApp message including project title, price, and direct link
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : `https://tunoteshub.com/projects/${getProjectSlug(project)}`
+  const buyMessage = encodeURIComponent(`Hi! I am interested in inquiring about the project "${project.title}" (Rs. ${finalPrice}) listed on TU Notes Hub.\nProject Link: ${currentUrl}`)
   const buyUrl = whatsapp ? `${whatsapp}?text=${buyMessage}` : null
 
   const techBadges = project.technologies.split(',').map(t => t.trim()).filter(Boolean)
@@ -208,6 +213,39 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 28px' }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 768px) {
+          .project-detail-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .mobile-top-price-banner {
+            display: flex !important;
+          }
+          .mobile-bottom-action-bar {
+            display: flex !important;
+          }
+          .mobile-package-includes-box {
+            display: block !important;
+          }
+          .project-right-col {
+            display: none !important;
+          }
+          body {
+            padding-bottom: 75px !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .mobile-top-price-banner {
+            display: none !important;
+          }
+          .mobile-bottom-action-bar {
+            display: none !important;
+          }
+          .mobile-package-includes-box {
+            display: none !important;
+          }
+        }
+      `}} />
 
       {/* ── SEO Breadcrumb Navigation ── */}
       <nav aria-label="Breadcrumb" style={{ marginBottom: '20px' }}>
@@ -219,6 +257,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
           <li style={{ color: 'var(--clr-text-2)', fontWeight: 600, maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-current="page">{project.title}</li>
         </ol>
       </nav>
+
       <div style={{ marginBottom: '14px' }}>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
           {project.category && <span style={{ fontSize: '10px', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, background: 'rgba(165,180,252,0.1)', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(165,180,252,0.2)' }}>{project.category}</span>}
@@ -251,7 +290,6 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
           {/* ── Thumbnail strip ── */}
           {allImages.length > 0 && (
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
-
               {allImages.map((src, i) => (
                 <div key={i} onClick={() => { setActiveImg(src); setShowVideo(false) }} style={{ width: '80px', height: '50px', flexShrink: 0, position: 'relative', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: (!showVideo && activeImg === src) ? '2px solid #6366f1' : '2px solid rgba(255,255,255,0.1)', transition: 'border 0.2s' }}>
                   <Image src={src} alt={`img-${i}`} fill unoptimized style={{ objectFit: 'cover' }} />
@@ -262,7 +300,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
           {/* ── Quick links ── */}
           {(project.demoUrl || project.youtubeUrl) && (
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '28px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
               {project.demoUrl && (
                 <a href={project.demoUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.22)', color: '#a5b4fc', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
                   🔗 Live Demo
@@ -275,6 +313,56 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
               )}
             </div>
           )}
+
+          {/* ── MOBILE ONLY PRICE & DISCOUNT BANNER (Includes Countdown Timer) ── */}
+          <div 
+            className="mobile-top-price-banner" 
+            style={{
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(6,182,212,0.08))',
+              border: '1px solid rgba(99,102,241,0.25)',
+              borderRadius: '14px',
+              padding: '14px 18px',
+              marginBottom: '24px',
+              flexDirection: 'column',
+              gap: '10px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <div>
+                <div style={{ fontSize: '10px', color: 'var(--clr-text-3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Price</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                  <span style={{ fontSize: '26px', fontWeight: 900, color: '#10b981' }}>
+                    Rs. {finalPrice}
+                  </span>
+                  {project.discountPercentage > 0 && (
+                    <span style={{ fontSize: '14px', color: 'var(--clr-text-3)', textDecoration: 'line-through' }}>
+                      Rs. {project.originalPrice}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {project.discountPercentage > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, #ef4444, #ec4899)',
+                  color: '#fff',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '4px 12px',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(239,68,68,0.3)',
+                }}>
+                  {project.discountPercentage}% OFF
+                </div>
+              )}
+            </div>
+
+            {/* Discount Countdown Timer on Mobile */}
+            {discountEndsAt && (
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px', width: '100%' }}>
+                <CountdownTimer endsAt={discountEndsAt} />
+              </div>
+            )}
+          </div>
 
           {/* ── Project Overview ── */}
           <div style={{ marginBottom: '24px' }}>
@@ -339,15 +427,50 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
             </div>
           )}
 
+          {/* ── MOBILE ONLY PACKAGE INCLUDES & DEVELOPER INFO BOX ── */}
+          <div className="mobile-package-includes-box" style={{ marginBottom: '24px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--clr-text-1)', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>📦 Package Includes</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              {[
+                { icon: '💻', label: 'Full Source Code' },
+                { icon: '🗄️', label: 'Database (.sql)' },
+                { icon: '📑', label: 'Project Report / Docs' },
+                { icon: '📧', label: 'Email Delivery' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--clr-text-2)' }}>
+                  <span style={{ color: '#6ee7b7', fontWeight: 700 }}>✓</span>
+                  {item.icon} {item.label}
+                </div>
+              ))}
+            </div>
+
+            {/* Developer Details on Mobile */}
+            <div style={{ padding: '14px', background: 'rgba(99,102,241,0.06)', borderRadius: '12px', border: '1px solid rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: isAdmin ? 'rgba(6,182,212,0.2)' : 'rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+                  {isAdmin ? '🛡️' : '👨‍💻'}
+                </div>
+                <div>
+                  <div style={{ fontSize: '10px', color: 'var(--clr-text-3)', textTransform: 'uppercase', fontWeight: 700 }}>Developer</div>
+                  <Link href={developerHref} style={{ fontWeight: 700, fontSize: '14px', color: '#fff', textDecoration: 'none' }}>
+                    {developerName}
+                  </Link>
+                </div>
+              </div>
+              <span style={{ fontSize: '10px', fontWeight: 700, background: isAdmin ? 'rgba(6,182,212,0.2)' : 'rgba(16,185,129,0.2)', color: isAdmin ? '#67e8f9' : '#34d399', padding: '3px 10px', borderRadius: '20px', border: `1px solid ${isAdmin ? 'rgba(6,182,212,0.3)' : 'rgba(16,185,129,0.3)'}` }}>
+                {isAdmin ? '🛡️ Publisher' : isVerified ? '✓ Verified' : 'Seller'}
+              </span>
+            </div>
+          </div>
+
         </div>
 
         {/* ═══════════════════════════════════════════════
-            RIGHT COLUMN (30%) — Sticky Pricing Sidebar
+            RIGHT COLUMN (30%) — Sticky Pricing Sidebar (Desktop Only)
             ═══════════════════════════════════════════════ */}
         <div className="project-right-col" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ background: 'linear-gradient(160deg, rgba(14,12,32,0.98), rgba(8,6,20,0.98))', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '14px', padding: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
             {/* Price section */}
-
             <div style={{ marginBottom: '4px' }}>
               {project.discountPercentage > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -358,7 +481,6 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
               <div style={{ fontSize: '38px', fontWeight: 900, color: '#6ee7b7', lineHeight: 1, letterSpacing: '-1px' }}>Rs. {finalPrice}</div>
             </div>
 
-
             {/* Countdown timer */}
             {discountEndsAt && (
               <div style={{ margin: '8px 0' }}>
@@ -366,7 +488,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
               </div>
             )}
 
-            {/* Checkout Action Buttons */}
+            {/* Checkout Action Buttons (Desktop) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
               <button
                 onClick={() => setIsCheckoutOpen(true)}
@@ -445,7 +567,6 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
             <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '14px 0' }} />
 
             {/* Developer Details */}
-
             <div style={{ marginBottom: '12px' }}>
               <div style={{ fontSize: '9px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>Developer</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -498,7 +619,87 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
 
       </div>
 
+      {/* ── MOBILE ONLY FIXED BOTTOM STICKY ACTION BAR (Daraz Mobile Style) ── */}
+      <div 
+        className="mobile-bottom-action-bar" 
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '65px',
+          background: 'rgba(8, 10, 18, 0.95)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(99, 102, 241, 0.25)',
+          zIndex: 1000,
+          padding: '8px 12px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          boxShadow: '0 -10px 25px rgba(0,0,0,0.5)'
+        }}
+      >
+        {/* Developer Profile Link */}
+        <Link href={developerHref} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--clr-text-2)', textDecoration: 'none', minWidth: '54px' }}>
+          <span style={{ fontSize: '18px' }}>👨‍💻</span>
+          <span style={{ fontSize: '10px', fontWeight: 600 }}>Developer</span>
+        </Link>
 
+        {/* Chat Icon with Direct WhatsApp Project Link */}
+        {buyUrl ? (
+          <a href={buyUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--clr-text-2)', textDecoration: 'none', minWidth: '44px' }}>
+            <span style={{ fontSize: '18px' }}>💬</span>
+            <span style={{ fontSize: '10px', fontWeight: 600 }}>Chat</span>
+          </a>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--clr-text-3)', minWidth: '44px' }}>
+            <span style={{ fontSize: '18px' }}>💬</span>
+            <span style={{ fontSize: '10px', fontWeight: 600 }}>Chat</span>
+          </div>
+        )}
+
+        {/* Buy Now Button */}
+        <button
+          onClick={() => setIsCheckoutOpen(true)}
+          style={{
+            flex: 1,
+            height: '44px',
+            background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+            border: 'none',
+            borderRadius: '10px',
+            color: '#fff',
+            fontSize: '13px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(245,158,11,0.3)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Buy Now
+        </button>
+
+        {/* Add to Cart Button */}
+        <button
+          onClick={cartAdded ? undefined : handleAddToCart}
+          disabled={cartLoading}
+          style={{
+            flex: 1,
+            height: '44px',
+            background: cartAdded ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, #ef4444, #f43f5e)',
+            border: cartAdded ? '1px solid #10b981' : 'none',
+            borderRadius: '10px',
+            color: '#fff',
+            fontSize: '13px',
+            fontWeight: 800,
+            cursor: cartAdded ? 'default' : 'pointer',
+            boxShadow: cartAdded ? 'none' : '0 4px 14px rgba(239,68,68,0.3)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {cartLoading ? 'Adding...' : cartAdded ? '✓ Added' : 'Add to Cart'}
+        </button>
+      </div>
 
       {/* Video Modal */}
       <AnimatePresence>
@@ -675,7 +876,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
                   </div>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <button type="button" onClick={() => setStep(1)} className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }}>Back</button>
-                    <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ flex: 2, justifyContent: 'center' }}>{isSubmitting ? 'Submitting...' : 'Submit Order'}</button>
+                    <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ flex: 2, justifyContent: 'center' }}>{isSubmitting ? 'Submit Order' : 'Submit Order'}</button>
                   </div>
                 </form>
               )}
