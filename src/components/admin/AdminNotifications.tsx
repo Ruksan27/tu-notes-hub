@@ -91,6 +91,19 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (tab: a
 
   return (
     <div className="relative" ref={dropRef} style={{ position: 'relative' }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .notification-dropdown {
+          right: 0;
+          width: 320px;
+        }
+        @media (max-width: 640px) {
+          .notification-dropdown {
+            right: -60px;
+            width: 300px;
+            max-width: calc(100vw - 24px);
+          }
+        }
+      `}} />
       <button 
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -140,11 +153,10 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (tab: a
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
+            className="notification-dropdown"
             style={{
               position: 'absolute',
               top: 'calc(100% + 12px)',
-              right: 0,
-              width: '320px',
               background: 'var(--clr-bg-800)',
               border: '1px solid var(--clr-border)',
               borderRadius: '12px',
