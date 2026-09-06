@@ -79,16 +79,9 @@ export default function DownloadPage() {
         // Layer 2: Small website link at the bottom right
         const footerLink = `l_text:Arial_22:tunoteshub.com/co_black,o_60/fl_layer_apply,g_south_east,x_15,y_15`
         
-        // Layer 3: QR Code
-        const targetNoteId = getNoteTargetId(params)
-        const targetUrl = `https://tunoteshub.com/download/${targetNoteId}`
-        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(targetUrl)}`
-        // Cloudinary requires Base64URL encoding for fetched URLs
-        const b64Url = btoa(qrApiUrl).replace(/\+/g, '-').replace(/\//g, '_')
-        const qrLayer = `l_fetch:${b64Url}/c_scale,w_100/fl_layer_apply,g_south_east,x_15,y_45`
-        
         // Pass filename to fl_attachment so the browser saves it with this name
-        return `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${qrLayer}/${footerLink}/${parts[1]}`
+        // (Removed l_fetch QR Code because Cloudinary blocks fetching external URLs without signatures)
+        return `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${footerLink}/${parts[1]}`
       }
     }
     
