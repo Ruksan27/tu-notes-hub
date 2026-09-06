@@ -9,9 +9,7 @@
     "lint": "eslint",
     "postinstall": "prisma generate"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
+
   "allowScripts": {
     "@google/genai": true,
     "@prisma/client": true,
