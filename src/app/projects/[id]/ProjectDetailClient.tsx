@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'react-toastify'
 import { getProjectSlug } from '@/lib/slugs'
@@ -84,6 +85,9 @@ function CountdownTimer({ endsAt }: { endsAt: Date }) {
 }
 
 export default function ProjectDetailClient({ project }: { project: Project }) {
+  const router = useRouter()
+  const pathname = usePathname()
+
   const youtubeId = project.youtubeUrl ? getYoutubeId(project.youtubeUrl) : null
   const screenshots = [project.screenshot1, project.screenshot2, project.screenshot3, project.screenshot4].filter(Boolean) as string[]
   const allImages = project.thumbnailUrl ? [project.thumbnailUrl, ...screenshots] : screenshots
@@ -141,7 +145,51 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
     ? `/projects/developer/${project.user.id}`
     : '/projects'
 
+  const handleBuyNow = useCallback(async () => {
+    const storedUserStr = typeof window !== 'undefined' ? localStorage.getItem('tu_user') : null
+    let currentUser = null
+    if (storedUserStr) {
+      try { currentUser = JSON.parse(storedUserStr) } catch {}
+    }
+
+    if (!currentUser) {
+      toast.info('Please login first to purchase this project! 🔐')
+      const redirectPath = encodeURIComponent(pathname || window.location.pathname)
+      router.push(`/login?redirect=${redirectPath}`)
+      return
+    }
+
+    try {
+      const res = await fetch('/api/auth/me')
+      if (res.status === 401) {
+        if (typeof window !== 'undefined') localStorage.removeItem('tu_user')
+        toast.info('Please login first to purchase this project! 🔐')
+        const redirectPath = encodeURIComponent(pathname || window.location.pathname)
+        router.push(`/login?redirect=${redirectPath}`)
+        return
+      }
+      const data = await res.json()
+      if (data?.user?.email && !emailInput) {
+        setEmailInput(data.user.email)
+      }
+    } catch {}
+
+    if (currentUser?.email && !emailInput) {
+      setEmailInput(currentUser.email)
+    }
+
+    setIsCheckoutOpen(true)
+  }, [router, pathname, emailInput])
+
   const handleAddToCart = useCallback(async () => {
+    const storedUserStr = typeof window !== 'undefined' ? localStorage.getItem('tu_user') : null
+    if (!storedUserStr) {
+      toast.info('Please login first to add items to cart! 🔐')
+      const redirectPath = encodeURIComponent(pathname || window.location.pathname)
+      router.push(`/login?redirect=${redirectPath}`)
+      return
+    }
+
     setCartLoading(true)
     try {
       const res = await fetch('/api/cart', {
@@ -150,7 +198,10 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
         body: JSON.stringify({ projectItemId: project.id })
       })
       if (res.status === 401) {
-        toast.info('Please login to add items to cart.')
+        if (typeof window !== 'undefined') localStorage.removeItem('tu_user')
+        toast.info('Please login first to add items to cart! 🔐')
+        const redirectPath = encodeURIComponent(pathname || window.location.pathname)
+        router.push(`/login?redirect=${redirectPath}`)
       } else {
         setCartAdded(true)
         toast.success('Added to cart! 🛒')
@@ -160,7 +211,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
     } finally {
       setCartLoading(false)
     }
-  }, [project.id])
+  }, [project.id, router, pathname])
 
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault()
