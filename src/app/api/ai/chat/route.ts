@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { GoogleGenAI } from '@google/genai'
 import { saveChatMessage, getChatHistory } from '@/lib/cacheDb'
+import { getNextApiKey } from '@/lib/gemini'
 
 const MAX_MESSAGES_PER_SESSION = 40 // 20 turns = 40 messages (user + model)
 
@@ -77,10 +78,10 @@ ${historyText ? `Previous conversation:\n${historyText}\n\n` : ''}Student: ${mes
 Professor:`
     }
 
-    // Call Gemini
-    const apiKey = process.env.GEMINI_KEY_ANSWER_SOLVER
+    // Call Gemini with rotating keys
+    const apiKey = getNextApiKey()
     if (!apiKey) {
-      console.error('[AI_CHAT] GEMINI_KEY_ANSWER_SOLVER is not set')
+      console.error('[AI_CHAT] No valid Gemini API keys found.')
       return NextResponse.json({ error: 'AI service not configured.' }, { status: 500 })
     }
 

@@ -18,7 +18,7 @@ const API_KEYS = getValidKeys()
 
 let currentKeyIndex = 0
 
-function getNextApiKey(): string {
+export function getNextApiKey(): string {
   if (API_KEYS.length === 0) return ''
   const key = API_KEYS[currentKeyIndex]
   currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length
@@ -82,7 +82,7 @@ async function callOfficialGemini(
   systemInstruction?: string,
   images?: { base64: string; mimeType: string }[]
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_KEY_ANSWER_SOLVER || getNextApiKey()
+  const apiKey = getNextApiKey()
   if (!apiKey) return ''
 
   try {

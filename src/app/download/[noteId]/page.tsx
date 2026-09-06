@@ -70,19 +70,10 @@ export default function DownloadPage() {
     const safeTitle = (title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
     const fileName = `TUNotes_${safeTitle}`
 
-    // If it's a Cloudinary image, inject watermark and force download with specific filename
+    // If it's a Cloudinary image, route it through our custom image API to securely sign the URL
     if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
-      const parts = url.split('/upload/')
-      if (parts.length === 2) {
-        // Layer 1: Diagonal faint watermark in the center (Copy Protection)
-        const diagonalWatermark = `l_text:Arial_100_bold:TU%20Notes%20Hub/co_black,o_12,a_-45/fl_layer_apply,g_center`
-        // Layer 2: Small website link at the bottom right
-        const footerLink = `l_text:Arial_22:tunoteshub.com/co_black,o_60/fl_layer_apply,g_south_east,x_15,y_15`
-        
-        // Pass filename to fl_attachment so the browser saves it with this name
-        // (Removed l_fetch QR Code because Cloudinary blocks fetching external URLs without signatures)
-        return `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${footerLink}/${parts[1]}`
-      }
+      const targetNoteId = getNoteTargetId(params)
+      return `/api/download/image?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${fileName}`
     }
     
     const targetNoteId = getNoteTargetId(params)
