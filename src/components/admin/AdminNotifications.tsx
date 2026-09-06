@@ -98,9 +98,13 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (tab: a
         }
         @media (max-width: 640px) {
           .notification-dropdown {
-            right: -60px;
-            width: 300px;
-            max-width: calc(100vw - 24px);
+            position: fixed !important;
+            top: 70px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            right: auto !important;
+            width: 92vw !important;
+            z-index: 9999 !important;
           }
         }
       `}} />
