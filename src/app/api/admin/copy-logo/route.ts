@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import sharp from 'sharp'
+import { getCurrentUser } from '@/lib/auth'
 
 export async function GET() {
   try {
+    const admin = await getCurrentUser()
+    if (!admin || admin.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const publicDir = path.join(process.cwd(), 'public')
     const faviconSrc = path.join(publicDir, 'favicon.ico')
 

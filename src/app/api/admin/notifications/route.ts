@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    const admin = await getCurrentUser()
+    if (!admin || admin.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const notifications = await prisma.notification.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 50 // Limit to latest 50
+      take: 50
     })
 
     return NextResponse.json({ notifications })
@@ -19,6 +23,9 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   try {
+    const admin = await getCurrentUser()
+    if (!admin || admin.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const body = await req.json()
     const { id, all } = body
 
@@ -43,6 +50,9 @@ export async function PATCH(req: Request) {
 
 export async function DELETE() {
   try {
+    const admin = await getCurrentUser()
+    if (!admin || admin.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     await prisma.notification.deleteMany({})
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -50,4 +60,3 @@ export async function DELETE() {
     return NextResponse.json({ error: 'Failed to clear notifications' }, { status: 500 })
   }
 }
-

@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server'
 import os from 'os'
+import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    const admin = await getCurrentUser()
+    if (!admin || admin.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const cpus = os.cpus()
     const loadAvg = os.loadavg()
     
