@@ -82,8 +82,6 @@ async function callOfficialGemini(
   const apiKey = getNextApiKey()
   if (!apiKey) return ''
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-
   const contents: any[] = []
   const parts: any[] = []
 
@@ -107,19 +105,28 @@ async function callOfficialGemini(
     }
   }
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    })
-    if (res.ok) {
-      const data = await res.json()
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-      if (text) return text
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash']
+  
+  for (const model of models) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    try {
+      console.log(`[Gemini AI] Trying model: ${model}`)
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+        if (text) return text
+      } else {
+        const err = await res.text()
+        console.warn(`[Gemini ${model} Error]: ${res.status} ${err.substring(0, 100)}`)
+      }
+    } catch (e) {
+      console.warn(`[Gemini ${model} Exception]`, e)
     }
-  } catch (e) {
-    console.warn('[Official Gemini API Failed]', e)
   }
   return ''
 }
@@ -303,7 +310,7 @@ export async function callGroq(
 
   console.warn(`[Groq AI] All models failed. Falling back to HuggingFace...`)
 
-  // HuggingFace Fallback (Specifically for Vision/OCR)
+  // HuggingFace Fallback
   try {
     const hfRes = await callHuggingFace(prompt, images)
     if (hfRes) return hfRes
@@ -311,29 +318,7 @@ export async function callGroq(
     console.error('HuggingFace fallback also failed:', e)
   }
 
-  // ULTIMATE FALLBACK: Pollinations AI (100% Free, No API Key required for Text)
-  if (!hasImages) {
-    console.log('[Pollinations AI] Trying ultimate free fallback...')
-    try {
-      const pRes = await fetch('https://text.pollinations.ai/openai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          model: 'openai', // Use 'openai' for the default working model
-        })
-      });
-      if (pRes.ok) {
-        const pData = await pRes.json();
-        const pText = pData.choices?.[0]?.message?.content;
-        if (pText) return pText;
-      } else {
-        console.warn(`[Pollinations AI] Error: ${pRes.status} ${await pRes.text()}`)
-      }
-    } catch (e) {
-      console.warn('[Pollinations AI] Exception:', e)
-    }
-  }
+  // Pollinations is deprecated (402 Payment Required), so removing it to prevent errors
 
   return ''
 }
@@ -348,13 +333,13 @@ async function callHuggingFace(
   // Filter valid images (Hugging Face supports basic images)
   const validImages = images?.filter(img => 
     img.mimeType.startsWith('image/')
-  )
-  const hasImages = validImages && validImages.length > 0
+  ) || []
+  const hasImages = validImages.length > 0
   
-  if (!hasImages) return '' // We only use HF for Vision tasks for now
-
-  // Default to Qwen2.5-VL-72B-Instruct, fallback to 7B if it fails
-  const models = ['Qwen/Qwen2.5-VL-72B-Instruct', 'Qwen/Qwen2-VL-7B-Instruct']
+  // Use text models if no images, vision models if images
+  const models = hasImages 
+    ? ['Qwen/Qwen2.5-VL-72B-Instruct', 'Qwen/Qwen2-VL-7B-Instruct']
+    : ['meta-llama/Meta-Llama-3-8B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3', 'Qwen/Qwen2.5-72B-Instruct']
   
   let lastError: any = null
 
