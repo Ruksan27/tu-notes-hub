@@ -126,6 +126,37 @@ video { pointer-events: none; -webkit-user-drag: none; }
   transform: translateY(-2px);
 }
 
+.subject-row-header {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subject-row-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.subject-card {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .subject-row-header {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  .subject-row-info {
+    gap: 10px;
+  }
+  .glass-card.subject-card {
+    margin-bottom: 10px;
+  }
+}
+
 /* ── Buttons ─────────────────────────────────── */
 .btn {
   display: inline-flex;

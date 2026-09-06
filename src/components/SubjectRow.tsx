@@ -210,11 +210,10 @@ export default function SubjectRow({
     <motion.div
       layout
       transition={{ type: 'spring', stiffness: 350, damping: 32 }}
-      className="glass-card"
+      className="glass-card subject-card"
       style={{
         padding: '0',
         overflow: 'hidden',
-        marginBottom: '16px',
         borderLeft: activeTab ? '4px solid var(--clr-primary-h)' : '4px solid transparent',
         borderColor: activeTab ? 'rgba(99,102,241,0.35)' : 'var(--clr-border)',
         boxShadow: activeTab ? '0 8px 32px rgba(99, 102, 241, 0.12)' : 'var(--shadow-sm)',
@@ -224,17 +223,14 @@ export default function SubjectRow({
       {/* Row Header */}
       <div
         onClick={handleRowClick}
+        className="subject-row-header"
         style={{
-          padding: '16px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
           background: activeTab ? 'rgba(99, 102, 241, 0.06)' : 'rgba(255, 255, 255, 0.015)',
           cursor: 'pointer',
           transition: 'background 0.25s ease',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+        <div className="subject-row-info">
           {/* Subject Info */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1 }}>
             <span
