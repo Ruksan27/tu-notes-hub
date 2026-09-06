@@ -45,8 +45,9 @@ export default function AdBannerBottom() {
   return (
     <div
       style={{
-        position: 'sticky',
+        position: 'fixed',
         bottom: 0,
+        left: 0,
         width: '100%',
         background: 'linear-gradient(90deg, rgba(10,10,26,0.98), rgba(12,10,28,0.98))',
         borderTop: '1px solid rgba(99,102,241,0.18)',

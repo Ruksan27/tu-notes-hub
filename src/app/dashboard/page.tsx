@@ -10,9 +10,10 @@ import { Sparkles, Brain, FileText, BookOpen, Clock, Plus, X, Send, Bot, Check, 
 import { DashboardSkeleton } from '@/components/SkeletonLoader'
 import BecomeSellerTab from '@/components/dashboard/BecomeSellerTab'
 import SellerCenterTab from '@/components/dashboard/SellerCenterTab'
+import ProfileTab from '@/components/dashboard/ProfileTab'
 import { getNoteSlug, getPaperSlug } from '@/lib/slugs'
 
-type Tab = 'overview' | 'compare' | 'payment' | 'become-seller' | 'seller-center'
+type Tab = 'overview' | 'compare' | 'payment' | 'become-seller' | 'seller-center' | 'profile'
 
 interface User {
   id: string; name: string; email: string
@@ -49,7 +50,7 @@ export default function DashboardPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const urlTab = params.get('tab') as Tab
-      if (urlTab === 'payment' || urlTab === 'compare' || urlTab === 'overview') {
+      if (urlTab === 'payment' || urlTab === 'compare' || urlTab === 'overview' || urlTab === 'profile') {
         setTab(urlTab)
       }
     }
@@ -138,6 +139,7 @@ export default function DashboardPage() {
   const navItems = [
     { id: 'overview', icon: '📚', label: 'My Subjects' },
     { id: 'compare', icon: '🤖', label: 'AI Exam Predictor' },
+    { id: 'profile', icon: '👤', label: 'Profile Settings' },
     // Show Upgrade Plan for everyone except Elite
     ...(user.packageType !== 'ELITE_AI' && user.role !== 'ADMIN' ? [{ id: 'payment', icon: '💎', label: 'Upgrade Plan' }] : []),
   ]
@@ -216,7 +218,7 @@ export default function DashboardPage() {
             <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>☰</button>
             <div>
               <h1 style={{ fontSize: '18px', margin: 0, fontWeight: 700 }}>
-                {tab === 'overview' ? '📚 My Dashboard' : tab === 'compare' ? '🤖 AI Exam Predictor' : tab === 'payment' ? '💎 Upgrade Plan' : tab === 'become-seller' ? '🛍️ Become a Seller' : '🏬 Seller Center'}
+                {tab === 'overview' ? '📚 My Dashboard' : tab === 'compare' ? '🤖 AI Exam Predictor' : tab === 'payment' ? '💎 Upgrade Plan' : tab === 'become-seller' ? '🛍️ Become a Seller' : tab === 'seller-center' ? '🏬 Seller Center' : '👤 Profile Settings'}
               </h1>
             </div>
           </div>
@@ -521,6 +523,13 @@ export default function DashboardPage() {
           {tab === 'seller-center' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <SellerCenterTab user={user} />
+            </motion.div>
+          )}
+
+          {/* ── Profile Tab ── */}
+          {tab === 'profile' && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <ProfileTab />
             </motion.div>
           )}
           </main>

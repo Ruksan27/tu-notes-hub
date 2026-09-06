@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'react-toastify'
 
-interface NavUser { name: string; role: string; packageType: string; email: string }
+interface NavUser { name: string; role: string; packageType: string; email: string; avatarUrl?: string | null }
 
 export default function Navbar() {
   const [user, setUser] = useState<NavUser | null>(null)
@@ -45,7 +45,19 @@ export default function Navbar() {
 
     const onScroll = () => setScrolled(window.scrollY > 8)
     window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
+
+    const onUserUpdate = () => {
+      const stored = localStorage.getItem('tu_user')
+      if (stored) {
+        try { setUser(JSON.parse(stored)) } catch {}
+      }
+    }
+    window.addEventListener('tu_user_updated', onUserUpdate)
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('tu_user_updated', onUserUpdate)
+    }
   }, [])
 
   // Fetch cart count when user is logged in
@@ -155,7 +167,13 @@ export default function Navbar() {
               <div className="nav-user-wrap" ref={dropRef}>
                 <button className="nav-user-btn" onClick={() => setDropOpen(!dropOpen)} aria-expanded={dropOpen}>
                   {/* Avatar */}
-                  <div className="nav-avatar">{user.name[0].toUpperCase()}</div>
+                  {user.avatarUrl ? (
+                    <div className="nav-avatar" style={{ padding: 0, overflow: 'hidden' }}>
+                      <img src={user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ) : (
+                    <div className="nav-avatar">{user.name[0].toUpperCase()}</div>
+                  )}
                   {/* Name */}
                   <span className="nav-username">{user.name.split(' ')[0]}</span>
                   {/* Package badge */}
@@ -187,6 +205,9 @@ export default function Navbar() {
                     <div className="nav-drop-divider" />
                     <Link href="/dashboard" className="nav-drop-item">
                       <span>📊</span> My Dashboard
+                    </Link>
+                    <Link href="/dashboard?tab=profile" className="nav-drop-item">
+                      <span>👤</span> Edit Profile
                     </Link>
                     {user.role === 'ADMIN' && (
                       <Link href="/admin" className="nav-drop-item">
@@ -254,9 +275,15 @@ export default function Navbar() {
             {/* User info in mobile menu */}
             {user && (
               <div className="nav-mobile-user">
-                <div className="nav-avatar" style={{ width: '42px', height: '42px', fontSize: '18px' }}>
-                  {user.name[0].toUpperCase()}
-                </div>
+                {user.avatarUrl ? (
+                  <div className="nav-avatar" style={{ width: '42px', height: '42px', padding: 0, overflow: 'hidden' }}>
+                    <img src={user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div className="nav-avatar" style={{ width: '42px', height: '42px', fontSize: '18px' }}>
+                    {user.name[0].toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <p style={{ fontWeight: 600, fontSize: '15px' }}>{user.name}</p>
                   {pkg && (
@@ -285,6 +312,7 @@ export default function Navbar() {
               {user ? (
                 <>
                   <Link href="/dashboard" className="nav-mobile-link">📊 My Dashboard</Link>
+                  <Link href="/dashboard?tab=profile" className="nav-mobile-link">👤 Edit Profile</Link>
                   {user && cartCount > 0 && (pathname.startsWith('/projects') || pathname === '/cart') && (
                     <Link href="/cart" className="nav-mobile-link">🛒 My Cart ({cartCount})</Link>
                   )}
