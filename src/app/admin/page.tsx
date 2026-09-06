@@ -1963,6 +1963,24 @@ function UsersTab() {
     }
   }
 
+  async function deleteUser(userId: string, userName: string) {
+    if (!window.confirm(`⚠️ DANGER: Are you sure you want to permanently delete the user "${userName}"? This cannot be undone.`)) return
+    try {
+      const res = await fetch(`/api/admin/users?id=${userId}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        toast.success('User deleted successfully! 🗑️')
+        fetchUsers()
+      } else {
+        const data = await res.json()
+        toast.error(data.error || 'Failed to delete user')
+      }
+    } catch {
+      toast.error('Network error')
+    }
+  }
+
   async function handleUpdateDetails(e: React.FormEvent) {
     e.preventDefault()
     if (!editingUser) return
@@ -2088,6 +2106,9 @@ function UsersTab() {
                           Revoke Access
                         </button>
                       )}
+                      <button className="btn btn-sm btn-outline" style={{ borderColor: 'rgba(239, 68, 68, 0.4)', color: '#ef4444' }} onClick={() => deleteUser(u.id, u.name || u.email)}>
+                        🗑️ Delete
+                      </button>
                     </div>
                   </td>
                 </tr>

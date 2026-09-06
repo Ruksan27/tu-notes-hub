@@ -99,3 +99,39 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
   }
 }
+
+// Delete user
+export async function DELETE(req: Request) {
+  try {
+    const admin = await getCurrentUser()
+    if (!admin || admin.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(req.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    // Delete user from the database
+    // Note: Due to foreign key constraints, Prisma will handle cascading deletes
+    // if configured in schema.prisma, otherwise this will throw an error if the user has related records
+    // that don't have onDelete: Cascade.
+    await prisma.user.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ success: true, message: 'User deleted successfully' })
+  } catch (error: any) {
+    console.error('[ADMIN_USERS_DELETE]', error)
+    
+    // Handle foreign key constraint failures explicitly if needed
+    if (error.code === 'P2003') {
+       return NextResponse.json({ error: 'Cannot delete user because they have associated records (e.g., payments, orders, blogs). Please remove those first.' }, { status: 400 })
+    }
+
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 })
+  }
+}
