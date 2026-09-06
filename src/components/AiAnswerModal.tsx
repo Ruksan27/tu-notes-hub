@@ -37,6 +37,14 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
   
   const dragControls = useDragControls()
   const [panelSize, setPanelSize] = useState({ width: 750, height: 500 })
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleResizeDrag = (e: React.MouseEvent, edges: string[]) => {
     e.preventDefault()
@@ -176,7 +184,7 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
     <>
       {/* Modal - now a draggable floating widget */}
       <motion.div
-        drag
+        drag={!isMobile}
         dragListener={false}
         dragControls={dragControls}
         dragMomentum={false}
@@ -184,13 +192,16 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
         animate={{ opacity: 1, y: 0, scale: 1 }}
         style={{
           position: 'fixed',
-          bottom: '30px', right: '30px',
+          bottom: isMobile ? '0' : '30px',
+          right: isMobile ? '0' : '30px',
+          left: isMobile ? '0' : 'auto',
           zIndex: 9999,
-          width: `${panelSize.width}px`,
-          height: `${panelSize.height}px`,
+          width: isMobile ? '100%' : `${panelSize.width}px`,
+          height: isMobile ? '85dvh' : `${panelSize.height}px`,
           background: '#0f1117',
-          borderRadius: '16px',
+          borderRadius: isMobile ? '24px 24px 0 0' : '16px',
           border: '1px solid rgba(99,102,241,0.25)',
+          borderBottom: isMobile ? 'none' : '1px solid rgba(99,102,241,0.25)',
           boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05)',
           display: 'flex',
           flexDirection: 'column',
@@ -198,24 +209,28 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
         }}
       >
         {/* ── Custom Resize Handles ── */}
-        <div onMouseDown={(e) => handleResizeDrag(e, ['left'])} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
-        <div onMouseDown={(e) => handleResizeDrag(e, ['right'])} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
-        <div onMouseDown={(e) => handleResizeDrag(e, ['top'])} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
-        <div onMouseDown={(e) => handleResizeDrag(e, ['bottom'])} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
-        <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'left'])} style={{ position: 'absolute', top: 0, left: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
-        <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'right'])} style={{ position: 'absolute', top: 0, right: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
-        <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'left'])} style={{ position: 'absolute', bottom: 0, left: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
-        <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'right'])} style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
+        {!isMobile && (
+          <>
+            <div onMouseDown={(e) => handleResizeDrag(e, ['left'])} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
+            <div onMouseDown={(e) => handleResizeDrag(e, ['right'])} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '6px', cursor: 'ew-resize', zIndex: 50 }} />
+            <div onMouseDown={(e) => handleResizeDrag(e, ['top'])} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
+            <div onMouseDown={(e) => handleResizeDrag(e, ['bottom'])} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '6px', cursor: 'ns-resize', zIndex: 50 }} />
+            <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'left'])} style={{ position: 'absolute', top: 0, left: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
+            <div onMouseDown={(e) => handleResizeDrag(e, ['top', 'right'])} style={{ position: 'absolute', top: 0, right: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
+            <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'left'])} style={{ position: 'absolute', bottom: 0, left: 0, width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 51 }} />
+            <div onMouseDown={(e) => handleResizeDrag(e, ['bottom', 'right'])} style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 51 }} />
+          </>
+        )}
         {/* Header */}
         <div 
-          onPointerDown={(e) => dragControls.start(e)}
+          onPointerDown={(e) => { if (!isMobile) dragControls.start(e) }}
           style={{
             display: 'flex', alignItems: 'center', gap: '12px',
             padding: '16px 20px',
             borderBottom: '1px solid rgba(255,255,255,0.07)',
             background: 'rgba(255,255,255,0.02)',
             flexShrink: 0,
-            cursor: 'grab',
+            cursor: isMobile ? 'default' : 'grab',
           }}
         >
           {/* TU AI Logo */}

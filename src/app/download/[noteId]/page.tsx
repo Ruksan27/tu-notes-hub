@@ -309,88 +309,90 @@ export default function DownloadPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
-                <span className="badge badge-semester" style={{ marginBottom: '6px' }}>📄 TU Official Resource</span>
-                <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--clr-text-1)', margin: 0 }}>{note?.title || 'Loading document...'}</h2>
+                <span style={{ display: 'inline-flex', marginBottom: '10px', fontSize: '11px', fontWeight: 800, padding: '4px 10px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px', letterSpacing: '0.05em' }}>📄 TU OFFICIAL RESOURCE</span>
+                <h2 style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>{note?.title || 'Loading document...'}</h2>
               </div>
               
               {/* Download Button (Triggers 15s Ad Lock Modal) */}
-              <div>
+              <div style={{ width: '100%' }}>
                   {!mounted ? (
-                    <div style={{ padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', textAlign: 'center', color: '#fff' }}>
+                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', textAlign: 'center', color: '#fff' }}>
                       ⏳ Loading...
                     </div>
                   ) : ready && fileUrl ? (
                   <button onClick={handleStartDownload}
-                    className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', cursor: 'pointer' }}>
-                    ⬇️ Download Files
+                    style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 800, borderRadius: '10px', cursor: 'pointer', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', color: '#fff', border: 'none', boxShadow: '0 8px 24px rgba(99,102,241,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
+                    <span style={{ fontSize: '18px' }}>⬇️</span> Download Resource Files
                   </button>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
                     <span className="spinner" style={{ width: '16px', height: '16px' }} />
-                    <span>Preparing offline download link... {countdown > 0 && `(${countdown}s)`}</span>
+                    <span>Preparing offline link... {countdown > 0 && `(${countdown}s)`}</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* One-Click Social Share Widgets */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '14px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600 }}>Share Resource:</span>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>Share Resource</span>
               
-              {/* WhatsApp Share */}
-              <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hey, check out this TU exam note on TU Notes Hub: ${note?.title || ''}\n${currentUrl}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px',
-                  background: 'rgba(37,211,102,0.12)', color: '#25D366', fontSize: '12px', fontWeight: 700, textDecoration: 'none'
-                }}
-              >
-                💬 WhatsApp
-              </a>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+                {/* WhatsApp Share */}
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hey, check out this TU exam note on TU Notes Hub: ${note?.title || ''}\n${currentUrl}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
+                    background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25D366', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
+                  }}
+                >
+                  💬 WhatsApp
+                </a>
 
-              {/* Viber Share */}
-              <a
-                href={`viber://forward?text=${encodeURIComponent(`Download TU Notes: ${note?.title || ''} on ${currentUrl}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px',
-                  background: 'rgba(115,114,242,0.12)', color: '#7372F2', fontSize: '12px', fontWeight: 700, textDecoration: 'none'
-                }}
-              >
-                📱 Viber
-              </a>
+                {/* Viber Share */}
+                <a
+                  href={`viber://forward?text=${encodeURIComponent(`Download TU Notes: ${note?.title || ''} on ${currentUrl}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
+                    background: 'rgba(115,114,242,0.1)', border: '1px solid rgba(115,114,242,0.2)', color: '#7372F2', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
+                  }}
+                >
+                  📱 Viber
+                </a>
 
-              {/* Facebook Share */}
-              <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px',
-                  background: 'rgba(24,119,242,0.12)', color: '#1877F2', fontSize: '12px', fontWeight: 700, textDecoration: 'none'
-                }}
-              >
-                🔵 Facebook
-              </a>
+                {/* Facebook Share */}
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
+                    background: 'rgba(24,119,242,0.1)', border: '1px solid rgba(24,119,242,0.2)', color: '#1877F2', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
+                  }}
+                >
+                  🔵 Facebook
+                </a>
 
-              {/* Copy Link button */}
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(currentUrl)
-                  alert('Link copied to clipboard! Share it with your friends.')
-                }}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px',
-                  background: 'rgba(255,255,255,0.05)', color: 'var(--clr-text-2)', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer'
-                }}
-              >
-                🔗 Copy Link
-              </button>
+                {/* Copy Link button */}
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentUrl)
+                    alert('Link copied to clipboard! Share it with your friends.')
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', fontSize: '13px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  🔗 Copy Link
+                </button>
+              </div>
             </div>
           </div>
 
@@ -430,40 +432,44 @@ export default function DownloadPage() {
             <>
               {/* Tab Controls (Only shown if extractedText exists) */}
               {note?.extractedText && (
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => setActiveTab('text')}
                     style={{
-                      padding: '8px 16px',
+                      flex: '1 1 auto',
+                      padding: '12px 16px',
                       fontSize: '13px',
                       fontWeight: 700,
-                      borderRadius: '6px',
+                      borderRadius: '10px',
                       border: 'none',
                       cursor: 'pointer',
                       background: activeTab === 'text' ? 'var(--grad-brand)' : 'rgba(255,255,255,0.05)',
                       color: '#fff',
-                      boxShadow: activeTab === 'text' ? '0 4px 12px rgba(99,102,241,0.3)' : 'none',
-                      transition: 'all 0.2s'
+                      boxShadow: activeTab === 'text' ? '0 4px 16px rgba(99,102,241,0.3)' : 'none',
+                      transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
                     }}
                   >
-                    📄 Interactive Text (Smart AI)
+                    <span style={{ fontSize: '16px' }}>📄</span> Smart AI Text
                   </button>
                   <button
                     onClick={() => setActiveTab('original')}
                     style={{
-                      padding: '8px 16px',
+                      flex: '1 1 auto',
+                      padding: '12px 16px',
                       fontSize: '13px',
                       fontWeight: 700,
-                      borderRadius: '6px',
+                      borderRadius: '10px',
                       border: 'none',
                       cursor: 'pointer',
                       background: activeTab === 'original' ? 'var(--grad-brand)' : 'rgba(255,255,255,0.05)',
                       color: '#fff',
-                      boxShadow: activeTab === 'original' ? '0 4px 12px rgba(99,102,241,0.3)' : 'none',
-                      transition: 'all 0.2s'
+                      boxShadow: activeTab === 'original' ? '0 4px 16px rgba(99,102,241,0.3)' : 'none',
+                      transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
                     }}
                   >
-                    🖼️ Original File
+                    <span style={{ fontSize: '16px' }}>🖼️</span> Original File
                   </button>
                 </div>
               )}
