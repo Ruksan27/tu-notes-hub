@@ -660,9 +660,9 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
               <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(6,182,212,0.08))', border: '1px dashed rgba(99,102,241,0.2)', borderRadius: '6px', padding: '18px 10px', marginBottom: '8px' }}>
                 <div style={{ fontSize: '10px', color: 'var(--clr-text-3)' }}>300 × 250 Ad Area</div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #6366f1, #06b6d4)', borderRadius: '6px', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 700, fontSize: '11px', color: '#fff' }}>TU Notes Hub Premium</span>
-                <span style={{ background: '#fff', color: '#6366f1', borderRadius: '4px', padding: '2px 6px', fontSize: '9.5px', fontWeight: 700 }}>Upgrade Now</span>
+              <div style={{ background: 'rgba(99, 102, 241, 0.15)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '6px', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, fontSize: '11px', color: '#818cf8' }}>TU Notes Hub Premium</span>
+                <span style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#c7d2fe', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '4px', padding: '2px 6px', fontSize: '9.5px', fontWeight: 700 }}>Upgrade Now</span>
               </div>
             </Link>
           </div>
