@@ -296,6 +296,19 @@ export default function DownloadPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', background: '#0b0f19', position: 'relative' }}>
       
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 768px) {
+          .mobile-dl-container { padding: 12px !important; gap: 16px !important; display: flex !important; flex-direction: column !important; }
+          .mobile-dl-card { padding: 14px !important; gap: 12px !important; }
+          .mobile-dl-title { font-size: 18px !important; line-height: 1.3 !important; }
+          .mobile-dl-btn { padding: 10px !important; font-size: 14px !important; }
+          .mobile-dl-badge { padding: 3px 8px !important; font-size: 10px !important; margin-bottom: 6px !important; }
+          .mobile-dl-share-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+          .mobile-dl-share-btn { padding: 8px !important; font-size: 12px !important; gap: 4px !important; }
+          .mobile-dl-tab-btn { padding: 10px !important; font-size: 12px !important; flex: 1 !important; }
+          .mobile-dl-tab-container { gap: 8px !important; margin-bottom: 12px !important; }
+        }
+      `}} />
       {/* Top Banner Ad */}
       {!isPaid && (
         <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
@@ -303,16 +316,16 @@ export default function DownloadPage() {
         </div>
       )}
 
-      <div style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: isPaid ? '1fr' : 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
+      <div className="mobile-dl-container" style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: isPaid ? '1fr' : 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
         
         {/* Main Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="glass-card mobile-dl-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }} className="mobile-dl-card">
               <div>
-                <span style={{ display: 'inline-flex', marginBottom: '10px', fontSize: '11px', fontWeight: 800, padding: '4px 10px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px', letterSpacing: '0.05em' }}>📄 TU OFFICIAL RESOURCE</span>
-                <h2 style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>{note?.title || 'Loading document...'}</h2>
+                <span className="mobile-dl-badge" style={{ display: 'inline-flex', marginBottom: '10px', fontSize: '11px', fontWeight: 800, padding: '4px 10px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px', letterSpacing: '0.05em' }}>📄 TU OFFICIAL RESOURCE</span>
+                <h2 className="mobile-dl-title" style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>{note?.title || 'Loading document...'}</h2>
               </div>
               
               {/* Download Button (Triggers 15s Ad Lock Modal) */}
@@ -322,9 +335,9 @@ export default function DownloadPage() {
                       ⏳ Loading...
                     </div>
                   ) : ready && fileUrl ? (
-                  <button onClick={handleStartDownload}
+                  <button onClick={handleStartDownload} className="mobile-dl-btn"
                     style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 800, borderRadius: '10px', cursor: 'pointer', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', color: '#fff', border: 'none', boxShadow: '0 8px 24px rgba(99,102,241,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
-                    <span style={{ fontSize: '18px' }}>⬇️</span> Download Resource Files
+                    <span style={{ fontSize: '18px' }} className="mobile-dl-title">⬇️</span> Download Resource Files
                   </button>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
@@ -339,12 +352,13 @@ export default function DownloadPage() {
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
               <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>Share Resource</span>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+              <div className="mobile-dl-share-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
                 {/* WhatsApp Share */}
                 <a
                   href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hey, check out this TU exam note on TU Notes Hub: ${note?.title || ''}\n${currentUrl}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="mobile-dl-share-btn"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
                     background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25D366', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
@@ -358,6 +372,7 @@ export default function DownloadPage() {
                   href={`viber://forward?text=${encodeURIComponent(`Download TU Notes: ${note?.title || ''} on ${currentUrl}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="mobile-dl-share-btn"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
                     background: 'rgba(115,114,242,0.1)', border: '1px solid rgba(115,114,242,0.2)', color: '#7372F2', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
@@ -371,6 +386,7 @@ export default function DownloadPage() {
                   href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="mobile-dl-share-btn"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
                     background: 'rgba(24,119,242,0.1)', border: '1px solid rgba(24,119,242,0.2)', color: '#1877F2', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
@@ -385,6 +401,7 @@ export default function DownloadPage() {
                     navigator.clipboard.writeText(currentUrl)
                     alert('Link copied to clipboard! Share it with your friends.')
                   }}
+                  className="mobile-dl-share-btn"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
                     background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', fontSize: '13px', fontWeight: 700, cursor: 'pointer'
@@ -432,9 +449,10 @@ export default function DownloadPage() {
             <>
               {/* Tab Controls (Only shown if extractedText exists) */}
               {note?.extractedText && (
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                <div className="mobile-dl-tab-container" style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => setActiveTab('text')}
+                    className="mobile-dl-tab-btn"
                     style={{
                       flex: '1 1 auto',
                       padding: '12px 16px',
@@ -454,6 +472,7 @@ export default function DownloadPage() {
                   </button>
                   <button
                     onClick={() => setActiveTab('original')}
+                    className="mobile-dl-tab-btn"
                     style={{
                       flex: '1 1 auto',
                       padding: '12px 16px',

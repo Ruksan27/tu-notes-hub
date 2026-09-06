@@ -2,6 +2,7 @@
 
 function getValidKeys() {
   const keys = [
+    process.env.GEMINI_KEY_ANSWER_SOLVER,
     process.env.GEMINI_KEY_1,
     process.env.GEMINI_KEY_2,
     process.env.GEMINI_KEY_3,
@@ -74,60 +75,54 @@ async function callNvidia(
   return ''
 }
 
+import { GoogleGenAI } from '@google/genai'
+
 async function callOfficialGemini(
   prompt: string,
   systemInstruction?: string,
   images?: { base64: string; mimeType: string }[]
 ): Promise<string> {
-  const apiKey = getNextApiKey()
+  const apiKey = process.env.GEMINI_KEY_ANSWER_SOLVER || getNextApiKey()
   if (!apiKey) return ''
 
-  const contents: any[] = []
-  const parts: any[] = []
-
-  if (images && images.length > 0) {
-    for (const img of images) {
-      parts.push({
-        inlineData: {
-          mimeType: img.mimeType,
-          data: img.base64
-        }
-      })
-    }
-  }
-  parts.push({ text: prompt })
-  contents.push({ role: 'user', parts })
-
-  const requestBody: any = { contents }
-  if (systemInstruction) {
-    requestBody.systemInstruction = {
-      parts: [{ text: systemInstruction }]
-    }
-  }
-
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash']
-  
-  for (const model of models) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
-    try {
-      console.log(`[Gemini AI] Trying model: ${model}`)
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      })
-      if (res.ok) {
-        const data = await res.json()
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-        if (text) return text
-      } else {
-        const err = await res.text()
-        console.warn(`[Gemini ${model} Error]: ${res.status} ${err.substring(0, 100)}`)
+  try {
+    const genAI = new GoogleGenAI({ apiKey })
+    
+    // Construct parts array for the SDK
+    const parts: any[] = []
+    
+    if (images && images.length > 0) {
+      for (const img of images) {
+        parts.push({
+          inlineData: {
+            mimeType: img.mimeType,
+            data: img.base64
+          }
+        })
       }
-    } catch (e) {
-      console.warn(`[Gemini ${model} Exception]`, e)
     }
+    
+    parts.push({ text: prompt })
+    
+    const models = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+    
+    for (const model of models) {
+      try {
+        console.log(`[Gemini SDK] Trying model: ${model}`)
+        const response = await genAI.models.generateContent({
+          model: model,
+          contents: parts,
+          config: systemInstruction ? { systemInstruction: systemInstruction } : undefined
+        })
+        if (response.text) return response.text
+      } catch (e: any) {
+        console.warn(`[Gemini SDK Error for ${model}]:`, e?.message || e)
+      }
+    }
+  } catch (e) {
+    console.error('[Gemini SDK init failed]', e)
   }
+  
   return ''
 }
 
@@ -230,12 +225,12 @@ async function getGroqModels(apiKey: string): Promise<string[]> {
     ]
     const sorted = [
       ...preferred.filter(p => ids.includes(p)),
-      ...ids.filter(id => !preferred.includes(id) && !id.includes('whisper') && !id.includes('tts') && !id.includes('vision'))
+      ...ids.filter(id => !preferred.includes(id) && !id.includes('whisper') && !id.includes('tts'))
     ]
     console.log('[Groq] Available models:', sorted.slice(0, 5).join(', '))
     return sorted.slice(0, 6) // limit to top 6
   } catch {
-    return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']
+    return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview']
   }
 }
 
@@ -256,10 +251,16 @@ export async function callGroq(
 
   // Discover available models dynamically
   const allModels = await getGroqModels(apiKey)
-  // For vision tasks, prefer vision-capable models from dynamic list
+  // For vision tasks, prefer vision-capable models
   const modelsToTry = hasImages 
-    ? allModels.filter(m => m.includes('vision') || m.includes('scout') || m.includes('maverick')).slice(0, 3)
+    ? allModels.filter(m => m.includes('vision')).length > 0 
+      ? allModels.filter(m => m.includes('vision')) 
+      : ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'] // Hardcode if not found
     : allModels.filter(m => !m.includes('vision') && !m.includes('whisper') && !m.includes('tts')).slice(0, 6)
+
+  if (modelsToTry.length === 0) {
+    modelsToTry.push('llama-3.2-11b-vision-preview')
+  }
 
   const messages: any[] = []
   if (systemInstruction) {
