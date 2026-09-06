@@ -9,69 +9,66 @@ export const metadata: Metadata = {
 export default function SellerPolicyPage() {
   return (
     <div className="min-h-[85vh] py-10 sm:py-16 px-4 sm:px-6 flex items-center justify-center">
-      <div className="w-full max-w-3xl mx-auto bg-[#0f101d] border border-indigo-500/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 relative overflow-hidden">
-        {/* Glow decoration */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-indigo-500 to-purple-500" />
-        <div className="absolute -top-24 -right-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="w-full max-w-3xl mx-auto rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8" style={{ background: 'var(--clr-bg-800)', border: '1px solid var(--clr-border)' }}>
 
         {/* Page Header */}
-        <div className="border-b border-white/10 pb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold mb-3">
+        <div className="border-b pb-6" style={{ borderColor: 'var(--clr-border)' }}>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-3" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--clr-text-2)' }}>
             📜 Official Terms & Rules
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">Seller Rules & Regulations</h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-2">Last Updated: August 2026 • Mandatory for all marketplace sellers</p>
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight" style={{ color: 'var(--clr-text-1)' }}>Seller Rules & Regulations</h1>
+          <p className="text-xs sm:text-sm mt-2" style={{ color: 'var(--clr-text-3)' }}>Last Updated: August 2026 • Mandatory for all marketplace sellers</p>
         </div>
 
         {/* Policy Sections */}
         <div className="space-y-6">
           
-          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
-            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">1</span>
+          <div className="p-4 sm:p-5 rounded-2xl space-y-2" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--clr-border)' }}>
+            <h2 className="text-sm sm:text-base font-bold flex items-center gap-2" style={{ color: 'var(--clr-text-1)' }}>
+              <span className="w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center" style={{ background: 'var(--clr-primary)', color: '#fff' }}>1</span>
               Project Verification & Quality Control
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+            <p className="text-xs sm:text-sm leading-relaxed pl-8" style={{ color: 'var(--clr-text-2)' }}>
               To protect buyers and maintain high platform quality, every submitted project is manually reviewed by TU Notes admins. Sellers must submit original or significantly modified source code accompanied by accurate descriptions, demo links/screenshots, and setup guides.
             </p>
           </div>
 
-          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
-            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">2</span>
+          <div className="p-4 sm:p-5 rounded-2xl space-y-2" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--clr-border)' }}>
+            <h2 className="text-sm sm:text-base font-bold flex items-center gap-2" style={{ color: 'var(--clr-text-1)' }}>
+              <span className="w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center" style={{ background: 'var(--clr-primary)', color: '#fff' }}>2</span>
               Platform Revenue Share & Commission
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
-              Sellers earn <strong className="text-emerald-400 font-extrabold">75%–80%</strong> of the sale price. A 20–25% platform commission covers secure payment processing, escrow protection, server bandwidth, and administrative verification. Payouts are processed weekly via eSewa, Khalti, or Bank Transfer.
+            <p className="text-xs sm:text-sm leading-relaxed pl-8" style={{ color: 'var(--clr-text-2)' }}>
+              Sellers earn <strong style={{ color: 'var(--clr-primary)' }}>75%–80%</strong> of the sale price. A 20–25% platform commission covers secure payment processing, escrow protection, server bandwidth, and administrative verification. Payouts are processed weekly via eSewa, Khalti, or Bank Transfer.
             </p>
           </div>
 
-          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
-            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">3</span>
+          <div className="p-4 sm:p-5 rounded-2xl space-y-2" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--clr-border)' }}>
+            <h2 className="text-sm sm:text-base font-bold flex items-center gap-2" style={{ color: 'var(--clr-text-1)' }}>
+              <span className="w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center" style={{ background: 'var(--clr-primary)', color: '#fff' }}>3</span>
               Off-Platform Deals & Direct Bypassing
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+            <p className="text-xs sm:text-sm leading-relaxed pl-8" style={{ color: 'var(--clr-text-2)' }}>
               All transactions, communication, and file deliveries must strictly take place within TU Notes Hub. Attempting to deal directly with buyers outside the platform or bypassing platform fees is strictly forbidden.
             </p>
           </div>
 
-          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
-            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">4</span>
+          <div className="p-4 sm:p-5 rounded-2xl space-y-2" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--clr-border)' }}>
+            <h2 className="text-sm sm:text-base font-bold flex items-center gap-2" style={{ color: 'var(--clr-text-1)' }}>
+              <span className="w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center" style={{ background: 'var(--clr-primary)', color: '#fff' }}>4</span>
               Private Code Repositories & Intellectual Property
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+            <p className="text-xs sm:text-sm leading-relaxed pl-8" style={{ color: 'var(--clr-text-2)' }}>
               The source-code repository for listed projects MUST remain PRIVATE before and during the sale. Uploading stolen, pirated, or unauthorized third-party content will result in immediate removal and forfeiture of earnings.
             </p>
           </div>
 
-          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 space-y-2">
-            <h2 className="text-sm sm:text-base font-bold text-amber-300 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">5</span>
+          <div className="p-4 sm:p-5 rounded-2xl space-y-2" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--clr-border)' }}>
+            <h2 className="text-sm sm:text-base font-bold flex items-center gap-2" style={{ color: 'var(--clr-text-1)' }}>
+              <span className="w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center" style={{ background: 'var(--clr-primary)', color: '#fff' }}>5</span>
               Violations & Account Suspension
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8">
+            <p className="text-xs sm:text-sm leading-relaxed pl-8" style={{ color: 'var(--clr-text-2)' }}>
               Violating these rules, submitting malicious code, or failing to deliver advertised features will lead to project removal, payout holds, seller badge revocation, or permanent account termination.
             </p>
           </div>
@@ -79,10 +76,11 @@ export default function SellerPolicyPage() {
         </div>
 
         {/* Back Button */}
-        <div className="pt-4 border-t border-white/10 flex justify-center">
+        <div className="pt-6 border-t flex justify-center" style={{ borderColor: 'var(--clr-border)' }}>
           <Link
             href="/dashboard"
-            className="w-full sm:w-auto text-center px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-sm transition-all shadow-xl shadow-indigo-600/25 active:scale-95"
+            className="w-full sm:w-auto text-center px-8 py-3 rounded-xl font-bold transition-all btn"
+            style={{ background: 'var(--clr-primary)', color: 'white' }}
           >
             ← Return to Dashboard
           </Link>
