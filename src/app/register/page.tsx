@@ -44,7 +44,7 @@ function CustomDropdown({ id, label, placeholder, options, value, onChange, disa
         onClick={() => !disabled && setOpen(p => !p)}
         className="input-field"
         style={{
-          display: 'flex', alignItems: 'center', justifyBetween: 'space-between', width: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
           cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
           borderColor: open ? 'var(--clr-primary)' : undefined,
           boxShadow: open ? '0 0 0 3px rgba(99,102,241,0.15)' : undefined
