@@ -25,56 +25,6 @@ export function getNextApiKey(): string {
   return key
 }
 
-// Call Nvidia REST API (OpenAI Compatible)
-async function callNvidia(
-  modelName: string,
-  messages: any[],
-  timeoutMs = 45_000
-): Promise<string> {
-  const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY
-  if (!NVIDIA_API_KEY) {
-    console.warn('[Nvidia] NVIDIA_API_KEY is not set in environment variables.')
-    return ''
-  }
-  const baseUrl = `https://integrate.api.nvidia.com/v1/chat/completions`
-
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
-
-  try {
-    const res = await fetch(baseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${NVIDIA_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: messages,
-      }),
-      signal: controller.signal,
-    })
-    clearTimeout(timer)
-
-    if (res.ok) {
-      const data = await res.json()
-      const text = data?.choices?.[0]?.message?.content ?? ''
-      if (text) return text
-    } else {
-      const errBody = await res.text()
-      console.warn(`[Nvidia] ${modelName} → ${res.status}: ${errBody.substring(0, 200)}`)
-      const err: any = new Error(`Nvidia ${res.status}: ${errBody.substring(0, 150)}`)
-      err.status = res.status
-      throw err
-    }
-  } catch (e: any) {
-    clearTimeout(timer)
-    throw e
-  }
-
-  return ''
-}
-
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 async function callOfficialGemini(
@@ -104,7 +54,12 @@ async function callOfficialGemini(
       }
     }
     
-    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
+    const models = [
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.8-flash',
+      'gemini-2.5-flash'
+    ]
     
     for (const model of models) {
       try {
@@ -118,6 +73,8 @@ async function callOfficialGemini(
         if (text) return text
       } catch (e: any) {
         console.warn(`[Gemini SDK Error for ${model}]:`, e?.message || e)
+        // Add 2 second delay on error to prevent rate limit cascades (503/429)
+        await new Promise((res) => setTimeout(res, 2000))
       }
     }
   } catch (e) {
@@ -127,50 +84,156 @@ async function callOfficialGemini(
   return ''
 }
 
+// Call Nvidia REST API (OpenAI Compatible)
+async function callNvidia(
+  modelName: string,
+  messages: any[],
+  timeoutMs = 45_000
+): Promise<string> {
+  const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY
+  if (!NVIDIA_API_KEY) {
+    console.warn('[Nvidia] API Key is missing in .env')
+    return ''
+  }
+  
+  const baseUrl = `https://integrate.api.nvidia.com/v1/chat/completions`
+  const controller = new AbortController()
+  const actualTimeout = modelName.includes('reasoning') || modelName.includes('deepseek-r1') ? 120_000 : timeoutMs
+  const timer = setTimeout(() => controller.abort(), actualTimeout)
+
+  try {
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${NVIDIA_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: messages,
+        ...(modelName === 'moonshotai/kimi-k3' ? {
+          max_tokens: 16384,
+          seed: 0,
+          temperature: 1,
+          reasoning_effort: "max"
+        } : modelName === 'deepseek-ai/deepseek-v4-pro-0813' ? {
+          max_tokens: 16384,
+          temperature: 1,
+          top_p: 0.95
+        } : {})
+      }),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+
+    if (res.ok) {
+      const data = await res.json()
+      const text = data?.choices?.[0]?.message?.content ?? ''
+      if (text) return text
+    } else {
+      const errBody = await res.text()
+      console.warn(`[Nvidia] ${modelName} → ${res.status}: ${errBody.substring(0, 200)}`)
+      const err: any = new Error(`Nvidia ${res.status}: ${errBody.substring(0, 150)}`)
+      err.status = res.status
+      throw err
+    }
+  } catch (e: any) {
+    clearTimeout(timer)
+    throw e
+  }
+  return ''
+}
+
+// Call Groq API (OpenAI Compatible)
+async function callGroq(
+  modelName: string,
+  messages: any[],
+  timeoutMs = 45_000
+): Promise<string> {
+  const GROQ_API_KEY = process.env.GROQ_API_KEY
+  if (!GROQ_API_KEY) {
+    console.warn('[Groq] API Key is missing in .env')
+    return ''
+  }
+  
+  const baseUrl = `https://api.groq.com/openai/v1/chat/completions`
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: messages,
+      }),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+
+    if (res.ok) {
+      const data = await res.json()
+      const text = data?.choices?.[0]?.message?.content ?? ''
+      if (text) return text
+    } else {
+      const errBody = await res.text()
+      console.warn(`[Groq] ${modelName} → ${res.status}: ${errBody.substring(0, 200)}`)
+      const err: any = new Error(`Groq ${res.status}: ${errBody.substring(0, 150)}`)
+      err.status = res.status
+      throw err
+    }
+  } catch (e: any) {
+    clearTimeout(timer)
+    throw e
+  }
+  return ''
+}
+
 export async function callGemini(
   prompt: string,
   systemInstruction?: string,
   images?: { base64: string, mimeType: string }[]
 ): Promise<string> {
+  const geminiText = await callOfficialGemini(prompt, systemInstruction, images)
+  if (geminiText) return geminiText
 
-  // 1. Try Official Gemini API first if API key is present
-  try {
-    const geminiText = await callOfficialGemini(prompt, systemInstruction, images)
-    if (geminiText) return geminiText
-  } catch (err) {
-    console.warn('[Official Gemini call failed, falling back to Nvidia/Groq]:', err)
-  }
-  
-  // 2. Fetch active Nvidia models dynamically
-  let MODELS_TO_TRY: string[] = []
-  const nvidiaKey = process.env.NVIDIA_API_KEY
-  if (nvidiaKey) {
-    MODELS_TO_TRY = await getNvidiaModels(nvidiaKey, Boolean(images && images.length > 0))
-  }
-
-  // Build OpenAI-compatible messages array
+  // Build OpenAI-compatible messages array for Nvidia fallback
   const messages: any[] = []
-  
   if (systemInstruction) {
     messages.push({ role: 'system', content: systemInstruction })
   }
 
+  const validImages = images?.filter(img => img.mimeType.startsWith('image/')) || []
+  const hasImages = validImages.length > 0
+
   const userContent: any[] = []
-  if (images && images.length > 0) {
-    for (const img of images) {
+  if (hasImages) {
+    for (const img of validImages) {
       userContent.push({
         type: 'image_url',
-        image_url: {
-          url: `data:${img.mimeType};base64,${img.base64}`
-        }
+        image_url: { url: `data:${img.mimeType};base64,${img.base64}` }
       })
     }
   }
   userContent.push({ type: 'text', text: prompt })
-  
   messages.push({ role: 'user', content: userContent })
 
-  let lastError: any = null
+  let MODELS_TO_TRY: string[] = []
+  if (hasImages) {
+    // Models for images/vision tasks
+    MODELS_TO_TRY = ['meta/llama-3.2-11b-vision-instruct', 'moonshotai/kimi-k3']
+  } else {
+    // Models for text/answer tasks
+    MODELS_TO_TRY = [
+      'nvidia/nemotron-3-ultra-550b-a55b',
+      'nvidia/nemotron-3.5-lightning-30b-a3b',
+      'deepseek-ai/deepseek-v4-pro-0813'
+    ]
+  }
 
   for (const modelName of MODELS_TO_TRY) {
     try {
@@ -178,23 +241,36 @@ export async function callGemini(
       const text = await callNvidia(modelName, messages)
       if (text) return text
     } catch (error: any) {
-      lastError = error
       const status = error?.status ?? 0
       console.warn(`[Nvidia Model ${modelName} Failed (${status}): ${error?.message?.substring(0, 80)}]`)
       continue 
     }
   }
-
-  console.warn(`[Groq AI] All models failed. Falling back to HuggingFace...`)
-
-  // 3. Groq fallback
-  try {
-    return await callGroq(prompt, systemInstruction, images)
-  } catch (groqErr) {
-    console.warn('[Groq Fallback Failed]. Skipping.')
-    if (lastError) throw lastError
-    throw new Error('All AI providers failed. Please try again later.')
+  
   }
+
+  console.warn(`[Nvidia AI] All models failed. Falling back to Groq...`)
+
+  let GROQ_MODELS_TO_TRY: string[] = []
+  if (hasImages) {
+    GROQ_MODELS_TO_TRY = ['qwen/qwen3.8-27b', 'qwen/qwen3.6-27b']
+  } else {
+    GROQ_MODELS_TO_TRY = ['gpt-oss-120b', 'gpt-oss-20b']
+  }
+
+  for (const modelName of GROQ_MODELS_TO_TRY) {
+    try {
+      console.log(`[Groq AI] Trying model: ${modelName}`)
+      const text = await callGroq(modelName, messages)
+      if (text) return text
+    } catch (error: any) {
+      const status = error?.status ?? 0
+      console.warn(`[Groq Model ${modelName} Failed (${status}): ${error?.message?.substring(0, 80)}]`)
+      continue 
+    }
+  }
+  
+  throw new Error('All AI models failed. Please check your API keys or try again later.')
 }
 
 // Dedicated Multi-Provider Helper for High Reliability AI Tasks
@@ -205,150 +281,6 @@ export async function callMultiProviderAI(
 ): Promise<string> {
   return callGemini(prompt, systemInstruction, images)
 }
-
-
-// Fetch available Nvidia models dynamically
-async function getNvidiaModels(apiKey: string, hasImages: boolean): Promise<string[]> {
-  try {
-    const res = await fetch('https://integrate.api.nvidia.com/v1/models', {
-      headers: { 'Authorization': `Bearer ${apiKey}` }
-    })
-    if (!res.ok) return []
-    const data = await res.json()
-    const ids: string[] = (data.data ?? []).map((m: any) => m.id)
-    
-    if (hasImages) {
-      const visionModels = ids.filter(id => id.includes('vision') || id.includes('vl-'))
-      if (visionModels.length > 0) return visionModels.slice(0, 3)
-    }
-
-    const preferred = [
-      'meta/llama-3.3-70b-instruct',
-      'meta/llama-3.1-405b-instruct',
-      'deepseek-ai/deepseek-r1',
-      'deepseek-ai/deepseek-coder-33b-instruct',
-      'nvidia/llama-3.1-nemotron-70b-instruct',
-      'google/gemma-2-27b-it',
-      'mistralai/mistral-large-2-instruct'
-    ]
-    const sorted = [
-      ...preferred.filter(p => ids.includes(p)),
-      ...ids.filter(id => !preferred.includes(id) && (id.includes('instruct') || id.includes('chat')) && !id.includes('vision'))
-    ]
-    return sorted.slice(0, 4)
-  } catch {
-    return []
-  }
-}
-
-// Fetch available Groq models dynamically
-async function getGroqModels(apiKey: string): Promise<string[]> {
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/models', {
-      headers: { 'Authorization': `Bearer ${apiKey}` }
-    })
-    if (!res.ok) return []
-    const data = await res.json()
-    const ids: string[] = (data.data ?? []).map((m: any) => m.id)
-    // Prefer larger/more capable chat models first
-    const preferred = [
-      'llama-3.3-70b-versatile', 'llama3-70b-8192', 'llama-3.1-70b-versatile',
-      'llama-3.1-8b-instant', 'llama3-8b-8192',
-      'moonshotai/kimi-k2-instruct', 'deepseek-r1-distill-llama-70b',
-      'compound-beta', 'qwen-qwq-32b',
-    ]
-    const sorted = [
-      ...preferred.filter(p => ids.includes(p)),
-      ...ids.filter(id => !preferred.includes(id) && !id.includes('whisper') && !id.includes('tts'))
-    ]
-    console.log('[Groq] Available models:', sorted.slice(0, 5).join(', '))
-    return sorted.slice(0, 6) // limit to top 6
-  } catch {
-    return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview']
-  }
-}
-
-// Fallback AI provider using Groq
-export async function callGroq(
-  prompt: string,
-  systemInstruction?: string,
-  images?: { base64: string; mimeType: string }[]
-): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY
-  if (!apiKey) {
-    console.warn('[Groq] GROQ_API_KEY is not set in environment variables.')
-    return ''
-  }
-
-  const validImages = images?.filter(img => img.mimeType.startsWith('image/')) || []
-  const hasImages = validImages.length > 0
-
-  // Discover available models dynamically
-  const allModels = await getGroqModels(apiKey)
-  // For vision tasks, prefer vision-capable models
-  const modelsToTry = hasImages 
-    ? allModels.filter(m => m.includes('vision')).length > 0 
-      ? allModels.filter(m => m.includes('vision')) 
-      : ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'] // Hardcode if not found
-    : allModels.filter(m => !m.includes('vision') && !m.includes('whisper') && !m.includes('tts')).slice(0, 6)
-
-  if (modelsToTry.length === 0) {
-    modelsToTry.push('llama-3.2-11b-vision-preview')
-  }
-
-  const messages: any[] = []
-  if (systemInstruction) {
-    messages.push({ role: 'system', content: systemInstruction })
-  }
-
-  if (hasImages) {
-    const contentParts: any[] = [{ type: 'text', text: prompt }]
-    for (const img of validImages) {
-      contentParts.push({
-        type: 'image_url',
-        image_url: { url: `data:${img.mimeType};base64,${img.base64}` }
-      })
-    }
-    messages.push({ role: 'user', content: contentParts })
-  } else {
-    messages.push({ role: 'user', content: prompt })
-  }
-
-  for (const model of modelsToTry) {
-    try {
-      console.log(`[Groq AI] Trying model: ${model}`)
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.2,
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        const resText = data.choices?.[0]?.message?.content ?? ''
-        if (resText) return resText
-      } else {
-        const errText = await response.text()
-        console.warn(`[Groq Model ${model} ${response.status}]:`, errText)
-      }
-    } catch (e) {
-      console.warn(`[Groq Model ${model} Exception]:`, e)
-    }
-  }
-
-  // HuggingFace Fallback Removed as requested
-  if (lastError) throw lastError
-  throw new Error('All AI providers (Gemini, Nvidia, Groq) failed or have invalid API keys. Please check your API keys in the .env file.')
-}
-
-// HuggingFace functions removed
 
 // Extract text from a document URL (PDF or Image) using Gemini
 export async function extractTextFromPdfUrl(url: string): Promise<string> {
