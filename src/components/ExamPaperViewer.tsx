@@ -60,21 +60,21 @@ export default function ExamPaperViewer({ data }: Props) {
           width: '100%',
           maxWidth: '800px',
           margin: '0 auto',
-          padding: 'clamp(28px, 6vw, 64px) clamp(24px, 6vw, 72px)',
+          padding: 'clamp(16px, 4vw, 64px) clamp(12px, 3vw, 72px)',
           boxShadow: '0 4px 40px rgba(0,0,0,0.22), 0 1px 6px rgba(0,0,0,0.10)',
           borderRadius: '3px',
         }}
       >
         {/* Header */}
         <div className="text-center mb-5 leading-snug">
-          <h1 className="text-[17pt] font-bold uppercase tracking-wide mb-1">{data.university || 'TRIBHUVAN UNIVERSITY'}</h1>
-          <h2 className="text-[14pt] font-bold mb-1">{data.faculty || 'Faculty of Humanities & Social Sciences'}</h2>
-          <h3 className="text-[13pt] font-bold uppercase mb-1">{data.office || 'OFFICE OF THE DEAN'}</h3>
-          <div className="text-[14pt] font-bold">{data.year || new Date().getFullYear()}</div>
+          <h1 className="text-[14pt] md:text-[17pt] font-bold uppercase tracking-wide mb-1">{data.university || 'TRIBHUVAN UNIVERSITY'}</h1>
+          <h2 className="text-[12pt] md:text-[14pt] font-bold mb-1">{data.faculty || 'Faculty of Humanities & Social Sciences'}</h2>
+          <h3 className="text-[11.5pt] md:text-[13pt] font-bold uppercase mb-1">{data.office || 'OFFICE OF THE DEAN'}</h3>
+          <div className="text-[12pt] md:text-[14pt] font-bold">{data.year || new Date().getFullYear()}</div>
         </div>
 
         {/* Course Details */}
-        <div className="text-[13pt] leading-relaxed">
+        <div className="text-[11.5pt] md:text-[13pt] leading-relaxed">
           <div className="flex justify-between">
             <span><span className="font-bold">{data.program || 'Bachelor in Computer Application'}</span></span>
             <span className="font-bold">Full Marks: {data.fullMarks || '60'}</span>
@@ -93,22 +93,22 @@ export default function ExamPaperViewer({ data }: Props) {
           </div>
         </div>
 
-        <div className="italic text-[13pt] mt-2 mb-3 pb-1 border-b-[1.5px] border-black">
+        <div className="italic text-[11.5pt] md:text-[13pt] mt-2 mb-3 pb-1 border-b-[1.5px] border-black">
           {data.instruction || 'Candidates are required to answer the questions in their own words as far as possible.'}
         </div>
 
         {/* Questions */}
         {data.groups && data.groups.map((group, gIndex) => (
           <div key={gIndex} className="mb-6">
-            <div className="text-center font-bold text-[13pt] mt-3 mb-2 relative flex justify-center items-center">
+            <div className="text-center font-bold text-[11.5pt] md:text-[13pt] mt-3 mb-2 relative flex justify-center items-center">
               <span>{group.groupName}</span>
               {group.marks && <span className="absolute right-0 font-bold">{group.marks}</span>}
             </div>
             {group.instruction && (
-              <p className="font-bold mb-2 text-[13pt]">{group.instruction}</p>
+              <p className="font-bold mb-2 text-[11.5pt] md:text-[13pt]">{group.instruction}</p>
             )}
 
-            <ol className="pl-6 mb-3 list-decimal text-[13.5pt]" start={group.questions[0]?.number || 1}>
+            <ol className="pl-6 mb-3 list-decimal text-[11.5pt] md:text-[13.5pt]" start={group.questions[0]?.number || 1}>
               {group.questions.map((q, qIndex) => {
                 const qKey = `${gIndex}-${qIndex}`
                 const isHovered = hoveredQ === qKey
@@ -200,10 +200,10 @@ export default function ExamPaperViewer({ data }: Props) {
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px',
-                                fontSize: '11.5pt'
+                                fontSize: '10.5pt',
                               }}
                             >
-                              <span>{String.fromCharCode(97 + idx)}) {cleanOptText}</span>
+                              <span className="md:text-[11.5pt]">{String.fromCharCode(97 + idx)}) {cleanOptText}</span>
                               {isCorrect && (
                                 <span style={{ fontSize: '11px', marginLeft: 'auto', background: '#10b981', color: '#ffffff', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
                                   ✓ Correct Answer

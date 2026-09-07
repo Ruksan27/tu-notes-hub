@@ -233,11 +233,11 @@ video {
   }
 
   .past-paper-card {
-    padding: 8px 12px;
+    padding: 6px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   .past-paper-title {
