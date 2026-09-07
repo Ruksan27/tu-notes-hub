@@ -11,6 +11,8 @@ export interface JWTPayload {
   email: string
   role: string
   packageType: string
+  name?: string
+  id?: string
 }
 
 // Hash password

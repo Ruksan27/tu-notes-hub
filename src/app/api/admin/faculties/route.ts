@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
         id,
         name,
         icon,
+        slug: id,
         visible: true,
       },
     })
