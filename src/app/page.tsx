@@ -232,7 +232,6 @@ export default async function HomePage() {
               { icon: '📄', title: 'PDF Export', desc: 'Export AI comparison reports as PDF and study offline anywhere anytime.' },
             ].map((feat) => (
               <div key={feat.title} className="glass-card" style={{ padding: '32px' }}>
-                <div style={{ fontSize: '40px', marginBottom: '16px' }}>{feat.icon}</div>
                 <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>{feat.title}</h3>
                 <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.7 }}>{feat.desc}</p>
               </div>

@@ -75,7 +75,7 @@ async function callNvidia(
   return ''
 }
 
-import { GoogleGenAI } from '@google/genai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 async function callOfficialGemini(
   prompt: string,
@@ -86,11 +86,13 @@ async function callOfficialGemini(
   if (!apiKey) return ''
 
   try {
-    const genAI = new GoogleGenAI({ apiKey })
+    const genAI = new GoogleGenerativeAI(apiKey)
     
     // Construct parts array for the SDK
     const parts: any[] = []
     
+    parts.push({ text: prompt })
+
     if (images && images.length > 0) {
       for (const img of images) {
         parts.push({
@@ -102,19 +104,18 @@ async function callOfficialGemini(
       }
     }
     
-    parts.push({ text: prompt })
-    
-    const models = ['gemini-1.5-flash', 'gemini-1.5-pro']
+    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
     
     for (const model of models) {
       try {
         console.log(`[Gemini SDK] Trying model: ${model}`)
-        const response = await genAI.models.generateContent({
+        const geminiModel = genAI.getGenerativeModel({
           model: model,
-          contents: parts,
-          config: systemInstruction ? { systemInstruction: systemInstruction } : undefined
+          systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
         })
-        if (response.text) return response.text
+        const result = await geminiModel.generateContent(parts)
+        const text = result.response.text()
+        if (text) return text
       } catch (e: any) {
         console.warn(`[Gemini SDK Error for ${model}]:`, e?.message || e)
       }
@@ -342,92 +343,12 @@ export async function callGroq(
     }
   }
 
-  console.warn(`[Groq AI] All models failed. Falling back to HuggingFace...`)
-
-  // HuggingFace Fallback
-  try {
-    const hfRes = await callHuggingFace(prompt, images)
-    if (hfRes) return hfRes
-  } catch(e) {
-    console.error('HuggingFace fallback also failed:', e)
-  }
-
-  // Pollinations is deprecated (402 Payment Required), so removing it to prevent errors
-
-  return ''
+  // HuggingFace Fallback Removed as requested
+  if (lastError) throw lastError
+  throw new Error('All AI providers (Gemini, Nvidia, Groq) failed or have invalid API keys. Please check your API keys in the .env file.')
 }
 
-async function callHuggingFace(
-  prompt: string,
-  images?: { base64: string, mimeType: string }[]
-): Promise<string> {
-  const apiKey = process.env.HF_API_KEY
-  if (!apiKey) return ''
-
-  // Filter valid images (Hugging Face supports basic images)
-  const validImages = images?.filter(img => 
-    img.mimeType.startsWith('image/')
-  ) || []
-  const hasImages = validImages.length > 0
-  
-  // Use text models if no images, vision models if images
-  const models = hasImages 
-    ? ['Qwen/Qwen2.5-VL-72B-Instruct', 'Qwen/Qwen2-VL-7B-Instruct']
-    : ['meta-llama/Meta-Llama-3-8B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3', 'Qwen/Qwen2.5-72B-Instruct']
-  
-  let lastError: any = null
-
-  for (const model of models) {
-    try {
-      console.log(`[HuggingFace AI] Trying model: ${model}`)
-      
-      const contentParts: any[] = [{ type: 'text', text: prompt }]
-      for (const img of validImages) {
-        contentParts.push({
-          type: 'image_url',
-          image_url: { url: `data:${img.mimeType};base64,${img.base64}` }
-        })
-      }
-
-      const response = await fetch('https://api-inference.huggingface.co/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: 'user',
-              content: contentParts
-            }
-          ],
-          max_tokens: 2000
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        const resText = data.choices?.[0]?.message?.content ?? ''
-        if (resText) return resText
-      } else {
-        const errText = await response.text()
-        console.warn(`[HF Model ${model} ${response.status}]:`, errText)
-        lastError = new Error(`HF API Error: ${response.status} ${errText}`)
-      }
-    } catch (e: any) {
-      console.warn(`[HF Model ${model} Exception]:`, e)
-      lastError = e
-    }
-  }
-  
-  if (lastError?.cause?.code === 'ENOTFOUND') {
-    throw new Error('Network Error: Cannot connect to HuggingFace API (DNS resolution failed). Please check your internet connection or DNS settings.')
-  }
-
-  return ''
-}
+// HuggingFace functions removed
 
 // Extract text from a document URL (PDF or Image) using Gemini
 export async function extractTextFromPdfUrl(url: string): Promise<string> {
