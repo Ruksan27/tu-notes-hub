@@ -110,7 +110,7 @@ Professor:`
       console.warn('[AI_CHAT] All Gemini models failed. Attempting Groq AI fallback...')
       try {
         const { callGroq } = await import('@/lib/gemini')
-        reply = await callGroq(prompt)
+        reply = await callGroq('llama3-70b-8192', [{ role: 'user', content: prompt }])
       } catch (groqErr: any) {
         console.error('[AI_CHAT] Groq fallback also failed:', groqErr)
         if (lastError) throw lastError
