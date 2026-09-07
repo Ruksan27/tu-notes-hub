@@ -70,11 +70,11 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
       <div className="semester-desktop">
         {filteredSemesters.map((sem) => {
           const totalSolutionBooks = (sem.solutionBooks || []).length
-          const totalNotes = sem.subjects.reduce((sum, s) => sum + s.notes.filter(n => n.noteType !== 'SYLLABUS').length, 0)
-          const totalPapers = sem.subjects.reduce((sum, s) => sum + s.pastPapers.length, 0)
-          const totalSheets = sem.subjects.reduce((sum, s) => sum + s.cheatsheets.length, 0)
-          const totalMcqs = sem.subjects.reduce((sum, s) => sum + (s.mcqs?.length || 0), 0)
-          const totalSyllabus = sem.subjects.reduce((sum, s) => sum + s.notes.filter(n => n.noteType === 'SYLLABUS').length, 0)
+          const totalNotes = sem.subjects.reduce((sum: number, s: any) => sum + s.notes.filter((n: any) => n.noteType !== 'SYLLABUS').length, 0)
+          const totalPapers = sem.subjects.reduce((sum: number, s: any) => sum + s.pastPapers.length, 0)
+          const totalSheets = sem.subjects.reduce((sum: number, s: any) => sum + s.cheatsheets.length, 0)
+          const totalMcqs = sem.subjects.reduce((sum: number, s: any) => sum + (s.mcqs?.length || 0), 0)
+          const totalSyllabus = sem.subjects.reduce((sum: number, s: any) => sum + s.notes.filter((n: any) => n.noteType === 'SYLLABUS').length, 0)
 
           const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`
           const periodSlug = isYearly ? `${ord}-year` : `${ord}-semester`
@@ -138,7 +138,7 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
                   {/* Subject names preview */}
                   {sem.subjects.length > 0 ? (
                     <div style={{ marginBottom: '20px' }}>
-                      {sem.subjects.slice(0, 3).map((sub) => (
+                      {sem.subjects.slice(0, 3).map((sub: any) => (
                         <p key={sub.id} style={{ fontSize: '13px', color: 'var(--clr-text-3)', lineHeight: 1.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <span style={{ color: 'var(--clr-accent)', fontWeight: 700, marginRight: '6px' }}>{sub.code}</span>
                           {sub.title.replace(' (New Syllabus)', '').replace(' (Old Syllabus)', '')}

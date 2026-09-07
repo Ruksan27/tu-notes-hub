@@ -145,7 +145,7 @@ async function callNvidia(
 }
 
 // Call Groq API (OpenAI Compatible)
-async function callGroq(
+export async function callGroq(
   modelName: string,
   messages: any[],
   timeoutMs = 45_000

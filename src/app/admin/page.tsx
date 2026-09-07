@@ -568,7 +568,7 @@ export default function AdminPage() {
 /* ── Manage Materials Tab ── */
 function ManageMaterialsTab() {
   const [faculties, setFaculties] = useState<Faculty[]>([])
-  const [semesters, setSemesters] = useState<{ id: string; name: string; order: number }[]>([])
+  const [semesters, setSemesters] = useState<{ id: string; name: string; order: number; visibleNew?: boolean; visibleOld?: boolean }[]>([])
   const [subjects, setSubjects] = useState<{ id: string; name: string; code: string; title: string }[]>([])
   const [facultyId, setFacultyId] = useState('')
   const [semesterId, setSemesterId] = useState('')
@@ -2372,7 +2372,7 @@ function UploadTab({ user }: { user?: any }) {
   const [sourceType, setSourceType] = useState<'FILE' | 'DRIVE'>('FILE')
   const [driveLink, setDriveLink] = useState('')
   const [faculties, setFaculties] = useState<Faculty[]>([])
-  const [semesters, setSemesters] = useState<{ id: string; name: string; order: number }[]>([])
+  const [semesters, setSemesters] = useState<{ id: string; name: string; order: number; visibleNew?: boolean; visibleOld?: boolean }[]>([])
   const [subjects, setSubjects] = useState<{ id: string; name: string; code: string; title: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [projectRestriction, setProjectRestriction] = useState<{
