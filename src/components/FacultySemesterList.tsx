@@ -1,7 +1,6 @@
 // src/components/FacultySemesterList.tsx
 'use client'
 
-import { useState, useMemo } from 'react'
 import Link from 'next/link'
 
 interface SubjectData {
@@ -18,6 +17,7 @@ interface SemesterData {
   id: string
   name: string
   order: number
+  visible?: boolean
   solutionBooks: { id: string }[]
   subjects: SubjectData[]
 }
@@ -33,42 +33,11 @@ interface FacultyData {
 export default function FacultySemesterList({ faculty }: { faculty: FacultyData }) {
   const isYearly = faculty.systemType === 'YEARLY'
 
-  // Automatically detect if this faculty has both New and Old Syllabus subjects
-  const hasNewAndOld = useMemo(() => {
-    let hasNew = false
-    let hasOld = false
-    for (const sem of faculty.semesters) {
-      for (const sub of sem.subjects) {
-        if (sub.title.includes('New Syllabus') || sub.code.startsWith('BCA ')) hasNew = true
-        if (
-          sub.title.includes('Old Syllabus') ||
-          sub.code.startsWith('CACS') ||
-          sub.code.startsWith('CAMT') ||
-          sub.code.startsWith('CASO') ||
-          sub.code.startsWith('CAEN') ||
-          sub.code.startsWith('CAAC') ||
-          sub.code.startsWith('CAST')
-        ) hasOld = true
-      }
-    }
-    return hasNew && hasOld
-  }, [faculty])
-
-  const [activeTab, setActiveTab] = useState<'new' | 'old'>('new')
-
-  // Filter subjects according to active syllabus tab and semester visibility
-  const filteredSemesters = useMemo(() => {
-    return faculty.semesters
-      .filter((sem: any) => {
-        if (sem.visible === false) return false
-        if (activeTab === 'new' && sem.visibleNew === false) return false
-        if (activeTab === 'old' && sem.visibleOld === false) return false
-        return true
-      })
-      .map((sem) => {
-      const filteredSubjects = sem.subjects.filter((sub) => {
-        if (!hasNewAndOld) return true
-
+  // Only filter out hidden semesters (admin controls this)
+  const filteredSemesters = faculty.semesters
+    .filter((sem: any) => sem.visible !== false)
+    .map((sem: any) => {
+      const filteredSubjects = sem.subjects.filter((sub: any) => {
         const isNew = sub.title.includes('New Syllabus') || sub.code.startsWith('BCA ')
         const isOld =
           sub.title.includes('Old Syllabus') ||
@@ -84,109 +53,23 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
           sub.code.startsWith('CAIN') ||
           sub.code.startsWith('CAOR')
 
-        if (activeTab === 'new') return isNew
-        if (activeTab === 'old') return isOld
+        if (isNew && sem.visibleNew === false) return false
+        if (isOld && sem.visibleOld === false) return false
         return true
       })
 
       return {
         ...sem,
-        subjects: filteredSubjects,
+        subjects: filteredSubjects
       }
-    }).filter((sem) => !hasNewAndOld || sem.subjects.length > 0)
-  }, [faculty, activeTab, hasNewAndOld])
+    })
 
   return (
     <div>
-      {/* Syllabus Toggle Selector Bar if faculty has both old and new syllabus */}
-      {hasNewAndOld && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '16px',
-          padding: '16px 24px',
-          borderRadius: '16px',
-          background: 'rgba(18, 21, 38, 0.8)',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
-          backdropFilter: 'blur(20px)',
-          marginBottom: '36px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-        }}>
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--clr-text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>🎓</span>
-              <span>Course Curriculum Version</span>
-            </div>
-            <p style={{ fontSize: '13px', color: 'var(--clr-text-2)', marginTop: '2px' }}>
-              Select your syllabus version to view your exact semester subjects
-            </p>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            background: 'rgba(255, 255, 255, 0.05)',
-            padding: '4px',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            gap: '6px',
-          }}>
-            <button
-              onClick={() => setActiveTab('new')}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: 'none',
-                transition: 'all 0.2s ease',
-                background: activeTab === 'new' ? 'var(--grad-brand)' : 'transparent',
-                color: activeTab === 'new' ? '#ffffff' : 'var(--clr-text-2)',
-              }}
-            >
-              ✨ New Syllabus
-            </button>
-            <button
-              onClick={() => setActiveTab('old')}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: 'none',
-                transition: 'all 0.2s ease',
-                background: activeTab === 'old' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent',
-                color: activeTab === 'old' ? '#ffffff' : 'var(--clr-text-2)',
-              }}
-            >
-              📜 Old Syllabus
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Semester/Year Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '24px',
-      }}>
+      {/* Semester/Year Grid (Desktop & Mobile Conditional) */}
+      <div className="semester-desktop">
         {filteredSemesters.map((sem) => {
-          const filteredSolutionBooks = (sem.solutionBooks || []).filter((book: any) => {
-            if (!hasNewAndOld) return true
-            const title = (book.title || '').toLowerCase()
-            const isOld = title.includes('old syllabus') || title.includes('(old)')
-            const isNew = title.includes('new syllabus') || title.includes('(new)')
-
-            if (activeTab === 'new') return isNew || (!isOld && !title.includes('old'))
-            if (activeTab === 'old') return isOld || (!isNew && title.includes('old'))
-            return true
-          })
-
-          const totalSolutionBooks = filteredSolutionBooks.length
+          const totalSolutionBooks = (sem.solutionBooks || []).length
           const totalNotes = sem.subjects.reduce((sum, s) => sum + s.notes.filter(n => n.noteType !== 'SYLLABUS').length, 0)
           const totalPapers = sem.subjects.reduce((sum, s) => sum + s.pastPapers.length, 0)
           const totalSheets = sem.subjects.reduce((sum, s) => sum + s.cheatsheets.length, 0)
@@ -195,7 +78,7 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
 
           const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`
           const periodSlug = isYearly ? `${ord}-year` : `${ord}-semester`
-          const linkHref = `/faculty/${faculty.id}/${periodSlug}${hasNewAndOld ? `?syllabus=${activeTab}` : ''}`
+          const linkHref = `/faculty/${faculty.id}/${periodSlug}`
 
           return (
             <Link
@@ -269,7 +152,7 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
                     </div>
                   ) : (
                     <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '20px', fontStyle: 'italic' }}>
-                      No subjects under selected syllabus
+                      No subjects available
                     </p>
                   )}
 
@@ -288,6 +171,61 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
           )
         })}
       </div>
+
+      <div className="semester-mobile">
+        {filteredSemesters.map((sem) => {
+          const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`
+          const periodSlug = isYearly ? `${ord}-year` : `${ord}-semester`
+          const linkHref = `/faculty/${faculty.id}/${periodSlug}`
+
+          return (
+            <Link key={sem.id} href={linkHref} style={{ textDecoration: 'none' }}>
+              <div className="glass-card" style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                borderLeft: '4px solid var(--clr-primary)',
+                borderRadius: '12px',
+                transition: 'all 0.25s ease',
+                margin: 0
+              }}>
+                <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-text-1)', letterSpacing: '0.02em' }}>
+                  {isYearly ? `${ord} Year` : `${ord} Semester`}
+                </span>
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '8px', 
+                  background: 'rgba(99, 102, 241, 0.1)', display: 'flex', 
+                  alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--clr-primary-h)'
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          )
+        })}
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .semester-desktop {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 24px;
+        }
+        .semester-mobile {
+          display: none;
+          flex-direction: column;
+          gap: 12px;
+        }
+        @media (max-width: 768px) {
+          .semester-desktop { display: none; }
+          .semester-mobile { display: flex; }
+        }
+      ` }} />
     </div>
   )
 }

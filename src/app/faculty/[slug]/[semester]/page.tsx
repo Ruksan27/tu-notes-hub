@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import AdUnit from '@/components/ads/AdUnit'
-import SolutionBookList from '@/components/SolutionBookList'
 
 import SemesterSubjectFilter from '@/components/SemesterSubjectFilter'
 
@@ -37,7 +36,6 @@ export async function generateStaticParams() {
 
 interface Props {
   params: Promise<{ slug: string; semester: string }>
-  searchParams?: Promise<{ syllabus?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -60,9 +58,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function SemesterPage({ params, searchParams }: Props) {
+export default async function SemesterPage({ params }: Props) {
   const { slug, semester } = await params
-  const { syllabus: initialSyllabus } = (await searchParams) || {}
   const order = parseInt(semester)
   if (isNaN(order)) notFound()
 
@@ -145,6 +142,24 @@ export default async function SemesterPage({ params, searchParams }: Props) {
 
   // Separate full semester guides vs subject-specific solution books
   const semesterGuides = solutionBooks.filter((b: any) => !b.subjectId)
+  
+  // Filter subjects based on visibleNew/visibleOld to get accurate count
+  const visibleSubjects = sem.subjects.filter((sub: any) => {
+    const isNew = sub.title.includes('New Syllabus') || sub.code.startsWith('BCA ')
+    const isOld = sub.title.includes('Old Syllabus') || 
+                  sub.code.startsWith('CACS') || sub.code.startsWith('CAMT') || 
+                  sub.code.startsWith('CASO') || sub.code.startsWith('CAEN') || 
+                  sub.code.startsWith('CAAC') || sub.code.startsWith('CAST') || 
+                  sub.code.startsWith('CAPJ') || sub.code.startsWith('CAEC') || 
+                  sub.code.startsWith('CAMG') || sub.code.startsWith('CAIN') || 
+                  sub.code.startsWith('CAOR')
+                  
+    if (isNew && sem.visibleNew === false) return false
+    if (isOld && sem.visibleOld === false) return false
+    return true
+  })
+  const subjectsCount = visibleSubjects.length
+
   const subjectsWithBooks = sem.subjects.map((sub: any) => ({
     ...sub,
     solutionBooks: solutionBooks.filter((b: any) => b.subjectId === sub.id)
@@ -179,7 +194,7 @@ export default async function SemesterPage({ params, searchParams }: Props) {
               {faculty.icon} {faculty.id.toUpperCase()} — <span className="text-gradient">{periodLabel}</span>
             </h1>
             <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', marginTop: '4px' }}>
-              {sem.subjects.length} Subject{sem.subjects.length !== 1 ? 's' : ''} • {faculty.name}
+              {subjectsCount} Subject{subjectsCount !== 1 ? 's' : ''} • {faculty.name}
             </p>
           </div>
         </div>
@@ -195,7 +210,8 @@ export default async function SemesterPage({ params, searchParams }: Props) {
         facultyId={faculty.id}
         semesterOrder={order}
         systemType={faculty.systemType}
-        initialSyllabus={initialSyllabus}
+        visibleNew={sem.visibleNew}
+        visibleOld={sem.visibleOld}
       />
 
       {/* Bottom Ad Unit */}

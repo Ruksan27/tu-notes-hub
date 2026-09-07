@@ -247,7 +247,6 @@ export async function callGemini(
     }
   }
   
-  }
 
   console.warn(`[Nvidia AI] All models failed. Falling back to Groq...`)
 

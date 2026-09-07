@@ -232,7 +232,7 @@ export default function SubjectRow({
       >
         <div className="subject-row-info">
           {/* Subject Info */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1 }}>
+          <div className="subject-title-wrapper">
             <span
               style={{
                 padding: '5px 10px',
@@ -243,12 +243,11 @@ export default function SubjectRow({
                 fontSize: '11px',
                 fontFamily: 'var(--font-display)',
                 whiteSpace: 'nowrap',
-                marginTop: '2px',
               }}
             >
               {subject.code}
             </span>
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: 'var(--clr-text-1)', lineHeight: 1.4 }}>
+            <h3 className="subject-title">
               {subject.title
                 .replace(/\s*\(Old Syllabus\)/gi, '')
                 .replace(/\s*\(New Syllabus\)/gi, '')
@@ -495,12 +494,14 @@ export default function SubjectRow({
               {activeTab === 'pastPapers' && (
                 <div>
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📝 Question Papers</h4>
-                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" className="past-paper-grid">
                     {pastPapers.map(pp => (
                       <Link key={pp.id} href={getResourceLink(`${pp.year} ${pp.examType.replace('_', ' ')}`, 'papers', getPaperSlug({ ...pp, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
-                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.04, y: -3, boxShadow: '0 8px 24px rgba(6,182,212,0.2)' }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px', background: 'rgba(6,182,212,0.06)', borderColor: 'rgba(6,182,212,0.2)' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{pp.year} {pp.examType.replace('_', ' ')}</p>
-                          <span style={{ fontSize: '11px', color: 'var(--clr-accent-h)', fontWeight: 600 }}>Download / View Paper →</span>
+                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.04, y: -3, boxShadow: '0 8px 24px rgba(6,182,212,0.2)' }} whileTap={{ scale: 0.98 }} className="glass-card past-paper-card" style={{ margin: 0, cursor: 'pointer', background: 'rgba(6,182,212,0.06)', borderColor: 'rgba(6,182,212,0.2)' }}>
+                          <p className="past-paper-title">{pp.year} {pp.examType.replace('_', ' ')}</p>
+                          <span className="past-paper-link">
+                            <span className="hide-mobile-text">Download / </span>View Paper →
+                          </span>
                         </motion.div>
                       </Link>
                     ))}

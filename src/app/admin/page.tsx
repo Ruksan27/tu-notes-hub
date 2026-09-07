@@ -984,7 +984,22 @@ function ManageMaterialsTab() {
             <select className="input-field w-full max-w-full" value={subjectId} onChange={e => setSubjectId(e.target.value)} disabled={!semesterId} style={{ cursor: semesterId ? 'pointer' : 'not-allowed' }}>
               <option value="">— Choose Subject —</option>
               <option value="FULL_SEMESTER" style={{ fontWeight: 'bold' }}>— Full Semester Guide (All Subjects) —</option>
-              {subjects.map(s => {
+              {subjects
+                .filter(s => {
+                  const selectedSem = semesters.find(sem => sem.id === semesterId)
+                  if (!selectedSem) return true
+                  
+                  const isNew = s.title.includes('New Syllabus') || s.code.startsWith('BCA ')
+                  const isOld = s.title.includes('Old Syllabus') || 
+                    (!s.code.startsWith('BCA ') && 
+                     (s.code.startsWith('CACS') || s.code.startsWith('CAMT') || s.code.startsWith('CASO') || s.code.startsWith('CAEN') || s.code.startsWith('CAAC') || s.code.startsWith('CAST') || s.code.startsWith('CAPJ') || s.code.startsWith('CAEC') || s.code.startsWith('CAMG') || s.code.startsWith('CAIN') || s.code.startsWith('CAOR'))
+                    )
+
+                  if (isNew && selectedSem.visibleNew === false) return false
+                  if (isOld && selectedSem.visibleOld === false) return false
+                  return true
+                })
+                .map(s => {
                 const clean = s.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()
                 const display = clean.length > 28 ? clean.slice(0, 26) + '...' : clean
                 return <option key={s.id} value={s.id}>[{s.code}] {display}</option>
@@ -2582,7 +2597,7 @@ function UploadTab({ user }: { user?: any }) {
     return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : link
   }
 
-  const [syllabusFilter, setSyllabusFilter] = useState<'all' | 'new' | 'old'>('all')
+
 
   useEffect(() => {
     if (!semesterId) { setSubjects([]); setSubjectId(''); return }
@@ -2704,11 +2719,6 @@ function UploadTab({ user }: { user?: any }) {
       toast.dismiss('upload-progress')
       toast.loading('Saving...', { toastId: 'upload-progress' })
       let finalTitle = noteTitle
-      if (syllabusFilter === 'old' && !finalTitle.includes('(Old Syllabus)')) {
-        finalTitle = `${finalTitle} (Old Syllabus)`
-      } else if (syllabusFilter === 'new' && !finalTitle.includes('(New Syllabus)')) {
-        finalTitle = `${finalTitle} (New Syllabus)`
-      }
       const saveRes = await fetch('/api/upload/solution-book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ semesterId, title: finalTitle, description: noteDescription, cloudinaryUrl, fileSize, isPremium, author, subjectId: subjectId || null }) })
       const sd = await saveRes.json()
       toast.dismiss('upload-progress')
@@ -3080,16 +3090,7 @@ function UploadTab({ user }: { user?: any }) {
               </div>
 
 
-              {facultyId === 'bca' && (
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Syllabus Version</label>
-                  <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all cursor-pointer" value={syllabusFilter} onChange={e => setSyllabusFilter(e.target.value as any)}>
-                    <option value="all" className="bg-slate-900">🌐 All (Both Syllabuses)</option>
-                    <option value="new" className="bg-slate-900">✨ New Syllabus (2080+)</option>
-                    <option value="old" className="bg-slate-900">📜 Old Syllabus (2074)</option>
-                  </select>
-                </div>
-              )}
+
 
               {/* Subject Dropdown */}
               <div>
@@ -3107,8 +3108,6 @@ function UploadTab({ user }: { user?: any }) {
                         if (!code) return
                         
                         let title = rawTitle
-                        if (syllabusFilter === 'old' && !title.includes('(Old Syllabus)')) title += ' (Old Syllabus)'
-                        if (syllabusFilter === 'new' && !title.includes('(New Syllabus)')) title += ' (New Syllabus)'
 
                         try {
                           const res = await fetch('/api/admin/subjects', {
@@ -3144,8 +3143,17 @@ function UploadTab({ user }: { user?: any }) {
                   </option>
                   {subjects
                     .filter(s => {
-                      if (syllabusFilter === 'new') return s.title.includes('New Syllabus') || s.code.startsWith('BCA ')
-                      if (syllabusFilter === 'old') return s.title.includes('Old Syllabus') || !s.code.startsWith('BCA ')
+                      const selectedSem = semesters.find(sem => sem.id === semesterId)
+                      if (!selectedSem) return true
+                      
+                      const isNew = s.title.includes('New Syllabus') || s.code.startsWith('BCA ')
+                      const isOld = s.title.includes('Old Syllabus') || 
+                        (!s.code.startsWith('BCA ') && 
+                         (s.code.startsWith('CACS') || s.code.startsWith('CAMT') || s.code.startsWith('CASO') || s.code.startsWith('CAEN') || s.code.startsWith('CAAC') || s.code.startsWith('CAST') || s.code.startsWith('CAPJ') || s.code.startsWith('CAEC') || s.code.startsWith('CAMG') || s.code.startsWith('CAIN') || s.code.startsWith('CAOR'))
+                        )
+
+                      if (isNew && selectedSem.visibleNew === false) return false
+                      if (isOld && selectedSem.visibleOld === false) return false
                       return true
                     })
                     .map(s => (
