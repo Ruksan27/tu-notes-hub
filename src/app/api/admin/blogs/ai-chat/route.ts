@@ -29,7 +29,7 @@ Rules:
       messageHistory = [{ role: 'user', content: prompt }]
     }
 
-    const selectedModel = model || 'gemini-2.5-flash'
+    const selectedModel = model || 'gemini-1.5-flash'
     let generatedContent = ''
 
     // Route request based on chosen AI Model / Provider

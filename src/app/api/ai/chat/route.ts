@@ -88,7 +88,7 @@ Professor:`
     const genAI = new GoogleGenAI({ apiKey })
     
     // Model fallback sequence to ensure reliability even during high demand / 503 errors
-    const modelsToTry = ['gemini-3.6-flash']
+    const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro']
     let reply = ''
     let lastError: any = null
 

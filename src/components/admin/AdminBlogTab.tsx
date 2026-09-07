@@ -37,7 +37,7 @@ export default function AdminBlogTab() {
 
   // Side-by-side AI Assistant Panel State
   const [showAiPanel, setShowAiPanel] = useState(true)
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash')
+  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash')
   const [aiInputText, setAiInputText] = useState('')
   const [aiGenerating, setAiGenerating] = useState(false)
   
@@ -486,7 +486,7 @@ export default function AdminBlogTab() {
                         }}
                       >
                         <optgroup label="🔮 Google Gemini Models">
-                          <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast & Smart)</option>
+                          <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast & Smart)</option>
                           <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Context)</option>
                         </optgroup>
 
