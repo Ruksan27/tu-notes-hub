@@ -139,7 +139,7 @@ export default function AdUnit({ type, slot = 'default-slot', style }: AdUnitPro
         />
 
         {/* Fallback Banner when AdSense is loading/not filled */}
-        <div className="w-full relative z-0 bg-gradient-to-r from-indigo-500/5 via-slate-900/40 to-cyan-500/5">
+        <div className="w-full h-full min-h-[inherit] flex flex-col justify-center relative z-0 bg-gradient-to-r from-indigo-500/5 via-slate-900/40 to-cyan-500/5">
           <AdPlaceholder type={type} />
         </div>
       </div>

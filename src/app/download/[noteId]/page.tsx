@@ -75,7 +75,7 @@ export default function DownloadPage() {
       const targetNoteId = getNoteTargetId(params)
       return `/api/download/image?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${fileName}`
     }
-    
+
     const targetNoteId = getNoteTargetId(params)
     // If it's a PDF, route it through our custom watermarking API
     if (url.toLowerCase().endsWith('.pdf') && !url.includes('drive.google.com')) {
@@ -113,7 +113,7 @@ export default function DownloadPage() {
           paid = true
         }
       }
-    } catch {}
+    } catch { }
 
     if (paid) {
       setIsPaid(true)
@@ -172,7 +172,7 @@ export default function DownloadPage() {
       if (note?.cloudinaryUrl) {
         const downloadHref = getFinalDownloadUrl(note.cloudinaryUrl, proxiedUrl, note.title)
         const safeTitle = (note.title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
-        
+
         const link = document.createElement('a')
         link.href = downloadHref
         link.target = '_blank'
@@ -198,11 +198,11 @@ export default function DownloadPage() {
   }, [note])
 
   const isImage = !isDriveLink && (
-                  fileUrl.toLowerCase().includes('.png') ||
-                  fileUrl.toLowerCase().includes('.jpg') ||
-                  fileUrl.toLowerCase().includes('.jpeg') ||
-                  fileUrl.toLowerCase().includes('.webp') ||
-                  fileUrl.toLowerCase().includes('.gif'))
+    fileUrl.toLowerCase().includes('.png') ||
+    fileUrl.toLowerCase().includes('.jpg') ||
+    fileUrl.toLowerCase().includes('.jpeg') ||
+    fileUrl.toLowerCase().includes('.webp') ||
+    fileUrl.toLowerCase().includes('.gif'))
 
   const isPdf = !isDriveLink && fileUrl.toLowerCase().includes('.pdf')
   const isDriveImage = isDriveLink && (
@@ -245,7 +245,7 @@ export default function DownloadPage() {
       if (fileUrl) {
         const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl, note?.title || '')
         const safeTitle = (note?.title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
-        
+
         const link = document.createElement('a')
         link.href = downloadHref
         link.target = '_blank'
@@ -264,7 +264,7 @@ export default function DownloadPage() {
     bait.style.top = '-999px';
     bait.style.height = '10px';
     document.body.appendChild(bait);
-    
+
     const isBlocked = window.getComputedStyle(bait).display === 'none' || bait.offsetHeight === 0;
     document.body.removeChild(bait);
 
@@ -279,14 +279,21 @@ export default function DownloadPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', background: '#0b0f19', position: 'relative' }}>
-      
-      <style dangerouslySetInnerHTML={{ __html: `
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .desktop-dl-btn {
+          width: fit-content;
+          padding: 12px 32px;
+          border-radius: 8px;
+        }
         @media (max-width: 768px) {
           .mobile-dl-container { padding: 8px !important; gap: 8px !important; display: flex !important; flex-direction: column !important; }
           .mobile-dl-card-outer { padding: 8px !important; gap: 8px !important; }
-          .mobile-dl-card-inner { gap: 6px !important; }
+          .mobile-dl-card-inner { flex-direction: column !important; gap: 12px !important; }
+          .mobile-dl-btn-wrapper { width: 100% !important; margin-top: 4px !important; }
           .mobile-dl-title { font-size: 14px !important; line-height: 1.25 !important; }
-          .mobile-dl-btn { padding: 10px !important; font-size: 13px !important; border-radius: 10px !important; letter-spacing: 0.02em !important; box-shadow: 0 4px 12px rgba(99,102,241,0.2) !important; }
+          .mobile-dl-btn { width: 100% !important; padding: 10px !important; font-size: 13px !important; border-radius: 10px !important; letter-spacing: 0.02em !important; box-shadow: 0 4px 12px rgba(99,102,241,0.2) !important; }
           .mobile-dl-badge { padding: 2px 6px !important; font-size: 9px !important; margin-bottom: 4px !important; }
           
           .mobile-dl-share-section { padding-top: 10px !important; margin-top: 2px !important; }
@@ -336,26 +343,26 @@ export default function DownloadPage() {
       )}
 
       <div className="mobile-dl-container" style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: isPaid ? '1fr' : 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
-        
+
         {/* Main Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
+
           <div className="glass-card mobile-dl-card-outer" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
-            <div className="mobile-dl-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
+            <div className="mobile-dl-card-inner" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: '20px' }}>
+              <div style={{ flex: 1 }}>
                 <span className="mobile-dl-badge" style={{ display: 'inline-flex', marginBottom: '10px', fontSize: '11px', fontWeight: 800, padding: '4px 10px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px', letterSpacing: '0.05em' }}>📄 TU OFFICIAL RESOURCE</span>
-                <h2 className="mobile-dl-title" style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>{note?.title || 'Loading document...'}</h2>
+                <h2 className="mobile-dl-title" style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>{note?.title ? note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '') : 'Loading document...'}</h2>
               </div>
-              
+
               {/* Download Button (Triggers 15s Ad Lock Modal) */}
-              <div style={{ width: '100%' }}>
-                  {!mounted ? (
-                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', textAlign: 'center', color: '#fff' }}>
-                      ⏳ Loading...
-                    </div>
-                  ) : ready && fileUrl ? (
-                  <button onClick={handleStartDownload} className="mobile-dl-btn"
-                    style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 800, borderRadius: '10px', cursor: 'pointer', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', color: '#fff', border: 'none', boxShadow: '0 8px 24px rgba(99,102,241,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
+              <div className="mobile-dl-btn-wrapper" style={{ flexShrink: 0 }}>
+                {!mounted ? (
+                  <div style={{ padding: '14px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', textAlign: 'center', color: '#fff' }}>
+                    ⏳ Loading...
+                  </div>
+                ) : ready && fileUrl ? (
+                  <button onClick={handleStartDownload} className="mobile-dl-btn desktop-dl-btn"
+                    style={{ fontSize: '15px', fontWeight: 800, cursor: 'pointer', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', color: '#fff', border: 'none', boxShadow: '0 8px 24px rgba(99,102,241,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
                     <span style={{ fontSize: '18px' }} className="mobile-dl-title">⬇️</span> Download Resource Files
                   </button>
                 ) : (
@@ -370,7 +377,7 @@ export default function DownloadPage() {
             {/* One-Click Social Share Widgets */}
             <div className="mobile-dl-share-section" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
               <span className="mobile-dl-share-title" style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>Share Resource</span>
-              
+
               <div className="mobile-dl-share-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
                 {/* WhatsApp Share */}
                 <a
@@ -435,7 +442,7 @@ export default function DownloadPage() {
           {/* Conditional Display: Show Ads & Countdown Block first, then show preview */}
           {!ready ? (
             <div className="glass-card" style={{ flex: 1, minHeight: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '32px', padding: '40px', textAlign: 'center', border: '1px dashed var(--clr-border)' }}>
-              
+
               {/* Countdown Circular Block */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                 <div className="countdown-circle flex-center" style={{ width: '80px', height: '80px', fontSize: '28px', background: 'var(--grad-brand)', boxShadow: '0 8px 24px rgba(99,102,241,0.3)' }}>
@@ -458,7 +465,7 @@ export default function DownloadPage() {
                 <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>Sponsored Advertisement</p>
                 <AdUnit type="large-rectangle" slot="countdown-middle-ad" />
                 <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginTop: '16px' }}>
-                  🎯 <strong style={{ color: 'var(--clr-primary-h)' }}>Elite AI Pass — Rs. 199/year</strong> | 
+                  🎯 <strong style={{ color: 'var(--clr-primary-h)' }}>Elite AI Pass — Rs. 199/year</strong> |
                   Instant downloads without waiting + Full PDF solution views.
                 </p>
               </div>
@@ -468,12 +475,12 @@ export default function DownloadPage() {
             <>
               {/* Tab Controls (Only shown if extractedText exists) */}
               {note?.extractedText && (
-                <div className="mobile-dl-tab-container" style={{ 
-                  display: 'flex', 
-                  background: 'rgba(255,255,255,0.03)', 
-                  padding: '5px', 
+                <div className="mobile-dl-tab-container" style={{
+                  display: 'flex',
+                  background: 'rgba(255,255,255,0.03)',
+                  padding: '5px',
                   borderRadius: '12px',
-                  marginBottom: '16px', 
+                  marginBottom: '16px',
                   border: '1px solid rgba(255,255,255,0.05)'
                 }}>
                   <button
@@ -544,7 +551,7 @@ export default function DownloadPage() {
                       {(() => {
                         try {
                           let cleanText = note.extractedText.trim();
-                          
+
                           // Remove markdown formatting if the AI returned it inside a code block
                           if (cleanText.startsWith('```')) {
                             cleanText = cleanText.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '');
@@ -556,11 +563,11 @@ export default function DownloadPage() {
                           } catch (parseErr) {
                             // Replace literal newlines with spaces
                             let fixedText = cleanText.replace(/\n/g, ' ').replace(/\r/g, '').replace(/\t/g, ' ');
-                            
+
                             // Fix Bad escaped character errors (e.g., AI generating LaTeX like \alpha or \c)
                             // We escape any backslash that isn't followed by a valid JSON escape character (" \ / b f n r t u)
                             fixedText = fixedText.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1');
-                            
+
                             parsed = JSON.parse(fixedText);
                           }
 
@@ -620,22 +627,13 @@ export default function DownloadPage() {
 
         {/* Sidebar Ads Column */}
         {!isPaid && (
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
+          <aside style={{
+            display: 'flex',
+            flexDirection: 'column',
             gap: '24px',
-            position: 'sticky',
-            top: '80px',
-            maxHeight: 'calc(100vh - 100px)',
-            overflowY: 'auto',
-            paddingBottom: '20px',
-            scrollbarWidth: 'none', // Hide scrollbar for cleaner look
-            msOverflowStyle: 'none'
+            alignSelf: 'flex-start',
+            width: '100%',
           }}>
-            <style>{`
-              div::-webkit-scrollbar { display: none; }
-            `}</style>
-            
             <div className="glass-card" style={{ padding: '20px', background: 'rgba(99,102,241,0.05)', borderColor: 'rgba(99,102,241,0.2)' }}>
               <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '8px' }}>💎 Upgrade to Elite</h4>
               <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5 }}>
@@ -646,12 +644,13 @@ export default function DownloadPage() {
               </a>
             </div>
 
-            {/* High-revenue standard sizes: Large Skyscraper (300x600) and Medium Rectangle (300x250) */}
-            <AdUnit type="large-rectangle" slot="download-sidebar-banner-1" style={{ minHeight: '600px', display: 'flex', alignItems: 'center' }} />
-            <AdUnit type="medium-rectangle" slot="download-sidebar-banner-2" style={{ minHeight: '250px', display: 'flex', alignItems: 'center' }} />
-          </div>
+            {/* Ads stay sticky as user scrolls down */}
+            <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <AdUnit type="large-rectangle" slot="download-sidebar-banner-1" style={{ minHeight: '600px' }} />
+              <AdUnit type="medium-rectangle" slot="download-sidebar-banner-2" style={{ minHeight: '250px' }} />
+            </div>
+          </aside>
         )}
-
       </div>
 
       {/* Bottom Ad */}
@@ -661,7 +660,7 @@ export default function DownloadPage() {
         </div>
       )}
 
-      {/* ── 15-S      {/* 10-SECOND SPONSORED AD COUNTDOWN MODAL (FOR FREE USERS) */}
+      {/* 10-SECOND SPONSORED AD COUNTDOWN MODAL (FOR FREE USERS) */}
       {downloadAdActive && (
         <div style={{
           position: 'fixed',
@@ -759,4 +758,3 @@ export default function DownloadPage() {
     </div>
   )
 }
-
