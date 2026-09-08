@@ -419,9 +419,12 @@ export default function SubjectRow({
                       <Link key={note.id} href={getResourceLink(note.title, 'notes', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.2)' }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px', background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)' }}>
                           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)', flexWrap: 'wrap', gap: '4px' }}>
                             <span>{note.noteType.replace('_', ' ')} ({note.fileSize || 'N/A'})</span>
-                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                              {(note as any).isFromOldSyllabus && <span className="badge" style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)' }}>OLD SYLLABUS</span>}
+                              {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
+                            </div>
                           </div>
                         </motion.div>
                       </Link>
@@ -499,6 +502,11 @@ export default function SubjectRow({
                       <Link key={pp.id} href={getResourceLink(`${pp.year} ${pp.examType.replace('_', ' ')}`, 'papers', getPaperSlug({ ...pp, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.04, y: -3, boxShadow: '0 8px 24px rgba(6,182,212,0.2)' }} whileTap={{ scale: 0.98 }} className="glass-card past-paper-card" style={{ margin: 0, cursor: 'pointer', background: 'rgba(6,182,212,0.06)', borderColor: 'rgba(6,182,212,0.2)' }}>
                           <p className="past-paper-title">{pp.year} {pp.examType.replace('_', ' ')}</p>
+                          {(pp as any).isFromOldSyllabus && (
+                            <span className="badge" style={{ fontSize: '9px', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '2px 6px', borderRadius: '4px', marginBottom: '4px', display: 'inline-block' }}>
+                              📜 Old Syllabus
+                            </span>
+                          )}
                           <span className="past-paper-link">
                             <span className="hide-mobile-text">Download / </span>View Paper →
                           </span>

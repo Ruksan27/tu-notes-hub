@@ -139,16 +139,28 @@ model Semester {
 }
 
 model Subject {
-  id            String       @id @default(uuid())
-  title         String
-  code          String
-  semesterId    String
-  semester      Semester     @relation(fields: [semesterId], references: [id])
-  notes         Note[]
-  pastPapers    PastPaper[]
-  cheatsheets   Cheatsheet[]
-  solutionBooks SolutionBook[]
-  mcqs          MCQ[]
+  id                    String       @id @default(uuid())
+  title                 String
+  code                  String
+  semesterId            String
+  semester              Semester     @relation(fields: [semesterId], references: [id])
+
+  // Cross-Syllabus Linking
+  linkedSubjectId       String?
+  linkedSubject         Subject?     @relation("SubjectToSubjectLink", fields: [linkedSubjectId], references: [id], onDelete: SetNull)
+  linkedBySubjects      Subject[]    @relation("SubjectToSubjectLink")
+
+  // Sharing Flags (When linked, which materials are shared to the target)
+  linkIncludeNotes      Boolean      @default(true)
+  linkIncludePastPapers Boolean      @default(true)
+  linkIncludeMCQs       Boolean      @default(true)
+  linkIncludeBooks      Boolean      @default(true)
+
+  notes                 Note[]
+  pastPapers            PastPaper[]
+  cheatsheets           Cheatsheet[]
+  solutionBooks         SolutionBook[]
+  mcqs                  MCQ[]
 }
 
 model Note {

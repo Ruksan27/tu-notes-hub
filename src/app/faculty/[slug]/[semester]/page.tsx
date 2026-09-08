@@ -72,6 +72,52 @@ export default async function SemesterPage({ params }: Props) {
           subjects: {
             orderBy: { code: 'asc' },
             include: {
+              linkedSubject: {
+                include: {
+                  notes: {
+                    orderBy: { createdAt: 'desc' },
+                    select: {
+                      id: true,
+                      title: true,
+                      description: true,
+                      cloudinaryUrl: true,
+                      fileSize: true,
+                      noteType: true,
+                      isPremium: true,
+                      downloadCount: true,
+                    }
+                  },
+                  pastPapers: {
+                    orderBy: { year: 'desc' },
+                    select: {
+                      id: true,
+                      year: true,
+                      examType: true,
+                      cloudinaryUrl: true,
+                    }
+                  },
+                  cheatsheets: {
+                    orderBy: { createdAt: 'desc' },
+                    select: { id: true, title: true, content: true, subjectId: true, createdAt: true }
+                  },
+                  mcqs: {
+                    orderBy: { createdAt: 'asc' },
+                  },
+                  solutionBooks: {
+                    orderBy: { createdAt: 'desc' },
+                    select: {
+                      id: true,
+                      title: true,
+                      description: true,
+                      cloudinaryUrl: true,
+                      fileSize: true,
+                      isPremium: true,
+                      author: true,
+                      subjectId: true,
+                    }
+                  }
+                }
+              },
               notes: {
                 orderBy: { createdAt: 'desc' },
                 select: {
@@ -83,7 +129,6 @@ export default async function SemesterPage({ params }: Props) {
                   noteType: true,
                   isPremium: true,
                   downloadCount: true,
-                  // Exclude extractedText — not needed in list view, can be very large
                 }
               },
               pastPapers: {
@@ -93,7 +138,6 @@ export default async function SemesterPage({ params }: Props) {
                   year: true,
                   examType: true,
                   cloudinaryUrl: true,
-                  // Exclude extractedText — not needed in list view
                 }
               },
               cheatsheets: {
@@ -160,10 +204,45 @@ export default async function SemesterPage({ params }: Props) {
   })
   const subjectsCount = visibleSubjects.length
 
-  const subjectsWithBooks = sem.subjects.map((sub: any) => ({
-    ...sub,
-    solutionBooks: solutionBooks.filter((b: any) => b.subjectId === sub.id)
-  }))
+  const subjectsWithBooks = sem.subjects.map((sub: any) => {
+    const linked = sub.linkedSubject
+    
+    // Direct materials
+    let notes = [...sub.notes]
+    let pastPapers = [...sub.pastPapers]
+    let cheatsheets = [...sub.cheatsheets]
+    let mcqs = [...(sub.mcqs || [])]
+    let directBooks = solutionBooks.filter((b: any) => b.subjectId === sub.id)
+
+    // Blend linked materials if sharing flags are true
+    if (linked) {
+      if (sub.linkIncludeNotes && linked.notes) {
+        const linkedNotes = linked.notes.map((n: any) => ({ ...n, isFromOldSyllabus: true }))
+        notes = [...notes, ...linkedNotes]
+      }
+      if (sub.linkIncludePastPapers && linked.pastPapers) {
+        const linkedPapers = linked.pastPapers.map((p: any) => ({ ...p, isFromOldSyllabus: true }))
+        pastPapers = [...pastPapers, ...linkedPapers]
+      }
+      if (sub.linkIncludeMCQs && linked.mcqs) {
+        const linkedMcqs = linked.mcqs.map((m: any) => ({ ...m, isFromOldSyllabus: true }))
+        mcqs = [...mcqs, ...linkedMcqs]
+      }
+      if (sub.linkIncludeBooks && linked.solutionBooks) {
+        const linkedBooks = linked.solutionBooks.map((b: any) => ({ ...b, isFromOldSyllabus: true }))
+        directBooks = [...directBooks, ...linkedBooks]
+      }
+    }
+
+    return {
+      ...sub,
+      notes,
+      pastPapers,
+      cheatsheets,
+      mcqs,
+      solutionBooks: directBooks
+    }
+  })
 
   return (
     <div className="container" style={{ padding: '40px 24px' }}>

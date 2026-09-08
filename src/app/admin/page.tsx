@@ -10,11 +10,12 @@ import AdminPricingTab from '@/components/admin/AdminPricingTab'
 import AdminSeoTab from '@/components/admin/AdminSeoTab'
 import AdminBackupTab from '@/components/admin/AdminBackupTab'
 import AdminBlogTab from '@/components/admin/AdminBlogTab'
+import AdminCourseMappingTab from '@/components/admin/AdminCourseMappingTab'
 import AdminNotifications from '@/components/admin/AdminNotifications'
 import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
 import MarkdownPaperViewer from '@/components/MarkdownPaperViewer'
 import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
-type AdminTab = 'overview' | 'payments' | 'faculties' | 'semesters' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup' | 'blogs'
+type AdminTab = 'overview' | 'payments' | 'faculties' | 'semesters' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup' | 'blogs' | 'mapping'
 
 interface Payment {
   id: string
@@ -167,6 +168,7 @@ export default function AdminPage() {
     { id: 'sellers',   icon: '🛍️', label: 'Seller Applications' },
     { id: 'stats',     icon: '📈', label: 'Material Stats' },
     { id: 'materials', icon: '🛠️', label: 'Manage Materials' },
+    { id: 'mapping',   icon: '🔗', label: 'Course Mapping' },
     { id: 'faculties', icon: '🏫', label: 'Faculties' },
     { id: 'semesters', icon: '🗓️', label: 'Semester Visibility' },
     { id: 'upload',    icon: '📤', label: 'Upload Materials' },
@@ -385,6 +387,12 @@ export default function AdminPage() {
             {tab === 'backup' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <AdminBackupTab />
+              </motion.div>
+            )}
+
+            {tab === 'mapping' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <AdminCourseMappingTab />
               </motion.div>
             )}
 
