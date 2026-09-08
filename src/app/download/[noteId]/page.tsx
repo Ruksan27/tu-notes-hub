@@ -296,22 +296,21 @@ export default function DownloadPage() {
         }
         @media (max-width: 768px) {
           .mobile-dl-top-ad { padding: 4px 8px 0 !important; }
-          .mobile-dl-main-area { gap: 8px !important; }
+          .mobile-dl-main-area { gap: 4px !important; }
           .mobile-dl-container { padding: 8px !important; gap: 8px !important; display: flex !important; flex-direction: column !important; }
-          .mobile-dl-card-outer { padding: 12px !important; gap: 12px !important; }
+          .mobile-dl-card-outer { padding: 8px !important; gap: 8px !important; }
           /* Stack layout for mobile to prevent squishing text */
-          .mobile-dl-card-inner { flex-direction: column !important; gap: 10px !important; align-items: flex-start !important; justify-content: flex-start !important; }
+          .mobile-dl-card-inner { flex-direction: column !important; gap: 8px !important; align-items: flex-start !important; justify-content: flex-start !important; }
           .mobile-dl-btn-wrapper { width: 100% !important; margin-top: 0 !important; }
-          .mobile-dl-title { font-size: 14px !important; line-height: 1.25 !important; }
+          .mobile-dl-title { font-size: 14px !important; line-height: 1.2 !important; }
           
           /* Smaller download button for mobile */
-          .mobile-dl-btn { width: 100% !important; padding: 6px 12px !important; border-radius: 6px !important; box-shadow: 0 1px 4px rgba(37,99,235,0.1) !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 0px !important; background: #2563eb !important; border: 1px solid #3b82f6 !important; }
-          .mobile-dl-btn span.main-text { font-size: 12px !important; font-weight: 700 !important; letter-spacing: 0.01em !important; }
-          .mobile-dl-btn span.sub-text { font-size: 8px !important; font-weight: 400 !important; color: rgba(255,255,255,0.7) !important; }
+          .mobile-dl-btn { width: 100% !important; padding: 4px 0 !important; border-radius: 6px !important; box-shadow: 0 1px 4px rgba(37,99,235,0.1) !important; display: flex !important; align-items: center !important; justify-content: center !important; background: #2563eb !important; border: 1px solid #3b82f6 !important; }
+          .mobile-dl-btn span.main-text { font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.01em !important; }
           
           .mobile-dl-badge { padding: 2px 5px !important; font-size: 8px !important; margin-bottom: 4px !important; display: inline-block !important; border-radius: 3px !important; }
           
-          .mobile-dl-share-section { padding-top: 10px !important; margin-top: 2px !important; }
+          .mobile-dl-share-section { padding-top: 8px !important; margin-top: 0px !important; }
           .mobile-dl-share-title { font-size: 9px !important; margin-bottom: 6px !important; }
           
           .mobile-dl-share-grid { 
@@ -333,14 +332,14 @@ export default function DownloadPage() {
           .mobile-dl-share-icon { font-size: 12px !important; line-height: 1 !important; }
           
           .mobile-dl-tab-btn { 
-            padding: 8px 8px !important; 
-            font-size: 11px !important; 
+            padding: 6px 8px !important; 
+            font-size: 9.5px !important; 
             flex: 1 !important; 
-            border-radius: 8px !important; 
+            border-radius: 6px !important; 
             box-shadow: none !important; /* Remove heavy shadow on mobile for flatter look */
           }
           .mobile-dl-tab-container { 
-            margin-bottom: 12px !important; 
+            margin-bottom: 6px !important; 
             padding: 4px !important; 
             border-radius: 12px !important; 
             background: rgba(255,255,255,0.05) !important; 
@@ -371,11 +370,8 @@ export default function DownloadPage() {
                   </div>
                 ) : ready && fileUrl ? (
                   <button onClick={handleStartDownload} className="mobile-dl-btn desktop-dl-btn active:scale-[0.98] transition-all hover:bg-blue-500"
-                    style={{ cursor: 'pointer', background: '#2563eb', color: '#fff', border: '1px solid #3b82f6', boxShadow: '0 2px 8px rgba(37,99,235,0.25)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span className="main-text">Download PDF</span>
-                    </div>
-                    <span className="sub-text">(Secured File • PDF)</span>
+                    style={{ cursor: 'pointer', background: '#2563eb', color: '#fff', border: '1px solid #3b82f6', boxShadow: '0 2px 8px rgba(37,99,235,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="main-text">Download PDF</span>
                   </button>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
