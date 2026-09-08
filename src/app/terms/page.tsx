@@ -12,31 +12,31 @@ export default function TermsPage() {
       num: 1,
       title: 'Acceptance of Terms',
       icon: '📜',
-      content: 'By accessing and using TU Notes Hub, you accept and agree to be bound by the terms, conditions, and provisions of this agreement. If you do not agree with any part of these terms, you must discontinue platform usage immediately.'
+      content: 'By registering an account and using TU Notes Hub, you accept and agree to be bound by these terms. If you do not agree with any part of these terms, please do not create an account or use our platform.'
     },
     {
       num: 2,
       title: 'Description of Service',
       icon: '🎓',
-      content: 'TU Notes Hub provides comprehensive educational resources including verified notes, past year question papers, AI exam predictions, and an open marketplace for students to buy and sell academic projects for educational & research purposes.'
+      content: 'TU Notes Hub provides comprehensive educational resources including verified notes, past year question papers, and syllabuses to assist university students in their academic journey.'
     },
     {
       num: 3,
       title: 'User Accounts & Security',
       icon: '🔐',
-      content: 'You are responsible for maintaining the confidentiality of your account credentials (email and password). You agree to accept full responsibility for all activities, purchases, and project submissions that occur under your account.'
+      content: 'You are responsible for maintaining the confidentiality of your account credentials. You agree to accept full responsibility for all activities that occur under your account. Please use a strong password and do not share your account details.'
     },
     {
       num: 4,
-      title: 'Intellectual Property & Code Rights',
-      icon: '💡',
-      content: 'Users retain original copyright ownership of projects they upload. By listing a project, sellers grant TU Notes Hub non-exclusive distribution rights to deliver verified source code packages and documentation to buyers according to platform terms.'
+      title: 'Content & Fair Use',
+      icon: '📚',
+      content: 'The study materials provided on this platform are for educational reference and personal study only. Users may not systematically scrape, redistribute, or commercially exploit the content provided by TU Notes Hub.'
     },
     {
       num: 5,
-      title: 'Limitation of Liability & Fair Use',
-      icon: '🛡️',
-      content: 'TU Notes Hub shall not be liable for any indirect, incidental, or consequential damages resulting from the use or inability to use our services. Projects bought on the marketplace are intended as reference templates and learning resources.'
+      title: 'Account Termination',
+      icon: '🛑',
+      content: 'We reserve the right to suspend or terminate accounts that violate these terms, engage in spamming, or attempt to compromise the security and integrity of the platform.'
     }
   ]
 

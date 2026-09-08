@@ -51,6 +51,10 @@ export async function POST(req: NextRequest) {
         packageType: user.packageType,
         facultyId: user.facultyId,
         semesterOrder: user.semesterOrder,
+        phone: user.phone,
+        college: user.college,
+        gender: user.gender,
+        avatarUrl: user.avatarUrl,
       }
     })
   } catch (error) {

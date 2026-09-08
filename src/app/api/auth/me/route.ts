@@ -23,6 +23,10 @@ export async function GET() {
         semesterOrder: true,
         adminFacultyId: true,
         adminSemesterId: true,
+        avatarUrl: true,
+        phone: true,
+        college: true,
+        gender: true,
       }
     })
 

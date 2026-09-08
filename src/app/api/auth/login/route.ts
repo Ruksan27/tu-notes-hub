@@ -42,9 +42,11 @@ export async function POST(req: NextRequest) {
         packageType: user.packageType,
         facultyId: user.facultyId,
         semesterOrder: user.semesterOrder,
-        adminFacultyId: user.adminFacultyId,
         adminSemesterId: user.adminSemesterId,
         avatarUrl: user.avatarUrl,
+        phone: user.phone,
+        college: user.college,
+        gender: user.gender,
       },
     })
   } catch (error) {

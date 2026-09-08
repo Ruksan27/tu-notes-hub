@@ -492,14 +492,14 @@ export default function DashboardPage() {
           {/* ── AI Compare Tab ── */}
           {tab === 'compare' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              {!isPremium ? (
+              {!isElite ? (
                 <div className="glass-card" style={{ padding: '64px', textAlign: 'center' }}>
                   <div style={{ fontSize: '56px', marginBottom: '16px' }}>🔒</div>
-                  <h2 className="text-2xl font-bold mb-3">Premium Feature</h2>
+                  <h2 className="text-2xl font-bold mb-3">Elite AI Feature</h2>
                   <p style={{ color: 'var(--clr-text-2)', marginBottom: '28px', maxWidth: '420px', margin: '0 auto 28px' }}>
-                    AI Exam Prediction requires a <strong>Semester Pass</strong> or <strong>Elite AI Pass</strong> to run automated comparisons of past papers.
+                    AI Exam Prediction requires an <strong>Elite AI Pass</strong> to run automated comparisons of past papers.
                   </p>
-                  <button className="btn btn-primary btn-lg" onClick={() => setTab('payment')}>
+                  <button className="btn btn-primary btn-lg" onClick={() => window.location.href = '/pricing'}>
                     💎 View Premium Plans
                   </button>
                 </div>

@@ -15,6 +15,7 @@ export default function ProfileTab() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    // 1. Load from localStorage initially for fast render
     const stored = localStorage.getItem('tu_user')
     if (stored) {
       try {
@@ -27,6 +28,22 @@ export default function ProfileTab() {
         setGender(parsed.gender || '')
       } catch {}
     }
+
+    // 2. Always fetch latest from server to ensure fresh data
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.authenticated && data.user) {
+          setUser(data.user)
+          setName(data.user.name || '')
+          setAvatarUrl(data.user.avatarUrl || '')
+          setCollege(data.user.college || '')
+          setPhone(data.user.phone || '')
+          setGender(data.user.gender || '')
+          localStorage.setItem('tu_user', JSON.stringify(data.user))
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

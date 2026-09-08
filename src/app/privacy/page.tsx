@@ -12,25 +12,25 @@ export default function PrivacyPage() {
       num: 1,
       title: 'Information We Collect',
       icon: '📊',
-      content: 'We collect information you provide directly to us, such as when you create or modify your account, purchase notes or projects, contact customer support, or communicate with us. This includes your name, email address, phone number, and college/faculty details.'
+      content: 'We collect information you provide directly to us when you create an account, verify your identity via OTP, or communicate with our support. This includes your name, email address, phone number, and college/faculty details.'
     },
     {
       num: 2,
       title: 'How We Use Your Information',
       icon: '⚡',
-      content: 'We use the information we collect to provide, maintain, and improve our academic services. This includes processing Marketplace transactions, verifying project downloads, sending order confirmations, and suggesting relevant notes for your semester.'
+      content: 'We use the information we collect to provide, maintain, and personalize your educational experience. This includes organizing notes for your specific semester and notifying you about relevant syllabus updates.'
     },
     {
       num: 3,
       title: 'Data Security & Protection',
       icon: '🛡️',
-      content: 'We implement robust industry-standard security measures to protect your personal data. All user passwords are encrypted using secure bcrypt hashing, and communication between your browser and our servers is fully encrypted using HTTPS SSL certificates.'
+      content: 'We implement robust industry-standard security measures to protect your personal data. All user passwords are encrypted using secure bcrypt hashing, and communication between your browser and our servers is fully encrypted via HTTPS.'
     },
     {
       num: 4,
       title: 'Cookies & Authentication',
       icon: '🍪',
-      content: 'We use essential cookies and local browser storage to keep you logged in securely, remember your cart items, and deliver customized content based on your selected faculty.'
+      content: 'We use essential cookies and local browser storage to keep you securely logged in and to remember your faculty preferences to deliver customized educational content.'
     }
   ]
 
