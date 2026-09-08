@@ -323,7 +323,7 @@ export default function RegisterPage() {
             </>
           ) : (
             <>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyCenter: 'center', width: '56px', height: '56px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px', color: 'var(--clr-primary-h)', fontSize: '24px', marginBottom: '20px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px', color: 'var(--clr-primary-h)', fontSize: '24px', marginBottom: '20px' }}>
                 🛡️
               </div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', marginBottom: '8px', letterSpacing: '-0.02em', color: '#fff' }}>Verify Email</h1>
