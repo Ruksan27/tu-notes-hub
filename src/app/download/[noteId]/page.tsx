@@ -295,8 +295,8 @@ export default function DownloadPage() {
           border-radius: 10px;
         }
         @media (max-width: 768px) {
-          .mobile-dl-top-ad { padding: 12px 12px 0 !important; }
-          .mobile-dl-main-area { gap: 12px !important; }
+          .mobile-dl-top-ad { padding: 4px 8px 0 !important; }
+          .mobile-dl-main-area { gap: 8px !important; }
           .mobile-dl-container { padding: 8px !important; gap: 8px !important; display: flex !important; flex-direction: column !important; }
           .mobile-dl-card-outer { padding: 12px !important; gap: 12px !important; }
           /* Stack layout for mobile to prevent squishing text */
