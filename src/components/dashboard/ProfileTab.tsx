@@ -28,12 +28,28 @@ export default function ProfileTab() {
     if (!file) return
 
     setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('upload_preset', 'tu-notes-hub')
 
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/dcvd8oio1/image/upload`, {
+      const sigRes = await fetch('/api/upload/signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder: 'tu-notes-hub/avatars' }),
+      })
+      const sigData = await sigRes.json()
+
+      if (!sigRes.ok || sigData.error) {
+        toast.error(sigData.error || 'Failed to authorize upload')
+        return
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('api_key', sigData.apiKey)
+      formData.append('timestamp', sigData.timestamp)
+      formData.append('signature', sigData.signature)
+      formData.append('folder', sigData.folder)
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`, {
         method: 'POST',
         body: formData,
       })
@@ -42,7 +58,7 @@ export default function ProfileTab() {
         setAvatarUrl(data.secure_url)
         toast.success('Avatar uploaded!')
       } else {
-        toast.error('Failed to upload avatar')
+        toast.error(data.error?.message || 'Failed to upload avatar')
       }
     } catch {
       toast.error('Upload error')

@@ -139,7 +139,6 @@ export default function DashboardPage() {
   const navItems = [
     { id: 'overview', icon: '📚', label: 'My Subjects' },
     { id: 'compare', icon: '🤖', label: 'AI Exam Predictor' },
-    { id: 'profile', icon: '👤', label: 'Profile Settings' },
     // Show Upgrade Plan for everyone except Elite
     ...(user.packageType !== 'ELITE_AI' && user.role !== 'ADMIN' ? [{ id: 'payment', icon: '💎', label: 'Upgrade Plan' }] : []),
   ]

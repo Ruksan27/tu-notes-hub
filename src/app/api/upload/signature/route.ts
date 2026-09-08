@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'CHILD_ADMIN')) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

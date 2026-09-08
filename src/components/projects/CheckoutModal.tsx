@@ -33,12 +33,28 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
     if (!file) return
 
     setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('upload_preset', 'tu-notes-hub') // Ensure this preset exists in Cloudinary
 
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/dcvd8oio1/image/upload`, {
+      const sigRes = await fetch('/api/upload/signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder: 'tu-notes-hub/screenshots' }),
+      })
+      const sigData = await sigRes.json()
+
+      if (!sigRes.ok || sigData.error) {
+        toast.error(sigData.error || 'Failed to authorize upload')
+        return
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('api_key', sigData.apiKey)
+      formData.append('timestamp', sigData.timestamp)
+      formData.append('signature', sigData.signature)
+      formData.append('folder', sigData.folder)
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`, {
         method: 'POST',
         body: formData,
       })
@@ -47,7 +63,7 @@ export default function CheckoutModal({ isOpen, onClose, projectId, projectTitle
         setScreenshotUrl(data.secure_url)
         toast.success('Screenshot uploaded!')
       } else {
-        toast.error('Failed to upload screenshot')
+        toast.error(data.error?.message || 'Failed to upload screenshot')
       }
     } catch {
       toast.error('Upload error')
