@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { toast } from 'react-toastify'
 import Image from 'next/image'
-
+import { Package, CheckCircle2, ShoppingCart, Clock, Pencil, EyeOff, Eye, Trash2, FolderCode, Rocket, Plus } from 'lucide-react'
 interface ProjectItem {
   id: string
   title: string
@@ -56,8 +56,8 @@ const EMPTY_FORM = {
   features: '',
 }
 
-const LABEL_CLS = 'block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2'
-const INPUT_CLS = 'w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/50 transition-all'
+const LABEL_CLS = 'block text-[10px] font-bold uppercase tracking-widest text-text3 mb-2'
+const INPUT_CLS = 'input-field text-sm'
 
 export default function AdminProjectsTab({ externalSubTab }: Props) {
   const [activeSubTab, setActiveSubTab] = useState<'ITEMS' | 'ORDERS' | 'CARTS'>(externalSubTab ?? 'ITEMS')
@@ -287,52 +287,61 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8 w-full pb-20">
 
-      {/* ── Top Bar: Add button only ── */}
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-slate-500">Manage projects, track orders &amp; abandoned carts.</p>
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="hidden sm:block">
+          <div className="text-[11px] font-bold text-brand uppercase tracking-[1.2px] mb-1">
+            Admin Control Center
+          </div>
+          <h2 className="text-3xl font-extrabold text-text1 tracking-tight">
+            Projects Market
+          </h2>
+        </div>
+        <p className="sm:hidden text-xs text-text3">Manage projects, track orders & abandoned carts.</p>
         <button
           onClick={openAddModal}
-          className="shrink-0 flex items-center gap-1.5 bg-gradient-to-r from-indigo-500 to-cyan-400 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-lg shadow-indigo-500/25 whitespace-nowrap"
+          className="btn btn-primary"
         >
-          <span className="text-base leading-none">+</span> Add Project
+          <Package size={16} />
+          Add Project
         </button>
       </div>
 
-      {/* ── Stats Row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* ── Stats Row (SaaS Minimalist) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Projects', value: projects.length, icon: '📦', color: 'text-indigo-400', border: 'border-indigo-500/15', bg: 'from-indigo-500/8' },
-          { label: 'Active / Visible', value: projects.filter(p => p.status === 'ACTIVE').length, icon: '✅', color: 'text-emerald-400', border: 'border-emerald-500/15', bg: 'from-emerald-500/8' },
-          { label: 'Total Orders', value: orders.length, icon: '🛒', color: 'text-cyan-400', border: 'border-cyan-500/15', bg: 'from-cyan-500/8' },
-          { label: 'Pending Review', value: pendingOrders, icon: '⏳', color: 'text-amber-400', border: 'border-amber-500/15', bg: 'from-amber-500/8' },
+          { label: 'Total Projects', value: projects.length, icon: <Package size={18} /> },
+          { label: 'Active / Visible', value: projects.filter(p => p.status === 'ACTIVE').length, icon: <CheckCircle2 size={18} className="text-success" /> },
+          { label: 'Total Orders', value: orders.length, icon: <ShoppingCart size={18} /> },
+          { label: 'Pending Review', value: pendingOrders, icon: <Clock size={18} className="text-warning" /> },
         ].map(s => (
-          <div key={s.label} className={`relative overflow-hidden bg-gradient-to-br ${s.bg} to-transparent border ${s.border} rounded-2xl p-3.5 sm:p-4 transition-all`}>
-            <div className="text-lg mb-2">{s.icon}</div>
-            <div className={`font-black text-3xl sm:text-4xl ${s.color} mb-1 leading-none`}>{s.value}</div>
-            <div className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider font-bold leading-tight">{s.label}</div>
+          <div key={s.label} className="glass-card p-5 flex flex-col gap-3">
+            <div className="flex justify-between items-center text-text3">
+              <div className="text-[11px] uppercase tracking-wider font-semibold">{s.label}</div>
+              {s.icon}
+            </div>
+            <div className="text-3xl font-bold text-text1 leading-none">{s.value}</div>
           </div>
         ))}
       </div>
 
-      {/* ── Sub-tab Switcher ── */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* ── Sub-tab Switcher (Separate Buttons) ── */}
+      <div className="flex flex-wrap gap-3 mt-2.5">
         {(['ITEMS', 'ORDERS', 'CARTS'] as const).map(t => (
           <button
             key={t}
             onClick={() => setActiveSubTab(t)}
-            className={`relative flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-extrabold transition-all border outline-none ${
+            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
               activeSubTab === t
-                ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300 shadow-[0_0_16px_rgba(99,102,241,0.2)]'
-                : 'bg-white/[0.04] border-white/8 text-slate-400 hover:bg-white/8 hover:text-slate-200 hover:border-white/15'
+                ? 'bg-brand text-white border-brand shadow-[0_4px_15px_rgba(99,102,241,0.35)]'
+                : 'glass-card text-text2 hover:text-text1 hover:border-brand/30'
             }`}
           >
-            <span className="text-sm">{t === 'ITEMS' ? '📦' : t === 'ORDERS' ? '🛒' : '🛍️'}</span>
-            <span className="hidden sm:inline">{t === 'ITEMS' ? 'Manage Projects' : t === 'ORDERS' ? 'Orders & Inquiries' : 'Cart Analytics'}</span>
-            <span className="inline sm:hidden">{t === 'ITEMS' ? 'Projects' : t === 'ORDERS' ? 'Orders' : 'Carts'}</span>
+            {t === 'ITEMS' ? '📦 Projects' : t === 'ORDERS' ? '🛒 Orders' : '🛍️ Carts'}
             {t === 'ORDERS' && pendingOrders > 0 && (
-              <span className="ml-1 bg-red-500 text-white text-[8px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center shadow-md">
+              <span className="ml-1 bg-danger text-white text-[10px] font-bold min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center shadow-sm">
                 {pendingOrders}
               </span>
             )}
@@ -366,203 +375,203 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                       layout
                       initial={{ opacity: 0, scale: 0.96 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="flex flex-col bg-[#0f1019] border border-white/8 rounded-2xl overflow-hidden hover:border-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300"
+                      className="flex flex-col glass-card overflow-hidden group hover:border-brand/30 hover:shadow-xl hover:shadow-brand/5 transition-all duration-300"
                     >
                       {/* Thumbnail */}
-                      <div className="relative h-44 bg-slate-800 shrink-0">
+                      <div className="relative h-44 bg-bg900 shrink-0 border-b border-border">
                         {p.thumbnailUrl ? (
-                          <Image src={p.thumbnailUrl} alt={p.title} fill unoptimized className="object-cover" />
+                          <Image src={p.thumbnailUrl} alt={p.title} fill unoptimized className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
                         ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-indigo-500/5 to-cyan-500/5">
-                            <span className="text-6xl opacity-20">💻</span>
+                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand/5 to-cyan-500/5">
+                            <Package size={48} className="text-text3 opacity-20" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f1019] via-black/20 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-bg900 via-bg900/20 to-transparent" />
 
                         {/* Status pill */}
                         <div className="absolute top-3 left-3">
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1 rounded-full backdrop-blur-md border ${
+                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-md border ${
                             p.status === 'ACTIVE'
-                              ? 'bg-emerald-500/25 border-emerald-500/50 text-emerald-300'
+                              ? 'bg-success/20 border-success/30 text-success'
                               : p.status === 'PENDING'
-                              ? 'bg-amber-500/25 border-amber-500/50 text-amber-300'
-                              : 'bg-slate-500/25 border-slate-500/40 text-slate-400'
+                              ? 'bg-warning/20 border-warning/30 text-warning'
+                              : 'bg-bg800/80 border-border text-text3'
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${p.status === 'ACTIVE' ? 'bg-emerald-400 animate-pulse' : p.status === 'PENDING' ? 'bg-amber-400' : 'bg-slate-500'}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${p.status === 'ACTIVE' ? 'bg-success animate-pulse' : p.status === 'PENDING' ? 'bg-warning' : 'bg-text3'}`} />
                             {p.status === 'ACTIVE' ? 'LIVE' : p.status === 'PENDING' ? 'REVIEW' : p.status}
                           </span>
                         </div>
 
                         {/* Discount badge */}
                         {p.discountPercentage > 0 && (
-                          <div className="absolute top-3 right-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-lg shadow-rose-500/30">
+                          <div className="absolute top-3 right-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg shadow-rose-500/20">
                             -{p.discountPercentage}%
                           </div>
                         )}
 
                         {/* Seller tag */}
                         <div className="absolute bottom-3 left-3">
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md ${
-                            p.user ? 'bg-indigo-600/70 text-white' : 'bg-cyan-600/70 text-white'
+                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-3 py-1 rounded-full backdrop-blur-md border ${
+                            p.user ? 'bg-brand/80 border-brand/50 text-white' : 'bg-bg800/80 border-border text-text2'
                           }`}>
-                            {p.user ? `👤 ${p.user.name}` : '🛡️ Admin'}
+                            {p.user ? <><div className="w-3 h-3 bg-white/20 rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 bg-white rounded-full"/></div> {p.user.name}</> : <><CheckCircle2 size={12} className="text-brand"/> Admin</>}
                           </span>
                         </div>
                       </div>
 
                       {/* Card Body */}
-                      <div className="flex flex-col flex-1 p-4 gap-3.5">
+                      <div className="flex flex-col flex-1 p-5 gap-4">
 
                         {/* Title + Tech tags */}
                         <div>
-                          <h3 className="font-extrabold text-[15px] text-white leading-snug mb-2">{p.title}</h3>
+                          <h3 className="font-bold text-lg text-text1 leading-snug mb-2.5 group-hover:text-brand transition-colors">{p.title}</h3>
                           <div className="flex flex-wrap gap-1.5">
-                            {p.technologies.split(',').slice(0, 5).map(t => (
-                              <span key={t} className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-wide">
+                            {p.technologies.split(',').slice(0, 4).map(t => (
+                              <span key={t} className="text-[10px] font-medium px-2 py-0.5 rounded bg-bg800 text-text2 border border-border uppercase tracking-wide">
                                 {t.trim()}
                               </span>
                             ))}
-                            {p.technologies.split(',').length > 5 && (
-                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-white/5 text-slate-500 border border-white/5">
-                                +{p.technologies.split(',').length - 5}
+                            {p.technologies.split(',').length > 4 && (
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-bg800/50 text-text3 border border-border/50">
+                                +{p.technologies.split(',').length - 4}
                               </span>
                             )}
                           </div>
                         </div>
 
                         {/* Price row */}
-                        <div className="flex items-center justify-between bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3.5 py-2.5">
+                        <div className="flex items-center justify-between bg-bg800 border border-border rounded-xl px-4 py-3">
                           <div>
                             {p.discountPercentage > 0 && (
-                              <div className="text-[10px] text-slate-500 line-through">Rs. {p.originalPrice}</div>
+                              <div className="text-[11px] text-text3 line-through mb-0.5 font-medium">Rs. {p.originalPrice}</div>
                             )}
-                            <div className="font-black text-2xl text-emerald-400 leading-none">Rs. {finalPrice}</div>
+                            <div className="font-black text-2xl text-success leading-none">Rs. {finalPrice}</div>
                           </div>
                           {p.discountPercentage > 0 && (
                             <div className="text-right">
-                              <div className="text-[9px] text-slate-500 uppercase tracking-wider">Save</div>
-                              <div className="text-sm font-black text-rose-400">Rs. {savedAmt}</div>
+                              <div className="text-[9px] text-text3 uppercase tracking-widest font-bold mb-0.5">You Save</div>
+                              <div className="text-sm font-bold text-rose-400">Rs. {savedAmt}</div>
                             </div>
                           )}
                         </div>
 
                         {/* Analytics 3-col */}
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-3">
                           {[
-                            { label: 'Views', value: views, sub: organicViews ? `${organicViews} organic` : null, color: 'text-sky-400' },
+                            { label: 'Views', value: views, sub: organicViews ? `${organicViews} org` : null, color: 'text-sky-400' },
                             { label: 'Sales', value: sales, sub: null, color: 'text-emerald-400' },
-                            { label: 'Conv %', value: `${conversionRate}%`, sub: null, color: 'text-indigo-400' },
+                            { label: 'Conv %', value: `${conversionRate}%`, sub: null, color: 'text-brand' },
                           ].map(stat => (
-                            <div key={stat.label} className="bg-white/[0.03] border border-white/5 rounded-xl p-2.5 text-center">
-                              <div className="text-[8px] text-slate-600 uppercase tracking-widest font-bold mb-1">{stat.label}</div>
-                              <div className={`text-sm font-black ${stat.color} leading-none`}>{stat.value}</div>
-                              {stat.sub && <div className="text-[8px] text-slate-600 mt-0.5">{stat.sub}</div>}
+                            <div key={stat.label} className="flex flex-col">
+                              <div className="text-[9px] text-text3 uppercase tracking-widest font-semibold mb-1">{stat.label}</div>
+                              <div className={`text-base font-bold ${stat.color} leading-none`}>{stat.value}</div>
+                              {stat.sub && <div className="text-[9px] text-text3 mt-1 font-medium">{stat.sub}</div>}
                             </div>
                           ))}
                         </div>
 
                         {/* Action Buttons */}
                         {['PENDING', 'CHANGES_REQUESTED'].includes(p.status) ? (
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-2 mt-1">
                             <button onClick={() => updateProjectStatusAdmin(p.id, 'ACTIVE')}
-                              className="w-full text-xs font-extrabold py-3 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 active:scale-95 transition-all">
-                              ✓ Approve & Publish
+                              className="w-full flex items-center justify-center gap-2 text-sm font-bold py-2.5 rounded-lg bg-success/15 text-success border border-success/30 hover:bg-success/25 active:scale-95 transition-all">
+                              <CheckCircle2 size={16} /> Approve & Publish
                             </button>
                             <div className="flex gap-2">
                               <button onClick={() => updateProjectStatusAdmin(p.id, 'CHANGES_REQUESTED', true)}
-                                className="flex-1 text-xs font-bold py-2.5 rounded-xl bg-orange-500/15 text-orange-400 border border-orange-500/30 hover:bg-orange-500/25 active:scale-95 transition-all">
-                                ✍️ Request Changes
+                                className="flex-1 flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-lg bg-warning/15 text-warning border border-warning/30 hover:bg-warning/25 active:scale-95 transition-all">
+                                <Pencil size={14} /> Request Changes
                               </button>
                               <button onClick={() => updateProjectStatusAdmin(p.id, 'REJECTED')}
-                                className="text-xs font-bold py-2.5 px-3 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 active:scale-95 transition-all">
-                                ✗ Reject
+                                className="flex items-center justify-center text-xs font-bold py-2.5 px-3 rounded-lg bg-danger/15 text-danger border border-danger/30 hover:bg-danger/25 active:scale-95 transition-all">
+                                <Trash2 size={14} /> Reject
                               </button>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 mt-1">
                             <button onClick={() => openEditModal(p)}
-                              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-3 rounded-xl bg-white/5 text-slate-200 border border-white/10 hover:bg-white/10 active:scale-95 transition-all">
-                              ✏️ Edit
+                              className="flex-1 flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-lg bg-bg800 text-text2 border border-border hover:text-text1 hover:border-brand/30 active:scale-95 transition-all">
+                              <Pencil size={14} /> Edit
                             </button>
                             <button onClick={() => toggleProjectStatus(p)}
-                              className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-3 rounded-xl border active:scale-95 transition-all ${
+                              className={`flex-1 flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-lg border active:scale-95 transition-all ${
                                 p.status === 'ACTIVE'
-                                  ? 'bg-amber-500/12 text-amber-300 border-amber-500/25 hover:bg-amber-500/20'
-                                  : 'bg-emerald-500/12 text-emerald-300 border-emerald-500/25 hover:bg-emerald-500/20'
+                                  ? 'bg-warning/10 text-warning border-warning/25 hover:bg-warning/20'
+                                  : 'bg-success/10 text-success border-success/25 hover:bg-success/20'
                               }`}>
-                              {p.status === 'ACTIVE' ? '🙈 Hide' : '👁 Show'}
+                              {p.status === 'ACTIVE' ? <><EyeOff size={14} /> Hide</> : <><Eye size={14} /> Show</>}
                             </button>
                             <button onClick={() => deleteProject(p.id)}
-                              className="w-11 flex items-center justify-center text-sm py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 active:scale-95 transition-all">
-                              🗑
+                              className="w-10 flex items-center justify-center rounded-lg bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20 active:scale-95 transition-all">
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         )}
 
                         {/* Drive Links */}
-                        <div className="space-y-2 pt-1 border-t border-white/5">
-
+                        <div className="space-y-3 pt-4 border-t border-border mt-1">
+                          
                           {/* Seller Source */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest w-16 shrink-0">Seller</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold text-text3 uppercase tracking-widest w-16 shrink-0">Seller</span>
                             {p.sourceDriveLink ? (
                               <a href={p.sourceDriveLink} target="_blank" rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-lg hover:bg-sky-500/20 transition-all">
-                                📁 Verify Source ✓
+                                className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-brand bg-brand/10 border border-brand/20 px-3 py-1.5 rounded-lg hover:bg-brand/20 transition-all">
+                                <FolderCode size={12} /> Verify Source
                               </a>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-400 bg-rose-500/8 border border-rose-500/15 px-2.5 py-1 rounded-lg">
-                                ⚠️ Not uploaded
+                              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-danger bg-danger/10 border border-danger/20 px-3 py-1.5 rounded-lg">
+                                <Clock size={12} /> Not uploaded
                               </span>
                             )}
                           </div>
 
                           {/* Delivery Link */}
                           {editAdminLinkId === p.id ? (
-                            <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-3 space-y-2">
-                              <label className="text-[9px] text-amber-400 font-black uppercase tracking-widest block">🚀 Admin Delivery Link</label>
+                            <div className="bg-bg800 border border-brand/30 rounded-xl p-3 space-y-2.5">
+                              <label className="text-[10px] text-brand font-bold uppercase tracking-widest flex items-center gap-1.5"><Rocket size={12}/> Admin Delivery Link</label>
                               <input
                                 type="url"
-                                className="w-full bg-black/40 border border-amber-500/30 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-400 transition-all placeholder:text-slate-600"
+                                className="w-full bg-bg900 border border-border rounded-lg px-3 py-2 text-xs text-text1 outline-none focus:border-brand transition-all placeholder:text-text3"
                                 value={editAdminLink}
                                 onChange={e => setEditAdminLink(e.target.value)}
                                 placeholder="https://drive.google.com/..."
                                 autoFocus
                               />
                               <div className="flex gap-2">
-                                <button className="flex-1 text-[10px] font-bold py-2 rounded-lg bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10 transition-all" onClick={() => setEditAdminLinkId(null)}>Cancel</button>
+                                <button className="flex-1 text-[10px] font-semibold py-2 rounded-lg bg-bg800 text-text3 border border-border hover:text-text2 transition-all" onClick={() => setEditAdminLinkId(null)}>Cancel</button>
                                 <button
-                                  className="flex-[2] text-[10px] font-bold py-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-50 transition-all"
+                                  className="flex-[2] text-[10px] font-semibold py-2 rounded-lg bg-brand/20 text-brand border border-brand/30 hover:bg-brand/30 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
                                   disabled={savingAdminLink}
                                   onClick={() => handleAdminSaveDeliveryLink(p.id)}
                                 >
-                                  {savingAdminLink ? '⏳ Saving…' : '💾 Save Link'}
+                                  {savingAdminLink ? <Clock size={12} className="animate-spin" /> : <Rocket size={12} />} {savingAdminLink ? 'Saving...' : 'Save Link'}
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest w-16 shrink-0">Delivery</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-[10px] font-bold text-text3 uppercase tracking-widest w-16 shrink-0">Delivery</span>
                               {p.adminDriveLink ? (
                                 <a href={p.adminDriveLink} target="_blank" rel="noreferrer"
-                                  className="flex-1 inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg hover:bg-amber-500/20 transition-all truncate min-w-0">
-                                  🚀 Delivery Link ✓
+                                  className="flex-1 inline-flex items-center gap-1.5 text-[10px] font-semibold text-warning bg-warning/10 border border-warning/20 px-3 py-1.5 rounded-lg hover:bg-warning/20 transition-all truncate min-w-0">
+                                  <Rocket size={12} className="shrink-0" /> <span className="truncate">Delivery Link</span>
                                 </a>
                               ) : (
-                                <span className="flex-1 inline-flex items-center gap-1 text-[10px] font-bold text-orange-400 bg-orange-500/8 border border-orange-500/15 px-2.5 py-1 rounded-lg min-w-0">
-                                  ⚠️ Not set yet
+                                <span className="flex-1 inline-flex items-center gap-1.5 text-[10px] font-semibold text-text3 bg-bg800 border border-border px-3 py-1.5 rounded-lg min-w-0">
+                                  <Clock size={12} /> Not set yet
                                 </span>
                               )}
                               <button
-                                className={`shrink-0 text-[9px] font-black px-2.5 py-1.5 rounded-lg border transition-all ${
+                                className={`shrink-0 flex items-center justify-center text-[10px] font-semibold w-8 h-8 rounded-lg border transition-all ${
                                   p.adminDriveLink
-                                    ? 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'
-                                    : 'bg-orange-500/15 text-orange-300 border-orange-500/25 hover:bg-orange-500/25'
+                                    ? 'bg-bg800 text-text2 border-border hover:text-brand hover:border-brand/30'
+                                    : 'bg-brand/10 text-brand border-brand/20 hover:bg-brand/20'
                                 }`}
                                 onClick={() => { setEditAdminLinkId(p.id); setEditAdminLink(p.adminDriveLink || '') }}
                               >
-                                {p.adminDriveLink ? '✏️' : '+ Set'}
+                                {p.adminDriveLink ? <Pencil size={12} /> : <Plus size={14} />}
                               </button>
                             </div>
                           )}
@@ -787,35 +796,38 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/85 backdrop-blur-md z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-5"
+            className="fixed inset-0 bg-bg900/80 backdrop-blur-sm z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-5"
             onClick={e => { if (e.target === e.currentTarget) setIsModalOpen(false) }}
           >
             <motion.div
               key="modal-box"
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 60 }}
+              initial={{ opacity: 0, y: 60, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 60, scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="w-full sm:max-w-2xl bg-[#0b0c18] border border-indigo-500/20 rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto shadow-[0_-20px_60px_rgba(0,0,0,0.8)]"
+              className="w-full sm:max-w-2xl glass-card rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto shadow-2xl shadow-brand/10 hide-scrollbar"
             >
               {/* Modal Header */}
-              <div className="sticky top-0 bg-[#0b0c18] z-10 flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 border-b border-white/5">
+              <div className="sticky top-0 bg-bg900/80 backdrop-blur-xl z-20 flex items-center justify-between px-6 py-5 border-b border-border">
                 <div>
-                  <h2 className="font-extrabold text-lg text-white">{editingProject ? '✏️ Edit Project' : '➕ Add New Project'}</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">{editingProject ? 'Update the project details below.' : 'Fill in the details to list a new project for sale.'}</p>
+                  <h2 className="font-bold text-xl text-text1 flex items-center gap-2">
+                    {editingProject ? <Pencil size={20} className="text-brand"/> : <Plus size={20} className="text-brand"/>}
+                    {editingProject ? 'Edit Project' : 'Add New Project'}
+                  </h2>
+                  <p className="text-xs text-text3 mt-1">{editingProject ? 'Update the project details below.' : 'Fill in the details to list a new project for sale.'}</p>
                 </div>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xl transition-all border border-white/5"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-bg800 hover:bg-border text-text2 hover:text-text1 transition-all"
                 >
-                  ×
+                  <Plus size={20} className="rotate-45" />
                 </button>
               </div>
 
-              <form onSubmit={handleSave} className="px-4 sm:px-6 py-5 flex flex-col gap-4">
+              <form onSubmit={handleSave} className="px-6 py-6 flex flex-col gap-6">
 
                 {/* ── Thumbnail Upload ── */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3">
+                <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-4">
                   <label className={LABEL_CLS}>Project Thumbnail</label>
                   <div
                     onClick={() => fileInputRef.current?.click()}
@@ -826,34 +838,34 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                       const file = e.dataTransfer.files?.[0]
                       if (file && file.type.startsWith('image/')) handleImageChange(file)
                     }}
-                    className={`relative w-full h-36 rounded-xl cursor-pointer overflow-hidden flex items-center justify-center transition-all border-2 border-dashed ${
-                      isDragging ? 'border-indigo-400 bg-indigo-500/10' : 'border-white/10 bg-black/20 hover:border-indigo-400/50 hover:bg-indigo-500/5'
+                    className={`relative w-full h-40 rounded-xl cursor-pointer overflow-hidden flex items-center justify-center transition-all border-2 border-dashed ${
+                      isDragging ? 'border-brand bg-brand/10' : 'border-border bg-bg900 hover:border-brand/50 hover:bg-brand/5'
                     }`}
                   >
                     {(imagePreview || formData.thumbnailUrl) ? (
                       <Image src={imagePreview || formData.thumbnailUrl!} alt="Thumbnail preview" fill className="object-cover" unoptimized />
                     ) : (
-                      <div className="text-center text-slate-500 pointer-events-none">
-                        <div className="text-3xl mb-1.5">📸</div>
-                        <div className="text-xs font-semibold">Click or drag &amp; drop</div>
-                        <div className="text-[10px] mt-0.5 text-slate-600">PNG, JPG, WEBP — Max 5MB</div>
+                      <div className="text-center text-text3 pointer-events-none flex flex-col items-center">
+                        <Package size={32} className="mb-2 opacity-50" />
+                        <div className="text-xs font-semibold text-text2">Click or drag &amp; drop image</div>
+                        <div className="text-[10px] mt-1 opacity-70">PNG, JPG, WEBP — Max 5MB</div>
                       </div>
                     )}
                     {(imagePreview || formData.thumbnailUrl) && (
                       <button
                         type="button"
                         onClick={e => { e.stopPropagation(); setImageFile(null); setImagePreview(null); setFormData(f => ({ ...f, thumbnailUrl: '' })) }}
-                        className="absolute top-2 right-2 bg-black/80 border border-white/15 rounded-lg text-white text-xs px-2.5 py-1 hover:bg-black transition-all font-bold"
+                        className="absolute top-3 right-3 bg-bg900/80 backdrop-blur border border-border rounded-lg text-text2 hover:text-text1 text-[10px] px-3 py-1.5 hover:bg-bg900 transition-all font-bold flex items-center gap-1.5"
                       >
-                        ✕ Clear
+                        <Trash2 size={12} /> Clear
                       </button>
                     )}
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (file) handleImageChange(file) }} />
-                  <div className="relative">
-                    <p className="text-[10px] text-slate-600 text-center mb-2 uppercase tracking-wider font-bold">— or paste image URL —</p>
+                  <div className="relative pt-1">
+                    <p className="text-[9px] text-text3 text-center mb-2.5 uppercase tracking-widest font-bold">— or paste image URL —</p>
                     <input
-                      className="w-full bg-black/30 border border-white/8 rounded-xl px-3 py-2.5 text-xs text-slate-300 outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600 font-mono truncate"
+                      className={INPUT_CLS + " font-mono text-xs"}
                       placeholder="https://res.cloudinary.com/..."
                       value={formData.thumbnailUrl}
                       onChange={e => { setFormData({ ...formData, thumbnailUrl: e.target.value }); setImageFile(null); setImagePreview(e.target.value || null) }}
@@ -862,8 +874,8 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                 </div>
 
                 {/* ── Basic Info ── */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3.5">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Basic Info</p>
+                <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-4">
+                  <p className="text-[10px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Basic Info</p>
 
                   <div>
                     <label className={LABEL_CLS}>Project Title *</label>
@@ -872,16 +884,16 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
 
                   <div>
                     <label className={LABEL_CLS}>Description *</label>
-                    <textarea required className={INPUT_CLS + ' min-h-[80px] resize-y'} placeholder="Describe what the project does, who it's for..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                    <textarea required className={INPUT_CLS + ' min-h-[100px] resize-y py-3'} placeholder="Describe what the project does, who it's for..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                   </div>
 
                   <div>
                     <label className={LABEL_CLS}>Technologies (comma-separated) *</label>
                     <input required className={INPUT_CLS} placeholder="Next.js, React, Prisma, PostgreSQL" value={formData.technologies} onChange={e => setFormData({ ...formData, technologies: e.target.value })} />
                     {formData.technologies && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
+                      <div className="flex flex-wrap gap-2 mt-3">
                         {formData.technologies.split(',').map(t => t.trim()).filter(Boolean).map(t => (
-                          <span key={t} className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-wide">{t}</span>
+                          <span key={t} className="text-[10px] font-semibold px-2.5 py-1 rounded bg-bg900 text-text2 border border-border uppercase tracking-wider">{t}</span>
                         ))}
                       </div>
                     )}
@@ -889,27 +901,27 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                 </div>
 
                 {/* ── Drive Links ── */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3.5">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Source &amp; Delivery</p>
+                <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-4">
+                  <p className="text-[10px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Source &amp; Delivery</p>
 
                   <div>
-                    <label className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-sky-400 mb-1.5">📁 Seller Source Link</label>
-                    <p className="text-[10px] text-slate-600 mb-2">Submitted by seller — for your verification only</p>
+                    <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-brand mb-1"><FolderCode size={12}/> Seller Source Link</label>
+                    <p className="text-[10px] text-text3 mb-2.5">Submitted by seller — for your verification only</p>
                     <input className={INPUT_CLS + ' font-mono text-xs'} type="url" placeholder="https://drive.google.com/..." value={formData.sourceDriveLink} onChange={e => setFormData({ ...formData, sourceDriveLink: e.target.value })} />
                   </div>
 
                   <div>
-                    <label className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400 mb-1.5">🚀 Admin Delivery Link</label>
-                    <p className="text-[10px] text-slate-600 mb-2">Emailed to buyer after payment approval</p>
-                    <input className={`${INPUT_CLS} font-mono text-xs ${formData.adminDriveLink ? 'border-amber-500/20' : 'border-orange-500/25'}`} type="url" placeholder="https://drive.google.com/..." value={formData.adminDriveLink} onChange={e => setFormData({ ...formData, adminDriveLink: e.target.value })} />
+                    <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-warning mb-1"><Rocket size={12}/> Admin Delivery Link</label>
+                    <p className="text-[10px] text-text3 mb-2.5">Emailed to buyer after payment approval</p>
+                    <input className={`${INPUT_CLS} font-mono text-xs focus:border-warning ${formData.adminDriveLink ? 'border-warning/30' : ''}`} type="url" placeholder="https://drive.google.com/..." value={formData.adminDriveLink} onChange={e => setFormData({ ...formData, adminDriveLink: e.target.value })} />
                   </div>
                 </div>
 
                 {/* ── Pricing ── */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3.5">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pricing</p>
+                <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-4">
+                  <p className="text-[10px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Pricing</p>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={LABEL_CLS}>Price (Rs.) *</label>
                       <input type="number" required min={0} className={INPUT_CLS} value={formData.originalPrice} onChange={e => setFormData({ ...formData, originalPrice: Number(e.target.value) })} />
@@ -922,21 +934,21 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
 
                   {/* Live price preview */}
                   {formData.originalPrice > 0 && (
-                    <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="bg-bg900 border border-border rounded-xl px-5 py-4 flex items-center justify-between gap-4 mt-2">
                       <div>
-                        <div className="text-[9px] uppercase tracking-widest text-slate-500 mb-1 font-bold">Final Price</div>
-                        <div className="flex items-baseline gap-2">
+                        <div className="text-[10px] uppercase tracking-widest text-text3 mb-1 font-bold">Final Price</div>
+                        <div className="flex items-baseline gap-2.5">
                           {formData.discountPercentage > 0 && (
-                            <span className="text-xs text-slate-500 line-through">Rs. {formData.originalPrice}</span>
+                            <span className="text-xs text-text3 line-through font-medium">Rs. {formData.originalPrice}</span>
                           )}
-                          <span className="font-black text-xl text-emerald-400">Rs. {calcDiscounted(formData.originalPrice, formData.discountPercentage)}</span>
+                          <span className="font-black text-2xl text-success">Rs. {calcDiscounted(formData.originalPrice, formData.discountPercentage)}</span>
                         </div>
                       </div>
                       {formData.discountPercentage > 0 && (
-                        <div className="text-right">
-                          <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Saves</div>
-                          <div className="font-black text-base text-rose-400">Rs. {saved(formData.originalPrice, formData.discountPercentage)}</div>
-                          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white">{formData.discountPercentage}% OFF</span>
+                        <div className="text-right flex flex-col items-end">
+                          <div className="text-[10px] text-text3 uppercase tracking-widest mb-0.5 font-bold">Customer Saves</div>
+                          <div className="font-bold text-lg text-rose-400 mb-1">Rs. {saved(formData.originalPrice, formData.discountPercentage)}</div>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20">{formData.discountPercentage}% OFF</span>
                         </div>
                       )}
                     </div>
@@ -944,20 +956,20 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                 </div>
 
                 {/* ── Features & Links ── */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3.5">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Features & Links</p>
+                <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-4">
+                  <p className="text-[10px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Features & Links</p>
 
                   <div>
                     <label className={LABEL_CLS}>Key Features (one per line)</label>
                     <textarea
-                      className={INPUT_CLS + ' min-h-[80px] resize-y'}
+                      className={INPUT_CLS + ' min-h-[100px] resize-y py-3'}
                       placeholder={"User authentication\nAdmin dashboard\nMobile-responsive\nFull source code + docs"}
                       value={formData.features}
                       onChange={e => setFormData({ ...formData, features: e.target.value })}
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                     <div>
                       <label className={LABEL_CLS}>Live Demo URL</label>
                       <input className={INPUT_CLS + ' text-xs'} type="url" placeholder="https://demo.myproject.com" value={formData.demoUrl} onChange={e => setFormData({ ...formData, demoUrl: e.target.value })} />
@@ -970,19 +982,19 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                 </div>
 
                 {/* ── Submit ── */}
-                <div className="flex gap-3 sticky bottom-0 bg-[#0b0c18] pb-4 pt-3 -mx-4 sm:-mx-6 px-4 sm:px-6 border-t border-white/5 mt-2">
+                <div className="flex gap-3 sticky bottom-0 bg-bg900/80 backdrop-blur-xl pb-6 pt-4 -mx-6 px-6 border-t border-border mt-2 rounded-b-3xl">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-cyan-400 text-white font-extrabold py-3.5 rounded-xl text-sm hover:opacity-90 active:translate-y-0.5 transition-all disabled:opacity-50 shadow-lg shadow-indigo-500/25"
+                    className="flex-1 btn btn-primary py-4 text-sm shadow-lg shadow-brand/20"
                   >
                     {saving ? (
-                      <><div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Saving…</>
+                      <><div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" /> Saving…</>
                     ) : (
-                      editingProject ? '💾 Save Changes' : '🚀 Publish Project'
+                      editingProject ? <><Pencil size={16}/> Save Changes</> : <><Rocket size={16}/> Publish Project</>
                     )}
                   </button>
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-3.5 rounded-xl bg-white/5 text-slate-400 border border-white/10 font-bold text-sm hover:bg-white/10 hover:text-slate-200 transition-all">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-4 rounded-xl bg-bg800 text-text2 border border-border font-bold text-sm hover:bg-border hover:text-text1 transition-all">
                     Cancel
                   </button>
                 </div>

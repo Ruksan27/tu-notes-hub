@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
         role: role || '',
         content,
         rating: Number(rating),
-        status: 'PENDING', // Admin needs to approve it
+        status: 'APPROVED', // Auto-publish by default
       },
     })
 

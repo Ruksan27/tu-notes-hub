@@ -48,6 +48,66 @@ export async function POST(req: NextRequest) {
     const averageRating = aggregations._avg.rating || 0
     const reviewCount = aggregations._count.rating || 0
 
+    const projectItem = await prisma.projectItem.update({
+      where: { id: projectId },
+      data: {
+        rating: averageRating,
+        reviewCount: reviewCount
+      },
+      select: { title: true }
+    })
+
+    // Create Admin Notification
+    try {
+      await prisma.notification.create({
+        data: {
+          type: 'REVIEW',
+          title: 'New Project Review ⭐️',
+          message: `${user.name || 'A user'} left a ${rating}-star review on "${projectItem.title}".`,
+          link: `/projects/${projectId}`
+        }
+      })
+    } catch (notifErr) {
+      console.error('Failed to create review notification', notifErr)
+    }
+
+    return NextResponse.json({ success: true, review })
+  } catch (error) {
+    console.error('[PROJECT_REVIEW_POST]', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(req.url)
+    const reviewId = searchParams.get('reviewId')
+    const projectId = searchParams.get('projectId')
+
+    if (!reviewId || !projectId) {
+      return NextResponse.json({ error: 'Missing reviewId or projectId' }, { status: 400 })
+    }
+
+    // Delete the review
+    await prisma.projectReview.delete({
+      where: { id: reviewId }
+    })
+
+    // Recalculate new average rating and update ProjectItem
+    const aggregations = await prisma.projectReview.aggregate({
+      where: { projectId },
+      _avg: { rating: true },
+      _count: { rating: true }
+    })
+
+    const averageRating = aggregations._avg.rating || 0
+    const reviewCount = aggregations._count.rating || 0
+
     await prisma.projectItem.update({
       where: { id: projectId },
       data: {
@@ -56,9 +116,9 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    return NextResponse.json({ success: true, review })
+    return NextResponse.json({ success: true, message: 'Review deleted successfully' })
   } catch (error) {
-    console.error('[PROJECT_REVIEW_POST]', error)
+    console.error('[PROJECT_REVIEW_DELETE]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
