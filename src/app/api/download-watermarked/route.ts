@@ -108,8 +108,15 @@ export async function GET(req: Request) {
     const watermarkedPdfBytes = await pdfDoc.save()
 
     // Generate a clean filename
-    const safeTitle = blog.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()
-    const filename = `${safeTitle}_tunoteshub.pdf`
+    const cleanTitle = blog.title
+      .replace(/\b(old|new)\s*syllabus\b/gi, '')
+      .replace(/\b(old|new)_syllabus\b/gi, '')
+      .replace(/\s*\(\s*(old|new)\s*\)/gi, '')
+      .replace(/^(tunoteshub|tunotes)_/gi, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+    const filename = `tunoteshub_${cleanTitle || 'blog'}.pdf`
 
     return new NextResponse(Buffer.from(watermarkedPdfBytes), {
       status: 200,

@@ -302,8 +302,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ sub
 
     // Save PDF Bytes
     const pdfBytes = await pdfDoc.save()
-    const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
-    const filename = `TUNotes_MCQ_${safeTitle}_${yearText}.pdf`
+    const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '')
+    const filename = `tunoteshub_MCQ_${safeTitle}_${yearText}.pdf`
 
     return new NextResponse(pdfBytes as any, {
       headers: {

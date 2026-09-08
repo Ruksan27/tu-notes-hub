@@ -59,6 +59,19 @@ export default function DownloadPage() {
   const [ready, setReady] = useState(false)
   const [driveContentType, setDriveContentType] = useState('')
 
+  const getCleanDownloadFileName = (title: string) => {
+    const cleanTitle = (title || 'Document')
+      .replace(/\b(old|new)\s*syllabus\b/gi, '')
+      .replace(/\b(old|new)_syllabus\b/gi, '')
+      .replace(/\s*\(\s*(old|new)\s*\)/gi, '')
+      .replace(/^(tunoteshub|tunotes)_/gi, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+
+    return `tunoteshub_${cleanTitle || 'Document'}`
+  }
+
   const getFinalDownloadUrl = (url: string, proxyUrl: string, title: string) => {
     if (!url) return ''
     if (url.includes('drive.google.com')) {
@@ -66,9 +79,8 @@ export default function DownloadPage() {
       return match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : url
     }
 
-    // Create a clean filename: "TUNotes_2021_BOARD_EXAM_Computer_Graphics"
-    const safeTitle = (title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
-    const fileName = `TUNotes_${safeTitle}`
+    // Create a clean filename: "tunoteshub_2025_BOARD_EXAM_Computer_Graphics_and_Animation"
+    const fileName = getCleanDownloadFileName(title)
 
     // If it's a Cloudinary image, route it through our custom image API to securely sign the URL
     if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
@@ -171,12 +183,12 @@ export default function DownloadPage() {
       // Trigger actual download programmatically
       if (note?.cloudinaryUrl) {
         const downloadHref = getFinalDownloadUrl(note.cloudinaryUrl, proxiedUrl, note.title)
-        const safeTitle = (note.title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
+        const fileName = getCleanDownloadFileName(note.title)
 
         const link = document.createElement('a')
         link.href = downloadHref
         link.target = '_blank'
-        link.download = `TUNotes_${safeTitle}`
+        link.download = fileName
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -244,12 +256,12 @@ export default function DownloadPage() {
     if (isPaid) {
       if (fileUrl) {
         const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl, note?.title || '')
-        const safeTitle = (note?.title || 'Document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
+        const fileName = getCleanDownloadFileName(note?.title || '')
 
         const link = document.createElement('a')
         link.href = downloadHref
         link.target = '_blank'
-        link.download = `TUNotes_${safeTitle}`
+        link.download = fileName
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)

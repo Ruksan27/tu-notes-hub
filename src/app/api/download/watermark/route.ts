@@ -151,8 +151,17 @@ export async function GET(req: NextRequest) {
     // 6. Save and return
     const pdfBytes = await pdfDoc.save()
 
-    const safeFilename = filename.replace(/[^a-zA-Z0-9_\-\.]/g, '_')
-    const downloadName = safeFilename.endsWith('.pdf') ? safeFilename : `${safeFilename}.pdf`
+    const cleanName = filename
+      .replace(/\b(old|new)\s*syllabus\b/gi, '')
+      .replace(/\b(old|new)_syllabus\b/gi, '')
+      .replace(/\s*\(\s*(old|new)\s*\)/gi, '')
+      .replace(/^(tunoteshub|tunotes)_/gi, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+
+    const baseName = cleanName ? `tunoteshub_${cleanName}` : 'tunoteshub_document'
+    const downloadName = baseName.endsWith('.pdf') ? baseName : `${baseName}.pdf`
 
     return new NextResponse(pdfBytes as any, {
       headers: {
