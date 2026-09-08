@@ -4,7 +4,10 @@ import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { motion, AnimatePresence } from 'motion/react'
 
+import { useRouter } from 'next/navigation'
+
 export function TestimonialForm() {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
@@ -32,6 +35,9 @@ export function TestimonialForm() {
       setRole('')
       setContent('')
       setRating(5)
+      setTimeout(() => {
+        window.location.reload()
+      }, 800)
     } catch (err) {
       toast.error('Failed to submit review. Please try again.')
     } finally {
