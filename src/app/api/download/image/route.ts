@@ -21,8 +21,17 @@ export async function GET(req: NextRequest) {
     }
 
     const cloudName = match[1]
-    let publicIdWithVersion = match[2] // This includes the version and folders/filename
+    let fullPath = match[2]
     
+    let version;
+    let publicId = fullPath;
+    
+    // Extract version if present (e.g. v1234567/...)
+    const versionMatch = fullPath.match(/^v(\d+)\/(.+)$/);
+    if (versionMatch) {
+      version = versionMatch[1];
+      publicId = versionMatch[2];
+    }
     // Find matching Cloudinary account from env
     const accountsStr = process.env.CLOUDINARY_ACCOUNTS || '[]'
     const accounts = JSON.parse(accountsStr)
@@ -52,7 +61,8 @@ export async function GET(req: NextRequest) {
     const qrLayer = `l_fetch:${b64Url}/c_scale,w_100/fl_layer_apply,g_south_east,x_15,y_45`
 
     // Generate SIGNED URL
-    const signedUrl = cloudinary.url(publicIdWithVersion, {
+    const signedUrl = cloudinary.url(publicId, {
+      version: version,
       raw_transformation: `fl_attachment:${filename}/${diagonalWatermark}/${qrLayer}/${footerLink}`,
       sign_url: true,
       secure: true
