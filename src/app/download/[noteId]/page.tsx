@@ -280,6 +280,13 @@ export default function DownloadPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', background: '#0b0f19', position: 'relative' }}>
 
+      {/* Top Leaderboard Ad (Above the fold) - 728x90/970x90 */}
+      {!isPaid && (
+        <div style={{ width: '100%', padding: '24px 24px 0', display: 'flex', justifyContent: 'center' }}>
+          <AdUnit type="leaderboard" slot="download-top-banner" />
+        </div>
+      )}
+
       <style dangerouslySetInnerHTML={{
         __html: `
         .desktop-dl-btn {
@@ -289,15 +296,21 @@ export default function DownloadPage() {
         }
         @media (max-width: 768px) {
           .mobile-dl-container { padding: 8px !important; gap: 8px !important; display: flex !important; flex-direction: column !important; }
-          .mobile-dl-card-outer { padding: 8px !important; gap: 8px !important; }
-          .mobile-dl-card-inner { flex-direction: column !important; gap: 12px !important; }
-          .mobile-dl-btn-wrapper { width: 100% !important; margin-top: 4px !important; }
-          .mobile-dl-title { font-size: 14px !important; line-height: 1.25 !important; }
-          .mobile-dl-btn { width: 100% !important; padding: 10px !important; font-size: 13px !important; border-radius: 10px !important; letter-spacing: 0.02em !important; box-shadow: 0 4px 12px rgba(99,102,241,0.2) !important; }
-          .mobile-dl-badge { padding: 2px 6px !important; font-size: 9px !important; margin-bottom: 4px !important; }
+          .mobile-dl-card-outer { padding: 12px !important; gap: 12px !important; }
+          
+          /* Stack layout for mobile to prevent squishing text */
+          .mobile-dl-card-inner { flex-direction: column !important; gap: 16px !important; align-items: flex-start !important; justify-content: flex-start !important; }
+          .mobile-dl-btn-wrapper { width: 100% !important; margin-top: 0 !important; }
+          .mobile-dl-title { font-size: 18px !important; line-height: 1.35 !important; }
+          
+          /* Full width prominent download button for mobile */
+          .mobile-dl-btn { width: 100% !important; padding: 12px !important; font-size: 14px !important; border-radius: 12px !important; letter-spacing: 0.02em !important; box-shadow: 0 4px 12px rgba(99,102,241,0.2) !important; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 8px !important; }
+          .mobile-dl-btn span { font-size: 18px !important; line-height: 1 !important; }
+          
+          .mobile-dl-badge { padding: 4px 8px !important; font-size: 10px !important; margin-bottom: 8px !important; display: inline-block !important; }
           
           .mobile-dl-share-section { padding-top: 10px !important; margin-top: 2px !important; }
-          .mobile-dl-share-title { font-size: 10px !important; margin-bottom: 8px !important; }
+          .mobile-dl-share-title { font-size: 9px !important; margin-bottom: 6px !important; }
           
           .mobile-dl-share-grid { 
             display: grid !important; 
@@ -306,16 +319,17 @@ export default function DownloadPage() {
             padding-bottom: 2px !important; 
           }
           
+          /* Smaller Share Buttons */
           .mobile-dl-share-btn { 
             display: flex !important;
             flex-direction: column !important;
-            padding: 6px 2px !important; 
-            font-size: 8.5px !important; 
+            padding: 4px 2px !important; 
+            font-size: 7.5px !important; 
             gap: 2px !important; 
-            border-radius: 8px !important; 
+            border-radius: 6px !important; 
             text-align: center;
           }
-          .mobile-dl-share-icon { font-size: 16px !important; line-height: 1 !important; }
+          .mobile-dl-share-icon { font-size: 12px !important; line-height: 1 !important; }
           
           .mobile-dl-tab-btn { 
             padding: 8px 8px !important; 
@@ -335,12 +349,6 @@ export default function DownloadPage() {
           .extracted-text-container { padding: 12px 4px !important; }
         }
       `}} />
-      {/* Top Banner Ad */}
-      {!isPaid && (
-        <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
-          <AdUnit type="leaderboard" slot="download-top-banner" />
-        </div>
-      )}
 
       <div className="mobile-dl-container" style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: isPaid ? '1fr' : 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
 
@@ -646,17 +654,20 @@ export default function DownloadPage() {
 
             {/* Ads stay sticky as user scrolls down */}
             <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <AdUnit type="large-rectangle" slot="download-sidebar-banner-1" style={{ minHeight: '600px' }} />
-              <AdUnit type="medium-rectangle" slot="download-sidebar-banner-2" style={{ minHeight: '250px' }} />
+              <AdUnit type="large-rectangle" slot="download-sidebar-banner-1" style={{ minHeight: '280px' }} />
+              <AdUnit type="large-rectangle" slot="download-sidebar-banner-2" style={{ minHeight: '280px' }} />
+              <AdUnit type="large-rectangle" slot="download-sidebar-banner-3" style={{ minHeight: '280px' }} />
             </div>
           </aside>
         )}
       </div>
 
-      {/* Bottom Ad */}
+      {/* Bottom Billboard Ad - 970x250 */}
       {!isPaid && (
-        <div style={{ padding: '0 24px 24px', display: 'flex', justifyContent: 'center' }}>
-          <AdUnit type="leaderboard" slot="download-bottom-banner" />
+        <div style={{ padding: '0 24px 24px', display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <div style={{ minHeight: '250px', width: '100%', maxWidth: '970px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AdUnit type="leaderboard" slot="download-bottom-banner" style={{ minHeight: '250px' }} />
+          </div>
         </div>
       )}
 

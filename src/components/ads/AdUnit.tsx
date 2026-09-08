@@ -42,7 +42,37 @@ function AdPlaceholder({ type }: { type: AdType }) {
     )
   }
 
-  if (type === 'medium-rectangle' || type === 'sidebar' || type === 'large-rectangle') {
+  if (type === 'sidebar') {
+    return (
+      <div className="text-center p-6 w-full h-full box-border flex flex-col items-center justify-between" style={{ minHeight: '100%' }}>
+        <div className="flex flex-col items-center mt-4">
+          <span className="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded mb-4 inline-block tracking-wider uppercase">
+            Sponsored Ad
+          </span>
+          <span className="text-5xl block mb-4">🚀</span>
+          <h4 className="text-lg font-bold text-white mb-2 leading-tight">
+            Boost Your Exam Prep!
+          </h4>
+          <p className="text-sm text-slate-400 leading-relaxed mb-6 max-w-[200px]">
+            Get full access to AI predicted questions and complete offline PDFs.
+          </p>
+        </div>
+        
+        <div className="flex flex-col items-center mb-4 w-full">
+          <div className="w-full h-[1px] bg-white/10 mb-6"></div>
+          <p className="text-[10px] text-slate-500 mb-3 uppercase tracking-widest">Limited Time Offer</p>
+          <a 
+            href="/pricing" 
+            className="w-[80%] py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-white text-sm font-bold no-underline shadow-lg hover:opacity-90 transition-all mb-4"
+          >
+            Upgrade Now →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  if (type === 'medium-rectangle' || type === 'large-rectangle') {
     return (
       <div className="text-center p-5 w-full box-border flex flex-col items-center justify-center">
         <span className="text-3xl block mb-2">💡</span>
