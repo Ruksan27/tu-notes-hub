@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { callMultiProviderAI } from '@/lib/gemini'
+import { callProjectValuationAI } from '@/lib/gemini'
 
 export async function POST(req: Request) {
   try {
@@ -101,7 +101,7 @@ Analyze this student project and compute its fair price:
   - Google Drive Link: ${sourceDriveLink ? 'VALID LINK PROVIDED' : 'NOT PROVIDED YET'}
 `
 
-    const rawResponse = await callMultiProviderAI(userPrompt, systemInstruction)
+    const rawResponse = await callProjectValuationAI(userPrompt, systemInstruction)
 
     const cleanedJson = rawResponse
       .replace(/```json/gi, '')
