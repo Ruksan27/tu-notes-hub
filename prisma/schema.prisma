@@ -62,7 +62,10 @@ model User {
   projectReviews        ProjectReview[]
   cart                  Cart?
   courseType            String    @default("NEW") // "NEW" or "OLD"
-  
+  phone                 String?
+  college               String?
+  gender                String?   // "MALE" | "FEMALE" | "OTHER"
+
   // Admin Assignments (For CHILD_ADMIN)
   adminFacultyId        String?
   adminSemesterId       String?

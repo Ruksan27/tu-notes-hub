@@ -8,6 +8,9 @@ export default function ProfileTab() {
   const [user, setUser] = useState<any>(null)
   const [name, setName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [college, setCollege] = useState('')
+  const [phone, setPhone] = useState('')
+  const [gender, setGender] = useState('')
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -19,6 +22,9 @@ export default function ProfileTab() {
         setUser(parsed)
         setName(parsed.name || '')
         setAvatarUrl(parsed.avatarUrl || '')
+        setCollege(parsed.college || '')
+        setPhone(parsed.phone || '')
+        setGender(parsed.gender || '')
       } catch {}
     }
   }, [])
@@ -79,7 +85,7 @@ export default function ProfileTab() {
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, avatarUrl })
+        body: JSON.stringify({ name, avatarUrl, college, phone, gender })
       })
 
       const data = await res.json()
@@ -164,6 +170,46 @@ export default function ProfileTab() {
             placeholder="John Doe"
             required 
           />
+        </div>
+
+        {/* College Input */}
+        <div>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--clr-text-2)', marginBottom: '8px' }}>College Name</label>
+          <input 
+            type="text" 
+            className="input-field" 
+            value={college} 
+            onChange={e => setCollege(e.target.value)} 
+            placeholder="e.g. Patan Multiple Campus"
+          />
+        </div>
+
+        {/* Phone Input */}
+        <div>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--clr-text-2)', marginBottom: '8px' }}>Phone Number</label>
+          <input 
+            type="tel" 
+            className="input-field" 
+            value={phone} 
+            onChange={e => setPhone(e.target.value)} 
+            placeholder="98XXXXXXXX"
+          />
+        </div>
+
+        {/* Gender Input */}
+        <div>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--clr-text-2)', marginBottom: '8px' }}>Gender</label>
+          <select
+            className="input-field"
+            value={gender}
+            onChange={e => setGender(e.target.value)}
+            style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+          >
+            <option value="">Select Gender</option>
+            <option value="MALE">Male</option>
+            <option value="FEMALE">Female</option>
+            <option value="OTHER">Other</option>
+          </select>
         </div>
 
         {/* Email Input (Readonly) */}

@@ -11,7 +11,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { name, avatarUrl } = await req.json()
+    const { name, avatarUrl, phone, college, gender } = await req.json()
 
     if (!name || name.trim().length < 3) {
       return NextResponse.json({ error: 'Name must be at least 3 characters' }, { status: 400 })
@@ -21,7 +21,10 @@ export async function PATCH(req: Request) {
       where: { id: user.id },
       data: {
         name: name.trim(),
-        avatarUrl: avatarUrl || null
+        avatarUrl: avatarUrl || null,
+        phone: phone || null,
+        college: college || null,
+        gender: gender || null
       },
       select: {
         id: true,
@@ -29,7 +32,10 @@ export async function PATCH(req: Request) {
         email: true,
         role: true,
         packageType: true,
-        avatarUrl: true
+        avatarUrl: true,
+        phone: true,
+        college: true,
+        gender: true
       }
     })
 

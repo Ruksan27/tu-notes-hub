@@ -26,6 +26,9 @@ export async function GET() {
         isEmailVerified: true,
         facultyId: true,
         semesterOrder: true,
+        college: true,
+        phone: true,
+        gender: true,
         adminFacultyId: true,
         adminSemesterId: true,
         createdAt: true,
@@ -88,7 +91,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json()
-    const { userId, name, email, role, packageType, months, facultyId, semesterOrder, adminFacultyId, adminSemesterId } = body
+    const { userId, name, email, college, phone, gender, role, packageType, months, facultyId, semesterOrder, adminFacultyId, adminSemesterId } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
@@ -97,6 +100,9 @@ export async function PUT(req: Request) {
     const updateData: any = {}
     if (name) updateData.name = name
     if (email) updateData.email = email
+    if (college !== undefined) updateData.college = college
+    if (phone !== undefined) updateData.phone = phone
+    if (gender !== undefined) updateData.gender = gender
     if (role) updateData.role = role as 'STUDENT' | 'ADMIN' | 'CHILD_ADMIN'
     
     // Allow clearing faculty or setting it

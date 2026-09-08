@@ -1953,6 +1953,9 @@ function UsersTab() {
   const [editingUser, setEditingUser] = useState<any | null>(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
+  const [editCollege, setEditCollege] = useState('')
+  const [editPhone, setEditPhone] = useState('')
+  const [editGender, setEditGender] = useState('')
   const [editRole, setEditRole] = useState('')
   const [editFacultyId, setEditFacultyId] = useState('')
   const [editSemesterOrder, setEditSemesterOrder] = useState<string | number>('')
@@ -2097,6 +2100,9 @@ function UsersTab() {
           userId: editingUser.id,
           name: editName,
           email: editEmail,
+          college: editCollege || null,
+          phone: editPhone || null,
+          gender: editGender || null,
           role: editRole,
           facultyId: editFacultyId || null,
           semesterOrder: editSemesterOrder !== '' ? parseInt(String(editSemesterOrder)) : null,
@@ -2123,6 +2129,9 @@ function UsersTab() {
     setEditingUser(u)
     setEditName(u.name || '')
     setEditEmail(u.email || '')
+    setEditCollege(u.college || '')
+    setEditPhone(u.phone || '')
+    setEditGender(u.gender || '')
     setEditRole(u.role || 'STUDENT')
     setEditFacultyId(u.facultyId || '')
     setEditSemesterOrder(u.semesterOrder !== null && u.semesterOrder !== undefined ? u.semesterOrder : '')
@@ -2307,6 +2316,23 @@ function UsersTab() {
               <div>
                 <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Email Address</label>
                 <input type="email" required className="input-field" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>College</label>
+                <input type="text" className="input-field" value={editCollege} onChange={e => setEditCollege(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Phone Number</label>
+                <input type="text" className="input-field" value={editPhone} onChange={e => setEditPhone(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Gender</label>
+                <select className="input-field" value={editGender} onChange={e => setEditGender(e.target.value)}>
+                  <option value="">None / Not Selected</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>System Role</label>
