@@ -32,6 +32,15 @@ export async function GET(req: NextRequest) {
       version = versionMatch[1];
       publicId = versionMatch[2];
     }
+
+    // Strip extension to prevent signature mismatch
+    let format = '';
+    const extMatch = publicId.match(/\.([a-zA-Z0-9]+)$/);
+    if (extMatch) {
+      format = extMatch[1];
+      publicId = publicId.substring(0, publicId.lastIndexOf('.'));
+    }
+    
     // Find matching Cloudinary account from env
     const accountsStr = process.env.CLOUDINARY_ACCOUNTS || '[]'
     const accounts = JSON.parse(accountsStr)
@@ -63,6 +72,7 @@ export async function GET(req: NextRequest) {
     // Generate SIGNED URL
     const signedUrl = cloudinary.url(publicId, {
       version: version,
+      format: format || undefined,
       raw_transformation: `fl_attachment:${filename}/${diagonalWatermark}/${qrLayer}/${footerLink}`,
       sign_url: true,
       secure: true
