@@ -257,21 +257,77 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex-center" style={{ minHeight: 'calc(100vh - 64px)', padding: '40px 16px' }}>
-      <div className="glass-card" style={{ width: '100%', maxWidth: '600px', padding: '44px 36px' }}>
+    <div className="flex-center relative" style={{ minHeight: 'calc(100vh - 64px)', padding: '40px 16px' }}>
+      
+      {/* Background Ambient Glow for the entire page */}
+      <div style={{ position: 'absolute', top: '10%', right: '10%', width: '40vw', height: '40vw', background: 'var(--clr-primary)', filter: 'blur(150px)', opacity: 0.05, borderRadius: '50%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '10%', left: '10%', width: '40vw', height: '40vw', background: 'var(--clr-primary-h)', filter: 'blur(150px)', opacity: 0.05, borderRadius: '50%', pointerEvents: 'none' }} />
+
+      <style>{`
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+          100% { transform: translateY(0px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        .shiny-btn {
+          position: relative; overflow: hidden;
+        }
+        .shiny-btn::after {
+          content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+          background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+          transform: rotate(30deg) translateX(-100%); transition: transform 0.6s ease-in-out;
+        }
+        .shiny-btn:hover::after {
+          transform: rotate(30deg) translateX(100%);
+        }
+      `}</style>
+
+      <div className="glass-card overflow-hidden p-0 grid grid-cols-1 md:grid-cols-2 relative z-10" style={{ width: '100%', maxWidth: '1050px', minHeight: '680px', alignItems: 'stretch', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 30px 60px rgba(0,0,0,0.6)' }}>
+        
+        {/* LEFT SIDE: Branding / Logo */}
+        <div className="hidden md:flex flex-col items-center justify-center relative overflow-hidden" style={{ background: 'radial-gradient(circle at top left, rgba(99,102,241,0.15) 0%, rgba(10,12,18,0.95) 100%)', borderRight: '1px solid rgba(255,255,255,0.05)', padding: '40px' }}>
+          
+          <div className="animate-float" style={{ zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img src="/Logo.gif" alt="TU Notes Hub Logo" style={{ width: '220px', borderRadius: '24px', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', marginBottom: '32px' }} />
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: 800, color: '#fff', textAlign: 'center', marginBottom: '12px', letterSpacing: '-0.02em' }}>
+              Your TU Journey,<br/><span style={{ color: 'var(--clr-primary-h)' }}>Simplified.</span>
+            </h2>
+            <p style={{ color: 'var(--clr-text-3)', textAlign: 'center', fontSize: '14px', lineHeight: 1.6, maxWidth: '280px' }}>
+              Access premium notes, past questions, and syllabuses for all faculties in one unified platform.
+            </p>
+          </div>
+
+          {/* Abstract glows */}
+          <div style={{ position: 'absolute', top: '5%', left: '-20%', width: '350px', height: '350px', background: 'var(--clr-primary)', filter: 'blur(130px)', opacity: 0.15, borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', bottom: '-10%', right: '-20%', width: '400px', height: '400px', background: '#3b82f6', filter: 'blur(140px)', opacity: 0.15, borderRadius: '50%' }} />
+          
+          {/* Subtle grid pattern overlay */}
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '30px 30px', opacity: 0.3, pointerEvents: 'none' }} />
+        </div>
+
+        {/* RIGHT SIDE: Form Content */}
+        <div style={{ padding: '48px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'rgba(15,23,42,0.3)' }}>
         
         {/* Header */}
-        <div className="text-center" style={{ marginBottom: '28px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎓</div>
+        <div style={{ marginBottom: '32px' }}>
           {step === 'FORM' ? (
             <>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', marginBottom: '8px' }}>Create Account</h1>
-              <p style={{ color: 'var(--clr-text-2)', fontSize: '14px' }}>Join thousands of TU students 🎓</p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '20px', color: 'var(--clr-primary-h)', fontSize: '12px', fontWeight: 700, marginBottom: '16px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                🚀 Join the Community
+              </div>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', marginBottom: '8px', letterSpacing: '-0.02em', color: '#fff' }}>Create Account</h1>
+              <p style={{ color: 'var(--clr-text-3)', fontSize: '15px' }}>Join thousands of TU students today.</p>
             </>
           ) : (
             <>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', marginBottom: '8px' }}>Verify Email</h1>
-              <p style={{ color: 'var(--clr-text-2)', fontSize: '14px' }}>OTP sent to <span style={{ color: 'var(--clr-primary-h)', fontWeight: 600 }}>{formData.email}</span></p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyCenter: 'center', width: '56px', height: '56px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px', color: 'var(--clr-primary-h)', fontSize: '24px', marginBottom: '20px' }}>
+                🛡️
+              </div>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', marginBottom: '8px', letterSpacing: '-0.02em', color: '#fff' }}>Verify Email</h1>
+              <p style={{ color: 'var(--clr-text-3)', fontSize: '15px' }}>OTP sent to <span style={{ color: '#fff', fontWeight: 600 }}>{formData.email}</span></p>
             </>
           )}
         </div>
@@ -383,11 +439,11 @@ export default function RegisterPage() {
             </div>
 
             {/* Submit */}
-            <button id="reg-submit" type="submit" className="btn btn-primary" style={{ marginTop: '8px', justifyContent: 'center', width: '100%' }} disabled={loading}>
+            <button id="reg-submit" type="submit" className="btn btn-primary shiny-btn" style={{ marginTop: '16px', justifyContent: 'center', width: '100%', padding: '14px', fontSize: '15px', fontWeight: 700, borderRadius: '12px' }} disabled={loading}>
               {loading ? (
                 <><span className="spinner" /> Sending OTP…</>
               ) : (
-                '📧 Create Account & Send OTP'
+                '🚀 Create Account & Send OTP'
               )}
             </button>
 
@@ -442,7 +498,7 @@ export default function RegisterPage() {
             </button>
           </form>
         )}
-
+        </div>
       </div>
     </div>
   )

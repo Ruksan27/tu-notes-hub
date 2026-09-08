@@ -35,33 +35,36 @@ export default function PrivacyPage() {
   ]
 
   return (
-    <div className="min-h-[85vh] py-10 sm:py-16 px-4 sm:px-6 flex items-center justify-center">
-      <div className="w-full max-w-3xl mx-auto bg-[#0d0e1b] border border-cyan-500/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 relative overflow-hidden backdrop-blur-xl">
-        
-        {/* Glow Top Gradient Line */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-500" />
-        <div className="absolute -top-24 -right-24 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="flex-center relative" style={{ minHeight: 'calc(100vh - 64px)', padding: '40px 16px' }}>
+      
+      {/* Abstract Background Glows */}
+      <div style={{ position: 'absolute', top: '5%', left: '10%', width: '400px', height: '400px', background: 'var(--clr-primary)', filter: 'blur(150px)', opacity: 0.1, borderRadius: '50%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: '350px', height: '350px', background: 'var(--clr-primary-h)', filter: 'blur(150px)', opacity: 0.1, borderRadius: '50%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '30px 30px', pointerEvents: 'none' }} />
 
+      <div className="glass-card" style={{ width: '100%', maxWidth: '800px', padding: '48px 40px', position: 'relative', zIndex: 10 }}>
+        
         {/* Page Header */}
-        <div className="border-b border-white/10 pb-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold mb-3">
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '24px', marginBottom: '32px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '20px', color: 'var(--clr-primary-h)', fontSize: '12px', fontWeight: 700, marginBottom: '16px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
             🔒 Privacy & Data Policy
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">Privacy Policy</h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-2">Last Updated: August 2026 • How TU Notes Hub protects your personal data</p>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '36px', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', marginBottom: '8px' }}>Privacy Policy</h1>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: '14px' }}>Last Updated: August 2026 • How TU Notes Hub protects your personal data</p>
         </div>
 
         {/* Privacy Sections */}
-        <div className="space-y-5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
           {sections.map((sec) => (
-            <div key={sec.num} className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/8 hover:border-cyan-500/30 transition-colors space-y-2">
-              <h2 className="text-sm sm:text-base font-bold text-cyan-300 flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-300 text-xs font-black flex items-center justify-center border border-cyan-500/30">
+            <div key={sec.num} className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.04] hover:border-indigo-500/20">
+              
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '12px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'var(--clr-primary)', color: '#fff', fontSize: '12px', fontWeight: 800 }}>
                   {sec.num}
                 </span>
-                <span>{sec.icon} {sec.title}</span>
+                {sec.icon} {sec.title}
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-9">
+              <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', lineHeight: 1.6, paddingLeft: '40px' }}>
                 {sec.content}
               </p>
             </div>
@@ -69,11 +72,8 @@ export default function PrivacyPage() {
         </div>
 
         {/* Back Button */}
-        <div className="pt-4 border-t border-white/10 flex justify-center">
-          <Link
-            href="/"
-            className="w-full sm:w-auto text-center px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-extrabold text-sm transition-all shadow-xl shadow-cyan-600/25 active:scale-95"
-          >
+        <div style={{ display: 'flex', justifyContent: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '28px' }}>
+          <Link href="/" className="btn btn-primary" style={{ padding: '12px 28px' }}>
             ← Return to Home
           </Link>
         </div>
