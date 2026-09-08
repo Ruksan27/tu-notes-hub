@@ -69,6 +69,10 @@ export async function GET(req: NextRequest) {
     })
 
     // Construct transformations with valid Cloudinary layer syntax (comma separated layer options)
+    
+    // Add 160px padding to the bottom so the watermark doesn't cover original text
+    const bottomPadding = `c_pad,h_h_add_160,w_w,g_north,b_white`
+    
     const diagonalWatermark = `l_text:Arial_100_bold:TU%20Notes%20Hub,co_black,o_12,a_-45/fl_layer_apply,g_center`
     const footerLink = `l_text:Arial_22:tunoteshub.com,co_black,o_60/fl_layer_apply,g_south_east,x_15,y_15`
     
@@ -83,7 +87,7 @@ export async function GET(req: NextRequest) {
     const signedUrl = cloudinary.url(publicId, {
       version: version,
       format: format || undefined,
-      raw_transformation: `fl_attachment:${cleanFilename}/${diagonalWatermark}/${qrLayer}/${footerLink}`,
+      raw_transformation: `${bottomPadding}/fl_attachment:${cleanFilename}/${diagonalWatermark}/${qrLayer}/${footerLink}`,
       sign_url: true,
       secure: true
     })

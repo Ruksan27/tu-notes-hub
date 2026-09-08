@@ -86,10 +86,20 @@ export async function GET(req: NextRequest) {
     for (const page of pages) {
       const { width, height } = page.getSize()
 
+      // Add extra blank padding to the bottom of the page to prevent
+      // watermarks and QR code from overlapping with original PDF content
+      const bottomPadding = 45
+      page.setSize(width, height + bottomPadding)
+      page.translateContent(0, bottomPadding)
+
+      // Get new dimensions if needed (we'll just use the old width/height for relative positioning)
+      // Wait, we translated the content up, so the new bottom of the page is now at y=0.
+      // So all our footers at y=0, y=10 etc will correctly appear in the new blank padded area!
+
       // A. Center Diagonal Text Watermark (Copy Protection)
       page.drawText('TU Notes Hub', {
         x: width / 2 - 130,
-        y: height / 2 - 30,
+        y: (height + bottomPadding) / 2 - 30, // Adjust center since height changed
         size: 56,
         font: fontBold,
         color: rgb(0.15, 0.15, 0.15),
