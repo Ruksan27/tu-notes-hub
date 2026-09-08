@@ -282,7 +282,7 @@ export default function DownloadPage() {
 
       {/* Top Leaderboard Ad (Above the fold) - 728x90/970x90 */}
       {!isPaid && (
-        <div style={{ width: '100%', padding: '24px 24px 0', display: 'flex', justifyContent: 'center' }}>
+        <div className="mobile-dl-top-ad" style={{ width: '100%', padding: '24px 24px 0', display: 'flex', justifyContent: 'center' }}>
           <AdUnit type="leaderboard" slot="download-top-banner" />
         </div>
       )}
@@ -291,23 +291,25 @@ export default function DownloadPage() {
         __html: `
         .desktop-dl-btn {
           width: fit-content;
-          padding: 12px 32px;
-          border-radius: 8px;
+          padding: 10px 24px;
+          border-radius: 10px;
         }
         @media (max-width: 768px) {
+          .mobile-dl-top-ad { padding: 12px 12px 0 !important; }
+          .mobile-dl-main-area { gap: 12px !important; }
           .mobile-dl-container { padding: 8px !important; gap: 8px !important; display: flex !important; flex-direction: column !important; }
           .mobile-dl-card-outer { padding: 12px !important; gap: 12px !important; }
-          
           /* Stack layout for mobile to prevent squishing text */
-          .mobile-dl-card-inner { flex-direction: column !important; gap: 16px !important; align-items: flex-start !important; justify-content: flex-start !important; }
+          .mobile-dl-card-inner { flex-direction: column !important; gap: 10px !important; align-items: flex-start !important; justify-content: flex-start !important; }
           .mobile-dl-btn-wrapper { width: 100% !important; margin-top: 0 !important; }
-          .mobile-dl-title { font-size: 18px !important; line-height: 1.35 !important; }
+          .mobile-dl-title { font-size: 14px !important; line-height: 1.25 !important; }
           
-          /* Full width prominent download button for mobile */
-          .mobile-dl-btn { width: 100% !important; padding: 12px !important; font-size: 14px !important; border-radius: 12px !important; letter-spacing: 0.02em !important; box-shadow: 0 4px 12px rgba(99,102,241,0.2) !important; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 8px !important; }
-          .mobile-dl-btn span { font-size: 18px !important; line-height: 1 !important; }
+          /* Smaller download button for mobile */
+          .mobile-dl-btn { width: 100% !important; padding: 6px 12px !important; border-radius: 6px !important; box-shadow: 0 1px 4px rgba(37,99,235,0.1) !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 0px !important; background: #2563eb !important; border: 1px solid #3b82f6 !important; }
+          .mobile-dl-btn span.main-text { font-size: 12px !important; font-weight: 700 !important; letter-spacing: 0.01em !important; }
+          .mobile-dl-btn span.sub-text { font-size: 8px !important; font-weight: 400 !important; color: rgba(255,255,255,0.7) !important; }
           
-          .mobile-dl-badge { padding: 4px 8px !important; font-size: 10px !important; margin-bottom: 8px !important; display: inline-block !important; }
+          .mobile-dl-badge { padding: 2px 5px !important; font-size: 8px !important; margin-bottom: 4px !important; display: inline-block !important; border-radius: 3px !important; }
           
           .mobile-dl-share-section { padding-top: 10px !important; margin-top: 2px !important; }
           .mobile-dl-share-title { font-size: 9px !important; margin-bottom: 6px !important; }
@@ -319,7 +321,6 @@ export default function DownloadPage() {
             padding-bottom: 2px !important; 
           }
           
-          /* Smaller Share Buttons */
           .mobile-dl-share-btn { 
             display: flex !important;
             flex-direction: column !important;
@@ -353,7 +354,7 @@ export default function DownloadPage() {
       <div className="mobile-dl-container" style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: isPaid ? '1fr' : 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
 
         {/* Main Area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="mobile-dl-main-area" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           <div className="glass-card mobile-dl-card-outer" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
             <div className="mobile-dl-card-inner" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: '20px' }}>
@@ -369,9 +370,12 @@ export default function DownloadPage() {
                     ⏳ Loading...
                   </div>
                 ) : ready && fileUrl ? (
-                  <button onClick={handleStartDownload} className="mobile-dl-btn desktop-dl-btn"
-                    style={{ fontSize: '15px', fontWeight: 800, cursor: 'pointer', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', color: '#fff', border: 'none', boxShadow: '0 8px 24px rgba(99,102,241,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
-                    <span style={{ fontSize: '18px' }} className="mobile-dl-title">⬇️</span> Download Resource Files
+                  <button onClick={handleStartDownload} className="mobile-dl-btn desktop-dl-btn active:scale-[0.98] transition-all hover:bg-blue-500"
+                    style={{ cursor: 'pointer', background: '#2563eb', color: '#fff', border: '1px solid #3b82f6', boxShadow: '0 2px 8px rgba(37,99,235,0.25)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="main-text">Download PDF</span>
+                    </div>
+                    <span className="sub-text">(Secured File • PDF)</span>
                   </button>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
@@ -398,7 +402,7 @@ export default function DownloadPage() {
                     background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25D366', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
-                  <span className="mobile-dl-share-icon">💬</span> <span>WhatsApp</span>
+                  <span className="mobile-dl-share-icon"></span> <span>WhatsApp</span>
                 </a>
 
                 {/* Instagram Share */}
@@ -412,7 +416,7 @@ export default function DownloadPage() {
                     background: 'rgba(225,48,108,0.1)', border: '1px solid rgba(225,48,108,0.2)', color: '#E1306C', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
-                  <span className="mobile-dl-share-icon">📸</span> <span>Instagram</span>
+                  <span className="mobile-dl-share-icon"></span> <span>Instagram</span>
                 </a>
 
                 {/* Facebook Share */}
@@ -426,7 +430,7 @@ export default function DownloadPage() {
                     background: 'rgba(24,119,242,0.1)', border: '1px solid rgba(24,119,242,0.2)', color: '#1877F2', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
-                  <span className="mobile-dl-share-icon">🔵</span> <span>Facebook</span>
+                  <span className="mobile-dl-share-icon"></span> <span>Facebook</span>
                 </a>
 
                 {/* Copy Link button */}
@@ -441,7 +445,7 @@ export default function DownloadPage() {
                     background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', fontSize: '13px', fontWeight: 700, cursor: 'pointer'
                   }}
                 >
-                  <span className="mobile-dl-share-icon">🔗</span> <span>Copy Link</span>
+                  <span className="mobile-dl-share-icon"></span> <span>Copy Link</span>
                 </button>
               </div>
             </div>
@@ -496,8 +500,8 @@ export default function DownloadPage() {
                     className="mobile-dl-tab-btn"
                     style={{
                       flex: 1,
-                      padding: '10px 16px',
-                      fontSize: '13px',
+                      padding: '8px 12px',
+                      fontSize: '11px',
                       fontWeight: 700,
                       borderRadius: '8px',
                       border: 'none',
@@ -506,18 +510,18 @@ export default function DownloadPage() {
                       color: activeTab === 'text' ? '#fff' : 'var(--clr-text-3)',
                       boxShadow: activeTab === 'text' ? '0 4px 16px rgba(99,102,241,0.3)' : 'none',
                       transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}
                   >
-                    <span style={{ fontSize: '15px' }}>📄</span> Smart AI Text
+                    Smart AI Text
                   </button>
                   <button
                     onClick={() => setActiveTab('original')}
                     className="mobile-dl-tab-btn"
                     style={{
                       flex: 1,
-                      padding: '10px 16px',
-                      fontSize: '13px',
+                      padding: '8px 12px',
+                      fontSize: '11px',
                       fontWeight: 700,
                       borderRadius: '8px',
                       border: 'none',
@@ -526,10 +530,10 @@ export default function DownloadPage() {
                       color: activeTab === 'original' ? '#fff' : 'var(--clr-text-3)',
                       boxShadow: activeTab === 'original' ? '0 4px 16px rgba(99,102,241,0.3)' : 'none',
                       transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}
                   >
-                    <span style={{ fontSize: '15px' }}>🖼️</span> Original File
+                    Original File
                   </button>
                 </div>
               )}
