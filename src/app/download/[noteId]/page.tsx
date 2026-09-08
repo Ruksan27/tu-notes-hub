@@ -646,10 +646,9 @@ export default function DownloadPage() {
               </a>
             </div>
 
-            <AdUnit type="sidebar" slot="download-sidebar-banner-1" />
-            <AdUnit type="sidebar" slot="download-sidebar-banner-2" />
-            {/* Added 3rd Ad for maximum revenue on long documents */}
-            <AdUnit type="sidebar" slot="download-sidebar-banner-3" />
+            {/* High-revenue standard sizes: Large Skyscraper (300x600) and Medium Rectangle (300x250) */}
+            <AdUnit type="large-rectangle" slot="download-sidebar-banner-1" style={{ minHeight: '600px', display: 'flex', alignItems: 'center' }} />
+            <AdUnit type="medium-rectangle" slot="download-sidebar-banner-2" style={{ minHeight: '250px', display: 'flex', alignItems: 'center' }} />
           </div>
         )}
 
