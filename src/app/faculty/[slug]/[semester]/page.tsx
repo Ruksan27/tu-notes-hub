@@ -216,19 +216,32 @@ export default async function SemesterPage({ params }: Props) {
 
     // Blend linked materials if sharing flags are true
     if (linked) {
-      if (sub.linkIncludeNotes && linked.notes) {
-        const linkedNotes = linked.notes.map((n: any) => ({ ...n, isFromOldSyllabus: true }))
-        notes = [...notes, ...linkedNotes]
+      if (linked.notes) {
+        const filteredLinkedNotes = linked.notes.filter((n: any) => {
+          if (n.noteType === 'LAB_WORK') return sub.linkIncludeLabWork !== false
+          if (n.noteType === 'PROJECT_WORK') return sub.linkIncludeProjectWork !== false
+          if (n.noteType === 'PROJECT') return sub.linkIncludeProjects !== false
+          if (n.noteType === 'GUIDE') return sub.linkIncludeGuides !== false
+          if (n.noteType === 'SYLLABUS') return sub.linkIncludeSyllabus !== false
+          return sub.linkIncludeNotes !== false
+        }).map((n: any) => ({ ...n, isFromOldSyllabus: true }))
+
+        notes = [...notes, ...filteredLinkedNotes]
       }
-      if (sub.linkIncludePastPapers && linked.pastPapers) {
+
+      if (sub.linkIncludeCheatsheets !== false && linked.cheatsheets) {
+        const linkedCheatsheets = linked.cheatsheets.map((c: any) => ({ ...c, isFromOldSyllabus: true }))
+        cheatsheets = [...cheatsheets, ...linkedCheatsheets]
+      }
+      if (sub.linkIncludePastPapers !== false && linked.pastPapers) {
         const linkedPapers = linked.pastPapers.map((p: any) => ({ ...p, isFromOldSyllabus: true }))
         pastPapers = [...pastPapers, ...linkedPapers]
       }
-      if (sub.linkIncludeMCQs && linked.mcqs) {
+      if (sub.linkIncludeMCQs !== false && linked.mcqs) {
         const linkedMcqs = linked.mcqs.map((m: any) => ({ ...m, isFromOldSyllabus: true }))
         mcqs = [...mcqs, ...linkedMcqs]
       }
-      if (sub.linkIncludeBooks && linked.solutionBooks) {
+      if (sub.linkIncludeBooks !== false && linked.solutionBooks) {
         const linkedBooks = linked.solutionBooks.map((b: any) => ({ ...b, isFromOldSyllabus: true }))
         directBooks = [...directBooks, ...linkedBooks]
       }

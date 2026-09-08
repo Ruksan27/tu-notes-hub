@@ -17,11 +17,18 @@ interface Semester {
   order: number
 }
 
-interface SubjectCounts {
+interface MaterialBreakdown {
   notes: number
+  labWork: number
+  projectWork: number
+  projects: number
+  guides: number
+  syllabus: number
   pastPapers: number
   mcqs: number
   solutionBooks: number
+  cheatsheets: number
+  total: number
 }
 
 interface SubjectItem {
@@ -35,12 +42,18 @@ interface SubjectItem {
     title: string
     code: string
     semester?: { name: string; order: number }
-    _count?: SubjectCounts
+    materialBreakdown?: MaterialBreakdown
   } | null
   linkIncludeNotes?: boolean
+  linkIncludeLabWork?: boolean
+  linkIncludeProjectWork?: boolean
+  linkIncludeProjects?: boolean
+  linkIncludeGuides?: boolean
+  linkIncludeSyllabus?: boolean
   linkIncludePastPapers?: boolean
   linkIncludeMCQs?: boolean
   linkIncludeBooks?: boolean
+  linkIncludeCheatsheets?: boolean
   semester?: {
     id: string
     name: string
@@ -48,7 +61,7 @@ interface SubjectItem {
     facultyId: string
     faculty?: Faculty
   }
-  _count?: SubjectCounts
+  materialBreakdown?: MaterialBreakdown
 }
 
 export default function AdminCourseMappingTab() {
@@ -62,14 +75,22 @@ export default function AdminCourseMappingTab() {
   const [loading, setLoading] = useState<boolean>(false)
   const [searchTerm, setSearchTerm] = useState<string>('')
 
-  // Modal State
+  // Modal State & Checkboxes
   const [linkModalOpen, setLinkModalOpen] = useState<boolean>(false)
   const [selectedSource, setSelectedSource] = useState<SubjectItem | null>(null)
   const [selectedTarget, setSelectedTarget] = useState<SubjectItem | null>(null)
+
   const [linkIncludeNotes, setLinkIncludeNotes] = useState<boolean>(true)
+  const [linkIncludeLabWork, setLinkIncludeLabWork] = useState<boolean>(true)
+  const [linkIncludeProjectWork, setLinkIncludeProjectWork] = useState<boolean>(true)
+  const [linkIncludeProjects, setLinkIncludeProjects] = useState<boolean>(true)
+  const [linkIncludeGuides, setLinkIncludeGuides] = useState<boolean>(true)
+  const [linkIncludeSyllabus, setLinkIncludeSyllabus] = useState<boolean>(true)
   const [linkIncludePastPapers, setLinkIncludePastPapers] = useState<boolean>(false)
   const [linkIncludeMCQs, setLinkIncludeMCQs] = useState<boolean>(true)
   const [linkIncludeBooks, setLinkIncludeBooks] = useState<boolean>(true)
+  const [linkIncludeCheatsheets, setLinkIncludeCheatsheets] = useState<boolean>(true)
+
   const [savingLink, setSavingLink] = useState<boolean>(false)
 
   // Drag & Drop State
@@ -167,14 +188,26 @@ export default function AdminCourseMappingTab() {
 
     if (target && target.linkedSubjectId === source.id) {
       setLinkIncludeNotes(target.linkIncludeNotes ?? true)
+      setLinkIncludeLabWork(target.linkIncludeLabWork ?? true)
+      setLinkIncludeProjectWork(target.linkIncludeProjectWork ?? true)
+      setLinkIncludeProjects(target.linkIncludeProjects ?? true)
+      setLinkIncludeGuides(target.linkIncludeGuides ?? true)
+      setLinkIncludeSyllabus(target.linkIncludeSyllabus ?? true)
       setLinkIncludePastPapers(target.linkIncludePastPapers ?? false)
       setLinkIncludeMCQs(target.linkIncludeMCQs ?? true)
       setLinkIncludeBooks(target.linkIncludeBooks ?? true)
+      setLinkIncludeCheatsheets(target.linkIncludeCheatsheets ?? true)
     } else {
       setLinkIncludeNotes(true)
+      setLinkIncludeLabWork(true)
+      setLinkIncludeProjectWork(true)
+      setLinkIncludeProjects(true)
+      setLinkIncludeGuides(true)
+      setLinkIncludeSyllabus(true)
       setLinkIncludePastPapers(false)
       setLinkIncludeMCQs(true)
       setLinkIncludeBooks(true)
+      setLinkIncludeCheatsheets(true)
     }
 
     setLinkModalOpen(true)
@@ -196,9 +229,15 @@ export default function AdminCourseMappingTab() {
           targetSubjectId: selectedTarget.id,
           sourceSubjectId: selectedSource.id,
           linkIncludeNotes,
+          linkIncludeLabWork,
+          linkIncludeProjectWork,
+          linkIncludeProjects,
+          linkIncludeGuides,
+          linkIncludeSyllabus,
           linkIncludePastPapers,
           linkIncludeMCQs,
           linkIncludeBooks,
+          linkIncludeCheatsheets,
         }),
       })
 
@@ -275,7 +314,7 @@ export default function AdminCourseMappingTab() {
               <span>🔗</span> Course & Syllabus Mapping Tool
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
-              Map Old Syllabus subjects to New Syllabus semesters. Share Notes, MCQs, and Solution Books instantly without re-uploading PDFs!
+              Map Old Syllabus subjects to New Syllabus semesters. Selectively share Notes, Lab Work, MCQs, Books & Syllabus files without re-uploading PDFs!
             </p>
           </div>
 
@@ -372,50 +411,60 @@ export default function AdminCourseMappingTab() {
                 <p style={{ fontSize: '13px', fontWeight: 600, marginTop: '8px' }}>No Old Syllabus subjects found for Semester {sourceSemOrder}.</p>
               </div>
             ) : (
-              sourceSubjects.map((sub) => (
-                <motion.div
-                  key={sub.id}
-                  draggable
-                  onDragStart={(e: any) => handleDragStart(e, sub.id)}
-                  whileHover={{ scale: 1.02 }}
-                  className="glass-card"
-                  style={{
-                    padding: '14px 16px',
-                    margin: 0,
-                    borderRadius: '12px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    cursor: 'grab',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                    <div>
-                      <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#67e8f9', fontSize: '10px', fontWeight: 700 }}>
-                        {sub.code}
-                      </span>
-                      <h5 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginTop: '4px' }}>
-                        {sub.title}
-                      </h5>
+              sourceSubjects.map((sub) => {
+                const b = sub.materialBreakdown || { notes: 0, labWork: 0, projectWork: 0, projects: 0, guides: 0, syllabus: 0, pastPapers: 0, mcqs: 0, solutionBooks: 0, cheatsheets: 0, total: 0 }
+                return (
+                  <motion.div
+                    key={sub.id}
+                    draggable
+                    onDragStart={(e: any) => handleDragStart(e, sub.id)}
+                    whileHover={{ scale: 1.02 }}
+                    className="glass-card"
+                    style={{
+                      padding: '14px 16px',
+                      margin: 0,
+                      borderRadius: '12px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      cursor: 'grab',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                      <div>
+                        <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#67e8f9', fontSize: '10px', fontWeight: 700 }}>
+                          {sub.code}
+                        </span>
+                        <h5 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-1)', marginTop: '4px' }}>
+                          {sub.title}
+                        </h5>
+                      </div>
+
+                      <button
+                        onClick={() => openLinkModal(sub)}
+                        className="btn btn-sm btn-primary"
+                        style={{ fontSize: '11px', padding: '4px 10px', whiteSpace: 'nowrap', borderRadius: '6px' }}
+                      >
+                        Link ➜
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => openLinkModal(sub)}
-                      className="btn btn-sm btn-primary"
-                      style={{ fontSize: '11px', padding: '4px 10px', whiteSpace: 'nowrap', borderRadius: '6px' }}
-                    >
-                      Link ➜
-                    </button>
-                  </div>
-
-                  {/* Materials Count */}
-                  <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: 'var(--clr-text-3)', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-                    <span>📄 {sub._count?.notes || 0} Notes</span>
-                    <span>📝 {sub._count?.pastPapers || 0} Papers</span>
-                    <span>✅ {sub._count?.mcqs || 0} MCQs</span>
-                    <span>📘 {sub._count?.solutionBooks || 0} Books</span>
-                  </div>
-                </motion.div>
-              ))
+                    {/* Complete Upload Breakdown Pills */}
+                    <div style={{ display: 'flex', gap: '6px', fontSize: '10.5px', color: 'var(--clr-text-3)', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                      {b.notes > 0 && <span className="badge" style={{ background: 'rgba(99,102,241,0.12)', color: '#a5b4fc', padding: '2px 6px' }}>📄 {b.notes} Notes</span>}
+                      {b.labWork > 0 && <span className="badge" style={{ background: 'rgba(6,182,212,0.12)', color: '#67e8f9', padding: '2px 6px' }}>🧪 {b.labWork} Lab</span>}
+                      {b.projectWork > 0 && <span className="badge" style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', padding: '2px 6px' }}>📁 {b.projectWork} ProjWork</span>}
+                      {b.projects > 0 && <span className="badge" style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', padding: '2px 6px' }}>💻 {b.projects} Proj</span>}
+                      {b.guides > 0 && <span className="badge" style={{ background: 'rgba(59,130,246,0.12)', color: '#93c5fd', padding: '2px 6px' }}>📘 {b.guides} Guides</span>}
+                      {b.syllabus > 0 && <span className="badge" style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', padding: '2px 6px' }}>📋 {b.syllabus} Syllabus</span>}
+                      {b.pastPapers > 0 && <span className="badge" style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', padding: '2px 6px' }}>📝 {b.pastPapers} Papers</span>}
+                      {b.mcqs > 0 && <span className="badge" style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7', padding: '2px 6px' }}>✅ {b.mcqs} MCQs</span>}
+                      {b.solutionBooks > 0 && <span className="badge" style={{ background: 'rgba(99,102,241,0.12)', color: '#a5b4fc', padding: '2px 6px' }}>📘 {b.solutionBooks} Books</span>}
+                      {b.cheatsheets > 0 && <span className="badge" style={{ background: 'rgba(236,72,153,0.12)', color: '#f472b6', padding: '2px 6px' }}>📋 {b.cheatsheets} Cheatsheet</span>}
+                      {b.total === 0 && <span style={{ fontStyle: 'italic', opacity: 0.6 }}>No files uploaded yet</span>}
+                    </div>
+                  </motion.div>
+                )
+              })
             )}
           </div>
         </div>
@@ -520,9 +569,15 @@ export default function AdminCourseMappingTab() {
                           {/* Flags Badges */}
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
                             {targetSub.linkIncludeNotes && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(99,102,241,0.15)', color: '#a5b4fc' }}>✓ Notes</span>}
-                            {targetSub.linkIncludeMCQs && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(99,102,241,0.15)', color: '#a5b4fc' }}>✓ MCQs</span>}
-                            {targetSub.linkIncludeBooks && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(99,102,241,0.15)', color: '#a5b4fc' }}>✓ Books</span>}
+                            {targetSub.linkIncludeLabWork && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(6,182,212,0.15)', color: '#67e8f9' }}>✓ Lab</span>}
+                            {targetSub.linkIncludeProjectWork && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(168,85,247,0.15)', color: '#c084fc' }}>✓ ProjWork</span>}
+                            {targetSub.linkIncludeProjects && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(168,85,247,0.15)', color: '#c084fc' }}>✓ Projects</span>}
+                            {targetSub.linkIncludeGuides && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(59,130,246,0.15)', color: '#93c5fd' }}>✓ Guides</span>}
+                            {targetSub.linkIncludeSyllabus && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}>✓ Syllabus</span>}
+                            {targetSub.linkIncludeMCQs && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(16,185,129,0.15)', color: '#6ee7b7' }}>✓ MCQs</span>}
+                            {targetSub.linkIncludeBooks && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(99,102,241,0.15)', color: '#a5b4fc' }}>✓ Solution Books</span>}
                             {targetSub.linkIncludePastPapers && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}>✓ Papers</span>}
+                            {targetSub.linkIncludeCheatsheets && <span className="badge" style={{ fontSize: '9.5px', background: 'rgba(236,72,153,0.15)', color: '#f472b6' }}>✓ Cheatsheet</span>}
                           </div>
                         </div>
                       ) : (
@@ -562,25 +617,27 @@ export default function AdminCourseMappingTab() {
               className="glass-card"
               style={{
                 width: '100%',
-                maxWidth: '520px',
+                maxWidth: '600px',
                 padding: '28px',
                 borderRadius: '16px',
                 background: 'var(--clr-bg-surface, #0f172a)',
                 border: '1px solid rgba(99,102,241,0.3)',
                 boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                maxHeight: '90vh',
+                overflowY: 'auto',
               }}
             >
-              <h4 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '4px' }}>
                 🔗 Map Subject & Material Sharing Options
               </h4>
               <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '20px' }}>
-                Connect Old Syllabus content to the target New Syllabus subject.
+                Select exactly which uploaded categories from the Old Subject will be shared with the New Subject.
               </p>
 
-              {/* Source Details */}
-              <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '12px 16px', borderRadius: '10px', marginBottom: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 700, textTransform: 'uppercase' }}>Source (Old Subject):</span>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginTop: '2px' }}>
+              {/* Source Details & Breakdown */}
+              <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '14px 16px', borderRadius: '10px', marginBottom: '16px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 700, textTransform: 'uppercase' }}>Source Subject (Uploaded Content):</span>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#fff', marginTop: '2px' }}>
                   {selectedSource.code} — {selectedSource.title}
                 </div>
               </div>
@@ -610,54 +667,89 @@ export default function AdminCourseMappingTab() {
                 </select>
               </div>
 
-              {/* Material Sharing Checkboxes */}
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-2)', display: 'block', marginBottom: '10px' }}>
-                  Select Materials to Share:
-                </label>
+              {/* Comprehensive Category Sharing Checkboxes */}
+              {(() => {
+                const b = selectedSource.materialBreakdown || { notes: 0, labWork: 0, projectWork: 0, projects: 0, guides: 0, syllabus: 0, pastPapers: 0, mcqs: 0, solutionBooks: 0, cheatsheets: 0, total: 0 }
+                return (
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-2)' }}>
+                        Select Upload Categories to Share ({b.total} Total Files Uploaded):
+                      </label>
+                      <button
+                        onClick={() => {
+                          const allOn = !(linkIncludeNotes && linkIncludeLabWork && linkIncludePastPapers && linkIncludeMCQs)
+                          setLinkIncludeNotes(allOn)
+                          setLinkIncludeLabWork(allOn)
+                          setLinkIncludeProjectWork(allOn)
+                          setLinkIncludeProjects(allOn)
+                          setLinkIncludeGuides(allOn)
+                          setLinkIncludeSyllabus(allOn)
+                          setLinkIncludePastPapers(allOn)
+                          setLinkIncludeMCQs(allOn)
+                          setLinkIncludeBooks(allOn)
+                          setLinkIncludeCheatsheets(allOn)
+                        }}
+                        style={{ fontSize: '11px', color: 'var(--clr-primary-h)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                      >
+                        Toggle All
+                      </button>
+                    </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={linkIncludeNotes}
-                      onChange={(e) => setLinkIncludeNotes(e.target.checked)}
-                      style={{ width: '16px', height: '16px' }}
-                    />
-                    📄 Share Notes
-                  </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '10px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeNotes} onChange={(e) => setLinkIncludeNotes(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>📄 Study Notes ({b.notes})</span>
+                      </label>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={linkIncludeMCQs}
-                      onChange={(e) => setLinkIncludeMCQs(e.target.checked)}
-                      style={{ width: '16px', height: '16px' }}
-                    />
-                    ✅ Share MCQs
-                  </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeLabWork} onChange={(e) => setLinkIncludeLabWork(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>🧪 Lab Works ({b.labWork})</span>
+                      </label>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={linkIncludeBooks}
-                      onChange={(e) => setLinkIncludeBooks(e.target.checked)}
-                      style={{ width: '16px', height: '16px' }}
-                    />
-                    📘 Share Solution Books
-                  </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeProjectWork} onChange={(e) => setLinkIncludeProjectWork(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>📁 Project Works ({b.projectWork})</span>
+                      </label>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={linkIncludePastPapers}
-                      onChange={(e) => setLinkIncludePastPapers(e.target.checked)}
-                      style={{ width: '16px', height: '16px' }}
-                    />
-                    📝 Share Past Papers
-                  </label>
-                </div>
-              </div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeProjects} onChange={(e) => setLinkIncludeProjects(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>💻 Projects ({b.projects})</span>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeGuides} onChange={(e) => setLinkIncludeGuides(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>📘 Exam Guides ({b.guides})</span>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeSyllabus} onChange={(e) => setLinkIncludeSyllabus(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>📋 Course Syllabus ({b.syllabus})</span>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeMCQs} onChange={(e) => setLinkIncludeMCQs(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>✅ Practice MCQs ({b.mcqs})</span>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeBooks} onChange={(e) => setLinkIncludeBooks(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>📘 Solution Books ({b.solutionBooks})</span>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludePastPapers} onChange={(e) => setLinkIncludePastPapers(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>📝 Past Papers ({b.pastPapers})</span>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--clr-text-1)', cursor: 'pointer', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input type="checkbox" checked={linkIncludeCheatsheets} onChange={(e) => setLinkIncludeCheatsheets(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                        <span>📋 Cheatsheets ({b.cheatsheets})</span>
+                      </label>
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>

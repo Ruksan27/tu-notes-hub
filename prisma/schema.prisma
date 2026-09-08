@@ -150,11 +150,17 @@ model Subject {
   linkedSubject         Subject?     @relation("SubjectToSubjectLink", fields: [linkedSubjectId], references: [id], onDelete: SetNull)
   linkedBySubjects      Subject[]    @relation("SubjectToSubjectLink")
 
-  // Sharing Flags (When linked, which materials are shared to the target)
+  // Sharing Flags (When linked, which specific material types are shared)
   linkIncludeNotes      Boolean      @default(true)
+  linkIncludeLabWork    Boolean      @default(true)
+  linkIncludeProjectWork Boolean     @default(true)
+  linkIncludeProjects   Boolean      @default(true)
+  linkIncludeGuides     Boolean      @default(true)
+  linkIncludeSyllabus   Boolean      @default(true)
   linkIncludePastPapers Boolean      @default(true)
   linkIncludeMCQs       Boolean      @default(true)
   linkIncludeBooks      Boolean      @default(true)
+  linkIncludeCheatsheets Boolean     @default(true)
 
   notes                 Note[]
   pastPapers            PastPaper[]

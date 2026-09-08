@@ -2,7 +2,7 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
-// GET: Fetch all subjects that are mapped/linked or available for mapping
+// GET: Fetch all subjects that are mapped/linked or available for mapping with detailed content counts
 export async function GET(req: NextRequest) {
   try {
     const facultyId = req.nextUrl.searchParams.get('facultyId')
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       whereClause.semester = { facultyId }
     }
 
-    const subjects = await prisma.subject.findMany({
+    const subjectsRaw = await prisma.subject.findMany({
       where: whereClause,
       include: {
         semester: {
@@ -30,26 +30,86 @@ export async function GET(req: NextRequest) {
                 faculty: true,
               },
             },
-            _count: {
+            notes: {
               select: {
-                notes: true,
-                pastPapers: true,
-                mcqs: true,
-                solutionBooks: true,
+                id: true,
+                noteType: true,
               },
             },
+            cheatsheets: { select: { id: true } },
+            pastPapers: { select: { id: true } },
+            mcqs: { select: { id: true } },
+            solutionBooks: { select: { id: true } },
           },
         },
-        _count: {
+        notes: {
           select: {
-            notes: true,
-            pastPapers: true,
-            mcqs: true,
-            solutionBooks: true,
+            id: true,
+            noteType: true,
           },
         },
+        cheatsheets: { select: { id: true } },
+        pastPapers: { select: { id: true } },
+        mcqs: { select: { id: true } },
+        solutionBooks: { select: { id: true } },
       },
       orderBy: { code: 'asc' },
+    })
+
+    // Process counts breakdown for each subject
+    const subjects = subjectsRaw.map((sub: any) => {
+      const getBreakdown = (notes: any[], papers: any[], mcqsList: any[], books: any[], cheatsheetsList: any[]) => {
+        const notesCount = notes.filter((n) => !['LAB_WORK', 'PROJECT_WORK', 'PROJECT', 'GUIDE', 'SYLLABUS'].includes(n.noteType)).length
+        const labWorkCount = notes.filter((n) => n.noteType === 'LAB_WORK').length
+        const projectWorkCount = notes.filter((n) => n.noteType === 'PROJECT_WORK').length
+        const projectsCount = notes.filter((n) => n.noteType === 'PROJECT').length
+        const guidesCount = notes.filter((n) => n.noteType === 'GUIDE').length
+        const syllabusCount = notes.filter((n) => n.noteType === 'SYLLABUS').length
+
+        return {
+          notes: notesCount,
+          labWork: labWorkCount,
+          projectWork: projectWorkCount,
+          projects: projectsCount,
+          guides: guidesCount,
+          syllabus: syllabusCount,
+          pastPapers: papers.length,
+          mcqs: mcqsList.length,
+          solutionBooks: books.length,
+          cheatsheets: cheatsheetsList.length,
+          total: notes.length + papers.length + mcqsList.length + books.length + cheatsheetsList.length,
+        }
+      }
+
+      const ownBreakdown = getBreakdown(
+        sub.notes || [],
+        sub.pastPapers || [],
+        sub.mcqs || [],
+        sub.solutionBooks || [],
+        sub.cheatsheets || []
+      )
+
+      let linkedBreakdown = null
+      if (sub.linkedSubject) {
+        linkedBreakdown = getBreakdown(
+          sub.linkedSubject.notes || [],
+          sub.linkedSubject.pastPapers || [],
+          sub.linkedSubject.mcqs || [],
+          sub.linkedSubject.solutionBooks || [],
+          sub.linkedSubject.cheatsheets || []
+        )
+      }
+
+      return {
+        ...sub,
+        materialBreakdown: ownBreakdown,
+        linkedSubject: sub.linkedSubject
+          ? {
+              ...sub.linkedSubject,
+              materialBreakdown: linkedBreakdown,
+            }
+          : null,
+      }
     })
 
     return NextResponse.json({ subjects })
@@ -67,9 +127,15 @@ export async function POST(req: NextRequest) {
       targetSubjectId,
       sourceSubjectId,
       linkIncludeNotes = true,
+      linkIncludeLabWork = true,
+      linkIncludeProjectWork = true,
+      linkIncludeProjects = true,
+      linkIncludeGuides = true,
+      linkIncludeSyllabus = true,
       linkIncludePastPapers = true,
       linkIncludeMCQs = true,
       linkIncludeBooks = true,
+      linkIncludeCheatsheets = true,
     } = body
 
     if (!targetSubjectId) {
@@ -102,9 +168,15 @@ export async function POST(req: NextRequest) {
       data: {
         linkedSubjectId: sourceSubjectId || null,
         linkIncludeNotes: Boolean(linkIncludeNotes),
+        linkIncludeLabWork: Boolean(linkIncludeLabWork),
+        linkIncludeProjectWork: Boolean(linkIncludeProjectWork),
+        linkIncludeProjects: Boolean(linkIncludeProjects),
+        linkIncludeGuides: Boolean(linkIncludeGuides),
+        linkIncludeSyllabus: Boolean(linkIncludeSyllabus),
         linkIncludePastPapers: Boolean(linkIncludePastPapers),
         linkIncludeMCQs: Boolean(linkIncludeMCQs),
         linkIncludeBooks: Boolean(linkIncludeBooks),
+        linkIncludeCheatsheets: Boolean(linkIncludeCheatsheets),
       },
       include: {
         linkedSubject: {
