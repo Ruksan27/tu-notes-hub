@@ -77,7 +77,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
           setIsPaid(true)
         }
       }
-    } catch {}
+    } catch { }
   }, [])
 
   const rawUrl = book.cloudinaryUrl || ''
@@ -95,7 +95,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
       .then((data) => setDriveContentType((data?.contentType || '').toLowerCase()))
       .catch(() => setDriveContentType(''))
   }, [rawUrl, isDrive])
-  
+
   const isImage = !isDrive && /\.(png|jpg|jpeg|webp|gif)$/i.test(rawUrl)
   const isDriveImage = isDrive && (
     driveContentType.startsWith('image/') ||
@@ -196,20 +196,20 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
     }
     if (viewMode === 'drive' && driveId) return driveEmbedUrl
     if (viewMode === 'gview') return gviewEmbedUrl
-    
+
     // Fix: Cloudinary 'raw' URLs (PDFs/docs) auto-download in iframes if used directly.
     // Force Google Docs Viewer for non-image Cloudinary files to prevent auto-download loop.
     if (!isDrive && !isImage) {
       return gviewEmbedUrl
     }
-    
+
     return proxyEmbedUrl
   }
 
   return (
     <div style={{ minHeight: 'calc(100vh - 70px)', background: 'var(--clr-bg)', color: '#fff', padding: '24px 4%' }}>
       <div style={{ maxWidth: '1600px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        
+
         {/* BREADCRUMB */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px', color: 'var(--clr-text-3)' }}>
           <Link href="/" style={{ color: 'var(--clr-text-3)' }}>Home</Link>
@@ -224,7 +224,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
         {/* TOP TOOLBAR */}
         <div className="glass-card" style={{ padding: '20px 28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-            
+
             {/* LEFT DETAILS & TITLE */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
@@ -249,51 +249,53 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
             <div>
               <button
                 onClick={handleDownloadClick}
-                className="btn btn-primary btn-lg"
-                style={{ fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', cursor: 'pointer', border: 'none' }}
+                className="btn btn-primary btn-lg max-md:!py-2 max-md:!px-5 max-md:!text-[13px]"
+                style={{ fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}
               >
                 <span>📥</span> Download Files
               </button>
             </div>
           </div>
 
-          {/* SHARE RESOURCE BAR */}
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', display: 'block', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Share Resource</span>
-            
-            <div className="grid grid-cols-4 md:flex md:flex-wrap gap-2 md:gap-3">
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-text-3)', display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Share Resource:</span>
+            <div className="flex items-center gap-3 max-md:gap-1.5 max-md:w-full">
               <a
                 href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${book.title} - ${shareUrl}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center transition-all no-underline p-2 rounded-lg text-[10px] font-bold bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] md:text-[14px] md:font-[600] md:px-[24px] md:py-[12px] md:rounded-[8px] md:bg-[#128c7e] md:border-transparent md:text-white"
+                className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1 max-md:!h-[26px] max-md:!rounded-md max-md:!tracking-tight max-md:!min-w-0"
+                style={{ background: '#128c7e', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none', display: 'flex', justifyContent: 'center' }}
               >
-                <span>WhatsApp</span>
+                <span className="truncate">WhatsApp</span>
               </a>
 
               <a
                 href="https://www.instagram.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center transition-all no-underline p-2 rounded-lg text-[10px] font-bold bg-[#E1306C]/10 border border-[#E1306C]/20 text-[#E1306C] md:text-[14px] md:font-[600] md:px-[24px] md:py-[12px] md:rounded-[8px] md:bg-[#E1306C] md:border-transparent md:text-white"
+                className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1 max-md:!h-[26px] max-md:!rounded-md max-md:!tracking-tight max-md:!min-w-0"
+                style={{ background: '#E1306C', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none', display: 'flex', justifyContent: 'center' }}
               >
-                <span>Instagram</span>
+                <span className="truncate">Instagram</span>
               </a>
 
               <a
                 href={`fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center transition-all no-underline p-2 rounded-lg text-[10px] font-bold bg-[#00B2FF]/10 border border-[#00B2FF]/20 text-[#00B2FF] md:text-[14px] md:font-[600] md:px-[24px] md:py-[12px] md:rounded-[8px] md:bg-[#00B2FF] md:border-transparent md:text-white"
+                className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1 max-md:!h-[26px] max-md:!rounded-md max-md:!tracking-tight max-md:!min-w-0"
+                style={{ background: '#00B2FF', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none', display: 'flex', justifyContent: 'center' }}
               >
-                <span>Messenger</span>
+                <span className="truncate">Messenger</span>
               </a>
 
               <button
                 onClick={handleCopyLink}
-                className="flex items-center justify-center transition-all p-2 rounded-lg text-[10px] font-bold bg-white/5 border border-white/10 text-gray-300 md:text-[14px] md:font-[600] md:px-[24px] md:py-[12px] md:rounded-[8px] md:bg-white/10 md:border-white/10 md:text-white cursor-pointer"
+                className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1 max-md:!h-[26px] max-md:!rounded-md max-md:!tracking-tight max-md:!min-w-0"
+                style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 600, display: 'flex', justifyContent: 'center' }}
               >
-                <span>{copied ? 'Copied' : 'Copy'}</span>
+                <span className="truncate">{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
           </div>
@@ -301,7 +303,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
 
         {/* 2-COLUMN MAIN CONTENT: LEFT DOCUMENT VIEWER + RIGHT ADS SIDEBAR */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'stretch' }} className="semester-layout-grid">
-          
+
           {/* LEFT COLUMN: EMBEDDED DOCUMENT VIEWER */}
           <div style={{
             background: '#0f172a',
@@ -346,36 +348,36 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
 
           {/* RIGHT COLUMN: ADS SIDEBAR */}
           {!isPaid && (
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '24px',
-            position: 'sticky',
-            top: '80px',
-            maxHeight: 'calc(100vh - 100px)',
-            overflowY: 'auto',
-            paddingBottom: '20px',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
-          }}>
-            <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+              position: 'sticky',
+              top: '80px',
+              maxHeight: 'calc(100vh - 100px)',
+              overflowY: 'auto',
+              paddingBottom: '20px',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}>
+              <style>{`div::-webkit-scrollbar { display: none; }`}</style>
 
-            <div className="glass-card" style={{ padding: '20px', background: 'rgba(99,102,241,0.05)', borderColor: 'rgba(99,102,241,0.2)' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '8px' }}>💎 Upgrade to Elite</h4>
-              <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5 }}>
-                Tired of ads? Get instant direct access, all AI prediction models, and unlock full solutions offline.
-              </p>
-              <a href="/pricing" className="btn btn-outline btn-sm" style={{ width: '100%', marginTop: '12px', justifyContent: 'center', border: '1px solid rgba(99,102,241,0.4)', color: '#fff' }}>
-                Unlock Premium
-              </a>
+              <div className="glass-card" style={{ padding: '20px', background: 'rgba(99,102,241,0.05)', borderColor: 'rgba(99,102,241,0.2)' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '8px' }}>💎 Upgrade to Elite</h4>
+                <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.5 }}>
+                  Tired of ads? Get instant direct access, all AI prediction models, and unlock full solutions offline.
+                </p>
+                <a href="/pricing" className="btn btn-outline btn-sm" style={{ width: '100%', marginTop: '12px', justifyContent: 'center', border: '1px solid rgba(99,102,241,0.4)', color: '#fff' }}>
+                  Unlock Premium
+                </a>
+              </div>
+
+              <AdUnit type="sidebar" slot="solution-book-sidebar-1" />
+              <AdUnit type="sidebar" slot="solution-book-sidebar-2" />
+              {/* 3rd Ad added for maximum visibility on long solutions */}
+              <AdUnit type="sidebar" slot="solution-book-sidebar-3" />
             </div>
-
-            <AdUnit type="sidebar" slot="solution-book-sidebar-1" />
-            <AdUnit type="sidebar" slot="solution-book-sidebar-2" />
-            {/* 3rd Ad added for maximum visibility on long solutions */}
-            <AdUnit type="sidebar" slot="solution-book-sidebar-3" />
-          </div>
-        )}
+          )}
 
         </div>
 

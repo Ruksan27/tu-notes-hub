@@ -112,7 +112,7 @@ export default function McqPracticePage() {
           setIsPaid(true)
         }
       }
-    } catch {}
+    } catch { }
   }, [])
 
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function McqPracticePage() {
     bait.style.top = '-999px'
     bait.style.height = '10px'
     document.body.appendChild(bait)
-    
+
     const isBlocked = window.getComputedStyle(bait).display === 'none' || bait.offsetHeight === 0
     document.body.removeChild(bait)
 
@@ -218,17 +218,17 @@ export default function McqPracticePage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', background: '#0b0f19', position: 'relative' }}>
-      
+
       {/* Top Sponsored Ad Banner */}
       <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
         <AdUnit type="leaderboard" slot="mcq-top-banner" />
       </div>
 
       <div style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
-        
+
         {/* Main Left Content Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
+
           {/* Header Card (Matches download page header) */}
           <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
@@ -253,34 +253,36 @@ export default function McqPracticePage() {
 
             {/* Social Share Bar */}
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '14px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600, display: 'block', marginBottom: '10px' }}>Share Resource:</span>
-              
-              <div className="grid grid-cols-4 md:flex md:flex-wrap gap-2 md:gap-3">
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-text-3)', display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Share Resource:</span>
+              <div className="flex items-center gap-3 max-md:gap-1.5 max-md:w-full">
                 <a
                   href={`https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(currentUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center transition-all no-underline p-2 rounded-lg text-[10px] font-bold bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] md:text-[14px] md:font-[600] md:px-[24px] md:py-[12px] md:rounded-[8px] md:bg-[#128c7e] md:border-transparent md:text-white"
+                  className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1 max-md:!h-[26px] max-md:!rounded-md max-md:!tracking-tight max-md:!min-w-0"
+                  style={{ background: '#128c7e', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none', display: 'flex', justifyContent: 'center' }}
                 >
-                  <span>WhatsApp</span>
+                  <span className="truncate">WhatsApp</span>
                 </a>
 
                 <a
                   href="https://www.instagram.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center transition-all no-underline p-2 rounded-lg text-[10px] font-bold bg-[#E1306C]/10 border border-[#E1306C]/20 text-[#E1306C] md:text-[14px] md:font-[600] md:px-[24px] md:py-[12px] md:rounded-[8px] md:bg-[#E1306C] md:border-transparent md:text-white"
+                  className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1 max-md:!h-[26px] max-md:!rounded-md max-md:!tracking-tight max-md:!min-w-0"
+                  style={{ background: '#E1306C', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none', display: 'flex', justifyContent: 'center' }}
                 >
-                  <span>Instagram</span>
+                  <span className="truncate">Instagram</span>
                 </a>
 
                 <a
                   href={`fb-messenger://share/?link=${encodeURIComponent(currentUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center transition-all no-underline p-2 rounded-lg text-[10px] font-bold bg-[#00B2FF]/10 border border-[#00B2FF]/20 text-[#00B2FF] md:text-[14px] md:font-[600] md:px-[24px] md:py-[12px] md:rounded-[8px] md:bg-[#00B2FF] md:border-transparent md:text-white"
+                  className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1 max-md:!h-[26px] max-md:!rounded-md max-md:!tracking-tight max-md:!min-w-0"
+                  style={{ background: '#00B2FF', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none', display: 'flex', justifyContent: 'center' }}
                 >
-                  <span>Messenger</span>
+                  <span className="truncate">Messenger</span>
                 </a>
 
                 <button
@@ -288,9 +290,10 @@ export default function McqPracticePage() {
                     navigator.clipboard.writeText(currentUrl)
                     alert('Link copied to clipboard!')
                   }}
-                  className="flex items-center justify-center transition-all p-2 rounded-lg text-[10px] font-bold bg-white/5 border border-white/10 text-gray-300 md:text-[14px] md:font-[600] md:px-[24px] md:py-[12px] md:rounded-[8px] md:bg-white/10 md:border-white/10 md:text-white cursor-pointer"
+                  className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1 max-md:!h-[26px] max-md:!rounded-md max-md:!tracking-tight max-md:!min-w-0"
+                  style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 600, display: 'flex', justifyContent: 'center' }}
                 >
-                  <span>Copy Link</span>
+                  <span className="truncate">Copy</span>
                 </button>
               </div>
             </div>
@@ -401,7 +404,7 @@ export default function McqPracticePage() {
 
         {/* Right Sidebar Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
+
           {/* Upgrade to Elite Banner */}
           <div className="glass-card" style={{ padding: '24px', background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.08))', border: '1px solid rgba(99,102,241,0.2)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>

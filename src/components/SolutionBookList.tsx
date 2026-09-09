@@ -49,7 +49,7 @@ export default function SolutionBookList({ books, facultyId, semesterOrder }: Pr
         <span>📘</span> Solution Books & Full Semester Guides ({books.length})
       </h2>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
         {books.map((book) => (
           <div
             key={book.id}
