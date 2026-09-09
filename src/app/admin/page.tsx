@@ -2706,49 +2706,73 @@ function UploadTab({ user }: { user?: any }) {
         fileSize = 'Drive'
       } else {
         if (!noteFile) { toast.error('Please choose a file'); setUploading(false); return }
-        if (noteFile.size > 10 * 1024 * 1024) { toast.error('Max 10MB limit reached for Cloudinary Free Tier'); setUploading(false); return }
-        toast.loading('Uploading...', { toastId: 'upload-progress' })
-        try {
-          const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/solution-books' }) })
-          if (!sigRes.ok) { toast.dismiss('upload-progress'); toast.error('Signature error'); setUploading(false); return }
-          const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
-          
-          const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
-          const rt = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'raw'
-          
-          // Chunked upload implementation
-          const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
-          const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
-          let finalUrl = ''
-          
-          for (let start = 0; start < noteFile.size; start += chunkSize) {
-            const end = Math.min(start + chunkSize, noteFile.size)
-            const chunk = noteFile.slice(start, end)
-            
-            const cf = new FormData()
-            cf.append('file', chunk)
-            cf.append('api_key', apiKey)
-            cf.append('timestamp', String(timestamp))
-            cf.append('signature', signature)
-            cf.append('folder', sf)
-            
-            const cr = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${rt}/upload`, {
-              method: 'POST',
-              headers: {
-                'X-Unique-Upload-Id': uniqueUploadId,
-                'Content-Range': `bytes ${start}-${end - 1}/${noteFile.size}`
-              },
-              body: cf
-            })
-            
-            const cd = await cr.json()
-            if (!cr.ok) { toast.dismiss('upload-progress'); toast.error(cd.error?.message || 'Upload failed'); setUploading(false); return }
-            if (cd.secure_url) finalUrl = cd.secure_url
+        if (noteFile.size > 10 * 1024 * 1024) {
+          toast.loading(`File is ${(noteFile.size / 1024 / 1024).toFixed(1)}MB (>10MB). Uploading directly to Google Drive... ☁️`, { toastId: 'upload-progress' })
+          try {
+            const formData = new FormData()
+            formData.append('file', noteFile)
+            const driveRes = await fetch('/api/upload-drive', { method: 'POST', body: formData })
+            const driveData = await driveRes.json()
+            if (!driveRes.ok || !driveData.success) {
+              toast.dismiss('upload-progress')
+              toast.error(driveData.error || 'Google Drive upload failed')
+              setUploading(false)
+              return
+            }
+            cloudinaryUrl = driveData.driveLink
+            fileSize = driveData.fileSize || `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
+            toast.dismiss('upload-progress')
+            toast.success('Uploaded to Google Drive successfully! 🚀')
+          } catch (err: any) {
+            toast.dismiss('upload-progress')
+            toast.error(err.message || 'Drive upload error')
+            setUploading(false)
+            return
           }
-          
-          if (!finalUrl) throw new Error('Failed to get secure URL')
-          cloudinaryUrl = finalUrl; fileSize = `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
-        } catch (err: any) { toast.dismiss('upload-progress'); toast.error(err.message || 'Upload error'); setUploading(false); return }
+        } else {
+          toast.loading('Uploading...', { toastId: 'upload-progress' })
+          try {
+            const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/solution-books' }) })
+            if (!sigRes.ok) { toast.dismiss('upload-progress'); toast.error('Signature error'); setUploading(false); return }
+            const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
+            
+            const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
+            const rt = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'raw'
+            
+            // Chunked upload implementation
+            const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
+            const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
+            let finalUrl = ''
+            
+            for (let start = 0; start < noteFile.size; start += chunkSize) {
+              const end = Math.min(start + chunkSize, noteFile.size)
+              const chunk = noteFile.slice(start, end)
+              
+              const cf = new FormData()
+              cf.append('file', chunk)
+              cf.append('api_key', apiKey)
+              cf.append('timestamp', String(timestamp))
+              cf.append('signature', signature)
+              cf.append('folder', sf)
+              
+              const cr = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${rt}/upload`, {
+                method: 'POST',
+                headers: {
+                  'X-Unique-Upload-Id': uniqueUploadId,
+                  'Content-Range': `bytes ${start}-${end - 1}/${noteFile.size}`
+                },
+                body: cf
+              })
+              
+              const cd = await cr.json()
+              if (!cr.ok) { toast.dismiss('upload-progress'); toast.error(cd.error?.message || 'Upload failed'); setUploading(false); return }
+              if (cd.secure_url) finalUrl = cd.secure_url
+            }
+            
+            if (!finalUrl) throw new Error('Failed to get secure URL')
+            cloudinaryUrl = finalUrl; fileSize = `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
+          } catch (err: any) { toast.dismiss('upload-progress'); toast.error(err.message || 'Upload error'); setUploading(false); return }
+        }
       }
       toast.dismiss('upload-progress')
       toast.loading('Saving...', { toastId: 'upload-progress' })
@@ -2883,91 +2907,122 @@ function UploadTab({ user }: { user?: any }) {
     const fileToUpload = contentType === 'NOTE' ? noteFile : paperFile
     if (!fileToUpload) { toast.error('Please choose a file'); return }
 
-    const maxSizeMB = 10
-    if (fileToUpload.size > maxSizeMB * 1024 * 1024) {
-      toast.error(`File too large! Max size is ${maxSizeMB}MB.`)
-      return
-    }
-
     setUploading(true)
 
-    try {
-      // Determine the cloud folder path
-      const subject = await fetch(`/api/admin/subjects/${subjectId}`).then(r => r.json()).catch(() => null)
-      const fileExtension = fileToUpload.name.split('.').pop()?.toLowerCase() || ''
-      const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(fileExtension)
-      const resourceType = isImage ? 'image' : 'raw'
+    let cloudinaryUrl = ''
+    let fileSize = ''
 
-      // Build folder path (same pattern as original backend)
-      let typeFolder = ''
-      if (contentType === 'NOTE') {
-        typeFolder = noteType.toLowerCase()
-      } else {
-        typeFolder = 'past-papers'
-      }
-      const folder = `tu-notes-hub/${typeFolder}`
-
-      // Step 1: Get upload signature from our backend
-      toast.loading('Preparing upload...', { toastId: 'upload-progress' })
-      const sigRes = await fetch('/api/upload/signature', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folder })
-      })
-      if (!sigRes.ok) {
-        const err = await sigRes.json()
-        toast.dismiss('upload-progress'); toast.error(err.error || 'Failed to get upload signature')
-        return
-      }
-      const { timestamp, signature, cloudName, apiKey, folder: signedFolder } = await sigRes.json()
-
-      // Step 2: Upload directly to Cloudinary using chunked upload (bypasses Vercel size limit!)
-      toast.loading('Uploading file to cloud...', { toastId: 'upload-progress' })
-      
-      const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
-      const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
-      let finalUrl = ''
-      
-      for (let start = 0; start < fileToUpload.size; start += chunkSize) {
-        const end = Math.min(start + chunkSize, fileToUpload.size)
-        const chunk = fileToUpload.slice(start, end)
-        
-        const cloudForm = new FormData()
-        cloudForm.append('file', chunk)
-        cloudForm.append('api_key', apiKey)
-        cloudForm.append('timestamp', String(timestamp))
-        cloudForm.append('signature', signature)
-        cloudForm.append('folder', signedFolder)
-        
-        const cloudRes = await fetch(
-          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-          { 
-            method: 'POST', 
-            headers: {
-              'X-Unique-Upload-Id': uniqueUploadId,
-              'Content-Range': `bytes ${start}-${end - 1}/${fileToUpload.size}`
-            },
-            body: cloudForm 
-          }
-        )
-        const cloudData = await cloudRes.json()
-        
-        if (!cloudRes.ok) {
-          toast.dismiss('upload-progress'); toast.error(cloudData.error?.message || 'Cloudinary upload failed')
+    if (fileToUpload.size > 10 * 1024 * 1024) {
+      toast.loading(`File is ${(fileToUpload.size / 1024 / 1024).toFixed(1)}MB (>10MB). Uploading directly to Google Drive... ☁️`, { toastId: 'upload-progress' })
+      try {
+        const formData = new FormData()
+        formData.append('file', fileToUpload)
+        const driveRes = await fetch('/api/upload-drive', { method: 'POST', body: formData })
+        const driveData = await driveRes.json()
+        if (!driveRes.ok || !driveData.success) {
+          toast.dismiss('upload-progress')
+          toast.error(driveData.error || 'Google Drive upload failed')
+          setUploading(false)
           return
         }
-        if (cloudData.secure_url) {
-          finalUrl = cloudData.secure_url
-        }
-      }
-
-      if (!finalUrl) {
-        toast.dismiss('upload-progress'); toast.error('Cloudinary upload failed to complete')
+        cloudinaryUrl = driveData.driveLink
+        fileSize = driveData.fileSize || `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
+        toast.dismiss('upload-progress')
+        toast.success('Uploaded to Google Drive successfully! 🚀')
+      } catch (err: any) {
+        toast.dismiss('upload-progress')
+        toast.error(err.message || 'Drive upload error')
+        setUploading(false)
         return
       }
+    } else {
+      try {
+        // Determine the cloud folder path
+        const subject = await fetch(`/api/admin/subjects/${subjectId}`).then(r => r.json()).catch(() => null)
+        const fileExtension = fileToUpload.name.split('.').pop()?.toLowerCase() || ''
+        const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(fileExtension)
+        const resourceType = isImage ? 'image' : 'raw'
 
-      const cloudinaryUrl = finalUrl
-      const fileSize = `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
+        // Build folder path (same pattern as original backend)
+        let typeFolder = ''
+        if (contentType === 'NOTE') {
+          typeFolder = noteType.toLowerCase()
+        } else {
+          typeFolder = 'past-papers'
+        }
+        const folder = `tu-notes-hub/${typeFolder}`
+
+        // Step 1: Get upload signature from our backend
+        toast.loading('Preparing upload...', { toastId: 'upload-progress' })
+        const sigRes = await fetch('/api/upload/signature', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ folder })
+        })
+        if (!sigRes.ok) {
+          const err = await sigRes.json()
+          toast.dismiss('upload-progress'); toast.error(err.error || 'Failed to get upload signature')
+          setUploading(false)
+          return
+        }
+        const { timestamp, signature, cloudName, apiKey, folder: signedFolder } = await sigRes.json()
+
+        // Step 2: Upload directly to Cloudinary using chunked upload
+        toast.loading('Uploading file to cloud...', { toastId: 'upload-progress' })
+        
+        const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
+        const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
+        let finalUrl = ''
+        
+        for (let start = 0; start < fileToUpload.size; start += chunkSize) {
+          const end = Math.min(start + chunkSize, fileToUpload.size)
+          const chunk = fileToUpload.slice(start, end)
+          
+          const cloudForm = new FormData()
+          cloudForm.append('file', chunk)
+          cloudForm.append('api_key', apiKey)
+          cloudForm.append('timestamp', String(timestamp))
+          cloudForm.append('signature', signature)
+          cloudForm.append('folder', signedFolder)
+          
+          const cloudRes = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+            { 
+              method: 'POST', 
+              headers: {
+                'X-Unique-Upload-Id': uniqueUploadId,
+                'Content-Range': `bytes ${start}-${end - 1}/${fileToUpload.size}`
+              },
+              body: cloudForm 
+            }
+          )
+          const cloudData = await cloudRes.json()
+          
+          if (!cloudRes.ok) {
+            toast.dismiss('upload-progress'); toast.error(cloudData.error?.message || 'Cloudinary upload failed')
+            setUploading(false)
+            return
+          }
+          if (cloudData.secure_url) {
+            finalUrl = cloudData.secure_url
+          }
+        }
+
+        if (!finalUrl) {
+          toast.dismiss('upload-progress'); toast.error('Cloudinary upload failed to complete')
+          setUploading(false)
+          return
+        }
+
+        cloudinaryUrl = finalUrl
+        fileSize = `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
+      } catch (err: any) {
+        toast.dismiss('upload-progress')
+        toast.error(err.message || 'Upload error')
+        setUploading(false)
+        return
+      }
+    }
 
       // Step 3: Save metadata to our database
       toast.loading('Saving to database...', { toastId: 'upload-progress' })
