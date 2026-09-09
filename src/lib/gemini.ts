@@ -278,36 +278,8 @@ export async function callProjectValuationAI(
   prompt: string,
   systemInstruction?: string
 ): Promise<string> {
-  const messages: any[] = []
-  if (systemInstruction) {
-    messages.push({ role: 'system', content: systemInstruction })
-  }
-  messages.push({ role: 'user', content: prompt })
-
-  // 1. Try Groq's gpt-oss-120b first
-  try {
-    console.log('[Project Valuation] Trying Groq gpt-oss-120b')
-    const text = await callGroq('gpt-oss-120b', messages)
-    if (text) return text
-  } catch (err: any) {
-    console.warn('[Project Valuation] Groq failed, falling back to Nvidia', err?.message)
-  }
-
-  // 2. Try Nvidia
-  try {
-    console.log('[Project Valuation] Trying Nvidia nemotron')
-    const text = await callNvidia('nvidia/nemotron-3-ultra-550b-a55b', messages)
-    if (text) return text
-  } catch (err: any) {
-    console.warn('[Project Valuation] Nvidia failed, falling back to Gemini', err?.message)
-  }
-
-  // 3. Try Gemini
-  console.log('[Project Valuation] Trying Gemini fallback')
-  const geminiText = await callOfficialGemini(prompt, systemInstruction)
-  if (geminiText) return geminiText
-
-  throw new Error('All AI models failed for project valuation. Please check API keys.')
+  // Use the multi-provider race (Promise.any) which is much faster and more reliable
+  return callGemini(prompt, systemInstruction)
 }
 
 // Extract text from a document URL (PDF or Image) using Gemini
