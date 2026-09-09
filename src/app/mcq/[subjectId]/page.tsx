@@ -224,7 +224,15 @@ export default function McqPracticePage() {
         <AdUnit type="leaderboard" slot="mcq-top-banner" />
       </div>
 
-      <div style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
+      <div className="mcq-page-grid" style={{ flex: 1, display: 'grid', gap: '24px', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%', gridTemplateColumns: 'minmax(0, 1fr) 340px', alignItems: 'stretch' }}>
+        <style>{`
+          @media (max-width: 768px) {
+            .mcq-page-grid { grid-template-columns: 1fr !important; padding: 12px 16px !important; }
+            .mcq-sidebar { display: none !important; }
+            .mcq-paper-sheet { width: 100% !important; padding: 16px !important; }
+            .mcq-filter-bar { width: 100% !important; flex-wrap: wrap; }
+          }
+        `}</style>
 
         {/* Main Left Content Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -305,44 +313,21 @@ export default function McqPracticePage() {
             padding: '30px 0',
             borderRadius: '16px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            overflowX: 'auto'
+            overflowX: 'auto',
+            width: '100%',
+            boxSizing: 'border-box' as const
           }}>
-            {/* Filter Bar inside Document Viewer */}
-            {(years.length > 0 || categories.length > 0) && (
-              <div style={{ width: '210mm', margin: '0 auto 20px auto', background: '#383b3d', padding: '10px 16px', borderRadius: '6px', display: 'flex', gap: '12px', alignItems: 'center', color: '#fff', fontSize: '13px' }}>
-                <span style={{ fontWeight: 'bold' }}>🔍 Filter Questions:</span>
-                {years.length > 1 && (
-                  <select
-                    value={filterYear}
-                    onChange={e => setFilterYear(e.target.value)}
-                    style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid #555', background: '#2a2d2f', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>
-                    <option value="all">All Years</option>
-                    {years.map(y => <option key={y} value={String(y)}>{y}</option>)}
-                  </select>
-                )}
-                {categories.length > 1 && (
-                  <select
-                    value={filterCategory}
-                    onChange={e => setFilterCategory(e.target.value)}
-                    style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid #555', background: '#2a2d2f', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>
-                    <option value="all">All Categories</option>
-                    {categories.map(c => <option key={c} value={c as string}>{formatExamType(c as string)}</option>)}
-                  </select>
-                )}
-                <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#ccc' }}>
-                  Showing {filtered.length} of {mcqs.length}
-                </span>
-              </div>
-            )}
+
 
             {/* Official Tribhuvan University Exam Paper Page Sheet */}
-            <div style={{
+            <div className="mcq-paper-sheet" style={{
               width: '210mm',
+              maxWidth: '100%',
               minHeight: '297mm',
               margin: '0 auto',
               background: '#ffffff',
               padding: '25mm 20mm',
-              boxSizing: 'border-box',
+              boxSizing: 'border-box' as const,
               boxShadow: '0 0 15px rgba(0, 0, 0, 0.3)',
               fontFamily: '"Times New Roman", Times, serif',
               color: '#000000',
@@ -402,8 +387,8 @@ export default function McqPracticePage() {
           </div>
         </div>
 
-        {/* Right Sidebar Area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Right Sidebar Area - Hidden on mobile */}
+        <div className="mcq-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* Upgrade to Elite Banner */}
           <div className="glass-card" style={{ padding: '24px', background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.08))', border: '1px solid rgba(99,102,241,0.2)' }}>
@@ -418,12 +403,30 @@ export default function McqPracticePage() {
             </Link>
           </div>
 
-          {/* Sponsored Sidebar Ad Box */}
+          {/* Sponsored Sidebar Ad Boxes (4 Ads) */}
           <div className="glass-card" style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)' }}>
             <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
               Sponsored Advertisement
             </p>
-            <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad" />
+            <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad-1" />
+          </div>
+          <div className="glass-card" style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)' }}>
+            <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
+              Sponsored Advertisement
+            </p>
+            <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad-2" />
+          </div>
+          <div className="glass-card" style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)' }}>
+            <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
+              Sponsored Advertisement
+            </p>
+            <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad-3" />
+          </div>
+          <div className="glass-card" style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)' }}>
+            <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
+              Sponsored Advertisement
+            </p>
+            <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad-4" />
           </div>
 
         </div>
