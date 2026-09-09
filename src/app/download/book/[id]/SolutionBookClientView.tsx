@@ -227,11 +227,11 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
             
             {/* LEFT DETAILS & TITLE */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="badge badge-primary" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📄 TU OFFICIAL RESOURCE
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+                <span className="badge badge-primary" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '4px 10px' }}>
+                  TU OFFICIAL RESOURCE
                 </span>
-                <span className="badge badge-free" style={{ fontSize: '11px' }}>
+                <span className="badge" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', padding: '4px 10px', background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px' }}>
                   {facultyUpper} {semLabel}
                 </span>
               </div>
@@ -258,46 +258,44 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
           </div>
 
           {/* SHARE RESOURCE BAR */}
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-3)' }}>Share Resource:</span>
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', display: 'block', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Share Resource</span>
             
-            <a
-              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${book.title} - ${shareUrl}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-sm"
-              style={{ background: '#128c7e', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none' }}
-            >
-              💬 WhatsApp
-            </a>
+            <div className="grid grid-cols-4 md:flex md:flex-wrap gap-2 md:gap-3">
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${book.title} - ${shareUrl}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#25D366]/10 md:bg-[#128c7e] border border-[#25D366]/20 md:border-transparent text-[#25D366] md:text-white"
+              >
+                <span>WhatsApp</span>
+              </a>
 
-            <a
-              href={`viber://forward?text=${encodeURIComponent(`${book.title} - ${shareUrl}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-sm"
-              style={{ background: '#7360f2', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none' }}
-            >
-              📱 Viber
-            </a>
+              <a
+                href="https://www.instagram.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#E1306C]/10 md:bg-[#E1306C] border border-[#E1306C]/20 md:border-transparent text-[#E1306C] md:text-white"
+              >
+                <span>Instagram</span>
+              </a>
 
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-sm"
-              style={{ background: '#1877f2', color: '#fff', textDecoration: 'none', fontWeight: 600, border: 'none' }}
-            >
-              🔵 Facebook
-            </a>
+              <a
+                href={`fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#00B2FF]/10 md:bg-[#00B2FF] border border-[#00B2FF]/20 md:border-transparent text-[#00B2FF] md:text-white"
+              >
+                <span>Messenger</span>
+              </a>
 
-            <button
-              onClick={handleCopyLink}
-              className="btn btn-sm"
-              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 600 }}
-            >
-              🔗 {copied ? 'Copied!' : 'Copy Link'}
-            </button>
+              <button
+                onClick={handleCopyLink}
+                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold transition-all bg-white/5 md:bg-white/10 border border-white/10 text-gray-300 md:text-white"
+              >
+                <span>{copied ? 'Copied' : 'Copy'}</span>
+              </button>
+            </div>
           </div>
         </div>
 

@@ -233,7 +233,7 @@ export default function McqPracticePage() {
           <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <span className="badge badge-semester" style={{ marginBottom: '6px' }}>📄 TU OFFICIAL RESOURCE</span>
+                <span className="badge badge-semester" style={{ marginBottom: '6px' }}>TU OFFICIAL RESOURCE</span>
                 <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--clr-text-1)', margin: 0 }}>
                   {cleanTitle} ({subject.code}) — MCQ Answers
                 </h2>
@@ -252,45 +252,47 @@ export default function McqPracticePage() {
             </div>
 
             {/* Social Share Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '14px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600 }}>Share Resource:</span>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '14px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600, display: 'block', marginBottom: '10px' }}>Share Resource:</span>
               
-              <a
-                href={`https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(currentUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', background: 'rgba(37,211,102,0.12)', color: '#25D366', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}
-              >
-                💬 WhatsApp
-              </a>
+              <div className="grid grid-cols-4 md:flex md:flex-wrap gap-2 md:gap-3">
+                <a
+                  href={`https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(currentUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#25D366]/10 md:bg-[#128c7e] border border-[#25D366]/20 md:border-transparent text-[#25D366] md:text-white"
+                >
+                  <span>WhatsApp</span>
+                </a>
 
-              <a
-                href={`viber://forward?text=${shareText}%20${encodeURIComponent(currentUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', background: 'rgba(115,114,242,0.12)', color: '#7372F2', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}
-              >
-                📱 Viber
-              </a>
+                <a
+                  href="https://www.instagram.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#E1306C]/10 md:bg-[#E1306C] border border-[#E1306C]/20 md:border-transparent text-[#E1306C] md:text-white"
+                >
+                  <span>Instagram</span>
+                </a>
 
-              <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', background: 'rgba(24,119,242,0.12)', color: '#1877F2', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}
-              >
-                🔵 Facebook
-              </a>
+                <a
+                  href={`fb-messenger://share/?link=${encodeURIComponent(currentUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#00B2FF]/10 md:bg-[#00B2FF] border border-[#00B2FF]/20 md:border-transparent text-[#00B2FF] md:text-white"
+                >
+                  <span>Messenger</span>
+                </a>
 
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(currentUrl)
-                  alert('Link copied to clipboard!')
-                }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', color: 'var(--clr-text-2)', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
-              >
-                🔗 Copy Link
-              </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentUrl)
+                    alert('Link copied to clipboard!')
+                  }}
+                  className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold transition-all bg-white/5 md:bg-white/10 border border-white/10 text-gray-300 md:text-white"
+                >
+                  <span>Copy Link</span>
+                </button>
+              </div>
             </div>
           </div>
 

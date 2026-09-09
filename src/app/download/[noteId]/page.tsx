@@ -370,7 +370,7 @@ export default function DownloadPage() {
           <div className="glass-card mobile-dl-card-outer" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)' }}>
             <div className="mobile-dl-card-inner" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: '20px' }}>
               <div style={{ flex: 1 }}>
-                <span className="mobile-dl-badge" style={{ display: 'inline-flex', marginBottom: '10px', fontSize: '11px', fontWeight: 800, padding: '4px 10px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px', letterSpacing: '0.05em' }}>📄 TU OFFICIAL RESOURCE</span>
+                <span className="mobile-dl-badge" style={{ display: 'inline-flex', marginBottom: '10px', fontSize: '11px', fontWeight: 800, padding: '4px 10px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px', letterSpacing: '0.05em' }}>TU OFFICIAL RESOURCE</span>
                 <h2 className="mobile-dl-title" style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>{note?.title ? note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '') : 'Loading document...'}</h2>
               </div>
 
@@ -410,7 +410,7 @@ export default function DownloadPage() {
                     background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25D366', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
-                  <span className="mobile-dl-share-icon"></span> <span>WhatsApp</span>
+                  <span>WhatsApp</span>
                 </a>
 
                 {/* Instagram Share */}
@@ -424,21 +424,21 @@ export default function DownloadPage() {
                     background: 'rgba(225,48,108,0.1)', border: '1px solid rgba(225,48,108,0.2)', color: '#E1306C', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
-                  <span className="mobile-dl-share-icon"></span> <span>Instagram</span>
+                  <span>Instagram</span>
                 </a>
 
-                {/* Facebook Share */}
+                {/* Messenger Share */}
                 <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
+                  href={`fb-messenger://share/?link=${encodeURIComponent(currentUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mobile-dl-share-btn"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
-                    background: 'rgba(24,119,242,0.1)', border: '1px solid rgba(24,119,242,0.2)', color: '#1877F2', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
+                    background: 'rgba(0,178,255,0.1)', border: '1px solid rgba(0,178,255,0.2)', color: '#00B2FF', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
-                  <span className="mobile-dl-share-icon"></span> <span>Facebook</span>
+                  <span>Messenger</span>
                 </a>
 
                 {/* Copy Link button */}
@@ -453,7 +453,7 @@ export default function DownloadPage() {
                     background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', fontSize: '13px', fontWeight: 700, cursor: 'pointer'
                   }}
                 >
-                  <span className="mobile-dl-share-icon"></span> <span>Copy Link</span>
+                  <span>Copy Link</span>
                 </button>
               </div>
             </div>
