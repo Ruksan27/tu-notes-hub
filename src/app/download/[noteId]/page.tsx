@@ -406,8 +406,8 @@ export default function DownloadPage() {
                   rel="noopener noreferrer"
                   className="mobile-dl-share-btn"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
-                    background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25D366', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '12px', borderRadius: '8px',
+                    background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25D366', fontSize: '14px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
                   <span>WhatsApp</span>
@@ -420,8 +420,8 @@ export default function DownloadPage() {
                   rel="noopener noreferrer"
                   className="mobile-dl-share-btn"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
-                    background: 'rgba(225,48,108,0.1)', border: '1px solid rgba(225,48,108,0.2)', color: '#E1306C', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '12px', borderRadius: '8px',
+                    background: 'rgba(225,48,108,0.1)', border: '1px solid rgba(225,48,108,0.2)', color: '#E1306C', fontSize: '14px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
                   <span>Instagram</span>
@@ -434,8 +434,8 @@ export default function DownloadPage() {
                   rel="noopener noreferrer"
                   className="mobile-dl-share-btn"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
-                    background: 'rgba(0,178,255,0.1)', border: '1px solid rgba(0,178,255,0.2)', color: '#00B2FF', fontSize: '13px', fontWeight: 700, textDecoration: 'none'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '12px', borderRadius: '8px',
+                    background: 'rgba(0,178,255,0.1)', border: '1px solid rgba(0,178,255,0.2)', color: '#00B2FF', fontSize: '14px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
                   <span>Messenger</span>
@@ -449,8 +449,8 @@ export default function DownloadPage() {
                   }}
                   className="mobile-dl-share-btn"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', fontSize: '13px', fontWeight: 700, cursor: 'pointer'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '12px', borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--clr-text-2)', fontSize: '14px', fontWeight: 700, cursor: 'pointer'
                   }}
                 >
                   <span>Copy Link</span>

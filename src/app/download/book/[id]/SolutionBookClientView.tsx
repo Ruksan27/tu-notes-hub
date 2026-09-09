@@ -266,7 +266,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
                 href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${book.title} - ${shareUrl}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#25D366]/10 md:bg-[#128c7e] border border-[#25D366]/20 md:border-transparent text-[#25D366] md:text-white"
+                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-3 p-2 md:py-2 md:px-5 rounded-lg md:rounded-lg text-[10px] md:text-sm font-bold no-underline transition-all bg-[#25D366]/10 md:bg-[#128c7e] border border-[#25D366]/20 md:border-transparent text-[#25D366] md:text-white"
               >
                 <span>WhatsApp</span>
               </a>
@@ -275,7 +275,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
                 href="https://www.instagram.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#E1306C]/10 md:bg-[#E1306C] border border-[#E1306C]/20 md:border-transparent text-[#E1306C] md:text-white"
+                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-3 p-2 md:py-2 md:px-5 rounded-lg md:rounded-lg text-[10px] md:text-sm font-bold no-underline transition-all bg-[#E1306C]/10 md:bg-[#E1306C] border border-[#E1306C]/20 md:border-transparent text-[#E1306C] md:text-white"
               >
                 <span>Instagram</span>
               </a>
@@ -284,14 +284,14 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
                 href={`fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold no-underline transition-all bg-[#00B2FF]/10 md:bg-[#00B2FF] border border-[#00B2FF]/20 md:border-transparent text-[#00B2FF] md:text-white"
+                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-3 p-2 md:py-2 md:px-5 rounded-lg md:rounded-lg text-[10px] md:text-sm font-bold no-underline transition-all bg-[#00B2FF]/10 md:bg-[#00B2FF] border border-[#00B2FF]/20 md:border-transparent text-[#00B2FF] md:text-white"
               >
                 <span>Messenger</span>
               </a>
 
               <button
                 onClick={handleCopyLink}
-                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-2 p-2 md:py-1.5 md:px-3 rounded-lg md:rounded-md text-[10px] md:text-xs font-bold transition-all bg-white/5 md:bg-white/10 border border-white/10 text-gray-300 md:text-white"
+                className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-3 p-2 md:py-2 md:px-5 rounded-lg md:rounded-lg text-[10px] md:text-sm font-bold transition-all bg-white/5 md:bg-white/10 border border-white/10 text-gray-300 md:text-white"
               >
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
