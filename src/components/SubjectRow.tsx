@@ -586,12 +586,15 @@ export default function SubjectRow({
                   {/* Blurred preview cards always shown */}
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px', filter: isEliteAI ? 'none' : 'blur(6px)', userSelect: isEliteAI ? 'auto' : 'none', pointerEvents: isEliteAI ? 'auto' : 'none' }}>
                     {cheatsheets.map(cs => (
-                      <motion.div key={cs.id} variants={cardItemVariants} className="glass-card" style={{ padding: '16px', margin: 0, borderRadius: '12px', background: 'rgba(99,102,241,0.06)', borderColor: 'rgba(99,102,241,0.2)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', margin: 0 }}>{cs.title}</p>
-                          <span className="badge badge-elite" style={{ fontSize: '9px' }}>ELITE AI ONLY</span>
+                      <motion.div key={cs.id} variants={cardItemVariants} className="glass-card" style={{ padding: '18px', margin: 0, borderRadius: '14px', background: 'linear-gradient(145deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.03) 100%)', border: '1px solid rgba(99,102,241,0.3)', boxShadow: '0 4px 20px rgba(99,102,241,0.08)', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.8), transparent)', opacity: 0.7 }} />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+                          <div style={{ alignSelf: 'flex-start' }}>
+                            <span className="badge badge-elite" style={{ fontSize: '9px', padding: '4px 10px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px', letterSpacing: '0.05em', borderRadius: '20px', boxShadow: '0 2px 8px rgba(99,102,241,0.2)' }}>✨ ELITE AI ONLY</span>
+                          </div>
+                          <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-text-1)', margin: 0, lineHeight: 1.4 }}>{cs.title}</p>
                         </div>
-                        {cs.content && <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{cs.content}</p>}
+                        {cs.content && <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5 }}>{cs.content}</p>}
                         
                         {/* Attached Files List */}
                         {cs.files && Array.isArray(cs.files) && cs.files.length > 0 && (
