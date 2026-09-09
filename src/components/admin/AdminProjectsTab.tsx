@@ -921,10 +921,28 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                 <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-4">
                   <p className="text-[10px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Pricing</p>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className={LABEL_CLS}>Price (Rs.) *</label>
+                      <label className={LABEL_CLS}>Original Price (Rs.) *</label>
                       <input type="number" required min={0} className={INPUT_CLS} value={formData.originalPrice} onChange={e => setFormData({ ...formData, originalPrice: Number(e.target.value) })} />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLS}>Final Price (Rs.)</label>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        className={INPUT_CLS} 
+                        value={calcDiscounted(formData.originalPrice, formData.discountPercentage)} 
+                        onChange={e => {
+                          const newFinal = Number(e.target.value);
+                          if (formData.originalPrice > 0 && newFinal <= formData.originalPrice) {
+                            const newDiscount = Math.round(((formData.originalPrice - newFinal) / formData.originalPrice) * 100);
+                            setFormData({ ...formData, discountPercentage: newDiscount });
+                          } else if (newFinal > formData.originalPrice) {
+                            setFormData({ ...formData, originalPrice: newFinal, discountPercentage: 0 });
+                          }
+                        }} 
+                      />
                     </div>
                     <div>
                       <label className={LABEL_CLS}>Discount %</label>
