@@ -107,17 +107,38 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ questionText, chatHistory: [] }),
     })
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) {
-          setError(data.error)
+      .then(async res => {
+        const contentType = res.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json()
+          if (data.error) setError(data.error)
+          else {
+            setInitialAnswer(data.answer)
+            setFromCache(data.fromCache)
+          }
+          setLoading(false)
         } else {
-          setInitialAnswer(data.answer)
-          setFromCache(data.fromCache)
+          // Streaming response
+          setFromCache(res.headers.get('X-From-Cache') === 'true')
+          const reader = res.body?.getReader()
+          if (!reader) throw new Error('No reader')
+          const decoder = new TextDecoder()
+          let done = false
+          while (!done) {
+            const { value, done: readerDone } = await reader.read()
+            done = readerDone
+            if (value) {
+              const chunk = decoder.decode(value, { stream: true })
+              setInitialAnswer(prev => prev + chunk)
+            }
+          }
+          setLoading(false)
         }
       })
-      .catch(() => setError('Network error. Please try again.'))
-      .finally(() => setLoading(false))
+      .catch(() => {
+        setError('Network error. Please try again.')
+        setLoading(false)
+      })
   }, [isOpen, questionText])
 
   // Auto-scroll inside chat container ONLY (does not scroll main page/window)
@@ -156,12 +177,34 @@ export default function AiAnswerModal({ isOpen, onClose, questionText }: AiAnswe
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questionText, chatHistory: newHistory }),
       })
-      const data = await res.json()
-
-      if (data.error) {
-        setChatHistory(prev => [...prev, { role: 'model', text: `❌ ${data.error}` }])
+      
+      const contentType = res.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json()
+        if (data.error) {
+          setChatHistory(prev => [...prev, { role: 'model', text: `❌ ${data.error}` }])
+        } else {
+          setChatHistory(prev => [...prev, { role: 'model', text: data.answer }])
+        }
       } else {
-        setChatHistory(prev => [...prev, { role: 'model', text: data.answer }])
+        // Streaming response
+        setChatHistory(prev => [...prev, { role: 'model', text: '' }])
+        const reader = res.body?.getReader()
+        if (!reader) throw new Error('No reader')
+        const decoder = new TextDecoder()
+        let done = false
+        while (!done) {
+          const { value, done: readerDone } = await reader.read()
+          done = readerDone
+          if (value) {
+            const chunk = decoder.decode(value, { stream: true })
+            setChatHistory(prev => {
+              const updated = [...prev]
+              updated[updated.length - 1].text += chunk
+              return updated
+            })
+          }
+        }
       }
     } catch {
       setChatHistory(prev => [...prev, { role: 'model', text: '❌ Network error. Please try again.' }])

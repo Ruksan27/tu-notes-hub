@@ -99,25 +99,49 @@ Please answer the student's latest follow-up question in a helpful, concise mann
 
     const systemInstruction = 'You are a helpful TU Nepal university professor. Always respond in English unless the student explicitly asks for Nepali.'
 
-    // --- Call AI (Gemini with 3x retry + Groq fallback) ---
-    const answer = await callGemini(prompt, systemInstruction)
+    // --- Call AI (Gemini Stream) ---
+    // We dynamically import here to ensure the stream logic has access to the updated function
+    const { callGeminiStream } = await import('@/lib/gemini')
+    const streamGenerator = callGeminiStream(prompt, systemInstruction)
 
-    if (!answer) {
-      return NextResponse.json(
-        { error: 'AI बाट उत्तर ल्याउन समस्या भयो। कृपया पुनः प्रयास गर्नुहोस्।' },
-        { status: 503 }
-      )
-    }
+    // Create a ReadableStream
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        let fullAnswer = ''
+        try {
+          for await (const chunk of streamGenerator) {
+            fullAnswer += chunk
+            controller.enqueue(encoder.encode(chunk))
+          }
+          
+          // --- Save to cache (only initial answers) ---
+          if (isInitialQuestion && fullAnswer.trim()) {
+             ensureCacheTable()
+              .then(() => saveCachedAnswer(questionHash, questionText, fullAnswer))
+              .catch(e => console.error('[ensureCacheTable / Cache Save Error]', e))
+          }
+        } catch (error: any) {
+          console.error('[AI Stream Error]', error)
+          // If we haven't sent anything yet, we could potentially send an error message
+          if (!fullAnswer) {
+             controller.enqueue(encoder.encode('\n\n❌ AI बाट उत्तर ल्याउन समस्या भयो। कृपया पुनः प्रयास गर्नुहोस्।'))
+          }
+        } finally {
+          controller.close()
+        }
+      }
+    })
 
-    // --- Save to cache (only initial answers) ---
-    if (isInitialQuestion && answer) {
-      await ensureCacheTable().catch(e => console.error('[ensureCacheTable]', e))
-      await saveCachedAnswer(questionHash, questionText, answer)
-    }
-
-    return NextResponse.json({ answer, fromCache: false })
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'X-From-Cache': 'false',
+        'Cache-Control': 'no-cache',
+      }
+    })
   } catch (error: any) {
-    console.error('[AI Solve Question]', error)
+    console.error('[AI Solve Question Error]', error)
     return NextResponse.json(
       { error: 'AI बाट उत्तर ल्याउन समस्या भयो। कृपया पुनः प्रयास गर्नुहोस्।' },
       { status: 500 }

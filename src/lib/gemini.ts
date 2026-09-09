@@ -187,6 +187,50 @@ export async function callGroq(
   return ''
 }
 
+export async function* callGeminiStream(
+  prompt: string,
+  systemInstruction?: string
+): AsyncGenerator<string, void, unknown> {
+  const keys = getValidKeys()
+  if (keys.length === 0) throw new Error('No API keys available')
+
+  const modelsToTry = [
+    'gemini-3.5-flash-lite',
+    'gemini-1.5-flash',
+  ]
+
+  for (let i = 0; i < modelsToTry.length; i++) {
+    const model = modelsToTry[i]
+    const apiKey = keys[i % keys.length]
+    const genAI = new GoogleGenerativeAI(apiKey)
+    
+    const geminiModel = genAI.getGenerativeModel({
+      model: model,
+      systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
+    })
+
+    try {
+      const parts = [{ text: prompt }]
+      const result = await geminiModel.generateContentStream(parts)
+      
+      let gotChunk = false
+      for await (const chunk of result.stream) {
+        gotChunk = true
+        const chunkText = chunk.text()
+        if (chunkText) {
+          yield chunkText
+        }
+      }
+      
+      if (gotChunk) return // Successfully streamed all chunks
+    } catch (e: any) {
+      console.warn(`[Gemini SDK Stream] Model ${model} failed, trying next...`, e?.message || e)
+    }
+  }
+  
+  throw new Error('All AI models failed. Please check your API keys or try again later.')
+}
+
 export async function callGemini(
   prompt: string,
   systemInstruction?: string,
