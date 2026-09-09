@@ -54,13 +54,14 @@ async function callOfficialGemini(
       }
     }
     
+    // Valid Google Generative AI Models
     const models = [
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.8-flash',
-      'gemini-2.5-flash'
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b',
+      'gemini-1.5-pro'
     ]
     
+    // Fallback sequentially instead of concurrently to prevent 429 Too Many Requests
     for (const model of models) {
       try {
         console.log(`[Gemini SDK] Trying model: ${model}`)
@@ -70,11 +71,14 @@ async function callOfficialGemini(
         })
         const result = await geminiModel.generateContent(parts)
         const text = result.response.text()
-        if (text) return text
+        if (text) {
+          console.log(`[Gemini SDK] ✅ ${model} answered!`)
+          return text
+        }
       } catch (e: any) {
         console.warn(`[Gemini SDK Error for ${model}]:`, e?.message || e)
-        // Add 2 second delay on error to prevent rate limit cascades (503/429)
-        await new Promise((res) => setTimeout(res, 2000))
+        // Add 1 second delay on error to prevent rate limit cascades
+        await new Promise((res) => setTimeout(res, 1000))
       }
     }
   } catch (e) {
@@ -98,8 +102,7 @@ async function callNvidia(
   
   const baseUrl = `https://integrate.api.nvidia.com/v1/chat/completions`
   const controller = new AbortController()
-  const actualTimeout = modelName.includes('reasoning') || modelName.includes('deepseek-r1') ? 120_000 : timeoutMs
-  const timer = setTimeout(() => controller.abort(), actualTimeout)
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const res = await fetch(baseUrl, {
@@ -111,16 +114,6 @@ async function callNvidia(
       body: JSON.stringify({
         model: modelName,
         messages: messages,
-        ...(modelName === 'moonshotai/kimi-k3' ? {
-          max_tokens: 16384,
-          seed: 0,
-          temperature: 1,
-          reasoning_effort: "max"
-        } : modelName === 'deepseek-ai/deepseek-v4-pro-0813' ? {
-          max_tokens: 16384,
-          temperature: 1,
-          top_p: 0.95
-        } : {})
       }),
       signal: controller.signal,
     })
@@ -198,10 +191,19 @@ export async function callGemini(
   systemInstruction?: string,
   images?: { base64: string, mimeType: string }[]
 ): Promise<string> {
-  const geminiText = await callOfficialGemini(prompt, systemInstruction, images)
-  if (geminiText) return geminiText
+  
+  // We race Official Gemini vs Groq vs Nvidia for the fastest response!
+  // This solves the Vercel 504 Timeout and High Demand issues.
+  const promises: Promise<string>[] = []
+  
+  // 1. Official Gemini Promise
+  promises.push((async () => {
+    const text = await callOfficialGemini(prompt, systemInstruction, images)
+    if (text) return text
+    throw new Error('Gemini failed')
+  })())
 
-  // Build OpenAI-compatible messages array for Nvidia fallback
+  // Build OpenAI-compatible messages array for fallback providers
   const messages: any[] = []
   if (systemInstruction) {
     messages.push({ role: 'system', content: systemInstruction })
@@ -222,54 +224,44 @@ export async function callGemini(
   userContent.push({ type: 'text', text: prompt })
   messages.push({ role: 'user', content: userContent })
 
-  let MODELS_TO_TRY: string[] = []
-  if (hasImages) {
-    // Models for images/vision tasks
-    MODELS_TO_TRY = ['meta/llama-3.2-11b-vision-instruct', 'moonshotai/kimi-k3']
-  } else {
-    // Models for text/answer tasks
-    MODELS_TO_TRY = [
-      'nvidia/nemotron-3-ultra-550b-a55b',
-      'nvidia/nemotron-3.5-lightning-30b-a3b',
-      'deepseek-ai/deepseek-v4-pro-0813'
-    ]
+  // 2. Groq Promise (Lightning fast, using real valid model names)
+  if (!hasImages) { // Groq vision is limited, use text models
+    promises.push((async () => {
+      // Valid Groq models
+      const models = ['llama-3.1-70b-versatile', 'llama3-8b-8192']
+      for (const m of models) {
+        try {
+          const text = await callGroq(m, messages)
+          if (text) return text
+        } catch (e) { continue }
+      }
+      throw new Error('Groq failed')
+    })())
   }
 
-  for (const modelName of MODELS_TO_TRY) {
-    try {
-      console.log(`[Nvidia AI] Trying model: ${modelName}`)
-      const text = await callNvidia(modelName, messages)
-      if (text) return text
-    } catch (error: any) {
-      const status = error?.status ?? 0
-      console.warn(`[Nvidia Model ${modelName} Failed (${status}): ${error?.message?.substring(0, 80)}]`)
-      continue 
+  // 3. Nvidia Promise (Valid models)
+  promises.push((async () => {
+    const models = hasImages 
+      ? ['meta/llama-3.2-11b-vision-instruct']
+      : ['meta/llama-3.1-70b-instruct', 'meta/llama-3.1-8b-instruct']
+      
+    for (const m of models) {
+      try {
+        const text = await callNvidia(m, messages)
+        if (text) return text
+      } catch (e) { continue }
     }
-  }
-  
+    throw new Error('Nvidia failed')
+  })())
 
-  console.warn(`[Nvidia AI] All models failed. Falling back to Groq...`)
-
-  let GROQ_MODELS_TO_TRY: string[] = []
-  if (hasImages) {
-    GROQ_MODELS_TO_TRY = ['qwen/qwen3.8-27b', 'qwen/qwen3.6-27b']
-  } else {
-    GROQ_MODELS_TO_TRY = ['gpt-oss-120b', 'gpt-oss-20b']
+  // RACE THEM! Whichever model replies first, wins!
+  try {
+    const fastestAnswer = await Promise.any(promises)
+    return fastestAnswer
+  } catch (aggregateError) {
+    console.error('[Multi-AI Race] All providers failed.', aggregateError)
+    throw new Error('All AI models failed. Please check your API keys or try again later.')
   }
-
-  for (const modelName of GROQ_MODELS_TO_TRY) {
-    try {
-      console.log(`[Groq AI] Trying model: ${modelName}`)
-      const text = await callGroq(modelName, messages)
-      if (text) return text
-    } catch (error: any) {
-      const status = error?.status ?? 0
-      console.warn(`[Groq Model ${modelName} Failed (${status}): ${error?.message?.substring(0, 80)}]`)
-      continue 
-    }
-  }
-  
-  throw new Error('All AI models failed. Please check your API keys or try again later.')
 }
 
 // Dedicated Multi-Provider Helper for High Reliability AI Tasks

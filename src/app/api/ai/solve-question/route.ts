@@ -10,6 +10,8 @@ import { getCachedAnswer, saveCachedAnswer, ensureCacheTable, hashQuestion } fro
 
 // Simple in-memory IP rate limit store
 // (resets on server restart — good enough for serverless)
+export const maxDuration = 60 // Allow 60s execution on Vercel to prevent AI timeout
+
 const ipRequestCounts = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT = 20      // max requests per window
 const RATE_WINDOW = 60_000 // 1 minute window
