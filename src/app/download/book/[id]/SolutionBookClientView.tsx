@@ -196,6 +196,13 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
     }
     if (viewMode === 'drive' && driveId) return driveEmbedUrl
     if (viewMode === 'gview') return gviewEmbedUrl
+    
+    // Fix: Cloudinary 'raw' URLs (PDFs/docs) auto-download in iframes if used directly.
+    // Force Google Docs Viewer for non-image Cloudinary files to prevent auto-download loop.
+    if (!isDrive && !isImage) {
+      return gviewEmbedUrl
+    }
+    
     return proxyEmbedUrl
   }
 

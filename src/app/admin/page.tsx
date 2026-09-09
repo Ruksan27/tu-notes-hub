@@ -2846,9 +2846,23 @@ function UploadTab({ user }: { user?: any }) {
       if (contentType === 'NOTE') {
         if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title required'); setUploading(false); return }
         payload.title = noteTitle; payload.description = noteDescription; payload.noteType = noteType; payload.isPremium = isPremium; payload.author = author
-      } else {
+      } else if (contentType === 'PAST_PAPER') {
         if (!paperYear) { toast.dismiss('upload-progress'); toast.error('Year required'); setUploading(false); return }
         payload.year = paperYear; payload.examType = examType
+      } else if (contentType === 'CHEATSHEET') {
+        if (!sheetTitle) { toast.dismiss('upload-progress'); toast.error('Title required'); setUploading(false); return }
+        payload.title = sheetTitle;
+        payload.content = sheetContent || '';
+        payload.files = [{ url: normalizeDriveUrl(driveLink), name: "Google Drive File", size: "Drive Link", type: "DRIVE_LINK" }]
+      } else if (contentType === 'MCQ') {
+        if (!mcqYear) { toast.dismiss('upload-progress'); toast.error('Year required'); setUploading(false); return }
+        payload.contentType = 'NOTE'
+        payload.noteType = 'MCQ_FILE'
+        const currentSub = subjects.find(s => s.id === subjectId)
+        payload.title = `${currentSub?.title || 'MCQ'} Collection - ${mcqYear}`
+        payload.description = `MCQ file for ${currentSub?.title || 'Subject'}`
+        payload.isPremium = 'false'
+        payload.author = 'Admin'
       }
       try {
         const sr = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
@@ -3201,8 +3215,7 @@ function UploadTab({ user }: { user?: any }) {
           </div>
 
           {/* File Source Card */}
-          {contentType !== 'CHEATSHEET' && contentType !== 'MCQ' && (
-            <div className="admin-card p-6 sm:p-7 h-full">
+          <div className="admin-card p-6 sm:p-7 h-full">
               <div className="flex items-center gap-3 mb-6">
                 <div className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-sm shadow-md shadow-cyan-500/40">3</div>
                 <div>
@@ -3253,8 +3266,6 @@ function UploadTab({ user }: { user?: any }) {
                 </div>
               )}
             </div>
-          )}
-
         </div>
 
         {/* ── STEP 4: MATERIAL DETAILS & METADATA (Full Width Card) ── */}
@@ -3615,13 +3626,13 @@ function UploadTab({ user }: { user?: any }) {
                 <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">Cheatsheet Title *</label>
                 <input className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:bg-black/40 transition-all" placeholder="e.g. .NET Quick Revision Cheatsheet" required value={sheetTitle} onChange={e => setSheetTitle(e.target.value)} />
               </div>
-              <MultiFileDropZone 
+              {sourceType === 'FILE' && <MultiFileDropZone 
                 label="Attach Files (PDF, Images, Word, Docs, etc.)" 
                 accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.doc,.pptx,.ppt,.txt" 
                 files={sheetFiles} 
                 onFiles={setSheetFiles} 
                 hint="Select multiple documents or photos to attach" 
-              />
+              />}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Markdown Content / Description</label>
                 <textarea
@@ -3654,40 +3665,42 @@ function UploadTab({ user }: { user?: any }) {
               </div>
 
               {/* AI Image Upload Section */}
-              <div className="bg-gradient-to-br from-fuchsia-500/10 to-indigo-500/10 border border-fuchsia-500/30 rounded-2xl p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl">✨</span>
-                  <div>
-                    <h4 className="m-0 font-extrabold text-fuchsia-400">AI Vision OCR: Extract MCQs from Photo</h4>
-                    <p className="m-0 text-xs text-slate-400 mt-0.5">Upload a photo of a question paper to extract questions automatically.</p>
+              {sourceType === 'FILE' && (
+                <div className="bg-gradient-to-br from-fuchsia-500/10 to-indigo-500/10 border border-fuchsia-500/30 rounded-2xl p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-2xl">✨</span>
+                    <div>
+                      <h4 className="m-0 font-extrabold text-fuchsia-400">AI Vision OCR: Extract MCQs from Photo</h4>
+                      <p className="m-0 text-xs text-slate-400 mt-0.5">Upload a photo of a question paper to extract questions automatically.</p>
+                    </div>
                   </div>
-                </div>
-                
-                <MultiFileDropZone 
-                  label="Question Paper Photos (JPG, PNG, PDF)" 
-                  accept=".jpg,.jpeg,.png,.webp,.pdf" 
-                  files={mcqImageFiles} 
-                  onFiles={setMcqImageFiles} 
-                  hint="Select photos of paper pages" 
-                />
+                  
+                  <MultiFileDropZone 
+                    label="Question Paper Photos (JPG, PNG, PDF)" 
+                    accept=".jpg,.jpeg,.png,.webp,.pdf" 
+                    files={mcqImageFiles} 
+                    onFiles={setMcqImageFiles} 
+                    hint="Select photos of paper pages" 
+                  />
 
-                {mcqImageFiles.length > 0 && (
-                  <button 
-                    type="button" 
-                    onClick={handleGenerateMcqsFromImage}
-                    disabled={mcqImageGenerating || !subjectId}
-                    className="mt-4 w-full p-3 rounded-xl font-extrabold border-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-gradient-to-br from-fuchsia-500 to-indigo-500 text-white flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/30 hover:opacity-90 transition-all"
-                  >
-                    {mcqImageGenerating ? (
-                      <><span className="spinner w-4 h-4" /> Processing Images & Generating MCQs...</>
-                    ) : (
-                      <>✨ Auto-Generate MCQs from {mcqImageFiles.length} Photo(s)</>
-                    )}
-                  </button>
-                )}
-              </div>
+                  {mcqImageFiles.length > 0 && (
+                    <button 
+                      type="button" 
+                      onClick={handleGenerateMcqsFromImage}
+                      disabled={mcqImageGenerating || !subjectId}
+                      className="mt-4 w-full p-3 rounded-xl font-extrabold border-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-gradient-to-br from-fuchsia-500 to-indigo-500 text-white flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/30 hover:opacity-90 transition-all"
+                    >
+                      {mcqImageGenerating ? (
+                        <><span className="spinner w-4 h-4" /> Processing Images & Generating MCQs...</>
+                      ) : (
+                        <>✨ Auto-Generate MCQs from {mcqImageFiles.length} Photo(s)</>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
               
-              {mcqItems.map((mcq, qi) => (
+              {sourceType === 'FILE' && mcqItems.map((mcq, qi) => (
                 <div key={qi} className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-[13px] font-extrabold text-indigo-400">Question {qi + 1}</span>

@@ -642,7 +642,7 @@ export default function SubjectRow({
                     }}>
                       <div style={{ fontSize: '32px' }}>🔒</div>
                       <p style={{ fontSize: '15px', fontWeight: 800, color: '#fff', margin: 0 }}>Elite AI Plan Required</p>
-                      <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', margin: 0, textAlign: 'center', maxWidth: '240px' }}>
+                      <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', margin: 0, textAlign: 'center', maxWidth: '280px' }}>
                         Cheatsheets are exclusive to Elite AI members. Upgrade to unlock instant access.
                       </p>
                       <Link href="/pricing" style={{ textDecoration: 'none', marginTop: '4px' }}>
