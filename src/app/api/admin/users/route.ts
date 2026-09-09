@@ -172,15 +172,47 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    // Delete user from the database
-    // Note: Due to foreign key constraints, Prisma will handle cascading deletes
-    // if configured in schema.prisma, otherwise this will throw an error if the user has related records
-    // that don't have onDelete: Cascade.
-    await prisma.user.delete({
-      where: { id }
+    // Create or find a placeholder "Deleted User" to keep records intact
+    let placeholderUser = await prisma.user.findUnique({ where: { email: 'deleted@tunoteshub.com' } })
+    if (!placeholderUser) {
+      const bcrypt = await import('bcryptjs')
+      placeholderUser = await prisma.user.create({
+        data: {
+          name: 'Deleted User',
+          email: 'deleted@tunoteshub.com',
+          password: await bcrypt.hash(Math.random().toString(36), 10),
+          role: 'STUDENT'
+        }
+      })
+    }
+
+    // Delete user from the database in a transaction to handle non-cascaded relations
+    await prisma.$transaction(async (tx) => {
+      // 1. Reassign their payments to keep the record
+      await tx.payment.updateMany({ 
+        where: { userId: id },
+        data: { userId: placeholderUser!.id }
+      })
+      
+      // 2. Reassign their project orders to keep the record
+      await tx.projectOrder.updateMany({ 
+        where: { userId: id },
+        data: { userId: placeholderUser!.id }
+      })
+      
+      // 3. For any projects they listed as a seller, disconnect them (set sellerId to null)
+      await tx.projectItem.updateMany({
+        where: { sellerId: id },
+        data: { sellerId: null }
+      })
+
+      // 4. Finally, delete the user (which cascades to Cart, SellerProfile, ProjectReview)
+      await tx.user.delete({
+        where: { id }
+      })
     })
 
-    return NextResponse.json({ success: true, message: 'User deleted successfully' })
+    return NextResponse.json({ success: true, message: 'User deleted and records preserved successfully' })
   } catch (error: any) {
     console.error('[ADMIN_USERS_DELETE]', error)
     
