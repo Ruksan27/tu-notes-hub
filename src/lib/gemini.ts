@@ -32,15 +32,12 @@ async function callOfficialGemini(
   systemInstruction?: string,
   images?: { base64: string; mimeType: string }[]
 ): Promise<string> {
-  const apiKey = getNextApiKey()
-  if (!apiKey) return ''
+  const keys = getValidKeys()
+  if (keys.length === 0) return ''
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    
     // Construct parts array for the SDK
     const parts: any[] = []
-    
     parts.push({ text: prompt })
 
     if (images && images.length > 0) {
@@ -55,34 +52,38 @@ async function callOfficialGemini(
     }
     
     // Valid Google Generative AI Models
-    const models = [
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-8b',
-      'gemini-1.5-pro'
+    const modelsToRace = [
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.5-pro',
+      'gemini-1.5-flash', // Keep as final fallback
     ]
     
-    // Fallback sequentially instead of concurrently to prevent 429 Too Many Requests
-    for (const model of models) {
-      try {
-        console.log(`[Gemini SDK] Trying model: ${model}`)
-        const geminiModel = genAI.getGenerativeModel({
-          model: model,
-          systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
-        })
-        const result = await geminiModel.generateContent(parts)
-        const text = result.response.text()
-        if (text) {
-          console.log(`[Gemini SDK] ✅ ${model} answered!`)
-          return text
-        }
-      } catch (e: any) {
-        console.warn(`[Gemini SDK Error for ${model}]:`, e?.message || e)
-        // Add 1 second delay on error to prevent rate limit cascades
-        await new Promise((res) => setTimeout(res, 1000))
+    const promises = modelsToRace.map(async (model, index) => {
+      // Rotate through available API keys for each request
+      const apiKey = keys[index % keys.length]
+      const genAI = new GoogleGenerativeAI(apiKey)
+      
+      const geminiModel = genAI.getGenerativeModel({
+        model: model,
+        systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
+      })
+      
+      const result = await geminiModel.generateContent(parts)
+      const text = result.response.text()
+      if (text) {
+        console.log(`[Gemini SDK] ✅ ${model} answered!`)
+        return text
       }
-    }
-  } catch (e) {
-    console.error('[Gemini SDK init failed]', e)
+      throw new Error(`Empty response from ${model}`)
+    })
+
+    // RACE! Whichever Gemini model answers first without 503 error, wins!
+    const fastestResponse = await Promise.any(promises)
+    return fastestResponse
+
+  } catch (e: any) {
+    console.error('[Gemini SDK All Models Failed]', e?.message || e)
   }
   
   return ''
@@ -191,17 +192,10 @@ export async function callGemini(
   systemInstruction?: string,
   images?: { base64: string, mimeType: string }[]
 ): Promise<string> {
-  
-  // We race Official Gemini vs Groq vs Nvidia for the fastest response!
-  // This solves the Vercel 504 Timeout and High Demand issues.
-  const promises: Promise<string>[] = []
-  
-  // 1. Official Gemini Promise
-  promises.push((async () => {
-    const text = await callOfficialGemini(prompt, systemInstruction, images)
-    if (text) return text
-    throw new Error('Gemini failed')
-  })())
+  // 1. Try Official Gemini First
+  const geminiText = await callOfficialGemini(prompt, systemInstruction, images)
+  if (geminiText) return geminiText
+  console.warn('[Gemini] failed or returned empty, falling back to Nvidia')
 
   // Build OpenAI-compatible messages array for fallback providers
   const messages: any[] = []
@@ -224,44 +218,32 @@ export async function callGemini(
   userContent.push({ type: 'text', text: prompt })
   messages.push({ role: 'user', content: userContent })
 
-  // 2. Groq Promise (Lightning fast, using real valid model names)
-  if (!hasImages) { // Groq vision is limited, use text models
-    promises.push((async () => {
-      // Valid Groq models
-      const models = ['llama-3.1-70b-versatile', 'llama3-8b-8192']
-      for (const m of models) {
-        try {
-          const text = await callGroq(m, messages)
-          if (text) return text
-        } catch (e) { continue }
-      }
-      throw new Error('Groq failed')
-    })())
+  // 2. Fallback to Nvidia
+  const nvidiaModels = hasImages 
+    ? ['meta/llama-3.2-11b-vision-instruct']
+    : ['meta/llama-3.1-70b-instruct', 'meta/llama-3.1-8b-instruct']
+    
+  for (const m of nvidiaModels) {
+    try {
+      const text = await callNvidia(m, messages)
+      if (text) return text
+    } catch (e) { continue }
   }
+  console.warn('[Nvidia] failed or returned empty, falling back to Groq')
 
-  // 3. Nvidia Promise (Valid models)
-  promises.push((async () => {
-    const models = hasImages 
-      ? ['meta/llama-3.2-11b-vision-instruct']
-      : ['meta/llama-3.1-70b-instruct', 'meta/llama-3.1-8b-instruct']
-      
-    for (const m of models) {
+  // 3. Fallback to Groq
+  if (!hasImages) { // Groq vision is limited, use text models
+    const groqModels = ['llama-3.1-70b-versatile', 'llama3-8b-8192']
+    for (const m of groqModels) {
       try {
-        const text = await callNvidia(m, messages)
+        const text = await callGroq(m, messages)
         if (text) return text
       } catch (e) { continue }
     }
-    throw new Error('Nvidia failed')
-  })())
-
-  // RACE THEM! Whichever model replies first, wins!
-  try {
-    const fastestAnswer = await Promise.any(promises)
-    return fastestAnswer
-  } catch (aggregateError) {
-    console.error('[Multi-AI Race] All providers failed.', aggregateError)
-    throw new Error('All AI models failed. Please check your API keys or try again later.')
+    console.warn('[Groq] failed or returned empty')
   }
+
+  throw new Error('All AI models failed. Please check your API keys or try again later.')
 }
 
 // Dedicated Multi-Provider Helper for High Reliability AI Tasks
