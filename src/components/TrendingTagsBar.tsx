@@ -13,16 +13,8 @@ interface TrendingTag {
   targetKeyword: string
 }
 
-const DEFAULT_TAGS: TrendingTag[] = [
-  { id: '1', tag: '#BCA_5th_Sem_MLS', label: 'BCA 5th MLS Notes', category: 'Notes', volume: '14.2K', isHot: true, targetKeyword: 'BCA 5th Sem MLS Notes' },
-  { id: '2', tag: '#Django_Projects', label: 'Django Projects', category: 'Project', volume: '9.8K', isHot: true, targetKeyword: 'Django' },
-  { id: '3', tag: '#CSIT_DBMS_Notes', label: 'CSIT 3rd DBMS', category: 'Notes', volume: '11.5K', isHot: false, targetKeyword: 'CSIT 3rd Sem DBMS Notes' },
-  { id: '4', tag: '#MERN_Ecommerce', label: 'MERN Project', category: 'Project', volume: '18.4K', isHot: true, targetKeyword: 'MERN' },
-  { id: '5', tag: '#TU_Exam_Routine', label: 'Exam Routines', category: 'Routine', volume: '25.1K', isHot: true, targetKeyword: 'Exam Routine' },
-]
-
 export default function TrendingTagsBar() {
-  const [tags, setTags] = useState<TrendingTag[]>(DEFAULT_TAGS)
+  const [tags, setTags] = useState<TrendingTag[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -43,6 +35,8 @@ export default function TrendingTagsBar() {
       router.push(`/faculties?q=${encodeURIComponent(tag.targetKeyword)}`)
     }
   }
+
+  if (tags.length === 0) return null
 
   return (
     <div style={{
