@@ -16,6 +16,9 @@ interface Project {
   status: string
   adminNote: string | null
   sourceDriveLink: string | null
+  aiCalculatedPrice?: number | null
+  aiComplexityGrade?: string | null
+  aiValuationJson?: string | null
   _count?: { orders: number }
 }
 
@@ -299,6 +302,32 @@ export default function SellerCenterTab({ user }: { user: User }) {
                   {p.status === 'PENDING' && (
                     <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#fcd34d' }}>
                       ⏳ Awaiting admin approval
+                    </div>
+                  )}
+
+                  {/* AI Valuation Report */}
+                  {p.aiValuationJson && (
+                    <div style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '8px', padding: '12px', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '1px' }}>🚀 AI Valuation</span>
+                        <span style={{ fontSize: '10px', fontWeight: 800, color: '#fff', background: 'var(--clr-primary)', padding: '2px 8px', borderRadius: '4px' }}>{p.aiComplexityGrade}</span>
+                      </div>
+                      {(() => {
+                        try {
+                          const ai = JSON.parse(p.aiValuationJson)
+                          return (
+                            <div style={{ fontSize: '12px', color: 'var(--clr-text-2)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <p><span style={{ color: 'var(--clr-text-3)' }}>Suggested:</span> Rs. {ai.suggestedRange?.min} - {ai.suggestedRange?.max}</p>
+                              <div style={{ marginTop: '4px' }}>
+                                <span style={{ fontSize: '10px', color: 'var(--clr-text-3)', textTransform: 'uppercase', fontWeight: 700 }}>Why this price?</span>
+                                <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px', fontSize: '11px', color: 'var(--clr-text-2)' }}>
+                                  {ai.justificationList?.map((j: string, i: number) => <li key={i} style={{ marginBottom: '2px' }}>{j}</li>)}
+                                </ul>
+                              </div>
+                            </div>
+                          )
+                        } catch (e) { return null }
+                      })()}
                     </div>
                   )}
 

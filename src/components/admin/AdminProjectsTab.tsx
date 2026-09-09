@@ -22,6 +22,9 @@ interface ProjectItem {
   user: { id: string; name: string } | null
   sourceDriveLink: string | null
   adminDriveLink: string | null
+  aiCalculatedPrice?: number | null
+  aiComplexityGrade?: string | null
+  aiValuationJson?: string | null
   _count?: { orders: number }
 }
 
@@ -506,6 +509,32 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                               className="w-10 flex items-center justify-center rounded-lg bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20 active:scale-95 transition-all">
                               <Trash2 size={14} />
                             </button>
+                          </div>
+                        )}
+
+                        {/* AI Valuation Report */}
+                        {p.aiValuationJson && (
+                          <div className="bg-brand/5 border border-brand/20 rounded-xl p-3 mt-1 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-1.5"><Rocket size={12}/> AI Valuation</span>
+                              <span className="text-[10px] font-black text-white bg-brand px-2 py-0.5 rounded-md">{p.aiComplexityGrade}</span>
+                            </div>
+                            {(() => {
+                              try {
+                                const ai = JSON.parse(p.aiValuationJson)
+                                return (
+                                  <div className="text-xs text-text2 space-y-1">
+                                    <p><span className="text-text3">Suggested:</span> Rs. {ai.suggestedRange?.min} - {ai.suggestedRange?.max}</p>
+                                    <div className="mt-1">
+                                      <span className="text-text3 text-[10px] uppercase font-bold">Why this price?</span>
+                                      <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[11px] text-text2/80">
+                                        {ai.justificationList?.map((j: string, i: number) => <li key={i}>{j}</li>)}
+                                      </ul>
+                                    </div>
+                                  </div>
+                                )
+                              } catch (e) { return null }
+                            })()}
                           </div>
                         )}
 
