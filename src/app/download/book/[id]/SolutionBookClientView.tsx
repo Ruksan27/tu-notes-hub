@@ -191,9 +191,12 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
 
   // Get the correct embed URL based on viewMode
   const getActiveSourceUrl = () => {
+    // For Google Drive links, ALWAYS use Google Docs Viewer (gview) by default
+    // This bypasses 'Tracking Prevention' (third-party cookie blocking) in Edge/Safari!
     if (isDrive && driveId) {
-      return driveEmbedUrl
+      return gviewEmbedUrl
     }
+
     if (viewMode === 'drive' && driveId) return driveEmbedUrl
     if (viewMode === 'gview') return gviewEmbedUrl
 

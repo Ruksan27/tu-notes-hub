@@ -2706,8 +2706,9 @@ function UploadTab({ user }: { user?: any }) {
         fileSize = 'Drive'
       } else {
         if (!noteFile) { toast.error('Please choose a file'); setUploading(false); return }
+        
         if (noteFile.size > 10 * 1024 * 1024) {
-          toast.loading(`File is ${(noteFile.size / 1024 / 1024).toFixed(1)}MB (>10MB). Uploading directly to Google Drive... ☁️`, { toastId: 'upload-progress' })
+          toast.loading(`File is ${(noteFile.size / 1024 / 1024).toFixed(1)}MB (>10MB). Auto-uploading to Google Drive... ☁️`, { toastId: 'upload-progress' })
           try {
             const formData = new FormData()
             formData.append('file', noteFile)
@@ -2722,7 +2723,7 @@ function UploadTab({ user }: { user?: any }) {
             cloudinaryUrl = driveData.driveLink
             fileSize = driveData.fileSize || `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
             toast.dismiss('upload-progress')
-            toast.success('Uploaded to Google Drive successfully! 🚀')
+            toast.success('Uploaded to Google Drive automatically! 🚀')
           } catch (err: any) {
             toast.dismiss('upload-progress')
             toast.error(err.message || 'Drive upload error')
@@ -2730,7 +2731,7 @@ function UploadTab({ user }: { user?: any }) {
             return
           }
         } else {
-          toast.loading('Uploading...', { toastId: 'upload-progress' })
+          toast.loading(`Uploading file (${(noteFile.size / 1024 / 1024).toFixed(1)}MB)...`, { toastId: 'upload-progress' })
           try {
             const sigRes = await fetch('/api/upload/signature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'tu-notes-hub/solution-books' }) })
             if (!sigRes.ok) { toast.dismiss('upload-progress'); toast.error('Signature error'); setUploading(false); return }
@@ -2739,8 +2740,8 @@ function UploadTab({ user }: { user?: any }) {
             const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
             const rt = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'raw'
             
-            // Chunked upload implementation
-            const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
+            // Chunked upload implementation (bypasses server size limits up to 100MB)
+            const chunkSize = 6 * 1024 * 1024
             const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
             let finalUrl = ''
             
@@ -2913,7 +2914,7 @@ function UploadTab({ user }: { user?: any }) {
     let fileSize = ''
 
     if (fileToUpload.size > 10 * 1024 * 1024) {
-      toast.loading(`File is ${(fileToUpload.size / 1024 / 1024).toFixed(1)}MB (>10MB). Uploading directly to Google Drive... ☁️`, { toastId: 'upload-progress' })
+      toast.loading(`File is ${(fileToUpload.size / 1024 / 1024).toFixed(1)}MB (>10MB). Auto-uploading to Google Drive... ☁️`, { toastId: 'upload-progress' })
       try {
         const formData = new FormData()
         formData.append('file', fileToUpload)
@@ -2928,7 +2929,7 @@ function UploadTab({ user }: { user?: any }) {
         cloudinaryUrl = driveData.driveLink
         fileSize = driveData.fileSize || `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
         toast.dismiss('upload-progress')
-        toast.success('Uploaded to Google Drive successfully! 🚀')
+        toast.success('Uploaded to Google Drive automatically! 🚀')
       } catch (err: any) {
         toast.dismiss('upload-progress')
         toast.error(err.message || 'Drive upload error')
@@ -2936,7 +2937,8 @@ function UploadTab({ user }: { user?: any }) {
         return
       }
     } else {
-      try {
+
+    try {
         // Determine the cloud folder path
         const subject = await fetch(`/api/admin/subjects/${subjectId}`).then(r => r.json()).catch(() => null)
         const fileExtension = fileToUpload.name.split('.').pop()?.toLowerCase() || ''
@@ -2953,7 +2955,7 @@ function UploadTab({ user }: { user?: any }) {
         const folder = `tu-notes-hub/${typeFolder}`
 
         // Step 1: Get upload signature from our backend
-        toast.loading('Preparing upload...', { toastId: 'upload-progress' })
+        toast.loading(`Uploading file (${(fileToUpload.size / 1024 / 1024).toFixed(1)}MB)...`, { toastId: 'upload-progress' })
         const sigRes = await fetch('/api/upload/signature', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2968,8 +2970,6 @@ function UploadTab({ user }: { user?: any }) {
         const { timestamp, signature, cloudName, apiKey, folder: signedFolder } = await sigRes.json()
 
         // Step 2: Upload directly to Cloudinary using chunked upload
-        toast.loading('Uploading file to cloud...', { toastId: 'upload-progress' })
-        
         const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
         const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
         let finalUrl = ''
@@ -3024,6 +3024,7 @@ function UploadTab({ user }: { user?: any }) {
       }
     }
 
+    try {
       // Step 3: Save metadata to our database
       toast.loading('Saving to database...', { toastId: 'upload-progress' })
       const payload: any = {
@@ -3035,14 +3036,14 @@ function UploadTab({ user }: { user?: any }) {
       }
 
       if (contentType === 'NOTE') {
-        if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title is required'); return }
+        if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title is required'); setUploading(false); return }
         payload.title = noteTitle
         payload.description = noteDescription
         payload.noteType = noteType
         payload.isPremium = isPremium
         payload.author = author
       } else if ((contentType as string) === 'SOLUTION_BOOK') {
-        if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title is required'); return }
+        if (!noteTitle) { toast.dismiss('upload-progress'); toast.error('Title is required'); setUploading(false); return }
         payload.title = noteTitle
         payload.description = noteDescription
         payload.isPremium = isPremium
@@ -3050,7 +3051,7 @@ function UploadTab({ user }: { user?: any }) {
         payload.semesterId = semesterId
         payload.subjectId = subjectId || null
       } else if (contentType === 'PAST_PAPER') {
-        if (!paperYear) { toast.dismiss('upload-progress'); toast.error('Year is required'); return }
+        if (!paperYear) { toast.dismiss('upload-progress'); toast.error('Year is required'); setUploading(false); return }
         payload.year = paperYear
         payload.examType = examType
       }

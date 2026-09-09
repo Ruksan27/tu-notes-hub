@@ -9,7 +9,6 @@
     "lint": "eslint",
     "postinstall": "prisma generate"
   },
-
   "allowScripts": {
     "@google/genai": true,
     "@prisma/client": true,
@@ -35,7 +34,6 @@
     "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
     "cloudinary": "^2.10.0",
-    "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.3",
     "katex": "^0.18.4",
     "lucide-react": "^1.37.0",

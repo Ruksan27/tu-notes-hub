@@ -33,7 +33,7 @@ export default function TrendingTagsBar() {
           setTags(data.tags)
         }
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   const handleTagClick = (tag: TrendingTag) => {

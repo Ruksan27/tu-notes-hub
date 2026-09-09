@@ -2,8 +2,71 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { deleteFromCloudinary } from '@/lib/cloudinary'
 import { getCurrentUser } from '@/lib/auth'
+import { deleteFileFromDriveNative } from '@/lib/googleDrive'
 
 export const dynamic = 'force-dynamic'
+
+async function deleteFileFromStorage(url: string) {
+  if (!url) return
+  if (url.includes('drive.google.com')) {
+    let fileId: string | null = null
+    const dMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+    const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+    if (dMatch) fileId = dMatch[1]
+    else if (idMatch) fileId = idMatch[1]
+
+    if (fileId) {
+      await deleteFileFromDriveNative(fileId)
+    }
+  } else {
+    const publicId = extractPublicId(url)
+    if (publicId) await deleteFromCloudinary(publicId, 'raw')
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const user = await getCurrentUser()
+    if (!user || user.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    const type = searchParams.get('type')
+
+    if (!id || !type) {
+      return NextResponse.json({ error: 'ID and type are required' }, { status: 400 })
+    }
+
+    if (type === 'note') {
+      const item = await prisma.note.findUnique({ where: { id } })
+      if (item) {
+        if (item.cloudinaryUrl) await deleteFileFromStorage(item.cloudinaryUrl)
+        await prisma.note.delete({ where: { id } })
+      }
+    } else if (type === 'pastpaper') {
+      const item = await prisma.pastPaper.findUnique({ where: { id } })
+      if (item) {
+        if (item.cloudinaryUrl) await deleteFileFromStorage(item.cloudinaryUrl)
+        await prisma.pastPaper.delete({ where: { id } })
+      }
+    } else if (type === 'cheatsheet') {
+      await prisma.cheatsheet.delete({ where: { id } })
+    } else if (type === 'solutionbook') {
+      const item = await prisma.solutionBook.findUnique({ where: { id } })
+      if (item) {
+        if (item.cloudinaryUrl) await deleteFileFromStorage(item.cloudinaryUrl)
+        await prisma.solutionBook.delete({ where: { id } })
+      }
+    } else if (type === 'mcq') {
+      await prisma.mCQ.delete({ where: { id } })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('Error deleting material:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
 
 export async function GET(request: Request) {
   try {
@@ -169,51 +232,4 @@ function extractPublicId(url: string) {
     // ignore
   }
   return null
-}
-
-export async function DELETE(request: Request) {
-  try {
-    const user = await getCurrentUser()
-    if (!user || user.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-    const type = searchParams.get('type')
-
-    if (!id || !type) {
-      return NextResponse.json({ error: 'ID and type are required' }, { status: 400 })
-    }
-
-    if (type === 'note') {
-      const item = await prisma.note.findUnique({ where: { id } })
-      if (item) {
-        const publicId = extractPublicId(item.cloudinaryUrl)
-        if (publicId) await deleteFromCloudinary(publicId, 'raw')
-        await prisma.note.delete({ where: { id } })
-      }
-    } else if (type === 'pastpaper') {
-      const item = await prisma.pastPaper.findUnique({ where: { id } })
-      if (item) {
-        const publicId = extractPublicId(item.cloudinaryUrl)
-        if (publicId) await deleteFromCloudinary(publicId, 'raw')
-        await prisma.pastPaper.delete({ where: { id } })
-      }
-    } else if (type === 'cheatsheet') {
-      await prisma.cheatsheet.delete({ where: { id } })
-    } else if (type === 'solutionbook') {
-      const item = await prisma.solutionBook.findUnique({ where: { id } })
-      if (item) {
-        const publicId = extractPublicId(item.cloudinaryUrl)
-        if (publicId) await deleteFromCloudinary(publicId, 'raw')
-        await prisma.solutionBook.delete({ where: { id } })
-      }
-    } else if (type === 'mcq') {
-      await prisma.mCQ.delete({ where: { id } })
-    }
-
-    return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('Error deleting material:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
 }
