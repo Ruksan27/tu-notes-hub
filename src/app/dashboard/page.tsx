@@ -46,14 +46,32 @@ export default function DashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Set initial tab from query parameter if present
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const urlTab = params.get('tab') as Tab
-      if (urlTab === 'payment' || urlTab === 'compare' || urlTab === 'overview' || urlTab === 'profile') {
-        setTab(urlTab)
+    // 1. Function to check and update current tab from URL search parameters
+    const syncTabFromUrl = () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const urlTab = params.get('tab') as Tab
+        if (urlTab && ['payment', 'compare', 'overview', 'profile', 'become-seller', 'seller-center'].includes(urlTab)) {
+          setTab(urlTab)
+        } else if (!urlTab) {
+          setTab('overview')
+        }
       }
     }
+
+    syncTabFromUrl()
+
+    // 2. Event listeners for soft client navigation & custom navbar tab triggers
+    const handleTabNav = (e: any) => {
+      if (e.detail && ['payment', 'compare', 'overview', 'profile', 'become-seller', 'seller-center'].includes(e.detail)) {
+        setTab(e.detail)
+      } else {
+        syncTabFromUrl()
+      }
+    }
+
+    window.addEventListener('tu_navigate_tab', handleTabNav)
+    window.addEventListener('popstate', syncTabFromUrl)
 
     const controller = new AbortController()
     let isTimeout = false
@@ -95,7 +113,12 @@ export default function DashboardPage() {
         }
       })
 
-    return () => { clearTimeout(timeout); controller.abort() }
+    return () => {
+      clearTimeout(timeout)
+      controller.abort()
+      window.removeEventListener('tu_navigate_tab', handleTabNav)
+      window.removeEventListener('popstate', syncTabFromUrl)
+    }
   }, [router])
 
   if (loading) {

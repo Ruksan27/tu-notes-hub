@@ -6,10 +6,12 @@ import { uploadToCloudinary } from '@/lib/cloudinary'
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getCurrentUser()
-    if (!user) {
+    const userPayload = await getCurrentUser()
+    if (!userPayload) {
       return NextResponse.json({ error: 'Please login to make a payment' }, { status: 401 })
     }
+
+    const currentUserId = userPayload.userId || (userPayload as any).id
 
     const contentType = req.headers.get('content-type') || ''
     let transactionId = ''
@@ -55,16 +57,38 @@ export async function POST(req: NextRequest) {
     // Validate referral code if provided
     if (referralCode && typeof referralCode === 'string' && referralCode.trim()) {
       const cleanCode = referralCode.trim()
-      const referrer = await prisma.user.findUnique({
-        where: { referralCode: cleanCode },
-        select: { id: true, referralCode: true }
+
+      const currentUser = await prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { id: true, referredById: true, referralCode: true }
       })
 
-      if (referrer && referrer.id !== user.userId) {
-        validReferralCode = cleanCode
-        // 10% Discount applied
-        const discount = Math.round(finalAmount * 0.10)
-        finalAmount = Math.max(0, finalAmount - discount)
+      const existingPaymentReferral = await prisma.payment.findFirst({
+        where: {
+          userId: currentUserId,
+          referralCode: { not: null },
+          status: { in: ['PENDING', 'APPROVED'] }
+        }
+      })
+
+      // Check if user already used a referral code or has existing referral payment
+      if (currentUser && !currentUser.referredById && !existingPaymentReferral) {
+        const referrer = await prisma.user.findUnique({
+          where: { referralCode: cleanCode },
+          select: { id: true, referralCode: true }
+        })
+
+        // Anti-Self referral check
+        if (
+          referrer &&
+          referrer.id !== currentUserId &&
+          referrer.referralCode !== currentUser.referralCode
+        ) {
+          validReferralCode = cleanCode
+          // 10% Discount applied
+          const discount = Math.round(finalAmount * 0.10)
+          finalAmount = Math.max(0, finalAmount - discount)
+        }
       }
     }
 
@@ -77,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.payment.create({
       data: {
-        userId: user.userId,
+        userId: currentUserId,
         transactionId,
         screenshotUrl: screenshotUrl || null,
         amount: finalAmount,
@@ -92,7 +116,7 @@ export async function POST(req: NextRequest) {
       data: {
         type: 'PAYMENT',
         title: 'New Payment Pending',
-        message: `${user.name} submitted payment of Rs. ${finalAmount} for ${packageType}${validReferralCode ? ` (Referral Code: ${validReferralCode})` : ''}.`,
+        message: `${userPayload.name || 'Student'} submitted payment of Rs. ${finalAmount} for ${packageType}${validReferralCode ? ` (Referral Code: ${validReferralCode})` : ''}.`,
         link: '/admin?tab=payments'
       }
     })

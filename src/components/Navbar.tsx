@@ -203,10 +203,24 @@ export default function Navbar() {
                       <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '2px' }}>{user.email}</p>
                     </div>
                     <div className="nav-drop-divider" />
-                    <Link href="/dashboard" className="nav-drop-item">
+                    <Link
+                      href="/dashboard"
+                      className="nav-drop-item"
+                      onClick={() => {
+                        setDropOpen(false)
+                        window.dispatchEvent(new CustomEvent('tu_navigate_tab', { detail: 'overview' }))
+                      }}
+                    >
                       <span>📊</span> My Dashboard
                     </Link>
-                    <Link href="/dashboard?tab=profile" className="nav-drop-item">
+                    <Link
+                      href="/dashboard?tab=profile"
+                      className="nav-drop-item"
+                      onClick={() => {
+                        setDropOpen(false)
+                        window.dispatchEvent(new CustomEvent('tu_navigate_tab', { detail: 'profile' }))
+                      }}
+                    >
                       <span>👤</span> Profile
                     </Link>
                     {(user.role === 'ADMIN' || user.role === 'CHILD_ADMIN') && (
@@ -311,8 +325,26 @@ export default function Navbar() {
 
               {user ? (
                 <>
-                  <Link href="/dashboard" className="nav-mobile-link">📊 My Dashboard</Link>
-                  <Link href="/dashboard?tab=profile" className="nav-mobile-link">👤 Profile</Link>
+                  <Link
+                    href="/dashboard"
+                    className="nav-mobile-link"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      window.dispatchEvent(new CustomEvent('tu_navigate_tab', { detail: 'overview' }))
+                    }}
+                  >
+                    📊 My Dashboard
+                  </Link>
+                  <Link
+                    href="/dashboard?tab=profile"
+                    className="nav-mobile-link"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      window.dispatchEvent(new CustomEvent('tu_navigate_tab', { detail: 'profile' }))
+                    }}
+                  >
+                    👤 Profile
+                  </Link>
                   {user && cartCount > 0 && (pathname.startsWith('/projects') || pathname === '/cart') && (
                     <Link href="/cart" className="nav-mobile-link">🛒 My Cart ({cartCount})</Link>
                   )}
