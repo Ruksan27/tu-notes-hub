@@ -135,9 +135,13 @@ export default async function HomePage() {
 
       {/* ── Stats & Top Contributors ──────────────────────── */}
       <section style={{ padding: '24px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)', background: 'rgba(11, 17, 32, 0.4)' }}>
-        <div className="home-stats-wrapper" style={{ width: '100%', maxWidth: '1440px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '32px' }}>
-          {/* Stats Grid */}
-          <div className="home-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', flex: '1 1 auto', alignItems: 'center' }}>
+        <div className="home-stats-wrapper" style={{ display: 'flex', width: '100%', maxWidth: '100%', padding: '0 48px', alignItems: 'center' }}>
+          
+          {/* Left Spacer */}
+          <div className="home-stats-spacer" style={{ flex: '1 1 0%', minWidth: 0 }}></div>
+
+          {/* Center Stats Grid */}
+          <div className="home-stats-grid" style={{ flex: '0 0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', width: '100%', maxWidth: '800px', justifyItems: 'center' }}>
             {dynamicStats.map((s) => (
               <div key={s.label} className="text-center" style={{ padding: '4px 2px' }}>
                 <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 3vw, 32px)', fontWeight: 800, background: 'var(--grad-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-1px', margin: 0 }}>
@@ -148,32 +152,33 @@ export default async function HomePage() {
             ))}
           </div>
 
-          {/* Top Contributors Card Widget on the far right */}
-          <div style={{ flex: '0 0 300px', width: '300px', marginLeft: 'auto', display: 'flex', justifyContent: 'flex-end' }} className="home-stats-widget-container">
+          {/* Right Top Contributors Widget */}
+          <div className="home-stats-widget-container" style={{ flex: '1 1 0%', minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
             <TopContributorsWidget limit={3} />
           </div>
         </div>
+
         <style>{`
-          @media (max-width: 990px) {
+          @media (max-width: 1250px) {
             .home-stats-wrapper {
+              display: flex !important;
               flex-direction: column !important;
-              align-items: center !important;
               gap: 24px !important;
               padding: 0 16px !important;
             }
+            .home-stats-spacer {
+              display: none !important;
+            }
             .home-stats-widget-container {
-              max-width: 320px !important;
-              width: 100% !important;
-              flex: 1 1 auto !important;
-              margin-left: 0 !important;
               justify-content: center !important;
+              max-width: 320px !important;
+              margin: 0 auto;
             }
           }
           @media (max-width: 640px) {
             .home-stats-grid {
               grid-template-columns: repeat(2, 1fr) !important;
               gap: 16px 12px !important;
-              width: 100% !important;
             }
           }
         `}</style>
