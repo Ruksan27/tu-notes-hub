@@ -14,6 +14,8 @@ interface Faculty {
 
 export default function ProfileTab() {
   const [user, setUser] = useState<any>(null)
+  const [isEditing, setIsEditing] = useState(false)
+
   const [name, setName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [college, setCollege] = useState('')
@@ -26,6 +28,16 @@ export default function ProfileTab() {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  const populateUserData = (userData: any) => {
+    setName(userData.name || '')
+    setAvatarUrl(userData.avatarUrl || '')
+    setCollege(userData.college || '')
+    setPhone(userData.phone || '')
+    setGender(userData.gender || '')
+    setFacultyId(userData.facultyId || '')
+    setSemesterOrder(userData.semesterOrder ? String(userData.semesterOrder) : '')
+  }
+
   useEffect(() => {
     // 1. Load from localStorage initially for fast render
     const stored = localStorage.getItem('tu_user')
@@ -33,13 +45,7 @@ export default function ProfileTab() {
       try {
         const parsed = JSON.parse(stored)
         setUser(parsed)
-        setName(parsed.name || '')
-        setAvatarUrl(parsed.avatarUrl || '')
-        setCollege(parsed.college || '')
-        setPhone(parsed.phone || '')
-        setGender(parsed.gender || '')
-        setFacultyId(parsed.facultyId || '')
-        setSemesterOrder(parsed.semesterOrder ? String(parsed.semesterOrder) : '')
+        populateUserData(parsed)
       } catch {}
     }
 
@@ -59,13 +65,7 @@ export default function ProfileTab() {
       .then(data => {
         if (data && data.authenticated && data.user) {
           setUser(data.user)
-          setName(data.user.name || '')
-          setAvatarUrl(data.user.avatarUrl || '')
-          setCollege(data.user.college || '')
-          setPhone(data.user.phone || '')
-          setGender(data.user.gender || '')
-          setFacultyId(data.user.facultyId || '')
-          setSemesterOrder(data.user.semesterOrder ? String(data.user.semesterOrder) : '')
+          populateUserData(data.user)
           localStorage.setItem('tu_user', JSON.stringify(data.user))
         }
       })
@@ -73,6 +73,13 @@ export default function ProfileTab() {
   }, [])
 
   const selectedFaculty = faculties.find(f => f.id === facultyId)
+
+  const handleCancelEdit = () => {
+    if (user) {
+      populateUserData(user)
+    }
+    setIsEditing(false)
+  }
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -143,6 +150,8 @@ export default function ProfileTab() {
         toast.success(data.message || 'Profile updated successfully! 🎉')
         localStorage.setItem('tu_user', JSON.stringify(data.user))
         setUser(data.user)
+        populateUserData(data.user)
+        setIsEditing(false)
         window.dispatchEvent(new Event('tu_user_updated'))
       } else {
         toast.error(data.error || 'Failed to update profile')
@@ -210,11 +219,52 @@ export default function ProfileTab() {
         onUserUpdate={(updated) => setUser((prev: any) => ({ ...prev, ...updated }))}
       />
 
-      {/* ── Profile Details Form ── */}
+      {/* ── Profile Details Card ── */}
       <div className="admin-card p-6 sm:p-8" style={{ background: 'var(--clr-bg-800)', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-lg)' }}>
-        <div style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '20px', color: 'var(--clr-text-1)', marginBottom: '4px', fontWeight: 800 }}>Profile Details</h2>
-          <p style={{ color: 'var(--clr-text-3)', fontSize: '13px' }}>Update your personal details and profile picture.</p>
+        
+        {/* Card Header with Edit Toggle Button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+          <div>
+            <h2 style={{ fontSize: '20px', color: 'var(--clr-text-1)', marginBottom: '4px', fontWeight: 800 }}>
+              Profile Details
+            </h2>
+            <p style={{ color: 'var(--clr-text-3)', fontSize: '13px', margin: 0 }}>
+              {isEditing ? 'Make changes to your editable profile details below and save.' : 'View your account details below or click Edit Profile to make changes.'}
+            </p>
+          </div>
+
+          {!isEditing ? (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              style={{
+                background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '9px 20px',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              ✏️ Edit Profile
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              className="btn btn-outline"
+              style={{ padding: '8px 16px', fontSize: '13px' }}
+            >
+              ✕ Cancel
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '640px' }}>
@@ -239,25 +289,27 @@ export default function ProfileTab() {
                   </span>
                 )}
               </div>
-              <div>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  id="avatarUpload" 
-                  style={{ display: 'none' }} 
-                  onChange={handleAvatarUpload}
-                />
-                <label 
-                  htmlFor="avatarUpload" 
-                  className="btn btn-outline btn-sm" 
-                  style={{ cursor: 'pointer', display: 'inline-flex', padding: '6px 16px' }}
-                >
-                  {uploading ? 'Uploading...' : 'Change Picture'}
-                </label>
-                <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginTop: '8px' }}>
-                  Recommended: Square image, max 2MB.
-                </p>
-              </div>
+              {isEditing && (
+                <div>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    id="avatarUpload" 
+                    style={{ display: 'none' }} 
+                    onChange={handleAvatarUpload}
+                  />
+                  <label 
+                    htmlFor="avatarUpload" 
+                    className="btn btn-outline btn-sm" 
+                    style={{ cursor: 'pointer', display: 'inline-flex', padding: '6px 16px' }}
+                  >
+                    {uploading ? 'Uploading...' : '📷 Change Picture'}
+                  </label>
+                  <p style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginTop: '8px' }}>
+                    Recommended: Square image, max 2MB.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -271,6 +323,8 @@ export default function ProfileTab() {
                 value={name} 
                 onChange={e => setName(e.target.value)} 
                 placeholder="Hari Prasad Sharma"
+                disabled={!isEditing}
+                style={{ opacity: isEditing ? 1 : 0.8, cursor: isEditing ? 'text' : 'not-allowed', background: isEditing ? undefined : 'rgba(0,0,0,0.3)' }}
                 required 
               />
             </div>
@@ -283,6 +337,8 @@ export default function ProfileTab() {
                 value={phone} 
                 onChange={e => setPhone(e.target.value)} 
                 placeholder="98XXXXXXXX"
+                disabled={!isEditing}
+                style={{ opacity: isEditing ? 1 : 0.8, cursor: isEditing ? 'text' : 'not-allowed', background: isEditing ? undefined : 'rgba(0,0,0,0.3)' }}
               />
             </div>
           </div>
@@ -296,6 +352,8 @@ export default function ProfileTab() {
               value={college} 
               onChange={e => setCollege(e.target.value)} 
               placeholder="e.g. Patan Multiple Campus"
+              disabled={!isEditing}
+              style={{ opacity: isEditing ? 1 : 0.8, cursor: isEditing ? 'text' : 'not-allowed', background: isEditing ? undefined : 'rgba(0,0,0,0.3)' }}
             />
           </div>
 
@@ -311,14 +369,16 @@ export default function ProfileTab() {
                 <button
                   key={g.val}
                   type="button"
-                  onClick={() => setGender(g.val)}
+                  disabled={!isEditing}
+                  onClick={() => setIsEditing && setGender(g.val)}
                   style={{
                     flex: 1,
                     padding: '10px',
                     borderRadius: '8px',
                     fontSize: '13px',
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    cursor: isEditing ? 'pointer' : 'not-allowed',
+                    opacity: isEditing ? 1 : 0.7,
                     background: gender === g.val ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)',
                     border: `1px solid ${gender === g.val ? 'var(--clr-primary)' : 'rgba(255,255,255,0.1)'}`,
                     color: gender === g.val ? '#ffffff' : 'var(--clr-text-2)',
@@ -374,16 +434,28 @@ export default function ProfileTab() {
             <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>🔒 Gmail address cannot be changed.</p>
           </div>
 
-          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--clr-border)', display: 'flex', justifyContent: 'flex-start' }}>
-            <button 
-              type="submit" 
-              className="btn btn-primary" 
-              disabled={saving || uploading}
-              style={{ padding: '12px 28px', fontSize: '14px', fontWeight: 700 }}
-            >
-              {saving ? '💾 Saving Profile...' : '💾 Save Changes'}
-            </button>
-          </div>
+          {/* Action buttons on Edit mode */}
+          {isEditing && (
+            <div style={{ paddingTop: '16px', borderTop: '1px solid var(--clr-border)', display: 'flex', gap: '12px', justifyContent: 'flex-start' }}>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                disabled={saving || uploading}
+                style={{ padding: '12px 28px', fontSize: '14px', fontWeight: 700 }}
+              >
+                {saving ? '💾 Saving Profile...' : '💾 Save Changes'}
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-outline" 
+                onClick={handleCancelEdit}
+                disabled={saving || uploading}
+                style={{ padding: '12px 20px', fontSize: '14px' }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

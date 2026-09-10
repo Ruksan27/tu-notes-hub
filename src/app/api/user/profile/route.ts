@@ -11,27 +11,24 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = userPayload.userId
+    const userId = userPayload.userId || (userPayload as any).id
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID missing from session' }, { status: 401 })
+    }
 
-    const { name, avatarUrl, phone, college, gender, facultyId, semesterOrder } = await req.json()
+    const body = await req.json()
+    const { name, avatarUrl, phone, college, gender } = body
 
-    if (!name || name.trim().length < 2) {
+    if (!name || typeof name !== 'string' || name.trim().length < 2) {
       return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 })
     }
 
     const updateData: any = {
       name: name.trim(),
-      avatarUrl: avatarUrl || null,
-      phone: phone || null,
-      college: college || null,
-      gender: gender || null,
-    }
-
-    if (facultyId !== undefined) {
-      updateData.facultyId = facultyId || null
-    }
-    if (semesterOrder !== undefined) {
-      updateData.semesterOrder = semesterOrder ? parseInt(String(semesterOrder), 10) : null
+      avatarUrl: avatarUrl ? String(avatarUrl) : null,
+      phone: phone ? String(phone) : null,
+      college: college ? String(college) : null,
+      gender: gender ? String(gender) : null,
     }
 
     const updatedUser = await prisma.user.update({
@@ -60,8 +57,8 @@ export async function PATCH(req: Request) {
       user: updatedUser, 
       message: 'Profile updated successfully! 🎉' 
     })
-  } catch (error) {
-    console.error('[USER_PROFILE_PATCH]', error)
-    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[USER_PROFILE_PATCH_ERROR]', error)
+    return NextResponse.json({ error: error?.message || 'Failed to update profile' }, { status: 500 })
   }
 }
