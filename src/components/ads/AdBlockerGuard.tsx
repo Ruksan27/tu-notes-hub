@@ -13,6 +13,8 @@ const NOTE_ROUTES = [
   '/projects',
   '/mcq',
   '/download',
+  '/blogs',
+  '/blog',
 ]
 
 export default function AdBlockerGuard() {

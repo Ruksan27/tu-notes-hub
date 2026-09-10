@@ -1,10 +1,10 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
 import SocialShare from '@/components/SocialShare'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
+import AdUnit from '@/components/ads/AdUnit'
 
 export const revalidate = 3600 // 1 hour
 
@@ -17,7 +17,6 @@ async function getBlog(rawSlug: string) {
   const slugified = decoded.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
   const unslugified = decoded.replace(/-/g, ' ')
 
-  // 1. Try finding blog by any slug variation, title, or ID
   let blog = await prisma.blog.findFirst({
     where: {
       OR: [
@@ -33,7 +32,6 @@ async function getBlog(rawSlug: string) {
     }
   })
 
-  // 2. Fallback partial match if exact match not found
   if (!blog) {
     blog = await prisma.blog.findFirst({
       where: {
@@ -48,7 +46,6 @@ async function getBlog(rawSlug: string) {
   return blog
 }
 
-// 1. Dynamic Metadata Generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const blog = await getBlog(slug)
@@ -74,10 +71,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// Helper to extract H2/H3 for Table of Contents
 function extractToc(html: string) {
   const headings: { id: string, text: string, level: number }[] = []
-  // Matches <h2 id="...">Text</h2> or <h2>Text</h2>
   const regex = /<(h[23])[^>]*>(.*?)<\/\1>/gi
   let match
   let index = 0
@@ -85,11 +80,10 @@ function extractToc(html: string) {
 
   while ((match = regex.exec(html)) !== null) {
     const level = match[1] === 'h2' ? 2 : 3
-    const text = match[2].replace(/<[^>]+>/g, '').trim() // Strip inner tags
+    const text = match[2].replace(/<[^>]+>/g, '').trim()
     const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${index}`
     headings.push({ id, text, level })
     
-    // Inject ID into the HTML so anchor links work
     const replacement = match[0].replace(/<(h[23])/, `<$1 id="${id}"`)
     modifiedHtml = modifiedHtml.replace(match[0], replacement)
     index++
@@ -106,15 +100,12 @@ export default async function BlogPostPage({ params }: Props) {
     notFound()
   }
 
-  // Calculate Reading Time (avg 200 words per minute)
   const textContent = blog.content.replace(/<[^>]*>?/gm, '')
   const wordCount = textContent.split(/\s+/).length
   const readingTime = Math.max(1, Math.ceil(wordCount / 200))
 
-  // Extract ToC and modify HTML to include IDs
   const { headings, modifiedHtml } = extractToc(blog.content)
 
-  // Fetch Related Articles (Simple keyword matching or just recent ones)
   const keywordsArr = blog.keywords?.split(',').map(k => k.trim()).filter(Boolean) || []
   let relatedBlogs: any[] = []
   if (keywordsArr.length > 0) {
@@ -128,7 +119,6 @@ export default async function BlogPostPage({ params }: Props) {
       orderBy: { views: 'desc' }
     })
   }
-  // Fallback to latest if no related keywords found
   if (relatedBlogs.length === 0) {
     relatedBlogs = await prisma.blog.findMany({
       where: { isPublished: true, id: { not: blog.id } },
@@ -137,7 +127,6 @@ export default async function BlogPostPage({ params }: Props) {
     })
   }
 
-  // 2. JSON-LD Structured Data
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
@@ -162,7 +151,6 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
-      {/* Inject JSON-LD Schema */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -170,7 +158,8 @@ export default async function BlogPostPage({ params }: Props) {
 
       <main className="container pt-3 sm:pt-20 pb-12 sm:pb-20 min-h-screen max-w-[1000px] mx-auto px-4">
         
-        <nav aria-label="Breadcrumb" style={{ marginBottom: '24px' }}>
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" style={{ marginBottom: '16px' }}>
           <ol style={{ display: 'flex', alignItems: 'center', gap: '8px', listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: 'var(--clr-text-3)' }}>
             <li><Link href="/" style={{ color: 'var(--clr-text-3)', textDecoration: 'none' }}>Home</Link></li>
             <li>/</li>
@@ -182,10 +171,15 @@ export default async function BlogPostPage({ params }: Props) {
           </ol>
         </nav>
 
-        <div style={{ display: 'grid', gridTemplateColumns: headings.length > 0 ? '1fr 280px' : '1fr', gap: '40px', alignItems: 'start' }}>
+        {/* ── Ad 1: Top Horizontal Leaderboard Ad Banner ── */}
+        <div style={{ marginBottom: '24px' }}>
+          <AdUnit type="leaderboard" slot="blog-detail-top-banner" />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '40px', alignItems: 'start' }} className="blog-page-grid">
           
           <article style={{ minWidth: 0 }}>
-            <header style={{ marginBottom: '32px' }}>
+            <header style={{ marginBottom: '24px' }}>
               <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, lineHeight: 1.2, marginBottom: '16px', color: 'var(--clr-text-1)' }}>
                 {blog.title}
               </h1>
@@ -211,10 +205,15 @@ export default async function BlogPostPage({ params }: Props) {
             </header>
 
             {blog.thumbnailUrl && (blog.thumbnailUrl.startsWith('/') || blog.thumbnailUrl.startsWith('http://') || blog.thumbnailUrl.startsWith('https://')) && (
-              <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', borderRadius: '16px', overflow: 'hidden', marginBottom: '40px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', borderRadius: '16px', overflow: 'hidden', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <Image src={blog.thumbnailUrl} alt={blog.title} fill style={{ objectFit: 'cover' }} priority unoptimized={!blog.thumbnailUrl.startsWith('/') && !blog.thumbnailUrl.includes('cloudinary.com')} />
               </div>
             )}
+
+            {/* ── Ad 2: In-Article Horizontal Banner Ad ── */}
+            <div style={{ margin: '20px 0 28px 0' }}>
+              <AdUnit type="inline" slot="blog-detail-in-article-banner" />
+            </div>
 
             {/* Render Rich HTML Content */}
             <div 
@@ -222,6 +221,11 @@ export default async function BlogPostPage({ params }: Props) {
               style={{ fontSize: '16px', lineHeight: 1.8, color: 'var(--clr-text-2)' }}
               dangerouslySetInnerHTML={{ __html: modifiedHtml }} 
             />
+
+            {/* ── Ad 3: End of Article Medium Rectangle / Square Ad Unit ── */}
+            <div style={{ marginTop: '36px', marginBottom: '28px', display: 'flex', justifyContent: 'center' }}>
+              <AdUnit type="medium-rectangle" slot="blog-detail-content-bottom-square" />
+            </div>
 
             {/* Social Share Buttons */}
             <SocialShare title={blog.title} text={blog.excerpt || ''} slug={blog.slug} />
@@ -247,34 +251,41 @@ export default async function BlogPostPage({ params }: Props) {
 
           </article>
 
-          {/* Sticky Sidebar: Table of Contents */}
-          {headings.length > 0 && (
-            <aside style={{ position: 'sticky', top: '100px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--clr-text-1)', marginBottom: '16px' }}>
-                Table of Contents
-              </h4>
-              <nav style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {headings.map(h => (
-                  <a 
-                    key={h.id} 
-                    href={`#${h.id}`} 
-                    style={{ 
-                      fontSize: '13px', 
-                      color: 'var(--clr-text-3)', 
-                      textDecoration: 'none', 
-                      marginLeft: h.level === 3 ? '16px' : '0',
-                      lineHeight: 1.4,
-                      transition: 'color 0.2s'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#818cf8'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'var(--clr-text-3)'}
-                  >
-                    {h.text}
-                  </a>
-                ))}
-              </nav>
-            </aside>
-          )}
+          {/* Sticky Sidebar: Table of Contents + Ad 4 (Sidebar Square Ad) */}
+          <aside style={{ position: 'sticky', top: '100px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {headings.length > 0 && (
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--clr-text-1)', marginBottom: '16px' }}>
+                  Table of Contents
+                </h4>
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {headings.map(h => (
+                    <a 
+                      key={h.id} 
+                      href={`#${h.id}`} 
+                      style={{ 
+                        fontSize: '13px', 
+                        color: 'var(--clr-text-3)', 
+                        textDecoration: 'none', 
+                        marginLeft: h.level === 3 ? '16px' : '0',
+                        lineHeight: 1.4,
+                        transition: 'color 0.2s'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#818cf8'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--clr-text-3)'}
+                    >
+                      {h.text}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+            )}
+
+            {/* ── Ad 4: Sidebar Medium-Rectangle / Square Ad ── */}
+            <div>
+              <AdUnit type="medium-rectangle" slot="blog-detail-sidebar-square-ad" />
+            </div>
+          </aside>
 
         </div>
 
@@ -299,6 +310,11 @@ export default async function BlogPostPage({ params }: Props) {
         )}
 
         <style dangerouslySetInnerHTML={{ __html: `
+          @media (max-width: 768px) {
+            .blog-page-grid {
+              grid-template-columns: 1fr !important;
+            }
+          }
           .blog-content h2 { font-size: 26px; font-weight: 800; color: #fff; margin-top: 48px; margin-bottom: 20px; scroll-margin-top: 90px; }
           .blog-content h3 { font-size: 20px; font-weight: 700; color: #e2e8f0; margin-top: 32px; margin-bottom: 16px; scroll-margin-top: 90px; }
           .blog-content p { margin-bottom: 20px; }
@@ -310,7 +326,6 @@ export default async function BlogPostPage({ params }: Props) {
           .blog-content code { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 14px; }
           .blog-content img { max-width: 100%; border-radius: 12px; margin: 24px 0; border: 1px solid rgba(255,255,255,0.05); }
           
-          /* Custom PDF Download CTA Class for Admin Editor */
           .blog-content .pdf-cta-box {
             display: flex; align-items: center; justify-content: space-between;
             background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.1));

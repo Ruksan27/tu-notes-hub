@@ -1,8 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
 import { prisma } from '@/lib/prisma'
 import { Metadata } from 'next'
+import AdUnit from '@/components/ads/AdUnit'
 
 export const metadata: Metadata = {
   title: 'Blogs & Articles | TU Notes Hub',
@@ -37,23 +37,37 @@ export default async function BlogsPage() {
 
   return (
     <main className="container pt-3 sm:pt-20 pb-12 sm:pb-20 min-h-screen mx-auto px-4">
-        
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '12px' }}>
-            Latest <span className="text-gradient">Articles & Guides</span>
-          </h1>
-          <p style={{ color: 'var(--clr-text-3)', fontSize: '15px', maxWidth: '600px', margin: '0 auto' }}>
-            Boost your tech career and ace your TU exams with our expertly crafted guides.
-          </p>
-        </div>
+      
+      {/* ── Page Header ── */}
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '12px' }}>
+          Latest <span className="text-gradient">Articles & Guides</span>
+        </h1>
+        <p style={{ color: 'var(--clr-text-3)', fontSize: '15px', maxWidth: '600px', margin: '0 auto' }}>
+          Boost your tech career and ace your TU exams with our expertly crafted guides.
+        </p>
+      </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: '24px'
-        }}>
-          {blogs.map(blog => (
-            <Link key={blog.id} href={`/blogs/${blog.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+      {/* ── Top Horizontal Banner Ad (Leaderboard) ── */}
+      <div style={{ marginBottom: '32px' }}>
+        <AdUnit type="leaderboard" slot="blogs-list-top-banner" />
+      </div>
+
+      {/* ── Blogs Grid ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+        gap: '24px'
+      }}>
+        {blogs.map((blog, index) => (
+          <React.Fragment key={blog.id}>
+            {/* Insert a Square / Medium-Rectangle Ad Unit after 3 blog cards */}
+            {index === 3 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AdUnit type="medium-rectangle" slot="blogs-grid-middle-square-ad" />
+              </div>
+            )}
+            <Link href={`/blogs/${blog.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="glass-card" style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'transform 0.2s', padding: 0 }}>
                 {/* Thumbnail */}
                 <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', background: '#111' }}>
@@ -87,16 +101,23 @@ export default async function BlogsPage() {
                 </div>
               </div>
             </Link>
-          ))}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {blogs.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--clr-text-3)' }}>
+          <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>📝</span>
+          <p>No blogs published yet. Check back soon!</p>
         </div>
+      )}
 
-        {blogs.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--clr-text-3)' }}>
-            <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>📝</span>
-            <p>No blogs published yet. Check back soon!</p>
-          </div>
-        )}
+      {/* ── Bottom Horizontal Banner Ad ── */}
+      <div style={{ marginTop: '40px' }}>
+        <AdUnit type="inline" slot="blogs-list-bottom-banner" />
+      </div>
 
-      </main>
+    </main>
   )
 }
+import React from 'react'
