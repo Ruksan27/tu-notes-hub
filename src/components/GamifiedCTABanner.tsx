@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { Upload, Users, TrendingUp, UploadCloud } from 'lucide-react';
 
+import TopContributorsWidget from './TopContributorsWidget';
+
 export default function GamifiedCTABanner() {
   return (
     <section
@@ -45,13 +47,13 @@ export default function GamifiedCTABanner() {
       <div
         style={{
           width: '100%',
-          maxWidth: '100%',
+          maxWidth: '1440px',
           margin: '0 auto',
-          padding: '0 60px',
+          padding: '0 48px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '150px',
+          gap: '32px',
           position: 'relative',
           zIndex: 2,
         }}
@@ -141,46 +143,56 @@ export default function GamifiedCTABanner() {
           </div>
         </div>
 
-        {/* Right: Gift Box Graphic + Upload Now Button */}
+        {/* Right: Top Contributors Widget + Upload Button */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '20px',
+            gap: '24px',
             flexShrink: 0,
           }}
           className="gamified-cta-right"
         >
-          {/* Gift Graphic */}
-          <div style={{ fontSize: '52px', lineHeight: 1, position: 'relative', userSelect: 'none' }}>
-            🎁
-            <span style={{ position: 'absolute', top: '-8px', right: '-8px', fontSize: '16px' }}>✨</span>
-            <span style={{ position: 'absolute', top: '-6px', left: '-10px', fontSize: '14px' }}>⭐</span>
-            <span style={{ position: 'absolute', bottom: '0px', right: '-12px', fontSize: '11px' }}>✨</span>
-          </div>
+          {/* Top Contributors Card Widget */}
+          <TopContributorsWidget limit={3} />
 
-          {/* Upload Button */}
-          <Link
-            href="/dashboard/notes/upload"
+          {/* Gift Icon & Upload CTA Button */}
+          <div
             style={{
-              background: '#1d4ed8',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '14px',
-              padding: '11px 22px',
-              borderRadius: '999px',
-              display: 'inline-flex',
+              display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              gap: '8px',
-              textDecoration: 'none',
-              boxShadow: '0 4px 16px rgba(29, 78, 216, 0.4)',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.2s ease',
+              gap: '10px',
             }}
           >
-            <Upload style={{ width: '16px', height: '16px' }} />
-            <span>Upload Now</span>
-          </Link>
+            <div style={{ fontSize: '42px', lineHeight: 1, position: 'relative', userSelect: 'none' }}>
+              🎁
+              <span style={{ position: 'absolute', top: '-6px', right: '-6px', fontSize: '14px' }}>✨</span>
+              <span style={{ position: 'absolute', top: '-4px', left: '-8px', fontSize: '12px' }}>⭐</span>
+            </div>
+
+            <Link
+              href="/dashboard/notes/upload"
+              style={{
+                background: '#1d4ed8',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '13.5px',
+                padding: '10px 20px',
+                borderRadius: '999px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                textDecoration: 'none',
+                boxShadow: '0 4px 16px rgba(29, 78, 216, 0.4)',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <Upload style={{ width: '15px', height: '15px' }} />
+              <span>Upload Now</span>
+            </Link>
+          </div>
         </div>
       </div>
 

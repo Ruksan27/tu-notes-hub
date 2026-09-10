@@ -45,42 +45,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid referral code.' }, { status: 400 })
     }
 
-    const BONUS_POINTS = 100
-
-    // 5. Transaction: Link user, give points to both, create logs
-    const [updatedUser] = await prisma.$transaction([
-      prisma.user.update({
-        where: { id: dbUser.id },
-        data: {
-          referredById: referrer.id,
-          rewardPoints: { increment: BONUS_POINTS }
-        }
-      }),
-      prisma.user.update({
-        where: { id: referrer.id },
-        data: {
-          rewardPoints: { increment: BONUS_POINTS }
-        }
-      }),
-      prisma.pointTransaction.create({
-        data: {
-          userId: dbUser.id,
-          amount: BONUS_POINTS,
-          reason: `REDEEMED_REFERRAL_CODE: ${code}`
-        }
-      }),
-      prisma.pointTransaction.create({
-        data: {
-          userId: referrer.id,
-          amount: BONUS_POINTS,
-          reason: `REFERRAL_BONUS_FROM: ${dbUser.id}`
-        }
-      })
-    ])
+    // 5. Transaction: Link user to referrer (referral milestone count only, no 100 bonus points)
+    const updatedUser = await prisma.user.update({
+      where: { id: dbUser.id },
+      data: {
+        referredById: referrer.id,
+      }
+    })
 
     return NextResponse.json({
       success: true,
-      message: `🎉 Successfully redeemed referral code! +${BONUS_POINTS} PTS`,
+      message: `🎉 Successfully linked referral code!`,
       newPoints: updatedUser.rewardPoints
     })
 

@@ -9,6 +9,8 @@ const AnimatedText = nextDynamic(() => import('@/components/AnimatedText').then(
 const Marquee = nextDynamic(() => import('@/components/Marquee').then(mod => mod.Marquee))
 const TestimonialForm = nextDynamic(() => import('@/components/TestimonialForm').then(mod => mod.TestimonialForm))
 const GamifiedCTABanner = nextDynamic(() => import('@/components/GamifiedCTABanner'))
+const TopContributorsWidget = nextDynamic(() => import('@/components/TopContributorsWidget'))
+const AnimatedCounter = nextDynamic(() => import('@/components/AnimatedCounter'))
 
 export const dynamic = 'force-dynamic'
 
@@ -131,23 +133,44 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Stats ─────────────────────────────────── */}
-      <section style={{ padding: '24px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)' }}>
-        <div className="container home-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
-          {dynamicStats.map((s) => (
-            <div key={s.label} className="text-center" style={{ padding: '8px 4px' }}>
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px, 5vw, 40px)', fontWeight: 800, background: 'var(--grad-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-1px', margin: 0 }}>
-                {s.value}
-              </p>
-              <p style={{ color: 'var(--clr-text-2)', fontSize: 'clamp(11.5px, 3vw, 14px)', marginTop: '4px', fontWeight: 600, margin: 0 }}>{s.label}</p>
-            </div>
-          ))}
+      {/* ── Stats & Top Contributors ──────────────────────── */}
+      <section style={{ padding: '24px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)', background: 'rgba(11, 17, 32, 0.4)' }}>
+        <div className="container home-stats-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '32px' }}>
+          {/* Stats Grid */}
+          <div className="home-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', flex: '1 1 auto', alignItems: 'center' }}>
+            {dynamicStats.map((s) => (
+              <div key={s.label} className="text-center" style={{ padding: '4px 2px' }}>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 3vw, 32px)', fontWeight: 800, background: 'var(--grad-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-1px', margin: 0 }}>
+                  <AnimatedCounter value={s.value} duration={1400} />
+                </p>
+                <p style={{ color: 'var(--clr-text-2)', fontSize: 'clamp(11px, 1.8vw, 13px)', marginTop: '4px', fontWeight: 600, margin: 0, whiteSpace: 'nowrap' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Top Contributors Card Widget on the far right */}
+          <div style={{ flex: '0 0 290px', width: '290px' }} className="home-stats-widget-container">
+            <TopContributorsWidget limit={3} />
+          </div>
         </div>
         <style>{`
+          @media (max-width: 990px) {
+            .home-stats-wrapper {
+              flex-direction: column !important;
+              align-items: center !important;
+              gap: 24px !important;
+            }
+            .home-stats-widget-container {
+              max-width: 320px !important;
+              width: 100% !important;
+              flex: 1 1 auto !important;
+            }
+          }
           @media (max-width: 640px) {
             .home-stats-grid {
               grid-template-columns: repeat(2, 1fr) !important;
               gap: 16px 12px !important;
+              width: 100% !important;
             }
           }
         `}</style>
