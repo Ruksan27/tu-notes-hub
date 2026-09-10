@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getProjectSlug, getNoteSlug, getPaperSlug, getSemesterPath } from '@/lib/slugs'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tunoteshub.com'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tunoteshub.me'
 
   // 1. Static Pages
   const staticPages: MetadataRoute.Sitemap = [

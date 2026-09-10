@@ -218,7 +218,7 @@ export default function PWARegister() {
                 TU Notes Hub
               </div>
               <div style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '2px' }}>
-                tunoteshub.com
+                tunoteshub.me
               </div>
             </div>
             <button

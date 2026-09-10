@@ -62,14 +62,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: blog.metaTitle || blog.title,
       description: blog.metaDesc || blog.excerpt || '',
-      url: `https://tunoteshub.com/blogs/${blog.slug}`,
+      url: `https://tunoteshub.me/blogs/${blog.slug}`,
       images: [{ url: blog.thumbnailUrl || '/default-og.png' }],
       type: 'article',
       publishedTime: blog.createdAt.toISOString(),
       authors: [blog.author],
     },
     alternates: {
-      canonical: `https://tunoteshub.com/blogs/${blog.slug}`,
+      canonical: `https://tunoteshub.me/blogs/${blog.slug}`,
     }
   }
 }
@@ -155,7 +155,7 @@ export default async function BlogPostPage({ params }: Props) {
       name: 'TU Notes Hub',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://tunoteshub.com/logo.png'
+        url: 'https://tunoteshub.me/logo.png'
       }
     }
   }

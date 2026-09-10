@@ -5,7 +5,7 @@ import Script from 'next/script'
 import ProjectDetailClient from './ProjectDetailClient'
 import { extractProjectId, getProjectSlug, slugify } from '@/lib/slugs'
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
 
 // ISR: revalidate every 1 hour
 export const revalidate = 3600

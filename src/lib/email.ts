@@ -158,7 +158,7 @@ export async function sendSellerStatusEmail(
           </div>
 
           <div style="text-align:center;">
-            <a href="https://tunoteshub.com/dashboard" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">
+            <a href="https://tunoteshub.me/dashboard" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">
               Go to Seller Center →
             </a>
           </div>

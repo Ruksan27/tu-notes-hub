@@ -17,21 +17,21 @@ export const metadata: Metadata = {
     'project with source code Nepal',
   ],
   alternates: {
-    canonical: 'https://tunoteshub.com/projects',
+    canonical: 'https://tunoteshub.me/projects',
   },
   openGraph: {
     type: 'website',
-    url: 'https://tunoteshub.com/projects',
+    url: 'https://tunoteshub.me/projects',
     title: 'Student Project Marketplace | TU Notes Hub',
     description: 'Buy verified BCA, CSIT & IT projects with source code, docs, and database. Fast delivery to your email.',
     siteName: 'TU Notes Hub',
-    images: [{ url: 'https://tunoteshub.com/og-image.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://tunoteshub.me/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Student Project Marketplace | TU Notes Hub',
     description: 'Buy verified student projects with full source code for BCA, CSIT & IT.',
-    images: ['https://tunoteshub.com/og-image.png'],
+    images: ['https://tunoteshub.me/og-image.png'],
     site: '@tunoteshub',
   },
 }

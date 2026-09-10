@@ -279,7 +279,7 @@ export async function GET(req: NextRequest) {
 
     const audit = {
       mySite: {
-        url: 'https://tunoteshub.com',
+        url: 'https://tunoteshub.me',
         name: 'TU Notes Hub (Your Site)',
         isUserSite: true,
         monthlyOrganicVisits: totalDownloads > 0 ? totalDownloads : totalUsers,
@@ -344,7 +344,7 @@ export async function POST(req: NextRequest) {
         `best notes for ${fac} ${sem} ${topic}`
       ]
 
-      const nextJsMetadataSnippet = `export const metadata: Metadata = {\n  title: '${seoTitle}',\n  description: '${metaDescription}',\n  keywords: ${JSON.stringify(primaryKeywords, null, 4)},\n  alternates: {\n    canonical: 'https://tunoteshub.com/notes/${fac.toLowerCase()}/${cleanSlug}',\n  },\n}`
+      const nextJsMetadataSnippet = `export const metadata: Metadata = {\n  title: '${seoTitle}',\n  description: '${metaDescription}',\n  keywords: ${JSON.stringify(primaryKeywords, null, 4)},\n  alternates: {\n    canonical: 'https://tunoteshub.me/notes/${fac.toLowerCase()}/${cleanSlug}',\n  },\n}`
 
       const schemaOrgJsonLd = JSON.stringify({
         '@context': 'https://schema.org',
@@ -358,7 +358,7 @@ export async function POST(req: NextRequest) {
         publisher: {
           '@type': 'Organization',
           name: 'TU Notes Hub',
-          url: 'https://tunoteshub.com'
+          url: 'https://tunoteshub.me'
         },
         aggregateRating: {
           '@type': 'AggregateRating',

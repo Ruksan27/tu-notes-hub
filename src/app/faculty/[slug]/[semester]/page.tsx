@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ord = order === 1 ? '1st' : order === 2 ? '2nd' : order === 3 ? '3rd' : `${order}th`
   const label = isYearly ? `${ord} Year` : `${ord} Semester`
   const canonicalSlug = isYearly ? `${ord.toLowerCase()}-year` : `${ord.toLowerCase()}-semester`
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
 
   return {
     title: `${faculty.id.toUpperCase()} ${label} — Notes & Past Papers | TU Notes Hub`,

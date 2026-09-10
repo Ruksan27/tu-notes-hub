@@ -94,7 +94,7 @@ export async function GET(req: Request) {
       })
       
       // Add a smaller footer watermark
-      page.drawText('Downloaded from tunoteshub.com', {
+      page.drawText('Downloaded from tunoteshub.me', {
         x: 40,
         y: 20,
         size: 10,

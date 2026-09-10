@@ -1,5 +1,5 @@
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tunoteshub.com'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tunoteshub.me'
 
   const robots = `User-agent: *
 Allow: /

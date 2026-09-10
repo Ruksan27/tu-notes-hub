@@ -47,7 +47,7 @@ function getDriveDownloadUrl(link: string): string {
 
 export default function SolutionBookClientView({ book }: { book: BookData }) {
   const [copied, setCopied] = useState(false)
-  const [shareUrl, setShareUrl] = useState(`https://tunoteshub.com/download/book/${book.id}`)
+  const [shareUrl, setShareUrl] = useState(`https://tunoteshub.me/download/book/${book.id}`)
   const [driveContentType, setDriveContentType] = useState('')
   const [isDocLoading, setIsDocLoading] = useState(true)
 
@@ -127,7 +127,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
     if (parts.length === 2) {
       // Cloudinary Image Watermark
       const diagonalWatermark = `l_text:Arial_100_bold:TU%20Notes%20Hub,co_black,o_12,a_-45/fl_layer_apply,g_center`
-      const footerLink = `l_text:Arial_22:tunoteshub.com,co_black,o_50/fl_layer_apply,g_south_east,x_15,y_15`
+      const footerLink = `l_text:Arial_22:tunoteshub.me,co_black,o_50/fl_layer_apply,g_south_east,x_15,y_15`
       downloadUrl = `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${footerLink}/${parts[1]}`
     }
   } else if (rawUrl.toLowerCase().endsWith('.pdf') || isDrive) {

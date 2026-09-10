@@ -11,7 +11,7 @@ import PWARegister from '@/components/PWARegister'
 import Script from 'next/script'
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'),
   title: {
     default: 'TU Notes Hub – Free Notes, Past Papers & AI Exam Predictions',
     template: '%s | TU Notes Hub',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   keywords: ['TU notes', 'Tribhuvan University', 'BCA notes', 'CSIT notes', 'TU past papers', 'exam prediction Nepal', 'free notes Nepal', 'BBS notes', 'BBA notes', 'TU syllabus'],
   authors: [{ name: 'TU Notes Hub' }],
   alternates: {
-    canonical: 'https://tunoteshub.com.np',
+    canonical: 'https://tunoteshub.me',
   },
   manifest: '/manifest.json',
   openGraph: {
@@ -102,23 +102,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               '@graph': [
                 {
                   '@type': 'WebSite',
-                  '@id': 'https://tunoteshub.com/#website',
-                  url: 'https://tunoteshub.com',
+                  '@id': 'https://tunoteshub.me/#website',
+                  url: 'https://tunoteshub.me',
                   name: 'TU Notes Hub',
                   description: 'Free notes, past papers, and AI exam predictions for Tribhuvan University students.',
                   potentialAction: {
                     '@type': 'SearchAction',
-                    target: { '@type': 'EntryPoint', urlTemplate: 'https://tunoteshub.com/faculties?q={search_term_string}' },
+                    target: { '@type': 'EntryPoint', urlTemplate: 'https://tunoteshub.me/faculties?q={search_term_string}' },
                     'query-input': 'required name=search_term_string',
                   },
                 },
                 {
                   '@type': 'Organization',
-                  '@id': 'https://tunoteshub.com/#organization',
+                  '@id': 'https://tunoteshub.me/#organization',
                   name: 'TU Notes Hub',
                   alternateName: ['TuneNotesHub', 'TU Notes'],
-                  url: 'https://tunoteshub.com',
-                  logo: { '@type': 'ImageObject', url: 'https://tunoteshub.com/Untitled%20design.png' },
+                  url: 'https://tunoteshub.me',
+                  logo: { '@type': 'ImageObject', url: 'https://tunoteshub.me/Untitled%20design.png' },
                   sameAs: [
                     'https://facebook.com/tunoteshub',
                     'https://twitter.com/tunoteshub',

@@ -3386,7 +3386,7 @@ function UploadTab({ user }: { user?: any }) {
                       ]
                       setSeoKeywordsList(kws)
 
-                      const snippet = `export const metadata: Metadata = {\n  title: '${generatedTitle}',\n  description: '${generatedDesc}',\n  keywords: [\n${kws.map(k => `    "${k}"`).join(',\n')}\n  ],\n  alternates: {\n    canonical: 'https://tunoteshub.com/notes/${(facultyId || 'bca').toLowerCase()}/${cleanSubSlug}',\n  },\n}`
+                      const snippet = `export const metadata: Metadata = {\n  title: '${generatedTitle}',\n  description: '${generatedDesc}',\n  keywords: [\n${kws.map(k => `    "${k}"`).join(',\n')}\n  ],\n  alternates: {\n    canonical: 'https://tunoteshub.me/notes/${(facultyId || 'bca').toLowerCase()}/${cleanSubSlug}',\n  },\n}`
                       
                       setSeoCodeSnippet(snippet)
                       setShowSeoBox(true)

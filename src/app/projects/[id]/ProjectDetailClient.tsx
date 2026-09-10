@@ -327,7 +327,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
   }
 
   // Pre-filled WhatsApp message including project title, price, and direct link
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : `https://tunoteshub.com/projects/${getProjectSlug(project)}`
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : `https://tunoteshub.me/projects/${getProjectSlug(project)}`
   const buyMessage = encodeURIComponent(`Hi! I am interested in inquiring about the project "${project.title}" (Rs. ${finalPrice}) listed on TU Notes Hub.\nProject Link: ${currentUrl}`)
   const buyUrl = whatsapp ? `${whatsapp}?text=${buyMessage}` : null
 

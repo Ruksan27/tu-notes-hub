@@ -61,7 +61,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ sub
     const fontHelveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
     // 2. Generate QR code PNG
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
     const targetUrl = `${baseUrl}/mcq/${subject.id}`
     const qrCodeDataUrl = await QRCode.toDataURL(targetUrl, {
       errorCorrectionLevel: 'M',
@@ -89,7 +89,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ sub
       })
 
       // Footer Website Link (Bottom Left)
-      page.drawText('Downloaded from tunoteshub.com — Free TU Notes & Solution Hub', {
+      page.drawText('Downloaded from tunoteshub.me — Free TU Notes & Solution Hub', {
         x: 40,
         y: 20,
         size: 8,
@@ -107,7 +107,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ sub
         opacity: 0.9,
       })
 
-      page.drawText('tunoteshub.com', {
+      page.drawText('tunoteshub.me', {
         x: width - qrDims.width - 38,
         y: 6,
         size: 7,
@@ -296,7 +296,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ sub
     currentPage.drawLine({ start: { x: 45, y }, end: { x: 550, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) })
     y -= 16
 
-    const footerNotice = `Downloaded from TU Notes Hub — https://tunoteshub.com`
+    const footerNotice = `Downloaded from TU Notes Hub — https://tunoteshub.me`
     const fnWidth = fontHelveticaBold.widthOfTextAtSize(footerNotice, 9)
     currentPage.drawText(footerNotice, { x: (595.28 - fnWidth) / 2, y, size: 9, font: fontHelveticaBold, color: rgb(0.3, 0.3, 0.3) })
 

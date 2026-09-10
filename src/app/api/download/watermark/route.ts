@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
     // 4. Generate QR Code pointing to the resource page
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
     let qrTarget = baseUrl
     if (bookId) qrTarget = `${baseUrl}/download/book/${bookId}`
     else if (noteId) qrTarget = `${baseUrl}/download/${noteId}`
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
       })
 
       // B. Second diagonal for dense coverage
-      page.drawText('tunoteshub.com', {
+      page.drawText('tunoteshub.me', {
         x: width / 4 - 80,
         y: height / 4,
         size: 28,
@@ -128,8 +128,8 @@ export async function GET(req: NextRequest) {
         opacity: 0.85,
       })
 
-      // D. Bottom Left: "Downloaded from tunoteshub.com"
-      page.drawText('Downloaded from tunoteshub.com — Free TU Notes & Past Papers', {
+      // D. Bottom Left: "Downloaded from tunoteshub.me"
+      page.drawText('Downloaded from tunoteshub.me — Free TU Notes & Past Papers', {
         x: 12,
         y: 13,
         size: 8,
@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
       })
 
       // F. "Scan to visit" text just below QR (tiny)
-      page.drawText('tunoteshub.com', {
+      page.drawText('tunoteshub.me', {
         x: width - qrSize - 8,
         y: 2,
         size: 6,

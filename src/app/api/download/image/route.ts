@@ -74,10 +74,10 @@ export async function GET(req: NextRequest) {
     const bottomPadding = `c_pad,h_h_add_160,w_w,g_north,b_white`
     
     const diagonalWatermark = `l_text:Arial_100_bold:TU%20Notes%20Hub,co_black,o_12,a_-45/fl_layer_apply,g_center`
-    const footerLink = `l_text:Arial_22:tunoteshub.com,co_black,o_60/fl_layer_apply,g_south_east,x_15,y_15`
+    const footerLink = `l_text:Arial_22:tunoteshub.me,co_black,o_60/fl_layer_apply,g_south_east,x_15,y_15`
     
     // QR Code Layer (URL-safe Base64 without '=' padding)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.com'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
     const targetUrl = noteId ? `${baseUrl}/download/${noteId}` : baseUrl
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(targetUrl)}`
     const b64Url = Buffer.from(qrApiUrl).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
