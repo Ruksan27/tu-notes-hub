@@ -141,6 +141,9 @@ export async function PUT(request: Request) {
     let updated;
 
     if (type === 'note') {
+      const existingNote = await prisma.note.findUnique({ where: { id }, select: { status: true, author: true } })
+      const newStatus = fields.status as 'PENDING' | 'APPROVED' | 'REJECTED' | undefined
+      
       updated = await prisma.note.update({
         where: { id },
         data: {
@@ -150,8 +153,34 @@ export async function PUT(request: Request) {
           ...(fields.isPremium !== undefined ? { isPremium: fields.isPremium } : {}),
           ...(fields.author !== undefined ? { author: fields.author } : {}),
           ...(fields.extractedText !== undefined ? { extractedText: fields.extractedText } : {}),
+          ...(fields.status !== undefined ? { status: fields.status } : {}),
+          ...(fields.rejectionReason !== undefined ? { rejectionReason: fields.rejectionReason } : {}),
         }
       })
+
+      // If status changed to APPROVED for the first time, credit reward points to author if user exists
+      if (newStatus === 'APPROVED' && existingNote?.status !== 'APPROVED') {
+        const authorEmail = fields.authorEmail || fields.uploaderEmail || updated.author
+        const ptsToAward = updated.awardedPoints > 0 ? updated.awardedPoints : 20
+        if (authorEmail) {
+          const uploader = await prisma.user.findUnique({ where: { email: authorEmail } })
+          if (uploader) {
+            await prisma.$transaction([
+              prisma.user.update({
+                where: { id: uploader.id },
+                data: { rewardPoints: { increment: ptsToAward } }
+              }),
+              prisma.pointTransaction.create({
+                data: {
+                  userId: uploader.id,
+                  amount: ptsToAward,
+                  reason: `NOTE_APPROVED: ${fields.title || updated.title}`
+                }
+              })
+            ])
+          }
+        }
+      }
     } else if (type === 'pastpaper') {
       updated = await prisma.pastPaper.update({
         where: { id },

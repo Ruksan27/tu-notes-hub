@@ -6,26 +6,17 @@ export default function HomeBanner() {
   return (
     <section className="section" style={{ paddingTop: '20px', paddingBottom: '40px' }}>
       <div className="container">
+        {/* Main Banner Container */}
         <div style={{
-          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85))',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
+          background: 'linear-gradient(135deg, #0b192c 0%, #112240 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: '24px',
-          padding: '40px 32px',
+          padding: '36px 32px',
           position: 'relative',
           overflow: 'hidden',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+          marginBottom: '20px'
         }}>
-          {/* Background Decorative Glow */}
-          <div style={{
-            position: 'absolute',
-            top: '-50%',
-            right: '-10%',
-            width: '400px',
-            height: '400px',
-            background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }} />
-
           <div style={{
             display: 'flex',
             flexDirection: 'row',
@@ -34,105 +25,141 @@ export default function HomeBanner() {
             gap: '24px',
             position: 'relative',
             zIndex: 1,
-            flexWrap: 'wrap',
+            flexWrap: 'wrap'
           }}>
-            {/* Left Content */}
+            {/* Left Column */}
             <div style={{ flex: '1 1 320px', maxWidth: '640px' }}>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 14px',
-                borderRadius: '999px',
-                background: 'rgba(99, 102, 241, 0.12)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
-                color: '#a5b4fc',
-                fontSize: '12px',
-                fontWeight: 700,
-                marginBottom: '16px',
-              }}>
-                <span>🎁 Student Rewards Program</span>
-              </div>
-
               <h2 style={{
-                fontSize: 'clamp(24px, 4vw, 36px)',
+                fontSize: 'clamp(24px, 4vw, 32px)',
                 fontWeight: 900,
-                color: '#fff',
-                marginBottom: '12px',
+                color: '#ffffff',
+                marginBottom: '8px',
                 lineHeight: 1.25,
-                letterSpacing: '-0.5px',
               }}>
-                Upload Notes & <span className="text-gradient">Earn Points</span>
+                Upload Notes & Earn Points
               </h2>
 
               <p style={{
-                color: 'var(--clr-text-2)',
-                fontSize: 'clamp(13.5px, 2vw, 15px)',
-                lineHeight: 1.6,
-                marginBottom: '24px',
+                color: '#94a3b8',
+                fontSize: '14px',
+                lineHeight: 1.5,
+                marginBottom: '20px',
               }}>
-                Share your handwritten study notes or solutions with thousands of TU students. Earn reward points for every download and rank on the leaderboards!
+                The more you contribute, the more you earn.
               </p>
 
-              {/* Perk Badges */}
-              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#e2e8f0', fontWeight: 600 }}>
-                  <span style={{ fontSize: '16px' }}>⚡</span> Fast Approval
+              {/* Badges Pill Row */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#cbd5e1',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                }}>
+                  <span>📑</span> Upload notes, Earn points
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#e2e8f0', fontWeight: 600 }}>
-                  <span style={{ fontSize: '16px' }}>🎁</span> Redeem Rewards
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#cbd5e1',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                }}>
+                  <span>👥</span> Help other students, Grow together
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#e2e8f0', fontWeight: 600 }}>
-                  <span style={{ fontSize: '16px' }}>🏆</span> Top Contributor Badge
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#cbd5e1',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                }}>
+                  <span>📈</span> Climb the leaderboard, Build your profile
                 </div>
-              </div>
-
-              {/* CTA Button */}
-              <div>
-                <Link
-                  href="/dashboard/notes/upload"
-                  className="btn btn-primary btn-lg"
-                  style={{
-                    borderRadius: '14px',
-                    fontWeight: 800,
-                    fontSize: '15px',
-                    padding: '14px 28px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
-                  }}
-                >
-                  <span>Upload Notes Now</span>
-                  <span style={{ fontSize: '16px' }}>→</span>
-                </Link>
               </div>
             </div>
 
-            {/* Right Graphic Badge */}
-            <div style={{
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '20px',
-            }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '56px', marginBottom: '8px', filter: 'drop-shadow(0 10px 20px rgba(99,102,241,0.4))' }}>
-                  🎁
-                </div>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>
-                  Earn Up To
-                </div>
-                <div style={{ fontSize: '22px', fontWeight: 900, background: 'var(--grad-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  500 Points / Note
-                </div>
+            {/* Right Column: Gift Illustration & CTA Button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: '48px', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))' }}>
+                🎁
               </div>
+              <Link
+                href="/dashboard/notes/upload"
+                style={{
+                  background: '#1d4ed8',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '14px',
+                  padding: '10px 24px',
+                  borderRadius: '999px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(29, 78, 216, 0.4)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>↑</span> Upload Now
+              </Link>
             </div>
           </div>
+        </div>
+
+        {/* Secondary Strip Below */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          padding: '16px 24px',
+          borderRadius: '16px',
+          background: 'rgba(15, 23, 42, 0.6)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          flexWrap: 'wrap'
+        }}>
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+              Start sharing your notes today.
+            </h4>
+            <p style={{ fontSize: '12px', color: '#94a3b8', margin: '2px 0 0 0' }}>
+              Join thousands of students earning points by contributing.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/notes/upload"
+            style={{
+              background: '#2563eb',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: 700,
+              padding: '8px 20px',
+              borderRadius: '999px',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            Upload Notes →
+          </Link>
         </div>
       </div>
     </section>

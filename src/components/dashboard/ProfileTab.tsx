@@ -13,6 +13,9 @@ export default function ProfileTab() {
   const [gender, setGender] = useState('')
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  
+  const [referralCodeInput, setReferralCodeInput] = useState('')
+  const [redeemingReferral, setRedeemingReferral] = useState(false)
 
   useEffect(() => {
     // 1. Load from localStorage initially for fast render
@@ -123,16 +126,156 @@ export default function ProfileTab() {
     }
   }
 
+  const handleRedeemReferral = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!referralCodeInput.trim()) return
+
+    setRedeemingReferral(true)
+    try {
+      const res = await fetch('/api/user/referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: referralCodeInput })
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || 'Referral code redeemed successfully!')
+        // Update user state to reflect points and referredById
+        const updatedUser = { ...user, rewardPoints: data.newPoints, referredById: 'SET' }
+        setUser(updatedUser)
+        localStorage.setItem('tu_user', JSON.stringify(updatedUser))
+        setReferralCodeInput('')
+      } else {
+        toast.error(data.error || 'Failed to redeem referral code')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setRedeemingReferral(false)
+    }
+  }
+
   if (!user) return <div className="p-8 text-center text-slate-400">Loading profile...</div>
 
   return (
-    <div className="admin-card p-6 sm:p-8" style={{ background: 'var(--clr-bg-800)', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-lg)' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '20px', color: 'var(--clr-text-1)', marginBottom: '8px' }}>Profile Settings</h2>
-        <p style={{ color: 'var(--clr-text-3)', fontSize: '14px' }}>Update your personal details and profile picture.</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      
+      {/* ── Reward Points & Contribution Card ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(6,182,212,0.15))',
+        border: '1px solid rgba(99,102,241,0.25)',
+        borderRadius: '16px',
+        padding: '24px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '20px',
+      }}>
+        <div>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)',
+            padding: '4px 12px', borderRadius: '999px', fontSize: '11px', color: '#a5b4fc',
+            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px',
+          }}>
+            🎁 Reward Points Balance
+          </div>
+          <div style={{ fontSize: '32px', fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>
+            {user.rewardPoints ?? 0} <span style={{ fontSize: '16px', color: '#67e8f9', fontWeight: 700 }}>PTS</span>
+          </div>
+          <p style={{ color: '#94a3b8', fontSize: '13px', margin: '6px 0 0 0' }}>
+            Earn +50 PTS per approved note. Max 4 uploads/day.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <a
+            href="/dashboard/notes/upload"
+            style={{
+              background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+              color: '#ffffff', fontWeight: 700, fontSize: '13px',
+              padding: '10px 20px', borderRadius: '10px', textDecoration: 'none',
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
+            }}
+          >
+            📤 Upload & Earn Points
+          </a>
+        </div>
       </div>
 
-      <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '500px' }}>
+      {/* ── Referral System Card ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+        <div style={{
+          background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '16px', padding: '24px'
+        }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', margin: '0 0 12px 0' }}>
+            🤝 Invite Friends, Earn Points!
+          </h3>
+          <p style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+            Share your referral code with friends. When they use it, you both earn <strong>+100 PTS</strong>!
+          </p>
+          <div style={{ background: '#050a14', padding: '12px 16px', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Your Referral Code</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#67e8f9', letterSpacing: '1px' }}>
+                {user.referralCode || 'GEN-XXXXX'}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(user.referralCode || '')
+                toast.info('Referral code copied to clipboard!')
+              }}
+              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
+            >
+              Copy Code
+            </button>
+          </div>
+        </div>
+
+        {!user.referredById && (
+          <div style={{
+            background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '16px', padding: '24px'
+          }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', margin: '0 0 12px 0' }}>
+              🎁 Redeem a Referral Code
+            </h3>
+            <p style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+              Were you invited by a friend? Enter their code here to instantly receive <strong>+100 PTS</strong>.
+            </p>
+            <form onSubmit={handleRedeemReferral} style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                placeholder="Enter Code (e.g., 550e8400...)"
+                value={referralCodeInput}
+                onChange={e => setReferralCodeInput(e.target.value)}
+                style={{ flex: 1, background: '#050a14', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '10px 14px', color: '#fff', fontSize: '13px', outline: 'none' }}
+                required
+              />
+              <button
+                type="submit"
+                disabled={redeemingReferral}
+                style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '10px', padding: '0 20px', fontSize: '13px', fontWeight: 700, cursor: redeemingReferral ? 'not-allowed' : 'pointer', opacity: redeemingReferral ? 0.7 : 1 }}
+              >
+                {redeemingReferral ? '...' : 'Redeem'}
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+
+      <div className="admin-card p-6 sm:p-8" style={{ background: 'var(--clr-bg-800)', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '20px', color: 'var(--clr-text-1)', marginBottom: '8px' }}>Profile Settings</h2>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: '14px' }}>Update your personal details and profile picture.</p>
+        </div>
+
+        <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '500px' }}>
         
         {/* Avatar Upload */}
         <div>
@@ -254,5 +397,6 @@ export default function ProfileTab() {
         </div>
       </form>
     </div>
-  )
+  </div>
+)
 }

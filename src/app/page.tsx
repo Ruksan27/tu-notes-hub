@@ -8,7 +8,7 @@ import AdUnit from '@/components/ads/AdUnit'
 const AnimatedText = nextDynamic(() => import('@/components/AnimatedText').then(mod => mod.AnimatedText))
 const Marquee = nextDynamic(() => import('@/components/Marquee').then(mod => mod.Marquee))
 const TestimonialForm = nextDynamic(() => import('@/components/TestimonialForm').then(mod => mod.TestimonialForm))
-const HomeBanner = nextDynamic(() => import('@/components/HomeBanner'))
+const GamifiedCTABanner = nextDynamic(() => import('@/components/GamifiedCTABanner'))
 
 export const dynamic = 'force-dynamic'
 
@@ -152,7 +152,7 @@ export default async function HomePage() {
           }
         `}</style>
       </section>
- 
+
       {/* ── Faculties Grid ────────────────────────── */}
       <section className="section">
         <div className="container">
@@ -191,7 +191,7 @@ export default async function HomePage() {
               ))
             )}
           </div>
-          
+
           <div className="text-center" style={{ marginTop: '32px' }}>
             <Link href="/faculties" className="btn btn-outline" style={{ borderRadius: '999px', padding: '10px 24px', fontSize: '13px' }}>
               🔍 View All Faculties →
@@ -243,7 +243,7 @@ export default async function HomePage() {
               🚀 Upgrade Now — {isOffer ? 'Offer:' : 'Starting'} {semesterPlanPrice} only
             </Link>
           </div>
-          
+
           <div style={{ marginTop: '40px' }}>
             <AdUnit type="leaderboard" slot="home-after-premium" />
           </div>
@@ -421,8 +421,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Upload Notes & Earn Points Promotional Banner ── */}
-      <HomeBanner />
+      {/* Gamified CTA Banner (Placed right before the footer) */}
+      <GamifiedCTABanner />
     </>
   )
 }

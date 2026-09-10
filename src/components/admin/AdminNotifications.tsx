@@ -90,11 +90,10 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (tab: a
     if (!n.isRead) markAsRead(n.id)
     if (n.link) {
       // Map links to tabs
-      if (n.link === '/admin?tab=sellers') onNavigate('sellers')
-      else if (n.link === '/admin?tab=payments') onNavigate('payments')
-      else if (n.link === '/admin?tab=projects') {
-         onNavigate('projects')
-      }
+      if (n.link.includes('sellers')) onNavigate('sellers')
+      else if (n.link.includes('payments')) onNavigate('payments')
+      else if (n.link.includes('projects')) onNavigate('projects')
+      else if (n.link.includes('materials')) onNavigate('materials')
       setIsOpen(false)
     }
   }

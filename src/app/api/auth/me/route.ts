@@ -27,6 +27,9 @@ export async function GET() {
         phone: true,
         college: true,
         gender: true,
+        rewardPoints: true,
+        referralCode: true,
+        referredById: true,
       }
     })
 

@@ -39,7 +39,7 @@ export default function AdBannerBottom() {
       .catch(() => {})
   }, [])
 
-  if (pathname?.startsWith('/admin')) return null
+  if (pathname !== '/') return null
   if (!visible) return null
 
   return (

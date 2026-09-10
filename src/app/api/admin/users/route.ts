@@ -19,6 +19,7 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        avatarUrl: true,
         email: true,
         role: true,
         packageType: true,

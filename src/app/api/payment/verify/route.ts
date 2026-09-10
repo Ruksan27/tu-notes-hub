@@ -25,18 +25,62 @@ export async function POST(req: NextRequest) {
         ? new Date(now.setMonth(now.getMonth() + 6))    // 6 months
         : new Date(now.setFullYear(now.getFullYear() + 1)) // 1 year
 
-      await prisma.user.update({
+      const buyer = await prisma.user.update({
         where: { id: payment.userId },
         data: {
           packageType: payment.packageBought,
           subscriptionExpiresAt: expiresAt,
+          planExpiresAt: expiresAt,
         },
+        select: { id: true, referredById: true, name: true, email: true }
       })
 
       await prisma.payment.update({
         where: { id: paymentId },
         data: { status: 'APPROVED' },
       })
+
+      // If buyer was referred by someone, credit referrer's milestone counter
+      if (buyer.referredById) {
+        const referrer = await prisma.user.findUnique({ where: { id: buyer.referredById } })
+        if (referrer) {
+          const newCount = referrer.successfulPaidReferrals + 1
+          let referrerPackage = referrer.packageType
+          let referrerExpiry = referrer.planExpiresAt || new Date()
+
+          // Check Milestones
+          if (newCount >= 8) {
+            referrerPackage = 'ELITE_AI'
+            const exp = new Date(referrerExpiry > new Date() ? referrerExpiry : new Date())
+            exp.setFullYear(exp.getFullYear() + 1)
+            referrerExpiry = exp
+          } else if (newCount >= 5 && referrerPackage === 'FREE') {
+            referrerPackage = 'SEMESTER_PASS'
+            const exp = new Date(referrerExpiry > new Date() ? referrerExpiry : new Date())
+            exp.setMonth(exp.getMonth() + 6)
+            referrerExpiry = exp
+          }
+
+          await prisma.user.update({
+            where: { id: referrer.id },
+            data: {
+              successfulPaidReferrals: newCount,
+              packageType: referrerPackage,
+              subscriptionExpiresAt: referrerExpiry,
+              planExpiresAt: referrerExpiry,
+            }
+          })
+
+          await prisma.referralLog.create({
+            data: {
+              referrerId: referrer.id,
+              referredUserId: buyer.id,
+              planPurchased: payment.packageBought,
+              discountGiven: 10.0,
+            }
+          })
+        }
+      }
 
       // Send the approval email
       const userToEmail = await prisma.user.findUnique({ where: { id: payment.userId } })

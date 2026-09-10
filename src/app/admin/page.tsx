@@ -601,6 +601,67 @@ function ManageMaterialsTab() {
   const [editTextValue, setEditTextValue] = useState('')
   const [savingPaperText, setSavingPaperText] = useState(false)
 
+  // ── Student Submissions State ──
+  const [submissions, setSubmissions] = useState<any[]>([])
+  const [submissionsLoading, setSubmissionsLoading] = useState(false)
+  const [submissionsFilter, setSubmissionsFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL'>('PENDING')
+  const [submissionsExpanded, setSubmissionsExpanded] = useState(true)
+  const [approvingId, setApprovingId] = useState<string | null>(null)
+  // ── Rejection Modal State ──
+  const [rejectingNote, setRejectingNote] = useState<{ id: string; title: string; fromTab: 'submissions' | 'materials' } | null>(null)
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('')
+
+  useEffect(() => {
+    loadSubmissions()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submissionsFilter])
+
+  async function loadSubmissions() {
+    setSubmissionsLoading(true)
+    try {
+      const res = await fetch(`/api/admin/submissions?status=${submissionsFilter}`)
+      if (res.ok) {
+        const data = await res.json()
+        setSubmissions(data.submissions || [])
+      }
+    } catch {
+      // silent
+    } finally {
+      setSubmissionsLoading(false)
+    }
+  }
+
+  async function handleSubmissionAction(noteId: string, action: 'APPROVE' | 'REJECT') {
+    setApprovingId(noteId)
+    if (action === 'REJECT') {
+      // Find note title for modal display
+      const note = submissions.find((s) => s.id === noteId) || notes.find((n) => n.id === noteId)
+      setRejectingNote({ id: noteId, title: note?.title || 'Untitled', fromTab: note ? 'submissions' : 'materials' })
+      // Do not send request yet; wait for modal confirmation
+      setApprovingId(null)
+      return
+    }
+    try {
+      const res = await fetch('/api/admin/notes/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noteId, action })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || `Note ${action.toLowerCase()}d! 🎉`)
+        loadSubmissions()
+        if (subjectId) loadMaterials()
+      } else {
+        toast.error(data.error || 'Failed to update')
+      }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setApprovingId(null)
+    }
+  }
+
   function openPaperViewer(item: any, type: 'pastpaper' | 'note', title: string) {
     setViewPaperItem({ id: item.id, type, title, extractedText: item.extractedText || '', cloudinaryUrl: item.cloudinaryUrl })
     setEditTextValue(item.extractedText || '')
@@ -854,6 +915,32 @@ function ManageMaterialsTab() {
     }
   }
 
+  // Helper to finalize rejection from modal
+  async function confirmRejection() {
+    if (!rejectingNote) return
+    const { id } = rejectingNote
+    try {
+      const res = await fetch('/api/admin/notes/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noteId: id, action: 'REJECT', rejectionReason: rejectionReasonInput })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || 'Note rejected! 🎉')
+        loadMaterials()
+        loadSubmissions()
+      } else {
+        toast.error(data.error || 'Failed to reject note')
+      }
+    } catch {
+      toast.error('Network error while rejecting')
+    } finally {
+      setRejectingNote(null)
+      setRejectionReasonInput('')
+    }
+  }
+
   function openEdit(item: any, type: string) {
     setEditItem(item)
     setEditType(type)
@@ -965,6 +1052,233 @@ function ManageMaterialsTab() {
       <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', marginBottom: '20px' }}>
         Select a Faculty → Semester → Subject to view, edit, re-run AI OCR, or manage MCQs and uploaded documents.
       </p>
+
+      {/* ── Student Submissions Panel ── */}
+      <div style={{
+        marginBottom: '28px',
+        border: '1px solid rgba(245,158,11,0.25)',
+        borderRadius: '18px',
+        overflow: 'hidden',
+        background: 'rgba(245,158,11,0.03)',
+      }}>
+        {/* Panel Header */}
+        <button
+          type="button"
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit'
+          }}
+          onClick={() => setSubmissionsExpanded(v => !v)}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '20px' }}>📥</span>
+            <span style={{ fontWeight: 800, fontSize: '15px', color: '#fcd34d' }}>Student &amp; Sub-Admin Submissions</span>
+            {submissions.length > 0 && submissionsFilter === 'PENDING' && (
+              <span style={{ background: 'rgba(245,158,11,0.3)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '999px', padding: '2px 10px', fontSize: '12px', fontWeight: 800 }}>
+                {submissions.length} pending
+              </span>
+            )}
+            {submissionsLoading && <span className="spinner" style={{ width: '14px', height: '14px' }} />}
+          </div>
+          <span style={{ color: 'var(--clr-text-3)', fontSize: '18px', transition: 'transform 0.2s', transform: submissionsExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+        </button>
+
+        {submissionsExpanded && (
+          <div style={{ padding: '0 20px 20px 20px' }}>
+
+            {/* Filter Tabs */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+              {(['PENDING', 'APPROVED', 'REJECTED', 'ALL'] as const).map(f => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setSubmissionsFilter(f)}
+                  style={{
+                    padding: '5px 14px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', border: 'none',
+                    background: submissionsFilter === f
+                      ? f === 'PENDING' ? 'rgba(245,158,11,0.3)' : f === 'APPROVED' ? 'rgba(16,185,129,0.25)' : f === 'REJECTED' ? 'rgba(239,68,68,0.25)' : 'rgba(99,102,241,0.25)'
+                      : 'rgba(255,255,255,0.05)',
+                    color: submissionsFilter === f
+                      ? f === 'PENDING' ? '#fcd34d' : f === 'APPROVED' ? '#34d399' : f === 'REJECTED' ? '#f87171' : '#a5b4fc'
+                      : 'var(--clr-text-3)',
+                    outline: submissionsFilter === f ? `1px solid ${f === 'PENDING' ? 'rgba(245,158,11,0.4)' : f === 'APPROVED' ? 'rgba(16,185,129,0.35)' : f === 'REJECTED' ? 'rgba(239,68,68,0.35)' : 'rgba(99,102,241,0.35)'}` : 'none',
+                  }}
+                >
+                  {f === 'PENDING' ? '⏳' : f === 'APPROVED' ? '✅' : f === 'REJECTED' ? '❌' : '📋'} {f}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={loadSubmissions}
+                style={{ padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'var(--clr-text-3)', marginLeft: 'auto' }}
+              >
+                🔄 Refresh
+              </button>
+            </div>
+
+            {/* Submissions Table */}
+            {submissionsLoading ? (
+              <div style={{ textAlign: 'center', padding: '32px' }}>
+                <span className="spinner" style={{ width: '24px', height: '24px' }} />
+                <p style={{ color: 'var(--clr-text-3)', marginTop: '10px', fontSize: '13px' }}>Loading submissions...</p>
+              </div>
+            ) : submissions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: '36px', marginBottom: '10px' }}>
+                  {submissionsFilter === 'PENDING' ? '🎉' : '📭'}
+                </div>
+                <p style={{ color: 'var(--clr-text-3)', fontSize: '14px', fontWeight: 600 }}>
+                  {submissionsFilter === 'PENDING' ? 'No pending submissions — all caught up!' : `No ${submissionsFilter.toLowerCase()} submissions found.`}
+                </p>
+              </div>
+            ) : (
+              <div className="table-wrap" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ minWidth: '200px' }}>Material Title</th>
+                      <th>Type</th>
+                      <th>Submitted By</th>
+                      <th>Faculty / Subject</th>
+                      <th>Points</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                      <th style={{ minWidth: '200px' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {submissions.map(s => {
+                      const isPending = s.status === 'PENDING'
+                      const isApproved = s.status === 'APPROVED'
+                      const isRejected = s.status === 'REJECTED'
+                      const isWorking = approvingId === s.id
+                      const subjectTitle = s.subject?.title || '—'
+                      const subjectCode = s.subject?.code || ''
+                      const semesterName = s.subject?.semester?.name || ''
+                      const isSubAdmin = s.isSubAdmin || s.authorRole === 'CHILD_ADMIN' || s.authorRole === 'ADMIN'
+
+                      return (
+                        <tr key={s.id} style={{ background: isPending ? 'rgba(245,158,11,0.04)' : 'transparent', opacity: isWorking ? 0.6 : 1 }}>
+                          <td>
+                            <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--clr-text-1)', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {s.title}
+                            </div>
+                            {s.description && (
+                              <div style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginTop: '2px', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {s.description}
+                              </div>
+                            )}
+                            {s.fileSize && (
+                              <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>📦 {s.fileSize}</div>
+                            )}
+                          </td>
+                          <td>
+                            <span className="badge badge-semester" style={{ fontSize: '10px' }}>
+                              {s.noteType?.replace(/_/g, ' ')}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '12px', color: 'var(--clr-text-2)', fontWeight: 600, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>{s.authorName || s.author || '—'}</span>
+                              {isSubAdmin && (
+                                <span style={{ background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                                  🛡️ Sub-Admin
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '11px', color: 'var(--clr-text-2)', fontWeight: 700 }}>
+                              {subjectCode && <span style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', padding: '1px 6px', borderRadius: '4px', marginRight: '4px', fontSize: '10px' }}>{subjectCode}</span>}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--clr-text-3)', marginTop: '2px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {semesterName} · {subjectTitle.replace(/\s*\(.*?\)/gi, '').trim()}
+                            </div>
+                          </td>
+                          <td>
+                            {isSubAdmin ? (
+                              <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 600 }}>— (No Points)</span>
+                            ) : (
+                              <span style={{ fontWeight: 800, color: '#fcd34d', fontSize: '13px' }}>+{s.awardedPoints || 0}</span>
+                            )}
+                          </td>
+                          <td>
+                            {isPending && <span className="badge" style={{ background: 'rgba(245,158,11,0.2)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.4)', fontSize: '10px' }}>⏳ PENDING</span>}
+                            {isApproved && <span className="badge badge-success" style={{ fontSize: '10px' }}>✅ APPROVED</span>}
+                            {isRejected && (
+                              <div>
+                                <span className="badge badge-low" style={{ fontSize: '10px' }}>❌ REJECTED</span>
+                                {s.rejectionReason && (
+                                  <div style={{ fontSize: '10.5px', color: '#f87171', marginTop: '3px', maxWidth: '180px', fontStyle: 'italic', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.25)', wordBreak: 'break-word' }}>
+                                    Reason: "{s.rejectionReason}"
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ fontSize: '11px', color: 'var(--clr-text-3)', whiteSpace: 'nowrap' }}>
+                            {new Date(s.createdAt).toLocaleDateString()}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              {(() => {
+                                const url = s.cloudinaryUrl
+                                const isValid = url && url.trim() !== '' && url !== 'https://drive.google.com'
+                                let viewHref = url
+                                if (isValid && (url.endsWith('.pdf') || url.includes('/raw/upload/'))) {
+                                  viewHref = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}`
+                                }
+                                return isValid ? (
+                                  <a
+                                    href={viewHref}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-sm btn-outline"
+                                    style={{ fontSize: '10px', padding: '3px 8px' }}
+                                  >
+                                    👁️ View File
+                                  </a>
+                                ) : (
+                                  <span style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic' }}>
+                                    ⚠️ No File Link
+                                  </span>
+                                )
+                              })()}
+                              {isPending && (
+                                <>
+                                  <button
+                                    className="btn btn-sm"
+                                    style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: 800, fontSize: '10px', opacity: isWorking ? 0.5 : 1 }}
+                                    disabled={isWorking}
+                                    onClick={() => handleSubmissionAction(s.id, 'APPROVE')}
+                                  >
+                                    {isWorking ? '⏳...' : '✓ Approve'}
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-danger"
+                                    style={{ fontSize: '10px', opacity: isWorking ? 0.5 : 1 }}
+                                    disabled={isWorking}
+                                    onClick={() => {
+                                      setRejectingNote({ id: s.id, title: s.title, fromTab: 'submissions' })
+                                      setRejectionReasonInput('')
+                                    }}
+                                  >
+                                    ✕ Reject
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Filter Dropdowns */}
       <div className="glass-card" style={{ padding: '20px', marginBottom: '24px' }}>
@@ -1131,6 +1445,7 @@ function ManageMaterialsTab() {
                     <tr>
                       <th>Title</th>
                       <th>Type</th>
+                      <th>Approval Status</th>
                       <th>Smart AI Status</th>
                       <th>Access</th>
                       <th>Downloads</th>
@@ -1142,13 +1457,31 @@ function ManageMaterialsTab() {
                     {notes.map(n => {
                       const hasText = Boolean(n.extractedText && n.extractedText.trim().length > 0)
                       const textLen = n.extractedText ? n.extractedText.length : 0
+                      const isPending = n.status === 'PENDING'
+                      const isApproved = n.status === 'APPROVED' || !n.status
+                      const isRejected = n.status === 'REJECTED'
+
                       return (
-                        <tr key={n.id}>
+                        <tr key={n.id} style={{ background: isPending ? 'rgba(245, 158, 11, 0.05)' : 'transparent' }}>
                           <td>
                             <div style={{ fontWeight: 600, maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
                             {n.author && <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>by {n.author}</div>}
                           </td>
                           <td><span className="badge badge-semester" style={{ fontSize: '11px' }}>{n.noteType?.replace('_', ' ')}</span></td>
+                          <td>
+                            {isPending && <span className="badge" style={{ background: 'rgba(245,158,11,0.2)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.4)', fontSize: '11px' }}>⏳ PENDING</span>}
+                            {isApproved && <span className="badge badge-success" style={{ fontSize: '11px' }}>✅ APPROVED</span>}
+                            {isRejected && (
+                              <div>
+                                <span className="badge badge-low" style={{ fontSize: '11px' }}>❌ REJECTED</span>
+                                {n.rejectionReason && (
+                                  <div style={{ fontSize: '10.5px', color: '#f87171', marginTop: '3px', maxWidth: '180px', fontStyle: 'italic', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.25)', wordBreak: 'break-word' }}>
+                                    Reason: "{n.rejectionReason}"
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </td>
                           <td>
                             {hasText ? (
                               <span className="badge badge-success" style={{ fontSize: '11px' }}>
@@ -1165,6 +1498,27 @@ function ManageMaterialsTab() {
                           <td style={{ fontSize: '12px' }}>{new Date(n.createdAt).toLocaleDateString()}</td>
                           <td>
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                              {isPending && (
+                                <>
+                                  <button
+                                    className="btn btn-sm"
+                                    style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: 800, fontSize: '11px' }}
+                                    onClick={() => handleApproveNote(n.id, 'APPROVE')}
+                                  >
+                                    ✓ Approve (+PTS & OCR)
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-danger"
+                                    style={{ fontSize: '11px' }}
+                                    onClick={() => {
+                                      setRejectingNote({ id: n.id, title: n.title, fromTab: 'materials' })
+                                      setRejectionReasonInput('')
+                                    }}
+                                  >
+                                    ✕ Reject
+                                  </button>
+                                </>
+                              )}
                               <button
                                 className="btn btn-sm"
                                 style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '11px' }}
@@ -1925,6 +2279,123 @@ function ManageMaterialsTab() {
           </motion.div>
         </div>
       )}
+      {/* ── Rejection Reason Modal ── */}
+      {rejectingNote && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 99999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: '#0b1329', border: '1px solid rgba(239, 68, 68, 0.4)',
+            borderRadius: '20px', padding: '28px', maxWidth: '520px', width: '100%', color: '#fff',
+            boxShadow: '0 20px 50px rgba(239,68,68,0.2)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ❌ Reject Material Submission
+              </h3>
+              <button
+                type="button"
+                onClick={() => setRejectingNote(null)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '18px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '13.5px', color: '#cbd5e1', marginBottom: '16px', lineHeight: 1.5 }}>
+              Specify the reason why <strong style={{ color: '#fff' }}>"{rejectingNote.title}"</strong> is being rejected. This will send an in-app notification to the user with the exact details.
+            </p>
+
+            {/* Preset Chips */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#94a3b8', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
+                Quick Select Preset Reason
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {[
+                  '📷 Blurry / unreadable photos or PDF',
+                  '📚 Wrong Faculty, Semester, or Subject selected',
+                  '📄 Incomplete document or missing pages',
+                  '⚠️ Duplicate file or copyright violation',
+                  '🎯 Low academic quality / does not meet guidelines',
+                  '🔗 Invalid external link or file unaccessible'
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setRejectionReasonInput(chip)}
+                    style={{
+                      background: rejectionReasonInput === chip ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.06)',
+                      border: `1px solid ${rejectionReasonInput === chip ? '#ef4444' : 'rgba(255, 255, 255, 0.12)'}`,
+                      color: rejectionReasonInput === chip ? '#fca5a5' : '#cbd5e1',
+                      padding: '5px 10px',
+                      borderRadius: '8px',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Reason Input */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#94a3b8', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                Reason Explanation (Custom Text)
+              </label>
+              <textarea
+                rows={3}
+                placeholder="e.g. Blur pages, duplicate note, missing diagrams, or wrong subject category."
+                value={rejectionReasonInput}
+                onChange={(e) => setRejectionReasonInput(e.target.value)}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: '12px', background: '#050a14',
+                  border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: '13.5px', outline: 'none',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setRejectingNote(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.08)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '10px', padding: '9px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!rejectingNote) return
+                  const reason = rejectionReasonInput.trim() || 'Content did not meet quality guidelines.'
+                  if (rejectingNote.fromTab === 'submissions') {
+                    handleSubmissionAction(rejectingNote.id, 'REJECT', reason)
+                  } else {
+                    handleApproveNote(rejectingNote.id, 'REJECT', reason)
+                  }
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff', border: 'none',
+                  borderRadius: '10px', padding: '9px 22px', fontSize: '13px', fontWeight: 800, cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)'
+                }}
+              >
+                Confirm Rejection ❌
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -1933,6 +2404,9 @@ function ManageMaterialsTab() {
 function UsersTab() {
   const [users, setUsers] = useState<any[]>([])
   const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState('ALL')
+  const [planFilter, setPlanFilter] = useState('ALL')
+  const [verifiedFilter, setVerifiedFilter] = useState('ALL')
   const [loading, setLoading] = useState(true)
   const [faculties, setFaculties] = useState<any[]>([])
   const [semesters, setSemesters] = useState<any[]>([])
@@ -2139,16 +2613,28 @@ function UsersTab() {
     setEditAdminSemesterId(u.adminSemesterId || '')
   }
 
-  const filtered = users.filter(u =>
-    (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (u.email || '').toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = users.filter(u => {
+    const matchesSearch =
+      (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(search.toLowerCase())
+
+    const matchesRole = roleFilter === 'ALL' || u.role === roleFilter
+    const matchesPlan = planFilter === 'ALL' || u.packageType === planFilter
+    const matchesVerified =
+      verifiedFilter === 'ALL'
+        ? true
+        : verifiedFilter === 'VERIFIED'
+        ? u.isEmailVerified === true
+        : u.isEmailVerified !== true
+
+    return matchesSearch && matchesRole && matchesPlan && matchesVerified
+  })
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h3 className="section-title" style={{ margin: 0 }}>👥 Users & Plans</h3>
+          <h3 className="section-title" style={{ margin: 0 }}>👥 Users &amp; Plans</h3>
           <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
             Manage registered students, grant premium access manually, and view active subscriptions.
           </p>
@@ -2165,6 +2651,122 @@ function UsersTab() {
           <button className="primary-btn" onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
             ✨ Add User
           </button>
+        </div>
+      </div>
+
+      {/* ── Filter Bar for Role, Plan, and Verification Status ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        flexWrap: 'wrap',
+        marginBottom: '20px',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
+        padding: '10px 16px',
+        borderRadius: '14px',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <span>⚙️</span> Filter:
+        </div>
+
+        {/* Role Filter */}
+        <select
+          value={roleFilter}
+          onChange={e => setRoleFilter(e.target.value)}
+          style={{
+            width: 'auto',
+            minWidth: '140px',
+            padding: '7px 12px',
+            borderRadius: '10px',
+            fontSize: '12px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            outline: 'none',
+            background: roleFilter !== 'ALL' ? 'rgba(99,102,241,0.2)' : '#0f172a',
+            border: roleFilter !== 'ALL' ? '1px solid rgba(99,102,241,0.5)' : '1px solid rgba(255,255,255,0.12)',
+            color: roleFilter !== 'ALL' ? '#a5b4fc' : '#cbd5e1',
+            boxShadow: roleFilter !== 'ALL' ? '0 0 12px rgba(99,102,241,0.2)' : 'none',
+          }}
+        >
+          <option value="ALL" style={{ background: '#0f172a', color: '#fff' }}>👥 All Roles</option>
+          <option value="STUDENT" style={{ background: '#0f172a', color: '#fff' }}>🎓 Students</option>
+          <option value="CHILD_ADMIN" style={{ background: '#0f172a', color: '#fff' }}>🛡️ Sub-Admins / Uploaders</option>
+          <option value="ADMIN" style={{ background: '#0f172a', color: '#fff' }}>👑 Super Admins</option>
+        </select>
+
+        {/* Plan Filter */}
+        <select
+          value={planFilter}
+          onChange={e => setPlanFilter(e.target.value)}
+          style={{
+            width: 'auto',
+            minWidth: '140px',
+            padding: '7px 12px',
+            borderRadius: '10px',
+            fontSize: '12px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            outline: 'none',
+            background: planFilter !== 'ALL' ? 'rgba(6,182,212,0.2)' : '#0f172a',
+            border: planFilter !== 'ALL' ? '1px solid rgba(6,182,212,0.5)' : '1px solid rgba(255,255,255,0.12)',
+            color: planFilter !== 'ALL' ? '#67e8f9' : '#cbd5e1',
+            boxShadow: planFilter !== 'ALL' ? '0 0 12px rgba(6,182,212,0.2)' : 'none',
+          }}
+        >
+          <option value="ALL" style={{ background: '#0f172a', color: '#fff' }}>💳 All Plans</option>
+          <option value="FREE" style={{ background: '#0f172a', color: '#fff' }}>🆓 Free Plan</option>
+          <option value="SEMESTER_PASS" style={{ background: '#0f172a', color: '#fff' }}>🎓 Semester Pass</option>
+          <option value="ELITE_AI" style={{ background: '#0f172a', color: '#fff' }}>💎 Elite AI</option>
+        </select>
+
+        {/* Verification Status Filter */}
+        <select
+          value={verifiedFilter}
+          onChange={e => setVerifiedFilter(e.target.value)}
+          style={{
+            width: 'auto',
+            minWidth: '150px',
+            padding: '7px 12px',
+            borderRadius: '10px',
+            fontSize: '12px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            outline: 'none',
+            background: verifiedFilter !== 'ALL' ? 'rgba(16,185,129,0.2)' : '#0f172a',
+            border: verifiedFilter !== 'ALL' ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.12)',
+            color: verifiedFilter !== 'ALL' ? '#6ee7b7' : '#cbd5e1',
+            boxShadow: verifiedFilter !== 'ALL' ? '0 0 12px rgba(16,185,129,0.2)' : 'none',
+          }}
+        >
+          <option value="ALL" style={{ background: '#0f172a', color: '#fff' }}>✔️ All Verification Status</option>
+          <option value="VERIFIED" style={{ background: '#0f172a', color: '#fff' }}>✅ Verified Only</option>
+          <option value="UNVERIFIED" style={{ background: '#0f172a', color: '#fff' }}>⚠️ Unverified Only</option>
+        </select>
+
+        {/* Reset Filters Button */}
+        {(roleFilter !== 'ALL' || planFilter !== 'ALL' || verifiedFilter !== 'ALL' || search) && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => { setRoleFilter('ALL'); setPlanFilter('ALL'); setVerifiedFilter('ALL'); setSearch(''); }}
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '6px 14px',
+              background: 'rgba(239,68,68,0.15)',
+              color: '#f87171',
+              border: '1px solid rgba(239,68,68,0.35)',
+              borderRadius: '999px',
+              cursor: 'pointer',
+            }}
+          >
+            ✕ Reset Filters
+          </button>
+        )}
+
+        <div style={{ marginLeft: 'auto', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
+          Showing <strong style={{ color: '#fcd34d', fontSize: '13px' }}>{filtered.length}</strong> of {users.length} users
         </div>
       </div>
 
@@ -2234,7 +2836,7 @@ function UsersTab() {
         <table>
           <thead>
             <tr>
-              <th>Student</th>
+              <th>Student / User</th>
               <th>Role</th>
               <th>Current Plan</th>
               <th>Subscription Expires</th>
@@ -2243,58 +2845,158 @@ function UsersTab() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px' }}><span className="spinner" /> Loading users...</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '48px' }}><span className="spinner" style={{ width: '24px', height: '24px' }} /> Loading users...</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'var(--clr-text-3)' }}>No users found.</td></tr>
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '48px', color: 'var(--clr-text-3)' }}>
+                  <div style={{ fontSize: '36px', marginBottom: '8px' }}>📭</div>
+                  No matching users found for selected filters.
+                </td>
+              </tr>
             ) : (
-              filtered.map(u => (
-                <tr key={u.id}>
-                  <td>
-                    <div style={{ fontWeight: 600 }}>{u.name || 'Unknown'}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--clr-text-3)' }}>{u.email}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--clr-text-3)', marginTop: '2px' }}>
-                      Joined: {new Date(u.createdAt).toLocaleDateString()}
-                      {u.isEmailVerified ? ' ✅' : ' ⚠️ unverified'}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${u.role === 'ADMIN' ? 'badge-elite' : u.role === 'CHILD_ADMIN' ? 'badge-semester' : 'badge-low'}`}>
-                      {u.role === 'CHILD_ADMIN' ? 'UPLOADER' : u.role}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge ${u.packageType === 'ELITE_AI' ? 'badge-elite' : u.packageType === 'SEMESTER_PASS' ? 'badge-success' : 'badge-low'}`}>
-                      {u.packageType === 'ELITE_AI' ? '💎 Elite AI' : u.packageType === 'SEMESTER_PASS' ? '🎓 Sem Pass' : '🆓 Free'}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: '12px', color: 'var(--clr-text-2)' }}>
-                    {u.subscriptionExpiresAt
-                      ? new Date(u.subscriptionExpiresAt).toLocaleDateString('en-NP', { dateStyle: 'medium' })
-                      : '—'}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <button className="btn btn-sm btn-outline" style={{ display: 'flex', gap: '4px', alignItems: 'center' }} onClick={() => startEdit(u)}>
-                        ✏️ Edit Details
-                      </button>
-                      <button className="btn btn-sm" style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }} onClick={() => updateUserPlan(u.id, 'SEMESTER_PASS', 6)}>
-                        + Sem Pass (6m)
-                      </button>
-                      <button className="btn btn-sm" style={{ background: 'rgba(217,70,239,0.12)', color: '#e879f9', border: '1px solid rgba(217,70,239,0.3)' }} onClick={() => updateUserPlan(u.id, 'ELITE_AI', 12)}>
-                        + Elite (1yr)
-                      </button>
-                      {u.packageType !== 'FREE' && (
-                        <button className="btn btn-sm btn-danger" onClick={() => updateUserPlan(u.id, 'FREE', 0)}>
-                          Revoke Access
-                        </button>
+              filtered.map(u => {
+                const isAdmin = u.role === 'ADMIN'
+                const isSubAdmin = u.role === 'CHILD_ADMIN'
+                const initials = (u.name || u.email || 'U').substring(0, 2).toUpperCase()
+
+                return (
+                  <tr key={u.id} style={{ transition: 'background 0.2s' }}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {u.avatarUrl ? (
+                          <img
+                            src={u.avatarUrl}
+                            alt={u.name || 'User'}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                              border: '1.5px solid rgba(255,255,255,0.15)'
+                            }}
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                              const sibling = (e.target as HTMLElement).nextElementSibling as HTMLElement;
+                              if (sibling) sibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div style={{
+                          width: '36px', height: '36px', borderRadius: '50%',
+                          background: isAdmin ? 'linear-gradient(135deg, #a855f7, #ec4899)' : isSubAdmin ? 'linear-gradient(135deg, #06b6d4, #3b82f6)' : 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                          color: '#ffffff', fontWeight: 800, fontSize: '13px',
+                          display: u.avatarUrl ? 'none' : 'flex',
+                          alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                          margin: '0 auto',
+                          textAlign: 'center',
+                          lineHeight: '36px'
+                        }}>
+                          {initials}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: 'var(--clr-text-1)', fontSize: '13.5px' }}>{u.name || 'Unknown User'}</div>
+                          <div style={{ fontSize: '11.5px', color: 'var(--clr-text-3)' }}>{u.email}</div>
+                          <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>Joined {new Date(u.createdAt).toLocaleDateString()}</span>
+                            {u.isEmailVerified ? (
+                              <span style={{ color: '#34d399', fontWeight: 700 }}>• ✅ Verified</span>
+                            ) : (
+                              <span style={{ color: '#fbbf24', fontWeight: 700 }}>• ⚠️ Unverified</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      {isAdmin && (
+                        <span className="badge" style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(236,72,153,0.25))', color: '#c084fc', border: '1px solid rgba(168,85,247,0.4)', fontWeight: 800, fontSize: '10px' }}>
+                          👑 SUPER ADMIN
+                        </span>
                       )}
-                      <button className="btn btn-sm btn-outline" style={{ borderColor: 'rgba(239, 68, 68, 0.4)', color: '#ef4444' }} onClick={() => deleteUser(u.id, u.name || u.email)}>
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                      {isSubAdmin && (
+                        <span className="badge" style={{ background: 'rgba(6,182,212,0.2)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.35)', fontWeight: 800, fontSize: '10px' }}>
+                          🛡️ SUB-ADMIN
+                        </span>
+                      )}
+                      {!isAdmin && !isSubAdmin && (
+                        <span className="badge" style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)', fontWeight: 700, fontSize: '10px' }}>
+                          🎓 STUDENT
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {u.packageType === 'ELITE_AI' && (
+                        <span className="badge" style={{ background: 'linear-gradient(135deg, rgba(56,189,248,0.25), rgba(129,140,248,0.25))', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.4)', fontWeight: 800, fontSize: '10px' }}>
+                          💎 ELITE AI
+                        </span>
+                      )}
+                      {u.packageType === 'SEMESTER_PASS' && (
+                        <span className="badge" style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.35)', fontWeight: 800, fontSize: '10px' }}>
+                          🎓 SEM PASS
+                        </span>
+                      )}
+                      {u.packageType !== 'ELITE_AI' && u.packageType !== 'SEMESTER_PASS' && (
+                        <span className="badge" style={{ background: 'rgba(255,255,255,0.06)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', fontSize: '10px' }}>
+                          🆓 FREE
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ fontSize: '12px', color: 'var(--clr-text-2)', fontWeight: 600 }}>
+                      {u.subscriptionExpiresAt ? (
+                        <span style={{ color: '#e2e8f0' }}>
+                          {new Date(u.subscriptionExpiresAt).toLocaleDateString('en-NP', { dateStyle: 'medium' })}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#64748b' }}>—</span>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button
+                          className="btn btn-sm"
+                          style={{ background: 'rgba(99,102,241,0.12)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)', fontSize: '11px', fontWeight: 600, padding: '4px 10px' }}
+                          onClick={() => startEdit(u)}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="btn btn-sm"
+                          style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)', fontSize: '11px', fontWeight: 600, padding: '4px 10px' }}
+                          onClick={() => updateUserPlan(u.id, 'SEMESTER_PASS', 6)}
+                        >
+                          + Sem Pass (6m)
+                        </button>
+                        <button
+                          className="btn btn-sm"
+                          style={{ background: 'rgba(217,70,239,0.12)', color: '#e879f9', border: '1px solid rgba(217,70,239,0.3)', fontSize: '11px', fontWeight: 600, padding: '4px 10px' }}
+                          onClick={() => updateUserPlan(u.id, 'ELITE_AI', 12)}
+                        >
+                          + Elite (1yr)
+                        </button>
+                        {u.packageType !== 'FREE' && (
+                          <button
+                            className="btn btn-sm btn-danger"
+                            style={{ fontSize: '11px', padding: '4px 10px' }}
+                            onClick={() => updateUserPlan(u.id, 'FREE', 0)}
+                          >
+                            Revoke
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-sm btn-outline"
+                          style={{ borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444', fontSize: '11px', padding: '4px 8px' }}
+                          onClick={() => deleteUser(u.id, u.name || u.email)}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>

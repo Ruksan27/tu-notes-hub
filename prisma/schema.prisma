@@ -44,6 +44,12 @@ enum ExamType {
   BACK_PAPER
 }
 
+enum NoteStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id                    String    @id @default(uuid())
   name                  String
@@ -67,11 +73,44 @@ model User {
   college               String?
   gender                String?   // "MALE" | "FEMALE" | "OTHER"
 
+  // Reward & Referral system
+  rewardPoints            Int               @default(0)
+  referralCode            String?           @unique @default(uuid())
+  referredById            String?
+  referredBy              User?             @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals               User[]            @relation("UserReferrals")
+  successfulPaidReferrals Int               @default(0)
+  planExpiresAt           DateTime?
+
+  pointTransactions       PointTransaction[]
+  referralLogsGiven       ReferralLog[]     @relation("ReferrerLogs")
+  referralLogsUsed        ReferralLog[]     @relation("ReferredUserLogs")
+
   // Admin Assignments (For CHILD_ADMIN)
   adminFacultyId        String?
   adminSemesterId       String?
   
   createdAt             DateTime  @default(now())
+}
+
+model PointTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int      // e.g. +50, -500
+  reason      String   // e.g. "NOTE_APPROVED", "REDEEM_SEMESTER_PASS"
+  createdAt   DateTime @default(now())
+}
+
+model ReferralLog {
+  id             String   @id @default(cuid())
+  referrerId     String
+  referrer       User     @relation("ReferrerLogs", fields: [referrerId], references: [id])
+  referredUserId String
+  referredUser   User     @relation("ReferredUserLogs", fields: [referredUserId], references: [id])
+  planPurchased  String   // "SEMESTER_PASS" | "ELITE_AI"
+  discountGiven  Float
+  createdAt      DateTime @default(now())
 }
 
 model SellerProfile {
@@ -174,19 +213,23 @@ model Subject {
 }
 
 model Note {
-  id            String   @id @default(uuid())
-  title         String
-  description   String?  @db.Text
-  cloudinaryUrl String
-  fileSize      String?
-  extractedText String?  @db.LongText
-  noteType      NoteType @default(PDF_BOOK)
-  isPremium     Boolean  @default(false)
-  author        String?
-  subjectId     String
-  subject       Subject  @relation(fields: [subjectId], references: [id])
-  downloadCount Int      @default(0)
-  createdAt     DateTime @default(now())
+  id              String     @id @default(uuid())
+  title           String
+  description     String?    @db.Text
+  cloudinaryUrl   String
+  fileSize        String?
+  fileHash        String?    // MD5 / SHA256 Hash to prevent duplicate re-uploads
+  status          NoteStatus @default(APPROVED)
+  rejectionReason String?
+  awardedPoints   Int        @default(0)
+  extractedText   String?    @db.LongText
+  noteType        NoteType   @default(PDF_BOOK)
+  isPremium       Boolean    @default(false)
+  author          String?
+  subjectId       String
+  subject         Subject    @relation(fields: [subjectId], references: [id])
+  downloadCount   Int        @default(0)
+  createdAt       DateTime   @default(now())
 }
 
 model PastPaper {

@@ -328,3 +328,52 @@ export async function sendProjectOrderDeliveredEmail(
   `
   await transporter.sendMail({ from: process.env.EMAIL_FROM, to: buyerEmail, subject, html })
 }
+
+export async function sendSubmissionStatusEmail(
+  email: string,
+  userName: string,
+  materialTitle: string,
+  status: 'APPROVED' | 'REJECTED',
+  points: number = 0,
+  reason: string = ''
+) {
+  const isApproved = status === 'APPROVED'
+  const subject = isApproved
+    ? '🎉 Your Material "' + materialTitle + '" was Approved! — TU Notes Hub'
+    : 'Material Submission Update: "' + materialTitle + '" — TU Notes Hub'
+
+  const headerBg = isApproved ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#ef4444,#b91c1c)'
+  const headerEmoji = isApproved ? '🎉' : '❌'
+  const headerTitle = isApproved ? 'Material Approved!' : 'Material Rejected'
+
+  const bodyContent = isApproved
+    ? '<p style="color:#94a3b8;line-height:1.7;margin:0 0 28px;">Great news! Your uploaded material <strong style="color:#6ee7b7;">"' + materialTitle + '"</strong> has been approved.</p>' +
+      '<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:24px;text-align:center;">' +
+      '<p style="color:#a5b4fc;font-weight:700;margin:0 0 12px;">Reward Points Added</p>' +
+      '<p style="color:#6ee7b7;font-size:42px;font-weight:800;margin:0;">+' + points + '</p>' +
+      '<p style="color:#94a3b8;margin:12px 0 0;font-size:14px;">Keep uploading to earn more points!</p></div>'
+    : '<p style="color:#94a3b8;line-height:1.7;margin:0 0 24px;">We reviewed your material <strong>"' + materialTitle + '"</strong> and could not approve it.</p>' +
+      '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:20px 24px;margin-bottom:24px;">' +
+      '<p style="color:#fca5a5;font-weight:700;margin:0 0 8px;">Reason:</p>' +
+      '<p style="color:#fca5a5;margin:0;">"' + reason + '"</p></div>' +
+      '<p style="color:#64748b;font-size:14px;">You can review our guidelines and try uploading again.</p>'
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${subject}</title></head>
+    <body style="margin:0;padding:0;background:#0d0f1a;font-family:'Segoe UI',sans-serif;">
+      <div style="max-width:520px;margin:40px auto;background:linear-gradient(135deg,#1a1d2e,#151826);border:1px solid rgba(99,102,241,0.3);border-radius:16px;overflow:hidden;">
+        <div style="background:${headerBg};padding:36px;text-align:center;">
+          <div style="font-size:52px;margin-bottom:12px;">${headerEmoji}</div>
+          <h1 style="margin:0;color:#fff;font-size:22px;font-weight:800;">${headerTitle}</h1>
+        </div>
+        <div style="padding:40px 36px;">
+          <h2 style="color:#e2e8f0;margin:0 0 16px;font-size:20px;">Hello, ${userName}!</h2>
+          ${bodyContent}
+        </div>
+        <div style="border-top:1px solid rgba(99,102,241,0.15);padding:20px 36px;text-align:center;">
+          <p style="color:#475569;font-size:12px;margin:0;">© 2025 TU Notes Hub — For Tribhuvan University Students</p>
+        </div>
+      </div>
+    </body></html>`
+
+  await transporter.sendMail({ from: process.env.EMAIL_FROM, to: email, subject, html })
+}
