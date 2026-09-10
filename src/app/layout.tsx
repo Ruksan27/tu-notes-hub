@@ -10,6 +10,8 @@ import AdBlockerGuard from '@/components/ads/AdBlockerGuard'
 import PWARegister from '@/components/PWARegister'
 import Script from 'next/script'
 
+import Footer from '@/components/Footer'
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'),
   title: {
@@ -136,9 +138,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AdBlockerGuard />
         <PWARegister />
         <Navbar />
-        <main style={{ paddingBottom: '80px' }}>
+        <main style={{ paddingBottom: '0px' }}>
           {children}
         </main>
+        <Footer />
         <AdBannerBottom />
         <ToastContainer
           position="top-right"

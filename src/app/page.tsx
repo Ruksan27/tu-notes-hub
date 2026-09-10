@@ -8,6 +8,7 @@ import AdUnit from '@/components/ads/AdUnit'
 const AnimatedText = nextDynamic(() => import('@/components/AnimatedText').then(mod => mod.AnimatedText))
 const Marquee = nextDynamic(() => import('@/components/Marquee').then(mod => mod.Marquee))
 const TestimonialForm = nextDynamic(() => import('@/components/TestimonialForm').then(mod => mod.TestimonialForm))
+const HomeBanner = nextDynamic(() => import('@/components/HomeBanner'))
 
 export const dynamic = 'force-dynamic'
 
@@ -419,6 +420,9 @@ export default async function HomePage() {
           />
         </div>
       </section>
+
+      {/* ── Upload Notes & Earn Points Promotional Banner ── */}
+      <HomeBanner />
     </>
   )
 }
