@@ -60,6 +60,7 @@ export default function TopContributorsWidget({ limit = 3 }: { limit?: number })
       style={{
         width: '100%',
         maxWidth: '300px',
+        marginLeft: 'auto',
         background: 'rgba(15, 23, 42, 0.75)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',

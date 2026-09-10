@@ -135,7 +135,7 @@ export default async function HomePage() {
 
       {/* ── Stats & Top Contributors ──────────────────────── */}
       <section style={{ padding: '24px 0', borderTop: '1px solid var(--clr-border)', borderBottom: '1px solid var(--clr-border)', background: 'rgba(11, 17, 32, 0.4)' }}>
-        <div className="container home-stats-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '32px' }}>
+        <div className="home-stats-wrapper" style={{ width: '100%', maxWidth: '1440px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '32px' }}>
           {/* Stats Grid */}
           <div className="home-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', flex: '1 1 auto', alignItems: 'center' }}>
             {dynamicStats.map((s) => (
@@ -149,7 +149,7 @@ export default async function HomePage() {
           </div>
 
           {/* Top Contributors Card Widget on the far right */}
-          <div style={{ flex: '0 0 290px', width: '290px' }} className="home-stats-widget-container">
+          <div style={{ flex: '0 0 300px', width: '300px', marginLeft: 'auto', display: 'flex', justifyContent: 'flex-end' }} className="home-stats-widget-container">
             <TopContributorsWidget limit={3} />
           </div>
         </div>
@@ -159,11 +159,14 @@ export default async function HomePage() {
               flex-direction: column !important;
               align-items: center !important;
               gap: 24px !important;
+              padding: 0 16px !important;
             }
             .home-stats-widget-container {
               max-width: 320px !important;
               width: 100% !important;
               flex: 1 1 auto !important;
+              margin-left: 0 !important;
+              justify-content: center !important;
             }
           }
           @media (max-width: 640px) {
