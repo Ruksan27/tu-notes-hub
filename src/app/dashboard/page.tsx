@@ -569,9 +569,57 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
   const [mcqs, setMcqs] = useState<any[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [generatingMcqs, setGeneratingMcqs] = useState(false)
+
+  // 7-Day History State
+  const [historyList, setHistoryList] = useState<any[]>([])
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
+
   const currentSubject = subjects.find((s) => s.id === selectedSubjectId)
 
   useEffect(() => { setSelectedPaperIds([]); setReport(null) }, [selectedSubjectId])
+
+  useEffect(() => {
+    loadHistory()
+  }, [])
+
+  async function loadHistory() {
+    setLoadingHistory(true)
+    try {
+      const res = await fetch('/api/ai/history')
+      const data = await res.json()
+      if (res.ok) setHistoryList(data.history || [])
+    } catch { }
+    finally { setLoadingHistory(false) }
+  }
+
+  async function deleteHistoryItem(id: number | string, e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      const res = await fetch(`/api/ai/history?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        toast.success('Removed from history')
+        setHistoryList(prev => prev.filter(item => item.id !== id))
+      }
+    } catch {
+      toast.error('Failed to delete item')
+    }
+  }
+
+  function openHistoryItem(item: any) {
+    if (item.type === 'EXAM_REPORT') {
+      setReport(item.data)
+      setMcqs(null)
+      setShowHistoryModal(false)
+      toast.info(`Loaded report: ${item.subjectTitle}`)
+    } else if (item.type === 'MCQ_SET') {
+      const mcqData = item.data?.mcqs || (Array.isArray(item.data) ? item.data : [])
+      setMcqs(mcqData)
+      setReport(null)
+      setShowHistoryModal(false)
+      toast.info(`Loaded MCQs: ${item.subjectTitle}`)
+    }
+  }
 
   async function runAIAnalysis() {
     if (selectedPaperIds.length < 2) { toast.error('Select at least 2 papers'); return }
@@ -585,8 +633,9 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
       const data = await res.json()
       if (res.ok) {
         setReport({ ...data.report, fromCache: data.fromCache })
+        loadHistory()
         if (data.fromCache) toast.info('⚡ Loaded from cache instantly!')
-        else toast.success('AI Report Generated! 🎉')
+        else toast.success('AI Report Generated & Saved for 7 days! 🎉')
       } else toast.error(data.error || 'Failed to generate report')
     } catch { toast.error('AI request failed') }
     finally { setLoading(false) }
@@ -604,7 +653,8 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
       const data = await res.json()
       if (res.ok) {
         setMcqs(data.mcqs)
-        toast.success('Generated 10 MCQs successfully! 🎉')
+        loadHistory()
+        toast.success('Generated 10 MCQs & Saved for 7 days! 🎉')
       } else {
         toast.error(data.error || 'Failed to generate MCQs')
       }
@@ -612,8 +662,9 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
     finally { setGeneratingMcqs(false) }
   }
 
+
   async function downloadPDF() {
-    const reportEl = document.getElementById('ai-report-container')
+    const reportEl = document.getElementById('ai-report-container') || document.getElementById('ai-mcq-container')
     if (!reportEl) { toast.error('Report not found'); return }
 
     const clone = reportEl.cloneNode(true) as HTMLElement
@@ -632,54 +683,77 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
         <meta charset="utf-8"/>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          body { background: #080a12 !important; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; }
+          body { background: #ffffff !important; color: #1e293b !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; }
           
           /* Watermark on every page */
           .print-watermark {
             display: block !important;
             position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotate(-40deg);
-            font-size: 72px; font-weight: 900;
-            color: rgba(99,102,241,0.06);
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 76px; font-weight: 900;
+            color: rgba(99, 102, 241, 0.06) !important;
             white-space: nowrap; pointer-events: none; z-index: 9999;
             letter-spacing: 0.05em;
           }
 
-          /* Layout */
-          h3 { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 20px; }
-          .topic-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 16px; border-radius: 10px; margin-bottom: 12px; page-break-inside: avoid; }
+          /* Layout & Headings */
+          h3 { font-size: 20px; font-weight: 800; color: #0f172a !important; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+          h4 { font-size: 16px; font-weight: 800; color: #0f172a !important; margin-bottom: 12px; }
+
+          /* Cards & Content */
+          div[style*="background"] { color: #1e293b; }
+          p, span, li, div { color: inherit; }
+          
+          /* Override dark card backgrounds to crisp light theme for print */
+          #ai-report-container, #ai-mcq-container { background: #ffffff !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+          
+          .topic-card, div[style*="rgba(255,255,255,0.02)"], div[style*="rgba(255,255,255,0.03)"] {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 16px !important;
+            border-radius: 12px !important;
+            margin-bottom: 14px !important;
+            page-break-inside: avoid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+          }
+
           .topic-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-          .topic-name { font-weight: 700; font-size: 14px; color: #fff; flex: 1; }
-          .badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
-          .badge-strong, .badge-high { background: rgba(16,185,129,0.2); color: #10b981; }
-          .badge-medium { background: rgba(245,158,11,0.2); color: #f59e0b; }
-          .badge-low { background: rgba(239,68,68,0.2); color: #ef4444; }
-          .prob-bar-track { background: rgba(255,255,255,0.06); height: 6px; border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
+          .topic-name { font-weight: 800; font-size: 15px; color: #0f172a !important; flex: 1; }
+          
+          /* Badges */
+          .badge { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 999px; white-space: nowrap; }
+          .badge-strong, .badge-high { background: #dcfce7 !important; color: #15803d !important; border: 1px solid #86efac !important; }
+          .badge-medium { background: #fef3c7 !important; color: #b45309 !important; border: 1px solid #fde68a !important; }
+          .badge-low { background: #ffe4e6 !important; color: #be123c !important; border: 1px solid #fecdd3 !important; }
+
+          /* Progress Bar */
+          .prob-bar-track { background: #f1f5f9 !important; height: 7px; border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
           .prob-bar-fill { height: 100%; border-radius: 999px; }
-          .prob-bar-fill.strong, .prob-bar-fill.high { background: linear-gradient(90deg, #10b981, #34d399); }
-          .prob-bar-fill.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-          .prob-bar-fill.low { background: linear-gradient(90deg, #ef4444, #f87171); }
-          .reasoning { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.6; }
-          .study-points { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
-          .study-points p { font-size: 11px; font-weight: 700; color: #818cf8; margin-bottom: 6px; }
-          .study-points ul { padding-left: 16px; }
-          .study-points li { font-size: 12px; color: #e2e8f0; margin-bottom: 3px; }
-          .predictions-section { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: 16px; }
-          .predictions-section h4 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 12px; }
-          .pred-card { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; padding: 14px; margin-bottom: 10px; page-break-inside: avoid; }
-          .pred-q { font-weight: 600; font-size: 13px; color: #fff; margin-bottom: 8px; }
+          .prob-bar-fill.strong, .prob-bar-fill.high { background: #10b981 !important; }
+          .prob-bar-fill.medium { background: #f59e0b !important; }
+          .prob-bar-fill.low { background: #ef4444 !important; }
+
+          .reasoning { font-size: 13px; color: #475569 !important; line-height: 1.6; }
+          .study-points { margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+          .study-points p { font-size: 11px; font-weight: 800; color: #4f46e5 !important; margin-bottom: 6px; text-transform: uppercase; }
+          .study-points ul { padding-left: 18px; }
+          .study-points li { font-size: 12px; color: #334155 !important; margin-bottom: 3px; }
+
+          .predictions-section { border-top: 2px solid #e2e8f0; padding-top: 20px; margin-top: 16px; }
+          .pred-card { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; border-radius: 10px; padding: 14px; margin-bottom: 10px; page-break-inside: avoid; }
+          .pred-q { font-weight: 700; font-size: 13px; color: #0f172a !important; margin-bottom: 8px; }
           .pred-meta { display: flex; gap: 10px; font-size: 11px; }
-          .pred-tag { background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 4px; color: rgba(255,255,255,0.5); }
-          .pred-tag strong { color: #fff; }
+          .pred-tag { background: #ffffff !important; border: 1px solid #cbd5e1 !important; padding: 3px 8px; border-radius: 4px; color: #475569 !important; }
+          .pred-tag strong { color: #0f172a !important; }
 
           /* QR Footer */
-          .print-qr-footer { display: flex !important; margin-top: 24px; border-top: 2px solid rgba(99,102,241,0.4); padding-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-          .qr-brand p { color: #fff; font-weight: 800; font-size: 16px; margin-bottom: 4px; }
-          .qr-brand .sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 2px; }
-          .qr-brand .hint { font-size: 11px; color: rgba(255,255,255,0.3); }
+          .print-qr-footer { display: flex !important; margin-top: 30px; border-top: 2px solid #4f46e5; padding-top: 16px; justify-content: space-between; align-items: center; gap: 20px; page-break-inside: avoid; }
+          .qr-brand p { color: #0f172a !important; font-weight: 800; font-size: 16px; margin-bottom: 4px; }
+          .qr-brand .sub { font-size: 12px; color: #64748b !important; margin-bottom: 2px; }
+          .qr-brand .hint { font-size: 11px; color: #4f46e5 !important; font-weight: 600; }
           .qr-img { text-align: center; }
-          .qr-img img { width: 90px; height: 90px; border-radius: 8px; border: 2px solid rgba(99,102,241,0.4); }
-          .qr-img p { font-size: 9px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+          .qr-img img { width: 90px; height: 90px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; padding: 4px; }
+          .qr-img p { font-size: 10px; color: #4f46e5 !important; font-weight: 700; margin-top: 4px; }
           
           @page { size: A4; margin: 12mm; }
         </style>
@@ -733,17 +807,30 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
               <Brain className="w-6 h-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h3 className="font-extrabold text-xl text-[var(--clr-text-1)]">Predict Exam Pattern</h3>
-                <span className="badge badge-elite text-[10px]">
-                  <Sparkles className="w-3 h-3" /> AI Engine
-                </span>
+              <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-extrabold text-xl text-[var(--clr-text-1)]">Predict Exam Pattern</h3>
+                  <span className="badge badge-elite text-[10px]">
+                    <Sparkles className="w-3 h-3" /> AI Engine
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setShowHistoryModal(true); loadHistory(); }}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/20 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>📜 7-Day History</span>
+                  {historyList.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-indigo-500 text-white text-[10px] font-extrabold">{historyList.length}</span>
+                  )}
+                </button>
               </div>
               <p className="text-xs sm:text-sm text-[var(--clr-text-2)]">
                 Select a subject and 2+ past papers to generate automated exam topic predictions.
               </p>
             </div>
           </div>
+
 
           {/* Subject Select */}
           <div>
@@ -797,36 +884,43 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 
               {selectedPaperIds.length > 0 && (
                 <p className="text-xs font-semibold mt-2 flex items-center gap-1.5">
-                  {selectedPaperIds.length >= 2
-                    ? <span className="text-emerald-400 flex items-center gap-1">✓ Ready for AI analysis ({selectedPaperIds.length} selected)</span>
-                    : <span className="text-amber-400 flex items-center gap-1">⚠️ Select at least 1 more paper to run analysis</span>
-                  }
+                  {selectedPaperIds.length >= 2 ? (
+                    <span className="text-emerald-400 flex items-center gap-1">✓ Ready to run AI analysis ({selectedPaperIds.length} papers selected)</span>
+                  ) : (
+                    <span className="text-amber-400 flex items-center gap-1">⚠️ Select at least {2 - selectedPaperIds.length} more paper for AI prediction</span>
+                  )}
                 </p>
               )}
             </motion.div>
           )}
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-3 pt-4 border-t border-[var(--clr-border)]">
             <button
               onClick={runAIAnalysis}
-              disabled={loading || generatingMcqs || selectedPaperIds.length < 2}
-              className="btn btn-lg btn-primary justify-center text-sm font-bold"
+              disabled={loading || selectedPaperIds.length < 2}
+              className="btn btn-primary font-bold flex-1 justify-center py-3"
             >
               {loading ? (
-                <><div className="spinner" style={{ width: '16px', height: '16px' }} /> Analyzing with AI…</>
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin text-lg">⚙️</span> Analyzing Exam Patterns...
+                </span>
               ) : (
-                <><Brain className="w-4 h-4" /> Run AI Analysis {selectedPaperIds.length > 0 ? `(${selectedPaperIds.length})` : ''}</>
+                <span className="flex items-center gap-2">
+                  <Brain className="w-5 h-5" /> Predict Exam Patterns
+                </span>
               )}
             </button>
 
             <button
               onClick={handleGenerateMcqs}
-              disabled={loading || generatingMcqs || selectedPaperIds.length < 2}
-              className="btn btn-lg btn-outline justify-center text-sm font-bold"
+              disabled={generatingMcqs || selectedPaperIds.length < 2}
+              className="btn btn-outline font-bold flex-1 justify-center py-3"
             >
               {generatingMcqs ? (
-                <><div className="spinner" style={{ width: '16px', height: '16px' }} /> Generating MCQs…</>
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin text-lg">⚙️</span> Generating 10 MCQs...
+                </span>
               ) : (
                 <><FileText className="w-4 h-4" /> Generate MCQs {selectedPaperIds.length > 0 ? `(${selectedPaperIds.length})` : ''}</>
               )}
@@ -860,17 +954,18 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
           <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
             <h3 className="text-xl font-bold">📝 Generated MCQs for {currentSubject?.title}</h3>
             <div style={{ display: 'flex', gap: '8px' }} className="hide-on-print">
+              <button className="btn btn-outline" onClick={() => { setShowHistoryModal(true); loadHistory(); }} style={{ fontSize: '12px', padding: '6px 14px' }}>📜 History ({historyList.length})</button>
               <button className="btn btn-outline" onClick={downloadPDF} style={{ fontSize: '12px', padding: '6px 14px' }}>💾 Save PDF</button>
               <button className="btn btn-outline" onClick={() => setMcqs(null)} style={{ fontSize: '12px', padding: '6px 14px' }}>← Close MCQs</button>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {mcqs.map((m: any, i: number) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '16px', borderRadius: '12px' }}>
-                <p style={{ fontWeight: 600, marginBottom: '12px', fontSize: '15px' }}>{i + 1}. {m.question}</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div key={i} className="mcq-item" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '16px', borderRadius: '12px' }}>
+                <p className="mcq-question" style={{ fontWeight: 600, marginBottom: '12px', fontSize: '15px' }}>{i + 1}. {m.question}</p>
+                <div className="mcq-options" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {m.options.map((opt: string, idx: number) => (
-                    <div key={idx} style={{ 
+                    <div key={idx} className={`mcq-option ${m.correctOption === idx ? 'correct' : ''}`} style={{ 
                       padding: '10px 14px', 
                       borderRadius: '8px', 
                       background: m.correctOption === idx ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.03)',
@@ -894,19 +989,19 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
           {/* Print Watermark & Footer */}
           <div className="print-watermark" aria-hidden="true">TU Notes Hub</div>
           <div className="print-qr-footer">
-            <div style={{ borderTop: '2px solid rgba(99,102,241,0.4)', paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', width: '100%' }}>
+            <div style={{ borderTop: '2px solid #4f46e5', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', width: '100%' }}>
               <div>
-                <p style={{ fontWeight: 800, fontSize: '16px', marginBottom: '4px', color: '#fff' }}>📚 TU Notes Hub</p>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '2px' }}>AI-Generated MCQ Solution Set</p>
-                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Scan QR to visit our website</p>
+                <p style={{ fontWeight: 800, fontSize: '16px', marginBottom: '4px', color: '#0f172a' }}>📚 TU Notes Hub</p>
+                <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>AI-Generated MCQ Solution Set</p>
+                <p style={{ fontSize: '11px', color: '#4f46e5', margin: 0, fontWeight: 600 }}>Scan QR to visit our website</p>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&bgcolor=080a12&color=ffffff&data=${encodeURIComponent('https://tunoteshub.vercel.app')}`}
+                  src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tunoteshub.me"
                   alt="QR Code"
-                  style={{ width: '90px', height: '90px', borderRadius: '8px', border: '2px solid rgba(99,102,241,0.4)' }}
+                  style={{ width: '90px', height: '90px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', padding: '4px' }}
                 />
-                <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>tunoteshub.vercel.app</p>
+                <p style={{ fontSize: '10px', color: '#4f46e5', marginTop: '4px', fontWeight: 700 }}>tunoteshub.me</p>
               </div>
             </div>
           </div>
@@ -932,36 +1027,46 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
               </div>
               <div style={{ display: 'flex', gap: '8px' }} className="hide-on-print">
                 <button className="btn btn-outline" onClick={() => { setReport(null); setSelectedPaperIds([]) }} style={{ fontSize: '12px', padding: '6px 14px' }}>← New Analysis</button>
+                <button className="btn btn-outline" onClick={() => { setShowHistoryModal(true); loadHistory(); }} style={{ fontSize: '12px', padding: '6px 14px' }}>📜 History ({historyList.length})</button>
                 {isElite && <button className="btn btn-outline" onClick={downloadPDF} style={{ fontSize: '12px', padding: '6px 14px' }}>💾 Save PDF</button>}
               </div>
             </div>
+
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
               {report.topicAnalysis?.map((topic: any, idx: number) => {
                 const level = topic.classification.toLowerCase()
                 return (
                   <motion.div key={topic.topic} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.08 }}
+                    className="topic-card"
                     style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '18px', borderRadius: '12px' }}
                   >
-                    <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-                      <span className="font-bold text-sm">{topic.topic}</span>
+                    <div className="topic-header flex items-center justify-between flex-wrap gap-2 mb-3">
+                      <span className="topic-name font-bold text-sm">{topic.topic}</span>
                       <span className={`badge badge-${level}`} style={{ fontSize: '11px', padding: '3px 8px' }}>
                         {topic.probability}% — {topic.classification}
                       </span>
                     </div>
-                    <div className="prob-bar-track mb-3">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${topic.probability}%` }} transition={{ duration: 1, delay: 0.5 }}
-                        className={`prob-bar-fill ${level}`} />
+
+                    <div className="prob-bar-track" style={{ background: 'rgba(255,255,255,0.06)', height: '6px', borderRadius: '999px', overflow: 'hidden', marginBottom: '12px' }}>
+                      <div className={`prob-bar-fill ${level}`} style={{
+                        width: `${topic.probability}%`, height: '100%', borderRadius: '999px',
+                        background: level === 'strong' || level === 'high' ? 'linear-gradient(90deg, #10b981, #34d399)' : level === 'medium' ? 'linear-gradient(90deg, #f59e0b, #fbbf24)' : 'linear-gradient(90deg, #ef4444, #f87171)'
+                      }} />
                     </div>
-                    <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.6, margin: 0 }}>
-                      <strong>Reasoning:</strong> {topic.reasoning}
-                    </p>
-                    {topic.cheatsheetPoints?.length > 0 && (
-                      <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
+
+                    {topic.reasoning && (
+                      <p className="reasoning" style={{ fontSize: '12px', color: 'var(--clr-text-2)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                        <strong>Reasoning:</strong> {topic.reasoning}
+                      </p>
+                    )}
+
+                    {topic.keyStudyPoints?.length > 0 && (
+                      <div className="study-points" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px', marginTop: '10px' }}>
                         <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-primary-h)', marginBottom: '6px' }}>💡 Quick Study Points:</p>
-                        <ul style={{ paddingLeft: '18px', margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          {topic.cheatsheetPoints.map((pt: string, i: number) => (
-                            <li key={i} style={{ fontSize: '12px', color: 'var(--clr-text-1)' }}>{pt}</li>
+                        <ul style={{ paddingLeft: '16px', margin: 0 }}>
+                          {topic.keyStudyPoints.map((pt: string, pIdx: number) => (
+                            <li key={pIdx} style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginBottom: '3px' }}>{pt}</li>
                           ))}
                         </ul>
                       </div>
@@ -972,20 +1077,21 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
             </div>
 
             {report.topPredictions?.length > 0 && (
-              <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '24px' }}>
+              <div className="predictions-section" style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '24px' }}>
                 <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>🔮 Predicted Questions</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {report.topPredictions.map((pred: any, idx: number) => (
                     <motion.div key={idx} whileHover={{ scale: 1.01 }}
+                      className="pred-card"
                       style={{ padding: '14px 16px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: '10px' }}
                     >
-                      <p style={{ fontWeight: 600, fontSize: '13px', color: 'var(--clr-text-1)', marginBottom: '8px' }}>{pred.predictedQuestion}</p>
-                      <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: 'var(--clr-text-3)' }}>
-                        <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 7px', borderRadius: '4px' }}>
-                          Chance: <strong style={{ color: '#fff' }}>{pred.probability}%</strong>
+                      <p className="pred-q" style={{ fontWeight: 600, fontSize: '13px', color: 'var(--clr-text-1)', marginBottom: '8px' }}>{pred.predictedQuestion}</p>
+                      <div className="pred-meta" style={{ display: 'flex', gap: '10px', fontSize: '11px', color: 'var(--clr-text-3)' }}>
+                        <span className="pred-tag" style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 7px', borderRadius: '4px' }}>
+                          Chance: <strong>{pred.probability}%</strong>
                         </span>
-                        <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 7px', borderRadius: '4px' }}>
-                          Weight: <strong style={{ color: '#fff' }}>{pred.marks} Marks</strong>
+                        <span className="pred-tag" style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 7px', borderRadius: '4px' }}>
+                          Weight: <strong>{pred.marks} Marks</strong>
                         </span>
                       </div>
                     </motion.div>
@@ -997,20 +1103,19 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
             {/* ── Print-only: Watermark + QR Footer ── */}
             <div className="print-watermark" aria-hidden="true">TU Notes Hub</div>
             <div className="print-qr-footer">
-              <div style={{ borderTop: '2px solid rgba(99,102,241,0.4)', paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
+              <div style={{ borderTop: '2px solid #4f46e5', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', width: '100%' }}>
                 <div>
-                  <p style={{ fontWeight: 800, fontSize: '16px', marginBottom: '4px', color: '#fff' }}>📚 TU Notes Hub</p>
-                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '2px' }}>AI-Powered Exam Prediction</p>
-                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Scan QR to visit our website</p>
+                  <p style={{ fontWeight: 800, fontSize: '16px', marginBottom: '4px', color: '#0f172a' }}>📚 TU Notes Hub</p>
+                  <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>AI-Powered Exam Prediction</p>
+                  <p style={{ fontSize: '11px', color: '#4f46e5', margin: 0, fontWeight: 600 }}>Scan QR to visit our website</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  {/* QR Code via free API - points to website */}
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&bgcolor=080a12&color=ffffff&data=${encodeURIComponent('https://tunoteshub.vercel.app')}`}
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tunoteshub.me"
                     alt="QR Code"
-                    style={{ width: '90px', height: '90px', borderRadius: '8px', border: '2px solid rgba(99,102,241,0.4)' }}
+                    style={{ width: '90px', height: '90px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', padding: '4px' }}
                   />
-                  <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>tunoteshub.vercel.app</p>
+                  <p style={{ fontSize: '10px', color: '#4f46e5', marginTop: '4px', fontWeight: 700 }}>tunoteshub.me</p>
                 </div>
               </div>
             </div>
@@ -1020,9 +1125,70 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
         {/* Right: AI Chat Panel (Elite only) */}
         {isElite && <AIChatPanel report={report} />}
       </div>
+
+      {/* ── 7-Day AI History Modal ── */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0f172a] border border-indigo-500/30 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  📜 7-Day AI History
+                </h3>
+                <p className="text-xs text-slate-400">Generated predictions & MCQs are automatically saved for 7 days before auto-cleanup.</p>
+              </div>
+              <button onClick={() => setShowHistoryModal(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {loadingHistory ? (
+              <div className="py-12 text-center text-sm text-slate-400">
+                <span className="animate-spin text-2xl inline-block mb-2">⚙️</span>
+                <p>Loading your 7-day saved history...</p>
+              </div>
+            ) : historyList.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 space-y-2">
+                <p className="text-3xl">📭</p>
+                <p className="text-sm font-bold text-slate-300">No saved AI history found.</p>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">Generate AI Exam Predictions or 10 MCQs — they will be saved here for 7 days so you can load or download them anytime!</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                {historyList.map((item) => (
+                  <div key={item.id} className="p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-indigo-500/40 transition flex items-center justify-between flex-wrap gap-3">
+                    <div className="space-y-1 flex-1 min-w-[200px]">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${item.type === 'EXAM_REPORT' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                          {item.type === 'EXAM_REPORT' ? '📊 EXAM PREDICTION' : '📝 10 MCQ SET'}
+                        </span>
+                        <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Auto-deletes in {item.daysRemaining} {item.daysRemaining === 1 ? 'day' : 'days'}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-sm text-slate-100">{item.subjectTitle}</h4>
+                      <p className="text-[11px] text-slate-400">Created: {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => openHistoryItem(item)} className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                        👁️ Load & View
+                      </button>
+                      <button onClick={(e) => deleteHistoryItem(item.id, e)} className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition text-xs cursor-pointer" title="Delete from history">
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
+
 
 /* ── AI Chat Panel ── */
 function AIChatPanel({ report }: { report: any }) {

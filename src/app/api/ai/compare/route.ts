@@ -7,6 +7,7 @@ import {
   buildComparisonKey,
   getCachedComparison,
   saveComparisonReport,
+  saveUserAiHistory,
 } from '@/lib/cacheDb'
 
 export async function POST(req: NextRequest) {
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
     const cacheKey = buildComparisonKey(subjectId, paperIds)
     const cached = await getCachedComparison(cacheKey)
     if (cached) {
+      // Also save to user history on cache hit so it appears in history
+      saveUserAiHistory(user.id, 'EXAM_REPORT', cached.subject || 'Exam Subject', cached).catch(console.error)
       return NextResponse.json({ report: cached, fromCache: true })
     }
 
@@ -79,10 +82,12 @@ export async function POST(req: NextRequest) {
     // ── AI Analysis ──────────────────────────────────────────────
     const report = await analyzePastPapers(subject.title, papersData)
 
-    // ── Save to Cache (fire-and-forget) ──────────────────────────
+    // ── Save to Cache & User History (fire-and-forget) ────────────
     saveComparisonReport(cacheKey, subject.title, report).catch(console.error)
+    saveUserAiHistory(user.id, 'EXAM_REPORT', subject.title, report).catch(console.error)
 
     return NextResponse.json({ report, fromCache: false })
+
   } catch (error) {
     console.error('[AI_COMPARE]', error)
     return NextResponse.json({ error: 'AI analysis failed. Please try again.' }, { status: 500 })

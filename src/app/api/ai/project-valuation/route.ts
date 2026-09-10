@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { callProjectValuationAI } from '@/lib/gemini'
+import { callProjectValuationAI, cleanAndParseJSON } from '@/lib/gemini'
 
 export async function POST(req: Request) {
   try {
@@ -103,14 +103,9 @@ Analyze this student project and compute its fair price:
 
     const rawResponse = await callProjectValuationAI(userPrompt, systemInstruction)
 
-    const cleanedJson = rawResponse
-      .replace(/```json/gi, '')
-      .replace(/```/g, '')
-      .trim()
-
     let appraisal: any = null
     try {
-      appraisal = JSON.parse(cleanedJson)
+      appraisal = cleanAndParseJSON(rawResponse)
     } catch (parseErr) {
       console.error('[AI Valuation JSON Parse Error]:', rawResponse)
       // Fallback default calculation if JSON parse fails

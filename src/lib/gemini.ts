@@ -391,6 +391,53 @@ If any question is a Multiple Choice Question (MCQ), ALWAYS extract its 4 option
   return rawResponse.replace(/```json|```/g, '').trim()
 }
 
+// Robust helper to parse AI-generated JSON (handles LaTeX backslashes, markdown blocks, control chars)
+export function cleanAndParseJSON(raw: string): any {
+  if (!raw) throw new Error('AI returned an empty response string')
+
+  let cleaned = raw
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .trim()
+
+  const firstBrace = cleaned.search(/[\{\[]/)
+  const lastBrace = Math.max(cleaned.lastIndexOf('}'), cleaned.lastIndexOf(']'))
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1)
+  }
+
+  try {
+    return JSON.parse(cleaned)
+  } catch (err1) {
+    // Fix unescaped backslashes in LaTeX formulas (e.g. \Delta, \frac, \theta, \alpha, \sum)
+    const fixedBackslashes = cleaned.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, '\\\\')
+
+    try {
+      return JSON.parse(fixedBackslashes)
+    } catch (err2) {
+      // Sanitize unescaped control characters inside strings
+      const sanitized = fixedBackslashes.replace(/[\u0000-\u001F\u007F-\u009F]/g, (ch) => {
+        if (ch === '\n') return '\\n'
+        if (ch === '\r') return '\\r'
+        if (ch === '\t') return '\\t'
+        return ''
+      })
+
+      try {
+        return JSON.parse(sanitized)
+      } catch (err3) {
+        console.error('[cleanAndParseJSON Failed]', {
+          error: (err1 as Error)?.message,
+          rawSample: raw.slice(0, 400)
+        })
+        throw err1
+      }
+    }
+  }
+}
+
 // Analyze past papers and generate comparison report
 export async function analyzePastPapers(
   subjectTitle: string,
@@ -414,6 +461,7 @@ Tasks:
 4. Classify as: LOW (<50%), MODERATE (50-75%), STRONG (>75%)
 5. Generate a cheatsheet with key points for top topics
 
+IMPORTANT: Ensure all LaTeX/math symbols use valid JSON escape sequences (e.g. \\\\Delta instead of \\Delta).
 Return STRICTLY valid JSON only (no markdown, no extra text):
 {
   "subject": "string",
@@ -443,8 +491,7 @@ Return STRICTLY valid JSON only (no markdown, no extra text):
 `
 
   const raw = await callGemini(prompt)
-  const cleaned = raw.replace(/```json|```/g, '').trim()
-  return JSON.parse(cleaned)
+  return cleanAndParseJSON(raw)
 }
 
 // Generate MCQs based on past papers
@@ -466,6 +513,7 @@ ${papersContext}
 Task:
 Generate 10 high-yield Multiple Choice Questions (MCQs) that are highly likely to appear in future exams based on the concepts tested in these past papers.
 
+IMPORTANT: Ensure all LaTeX/math symbols use valid JSON escape sequences (e.g. \\\\Delta instead of \\Delta).
 Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra text):
 [
   {
@@ -478,8 +526,7 @@ Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra te
 `
 
   const raw = await callGemini(prompt)
-  const cleaned = raw.replace(/```json|```/g, '').trim()
-  return JSON.parse(cleaned)
+  return cleanAndParseJSON(raw)
 }
 
 // Generate MCQs directly from an image (question paper photo)
@@ -498,6 +545,7 @@ Generate 10 high-yield Multiple Choice Questions (MCQs) based on the topics and 
 If the images already contain MCQs, extract and format ALL unique ones properly.
 If they contain long-form questions, convert the key concepts into MCQs.
 
+IMPORTANT: Ensure all LaTeX/math symbols use valid JSON escape sequences (e.g. \\\\Delta instead of \\Delta).
 Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra text):
 [
   {
@@ -510,11 +558,6 @@ Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra te
 `
 
   const raw = await callGemini(prompt, undefined, images)
-  const cleaned = raw.replace(/```json|```/g, '').trim()
-  
-  if (!cleaned) {
-    throw new Error('AI returned an empty response. Please check API keys or try again.')
-  }
-  
-  return JSON.parse(cleaned)
+  return cleanAndParseJSON(raw)
 }
+

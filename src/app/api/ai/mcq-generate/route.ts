@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateMcqs, extractTextFromPdfUrl } from '@/lib/gemini'
+import { saveUserAiHistory } from '@/lib/cacheDb'
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,9 +67,13 @@ export async function POST(req: NextRequest) {
     // ── AI Analysis ──────────────────────────────────────────────
     const mcqs = await generateMcqs(subject.title, papersData)
 
+    // ── Save to User History (fire-and-forget) ────────────────────
+    saveUserAiHistory(user.id, 'MCQ_SET', subject.title, { mcqs, subjectTitle: subject.title }).catch(console.error)
+
     return NextResponse.json({ mcqs })
   } catch (error) {
     console.error('[AI_MCQ_GENERATE]', error)
     return NextResponse.json({ error: 'AI MCQ generation failed. Please try again.' }, { status: 500 })
   }
 }
+

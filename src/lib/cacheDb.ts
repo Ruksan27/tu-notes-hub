@@ -191,3 +191,91 @@ export async function deleteChatSession(userId: string, sessionId: string): Prom
     )
   } catch (e) { console.error('[CacheDB] Failed to delete session:', e) }
 }
+
+// ─── 7-DAY AI GENERATION HISTORY ─────────────────────────────────
+
+export async function ensureGeneratedHistoryTable() {
+  const db = getDb()
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS ai_generated_history (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      type VARCHAR(20) NOT NULL,
+      subject_title VARCHAR(255) NOT NULL,
+      data_json LONGTEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      expires_at TIMESTAMP NOT NULL,
+      INDEX idx_user_expires (user_id, expires_at)
+    )
+  `)
+}
+
+export async function saveUserAiHistory(
+  userId: string,
+  type: 'EXAM_REPORT' | 'MCQ_SET',
+  subjectTitle: string,
+  data: any
+): Promise<void> {
+  try {
+    const db = getDb()
+    await ensureGeneratedHistoryTable()
+    await db.execute(
+      `INSERT INTO ai_generated_history (user_id, type, subject_title, data_json, expires_at)
+       VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY))`,
+      [userId, type, subjectTitle, JSON.stringify(data)]
+    )
+    // Auto cleanup expired records
+    db.execute('DELETE FROM ai_generated_history WHERE expires_at <= NOW() LIMIT 100').catch(() => {})
+  } catch (e) {
+    console.error('[CacheDB] Failed to save AI generated history:', e)
+  }
+}
+
+export async function getUserAiHistory(userId: string): Promise<any[]> {
+  try {
+    const db = getDb()
+    await ensureGeneratedHistoryTable()
+    // Cleanup expired records
+    db.execute('DELETE FROM ai_generated_history WHERE expires_at <= NOW() LIMIT 100').catch(() => {})
+
+    const rows = await db.execute(
+      `SELECT id, type, subject_title, data_json, created_at, expires_at,
+              TIMESTAMPDIFF(DAY, NOW(), expires_at) as days_remaining
+       FROM ai_generated_history
+       WHERE user_id = ? AND expires_at > NOW()
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [userId]
+    ) as any[]
+
+    return (rows || []).map((r) => {
+      let parsed = null
+      try { parsed = typeof r.data_json === 'string' ? JSON.parse(r.data_json) : r.data_json } catch {}
+      return {
+        id: r.id,
+        type: r.type,
+        subjectTitle: r.subject_title,
+        data: parsed,
+        createdAt: r.created_at,
+        expiresAt: r.expires_at,
+        daysRemaining: Math.max(1, r.days_remaining ?? 7),
+      }
+    })
+  } catch (e) {
+    console.error('[CacheDB] Failed to get AI history:', e)
+    return []
+  }
+}
+
+export async function deleteUserAiHistoryItem(userId: string, id: number | string): Promise<void> {
+  try {
+    const db = getDb()
+    await db.execute(
+      'DELETE FROM ai_generated_history WHERE user_id = ? AND id = ?',
+      [userId, id]
+    )
+  } catch (e) {
+    console.error('[CacheDB] Failed to delete AI history item:', e)
+  }
+}
+

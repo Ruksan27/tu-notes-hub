@@ -71,16 +71,50 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    // Filter subjects based on courseType
+    // Filter subjects based on semester.visibleNew, semester.visibleOld and dbUser.courseType
+    const visibleNew = semester?.visibleNew !== false
+    const visibleOld = semester?.visibleOld !== false
+
     let subjectsToReturn = semester?.subjects || []
-    
-    if (dbUser.courseType === 'OLD') {
-      // For old course, exclude subjects that have "(New" in their title
-      subjectsToReturn = subjectsToReturn.filter(sub => !sub.title.toLowerCase().includes('(new'))
-    } else if (dbUser.courseType === 'NEW') {
-      // For new course, exclude subjects that have "(Old" in their title
-      subjectsToReturn = subjectsToReturn.filter(sub => !sub.title.toLowerCase().includes('(old'))
-    }
+
+    subjectsToReturn = subjectsToReturn.filter(sub => {
+      const titleLower = sub.title.toLowerCase()
+      const codeUpper = sub.code.toUpperCase()
+
+      const isNew =
+        titleLower.includes('new syllabus') ||
+        titleLower.includes('(new') ||
+        titleLower.includes('[new') ||
+        codeUpper.startsWith('BCA ')
+
+      const isOld =
+        titleLower.includes('old syllabus') ||
+        titleLower.includes('(old') ||
+        titleLower.includes('[old') ||
+        codeUpper.startsWith('CACS') ||
+        codeUpper.startsWith('CAMT') ||
+        codeUpper.startsWith('CASO') ||
+        codeUpper.startsWith('CAEN') ||
+        codeUpper.startsWith('CAAC') ||
+        codeUpper.startsWith('CAST') ||
+        codeUpper.startsWith('CAPJ') ||
+        codeUpper.startsWith('CAEC') ||
+        codeUpper.startsWith('CAMG') ||
+        codeUpper.startsWith('CAIN') ||
+        codeUpper.startsWith('CAOR')
+
+      // 1. Admin visibility settings for this semester take top priority
+      if (isNew && !visibleNew) return false
+      if (isOld && !visibleOld) return false
+
+      // 2. If both syllabi are active for this semester, filter by user's courseType preference
+      if (visibleNew && visibleOld) {
+        if (dbUser.courseType === 'OLD' && isNew) return false
+        if (dbUser.courseType === 'NEW' && isOld) return false
+      }
+
+      return true
+    })
 
     return NextResponse.json({
       user: dbUser,
