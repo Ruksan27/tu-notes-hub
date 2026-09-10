@@ -5236,6 +5236,7 @@ function SiteSettingsTab() {
   const [contactPhone, setContactPhone] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [githubLink, setGithubLink] = useState('')
+  const [linkedinLink, setLinkedinLink] = useState('')
 
   // About items state
   const [aboutItems, setAboutItems] = useState<any[]>([])
@@ -5366,6 +5367,7 @@ function SiteSettingsTab() {
           setContactPhone(d.settings.contactPhone || '')
           setContactEmail(d.settings.contactEmail || '')
           setGithubLink(d.settings.githubLink || '')
+          setLinkedinLink(d.settings.linkedinLink || '')
           if (d.settings.paymentQrUrl) setPaymentQrUrl(d.settings.paymentQrUrl)
         }
       })
@@ -5396,6 +5398,7 @@ function SiteSettingsTab() {
       fd.append('contactPhone', contactPhone)
       fd.append('contactEmail', contactEmail)
       fd.append('githubLink', githubLink)
+      fd.append('linkedinLink', linkedinLink)
       if (paymentQrFile) fd.append('paymentQr', paymentQrFile)
 
       const res = await fetch('/api/admin/settings', {
@@ -5617,6 +5620,20 @@ function SiteSettingsTab() {
                         placeholder="https://github.com/yourusername"
                         value={githubLink}
                         onChange={e => setGithubLink(e.target.value)}
+                      />
+                    </div>
+
+                    {/* LinkedIn */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--clr-text-1)', marginBottom: '6px' }}>
+                        💼 LinkedIn Profile
+                      </label>
+                      <input
+                        type="url"
+                        className="admin-input w-full"
+                        placeholder="https://linkedin.com/in/yourprofile"
+                        value={linkedinLink}
+                        onChange={e => setLinkedinLink(e.target.value)}
                       />
                     </div>
                   </div>

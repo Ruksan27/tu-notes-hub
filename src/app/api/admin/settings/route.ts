@@ -7,7 +7,7 @@ import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
-// GET — anyone can fetch settings (for the WhatsApp button)
+// GET — anyone can fetch settings (for WhatsApp button & footer social links)
 export async function GET() {
   try {
     const settings = await prisma.siteSettings.upsert({
@@ -18,19 +18,31 @@ export async function GET() {
         facebookLink: 'https://facebook.com',
         tiktokLink: 'https://tiktok.com',
         instagramLink: 'https://instagram.com',
+        linkedinLink: 'https://linkedin.com',
+        githubLink: 'https://github.com',
         contactPhone: '9767776999',
         contactEmail: 'tunoteshub@gmail.com'
       },
       update: {},
     })
-    let githubLink = 'https://github.com'
+
+    let githubLink = (settings as any).githubLink || 'https://github.com'
+    let linkedinLink = (settings as any).linkedinLink || 'https://linkedin.com'
+
     try {
       const extraContent = await fs.readFile(path.join(process.cwd(), 'data', 'extra-settings.json'), 'utf-8')
       const extra = JSON.parse(extraContent)
-      githubLink = extra.githubLink || 'https://github.com'
+      if (extra.githubLink) githubLink = extra.githubLink
+      if (extra.linkedinLink) linkedinLink = extra.linkedinLink
     } catch {}
 
-    return NextResponse.json({ settings: { ...settings, githubLink } })
+    return NextResponse.json({
+      settings: {
+        ...settings,
+        githubLink,
+        linkedinLink
+      }
+    })
   } catch (error) {
     console.error('[SITE_SETTINGS_GET]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -50,6 +62,8 @@ export async function PUT(req: NextRequest) {
     const facebookLink = fd.get('facebookLink') as string
     const tiktokLink = fd.get('tiktokLink') as string
     const instagramLink = fd.get('instagramLink') as string
+    const linkedinLink = fd.get('linkedinLink') as string
+    const githubLink = fd.get('githubLink') as string
     const contactPhone = fd.get('contactPhone') as string
     const contactEmail = fd.get('contactEmail') as string
     const paymentQrFile = fd.get('paymentQr') as File | null
@@ -71,6 +85,8 @@ export async function PUT(req: NextRequest) {
       facebookLink: facebookLink || 'https://facebook.com',
       tiktokLink: tiktokLink || 'https://tiktok.com',
       instagramLink: instagramLink || 'https://instagram.com',
+      linkedinLink: linkedinLink || 'https://linkedin.com',
+      githubLink: githubLink || 'https://github.com',
       contactPhone: contactPhone || '9767776999',
       contactEmail: contactEmail || 'tunoteshub@gmail.com'
     }
@@ -87,6 +103,8 @@ export async function PUT(req: NextRequest) {
         facebookLink: facebookLink || 'https://facebook.com',
         tiktokLink: tiktokLink || 'https://tiktok.com',
         instagramLink: instagramLink || 'https://instagram.com',
+        linkedinLink: linkedinLink || 'https://linkedin.com',
+        githubLink: githubLink || 'https://github.com',
         contactPhone: contactPhone || '9767776999',
         contactEmail: contactEmail || 'tunoteshub@gmail.com',
         ...(paymentQrUrl && { paymentQrUrl }) 
@@ -94,18 +112,26 @@ export async function PUT(req: NextRequest) {
       update: updateData,
     })
 
-    const githubLink = fd.get('githubLink') as string
-    if (githubLink !== null) {
-      try {
-        await fs.writeFile(
-          path.join(process.cwd(), 'data', 'extra-settings.json'),
-          JSON.stringify({ githubLink: githubLink || 'https://github.com' }, null, 2),
-          'utf-8'
-        )
-      } catch {}
-    }
+    // Also update extra-settings.json for backup sync
+    try {
+      await fs.writeFile(
+        path.join(process.cwd(), 'data', 'extra-settings.json'),
+        JSON.stringify({ 
+          githubLink: githubLink || 'https://github.com',
+          linkedinLink: linkedinLink || 'https://linkedin.com'
+        }, null, 2),
+        'utf-8'
+      )
+    } catch {}
 
-    return NextResponse.json({ success: true, settings: { ...settings, githubLink: githubLink || 'https://github.com' } })
+    return NextResponse.json({ 
+      success: true, 
+      settings: { 
+        ...settings, 
+        githubLink: githubLink || 'https://github.com',
+        linkedinLink: linkedinLink || 'https://linkedin.com'
+      } 
+    })
   } catch (error) {
     console.error('[SITE_SETTINGS_PUT]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
