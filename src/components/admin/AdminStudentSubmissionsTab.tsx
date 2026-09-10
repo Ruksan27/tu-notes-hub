@@ -221,7 +221,7 @@ export default function AdminStudentSubmissionsTab() {
             <span style={{ fontSize: '12px', fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase' }}>📋 Total Submitted</span>
             <FileText style={{ width: '18px', height: '18px', color: '#818cf8' }} />
           </div>
-          <div style={{ fontSize: '32px', fontWeight 900, color: '#a5b4fc' }}>{counts.total}</div>
+          <div style={{ fontSize: '32px', fontWeight: 900, color: '#a5b4fc' }}>{counts.total}</div>
         </div>
       </div>
 
@@ -364,7 +364,7 @@ export default function AdminStudentSubmissionsTab() {
                       width: '42px', height: '42px', borderRadius: '50%',
                       background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
                       color: '#fff', fontWeight: 800, fontSize: '18px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', shrink: 0
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                     }}>
                       {(note.authorUser?.name?.[0] || note.author?.[0] || 'U').toUpperCase()}
                     </div>

@@ -166,7 +166,7 @@ export default function ReferralDashboardCard({ user, onUserUpdate }: ReferralDa
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            justify: 'space-between',
+            justifyContent: 'space-between',
             background: 'rgba(255,255,255,0.04)',
             padding: '10px 14px',
             borderRadius: '10px',

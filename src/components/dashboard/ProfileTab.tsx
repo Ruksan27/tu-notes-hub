@@ -370,7 +370,7 @@ export default function ProfileTab() {
                   key={g.val}
                   type="button"
                   disabled={!isEditing}
-                  onClick={() => setIsEditing && setGender(g.val)}
+                  onClick={() => setGender(g.val)}
                   style={{
                     flex: 1,
                     padding: '10px',

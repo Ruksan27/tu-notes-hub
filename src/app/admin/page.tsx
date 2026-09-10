@@ -631,9 +631,9 @@ function ManageMaterialsTab() {
     }
   }
 
-  async function handleSubmissionAction(noteId: string, action: 'APPROVE' | 'REJECT') {
+  async function handleSubmissionAction(noteId: string, action: 'APPROVE' | 'REJECT', rejectionReason?: string) {
     setApprovingId(noteId)
-    if (action === 'REJECT') {
+    if (action === 'REJECT' && !rejectionReason) {
       // Find note title for modal display
       const note = submissions.find((s) => s.id === noteId) || notes.find((n) => n.id === noteId)
       setRejectingNote({ id: noteId, title: note?.title || 'Untitled', fromTab: note ? 'submissions' : 'materials' })
@@ -645,13 +645,14 @@ function ManageMaterialsTab() {
       const res = await fetch('/api/admin/notes/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ noteId, action })
+        body: JSON.stringify({ noteId, action, rejectionReason })
       })
       const data = await res.json()
       if (res.ok) {
         toast.success(data.message || `Note ${action.toLowerCase()}d! 🎉`)
         loadSubmissions()
         if (subjectId) loadMaterials()
+        setRejectingNote(null)
       } else {
         toast.error(data.error || 'Failed to update')
       }
@@ -1503,7 +1504,7 @@ function ManageMaterialsTab() {
                                   <button
                                     className="btn btn-sm"
                                     style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: 800, fontSize: '11px' }}
-                                    onClick={() => handleApproveNote(n.id, 'APPROVE')}
+                                    onClick={() => handleSubmissionAction(n.id, 'APPROVE')}
                                   >
                                     ✓ Approve (+PTS & OCR)
                                   </button>
@@ -2378,11 +2379,7 @@ function ManageMaterialsTab() {
                 onClick={() => {
                   if (!rejectingNote) return
                   const reason = rejectionReasonInput.trim() || 'Content did not meet quality guidelines.'
-                  if (rejectingNote.fromTab === 'submissions') {
-                    handleSubmissionAction(rejectingNote.id, 'REJECT', reason)
-                  } else {
-                    handleApproveNote(rejectingNote.id, 'REJECT', reason)
-                  }
+                  handleSubmissionAction(rejectingNote.id, 'REJECT', reason)
                 }}
                 style={{
                   background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff', border: 'none',

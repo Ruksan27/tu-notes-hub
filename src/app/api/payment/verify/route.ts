@@ -103,7 +103,6 @@ export async function POST(req: NextRequest) {
         if (unlockedMessage) {
           await prisma.notification.create({
             data: {
-              userId: referrer.id,
               type: 'SYSTEM',
               title: 'Free Pass Unlocked! 🎁',
               message: unlockedMessage,

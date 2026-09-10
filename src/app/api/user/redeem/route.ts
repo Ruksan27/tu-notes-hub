@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       }),
       prisma.pointTransaction.create({
         data: {
-          userId: user.id,
+          userId: user.id as string,
           amount: -requiredPoints,
           reason: `REDEEM_${targetPlan}`
         }
