@@ -207,7 +207,7 @@ export default function Navbar() {
                       <span>📊</span> My Dashboard
                     </Link>
                     <Link href="/dashboard?tab=profile" className="nav-drop-item">
-                      <span>👤</span> Edit Profile
+                      <span>👤</span> Profile
                     </Link>
                     {(user.role === 'ADMIN' || user.role === 'CHILD_ADMIN') && (
                       <Link href="/admin" className="nav-drop-item">
@@ -312,7 +312,7 @@ export default function Navbar() {
               {user ? (
                 <>
                   <Link href="/dashboard" className="nav-mobile-link">📊 My Dashboard</Link>
-                  <Link href="/dashboard?tab=profile" className="nav-mobile-link">👤 Edit Profile</Link>
+                  <Link href="/dashboard?tab=profile" className="nav-mobile-link">👤 Profile</Link>
                   {user && cartCount > 0 && (pathname.startsWith('/projects') || pathname === '/cart') && (
                     <Link href="/cart" className="nav-mobile-link">🛒 My Cart ({cartCount})</Link>
                   )}

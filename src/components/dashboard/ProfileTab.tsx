@@ -215,7 +215,7 @@ export default function ProfileTab() {
 
       <div className="admin-card p-6 sm:p-8" style={{ background: 'var(--clr-bg-800)', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-lg)' }}>
         <div style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '20px', color: 'var(--clr-text-1)', marginBottom: '8px' }}>Profile Settings</h2>
+          <h2 style={{ fontSize: '20px', color: 'var(--clr-text-1)', marginBottom: '8px' }}>Profile</h2>
           <p style={{ color: 'var(--clr-text-3)', fontSize: '14px' }}>Update your personal details and profile picture.</p>
         </div>
 

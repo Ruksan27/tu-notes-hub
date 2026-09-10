@@ -217,7 +217,7 @@ export default function DashboardPage() {
             <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>☰</button>
             <div>
               <h1 style={{ fontSize: '18px', margin: 0, fontWeight: 700 }}>
-                {tab === 'overview' ? '📚 My Dashboard' : tab === 'compare' ? '🤖 AI Exam Predictor' : tab === 'payment' ? '💎 Upgrade Plan' : tab === 'become-seller' ? '🛍️ Become a Seller' : tab === 'seller-center' ? '🏬 Seller Center' : '👤 Profile Settings'}
+                {tab === 'overview' ? '📚 My Dashboard' : tab === 'compare' ? '🤖 AI Exam Predictor' : tab === 'payment' ? '💎 Upgrade Plan' : tab === 'become-seller' ? '🛍️ Become a Seller' : tab === 'seller-center' ? '🏬 Seller Center' : '👤 Profile'}
               </h1>
             </div>
           </div>
