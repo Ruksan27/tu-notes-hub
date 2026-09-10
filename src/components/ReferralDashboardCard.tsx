@@ -307,9 +307,26 @@ export default function ReferralDashboardCard({ user, onUserUpdate }: ReferralDa
               {claimingMilestone === 'SEMESTER_PASS' ? '⏳ Activating Pass...' : '🎁 Claim Semester Pass Now!'}
             </button>
           ) : (
-            <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
-              Need {5 - paidCount} more referral{5 - paidCount > 1 ? 's' : ''} to unlock
-            </div>
+            <button
+              disabled
+              style={{
+                width: '100%',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#64748b',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '10px',
+                padding: '11px 16px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'not-allowed',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              🔒 Claim Semester Pass ({paidCount}/5)
+            </button>
           )}
         </div>
 
@@ -365,9 +382,26 @@ export default function ReferralDashboardCard({ user, onUserUpdate }: ReferralDa
               {claimingMilestone === 'ELITE_AI' ? '⏳ Activating Pass...' : '🚀 Claim Elite AI Pass Now!'}
             </button>
           ) : (
-            <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
-              Need {8 - paidCount} more referral{8 - paidCount > 1 ? 's' : ''} to unlock
-            </div>
+            <button
+              disabled
+              style={{
+                width: '100%',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#64748b',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '10px',
+                padding: '11px 16px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'not-allowed',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              🔒 Claim Elite AI Pass ({paidCount}/8)
+            </button>
           )}
         </div>
 
