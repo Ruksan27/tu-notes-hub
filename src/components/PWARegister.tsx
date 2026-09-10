@@ -207,11 +207,13 @@ export default function PWARegister() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '26px',
+              overflow: 'hidden',
               flexShrink: 0,
               boxShadow: '0 6px 20px rgba(99,102,241,0.4)',
+              padding: '4px',
             }}>
-              🎓
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/Logo.gif" alt="TU Notes Hub Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '10px' }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--clr-text-1)', fontFamily: 'var(--font-display)' }}>
@@ -326,8 +328,9 @@ export default function PWARegister() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'linear-gradient(135deg,#6366f1,#06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
-                🎓
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'linear-gradient(135deg,#6366f1,#06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, padding: '3px' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/Logo.gif" alt="TU Notes Hub Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }} />
               </div>
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--clr-text-1)' }}>TU Notes Hub</div>
