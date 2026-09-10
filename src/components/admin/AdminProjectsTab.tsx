@@ -3,29 +3,57 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { toast } from 'react-toastify'
 import Image from 'next/image'
-import { Package, CheckCircle2, ShoppingCart, Clock, Pencil, EyeOff, Eye, Trash2, FolderCode, Rocket, Plus } from 'lucide-react'
+import { Package, CheckCircle2, ShoppingCart, Clock, Pencil, EyeOff, Eye, Trash2, FolderCode, Rocket, Plus, ExternalLink, Code2, Layers, ShieldCheck, FileText, Sparkles, X } from 'lucide-react'
 interface ProjectItem {
   id: string
   title: string
+  shortDescription?: string | null
   description: string
+  category?: string | null
+  subcategory?: string | null
+  projectType?: string | null
+  projectObjective?: string | null
+  modules?: string | null
+  requirements?: string | null
+  installation?: string | null
+  limitations?: string | null
+  version?: string | null
+  features: string | null
   technologies: string
+  frontend?: string | null
+  backend?: string | null
+  dbType?: string | null
+  framework?: string | null
+  libraries?: string | null
   originalPrice: number
   discountPercentage: number
+  negotiable?: boolean
+  license?: string | null
+  salesType?: string | null
   thumbnailUrl: string | null
+  screenshot1?: string | null
+  screenshot2?: string | null
+  screenshot3?: string | null
+  screenshot4?: string | null
   demoUrl: string | null
   youtubeUrl: string | null
-  features: string | null
-  status: string
+  tiktokUrl?: string | null
+  instagramUrl?: string | null
+  githubUrl?: string | null
+  sourceDriveLink: string | null
+  adminDriveLink: string | null
+  demoCredentials?: string | null
+  adminNote?: string | null
   views?: number
   organicViews?: number
   searchClicks?: number
-  user: { id: string; name: string } | null
-  sourceDriveLink: string | null
-  adminDriveLink: string | null
+  user: { id: string; name: string; email?: string } | null
   aiCalculatedPrice?: number | null
   aiComplexityGrade?: string | null
   aiValuationJson?: string | null
   _count?: { orders: number }
+  status: string
+  createdAt?: string
 }
 
 interface ProjectOrder {
@@ -81,6 +109,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
   const [editAdminLinkId, setEditAdminLinkId] = useState<string | null>(null)
   const [editAdminLink, setEditAdminLink] = useState('')
   const [savingAdminLink, setSavingAdminLink] = useState(false)
+  const [previewProject, setPreviewProject] = useState<ProjectItem | null>(null)
 
   useEffect(() => {
     if (externalSubTab) setActiveSubTab(externalSubTab)
@@ -476,6 +505,10 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                         {/* Action Buttons */}
                         {['PENDING', 'CHANGES_REQUESTED'].includes(p.status) ? (
                           <div className="flex flex-col gap-2 mt-1">
+                            <button onClick={() => setPreviewProject(p)}
+                              className="w-full flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-lg bg-brand/10 text-brand border border-brand/25 hover:bg-brand/20 active:scale-95 transition-all">
+                              <Eye size={14} /> Preview Full Details
+                            </button>
                             <button onClick={() => updateProjectStatusAdmin(p.id, 'ACTIVE')}
                               className="w-full flex items-center justify-center gap-2 text-sm font-bold py-2.5 rounded-lg bg-success/15 text-success border border-success/30 hover:bg-success/25 active:scale-95 transition-all">
                               <CheckCircle2 size={16} /> Approve & Publish
@@ -492,23 +525,29 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                             </div>
                           </div>
                         ) : (
-                          <div className="flex gap-2 mt-1">
-                            <button onClick={() => openEditModal(p)}
-                              className="flex-1 flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-lg bg-bg800 text-text2 border border-border hover:text-text1 hover:border-brand/30 active:scale-95 transition-all">
-                              <Pencil size={14} /> Edit
+                          <div className="flex flex-col gap-2 mt-1">
+                            <button onClick={() => setPreviewProject(p)}
+                              className="w-full flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-lg bg-brand/10 text-brand border border-brand/25 hover:bg-brand/20 active:scale-95 transition-all">
+                              <Eye size={14} /> Preview Full Details
                             </button>
-                            <button onClick={() => toggleProjectStatus(p)}
-                              className={`flex-1 flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-lg border active:scale-95 transition-all ${
-                                p.status === 'ACTIVE'
-                                  ? 'bg-warning/10 text-warning border-warning/25 hover:bg-warning/20'
-                                  : 'bg-success/10 text-success border-success/25 hover:bg-success/20'
-                              }`}>
-                              {p.status === 'ACTIVE' ? <><EyeOff size={14} /> Hide</> : <><Eye size={14} /> Show</>}
-                            </button>
-                            <button onClick={() => deleteProject(p.id)}
-                              className="w-10 flex items-center justify-center rounded-lg bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20 active:scale-95 transition-all">
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex gap-2">
+                              <button onClick={() => openEditModal(p)}
+                                className="flex-1 flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-lg bg-bg800 text-text2 border border-border hover:text-text1 hover:border-brand/30 active:scale-95 transition-all">
+                                <Pencil size={14} /> Edit
+                              </button>
+                              <button onClick={() => toggleProjectStatus(p)}
+                                className={`flex-1 flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-lg border active:scale-95 transition-all ${
+                                  p.status === 'ACTIVE'
+                                    ? 'bg-warning/10 text-warning border-warning/25 hover:bg-warning/20'
+                                    : 'bg-success/10 text-success border-success/25 hover:bg-success/20'
+                                }`}>
+                                {p.status === 'ACTIVE' ? <><EyeOff size={14} /> Hide</> : <><Eye size={14} /> Show</>}
+                              </button>
+                              <button onClick={() => deleteProject(p.id)}
+                                className="w-10 flex items-center justify-center rounded-lg bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20 active:scale-95 transition-all">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </div>
                         )}
 
@@ -1051,6 +1090,502 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── PREVIEW MODAL ── */}
+      <AnimatePresence>
+        {previewProject && (() => {
+          const fp = calcDiscounted(previewProject.originalPrice, previewProject.discountPercentage)
+          const screenshots = [previewProject.screenshot1, previewProject.screenshot2, previewProject.screenshot3, previewProject.screenshot4].filter(Boolean) as string[]
+          let feats: string[] = []
+          try { feats = JSON.parse(previewProject.features ?? '') } catch { feats = (previewProject.features ?? '').split('\n').filter(Boolean) }
+          let aiData: any = null
+          try { if (previewProject.aiValuationJson) aiData = JSON.parse(previewProject.aiValuationJson) } catch {}
+          let credsData: Record<string, string> | null = null
+          try { if (previewProject.demoCredentials) credsData = JSON.parse(previewProject.demoCredentials) } catch {}
+
+          const statusColor = previewProject.status === 'ACTIVE' ? { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-400', dot: 'bg-emerald-400 animate-pulse' }
+            : previewProject.status === 'PENDING' ? { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-400', dot: 'bg-amber-400' }
+            : previewProject.status === 'CHANGES_REQUESTED' ? { bg: 'bg-orange-500/20', border: 'border-orange-500/40', text: 'text-orange-400', dot: 'bg-orange-400' }
+            : { bg: 'bg-slate-500/20', border: 'border-slate-500/40', text: 'text-slate-400', dot: 'bg-slate-400' }
+
+          return (
+            <motion.div
+              key="preview-bg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[3000] flex items-center justify-center p-3 sm:p-6"
+              style={{ background: 'rgba(2, 6, 23, 0.92)', backdropFilter: 'blur(20px)' }}
+              onClick={e => { if (e.target === e.currentTarget) setPreviewProject(null) }}
+            >
+              <motion.div
+                key="preview-box"
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 30, scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                className="w-full max-w-5xl bg-[#090d16] border border-slate-800/90 rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col relative text-slate-200"
+              >
+
+                {/* ── TOP STICKY BAR ── */}
+                <div className="sticky top-0 z-30 px-6 py-3.5 bg-[#0f172a]/95 backdrop-blur-xl border-b border-slate-800/90 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-400 shrink-0">
+                      <Eye size={17} />
+                    </div>
+                    <div className="min-w-0 flex items-center gap-2.5">
+                      <span className="font-extrabold text-sm text-white tracking-tight">Project Overview</span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border uppercase tracking-wider ${statusColor.bg} ${statusColor.border} ${statusColor.text}`}>
+                        {previewProject.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setPreviewProject(null)}
+                    className="w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all shrink-0 ml-4 border border-slate-700/60"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* ── SCROLLABLE CONTENT BODY ── */}
+                <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 custom-scrollbar">
+
+                  {/* ── HERO BANNER & PRIMARY SUMMARY ── */}
+                  <div className="relative bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-slate-900/60 border border-indigo-500/20 rounded-2xl p-5 md:p-6 shadow-xl overflow-hidden">
+                    {/* Background ambient glow */}
+                    <div className="absolute -top-24 -right-24 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center relative z-10">
+                      {/* Left: Thumbnail Preview Frame */}
+                      <div className="md:col-span-4 flex flex-col justify-center">
+                        {previewProject.thumbnailUrl ? (
+                          <div className="relative aspect-video rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 shadow-2xl p-1 group">
+                            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-900">
+                              <Image src={previewProject.thumbnailUrl} alt={previewProject.title} fill unoptimized className="object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
+                            </div>
+                            <a href={previewProject.thumbnailUrl} target="_blank" rel="noreferrer" className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/70 backdrop-blur-md text-white/80 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ExternalLink size={13} />
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="aspect-video rounded-2xl border border-slate-800 bg-slate-950/80 flex flex-col items-center justify-center text-slate-500 gap-2">
+                            <Package size={32} className="text-slate-600" />
+                            <span className="text-xs font-medium">No Thumbnail Provided</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Title, Badges & Author Info */}
+                      <div className="md:col-span-8 flex flex-col justify-between space-y-4">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                            {previewProject.category && (
+                              <span className="text-xs font-bold px-3 py-1 rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                                {previewProject.category}{previewProject.subcategory ? ` › ${previewProject.subcategory}` : ''}
+                              </span>
+                            )}
+                            {previewProject.projectType && (
+                              <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-slate-800/90 text-slate-300 border border-slate-700">
+                                {previewProject.projectType}
+                              </span>
+                            )}
+                            {previewProject.version && (
+                              <span className="text-xs font-mono font-medium px-2.5 py-1 rounded-lg bg-slate-800/80 text-slate-400 border border-slate-700">
+                                v{previewProject.version}
+                              </span>
+                            )}
+                          </div>
+
+                          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug capitalize">
+                            {previewProject.title}
+                          </h1>
+
+                          <p className="text-xs text-slate-400 mt-2 flex items-center gap-2">
+                            Submitted by <span className="text-indigo-300 font-bold">{previewProject.user?.name ?? 'Admin'}</span>
+                            {previewProject.user?.email && <span className="text-slate-500">({previewProject.user.email})</span>}
+                            {previewProject.createdAt && ` • ${new Date(previewProject.createdAt).toLocaleDateString('en-NP', { day: '2-digit', month: 'short', year: 'numeric' })}`}
+                          </p>
+
+                          {previewProject.shortDescription && (
+                            <p className="text-sm text-slate-300 mt-3 leading-relaxed bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80">
+                              {previewProject.shortDescription}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Executive Stats & Price Strip */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                          <div className="bg-[#0f172a]/90 rounded-xl p-3 border border-emerald-500/30">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Selling Price</span>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-lg font-black text-emerald-400">Rs. {fp}</span>
+                              {previewProject.discountPercentage > 0 && (
+                                <span className="text-xs text-slate-500 line-through">Rs. {previewProject.originalPrice}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="bg-[#0f172a]/90 rounded-xl p-3 border border-slate-800">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Views</span>
+                            <span className="text-lg font-black text-sky-400">{previewProject.views || 0}</span>
+                          </div>
+                          <div className="bg-[#0f172a]/90 rounded-xl p-3 border border-slate-800">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Total Sales</span>
+                            <span className="text-lg font-black text-emerald-400">{previewProject._count?.orders || 0}</span>
+                          </div>
+                          <div className="bg-[#0f172a]/90 rounded-xl p-3 border border-slate-800">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Organic Hits</span>
+                            <span className="text-lg font-black text-purple-400">{previewProject.organicViews || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── 2-COLUMN MAIN CONTENT ── */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    {/* LEFT COLUMN: Screenshots, Description, Objective, Features, Modules, Requirements */}
+                    <div className="lg:col-span-7 space-y-5">
+
+                      {/* Screenshots Showcase */}
+                      {screenshots.length > 0 && (
+                        <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                          <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+                            <FileText size={14} /> Screenshots Gallery ({screenshots.length})
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                            {screenshots.map((s, i) => (
+                              <a key={i} href={s} target="_blank" rel="noreferrer" className="relative aspect-video rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950 group block shadow-md">
+                                <Image src={s} alt={`Screenshot ${i+1}`} fill unoptimized className="object-cover group-hover:scale-110 transition-transform duration-300" />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <ExternalLink size={14} className="text-white" />
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Full Description */}
+                      <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                        <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+                          <FileText size={14} /> Full Description
+                        </div>
+                        <div className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap font-normal">
+                          {previewProject.description}
+                        </div>
+                      </div>
+
+                      {/* Project Objective */}
+                      {previewProject.projectObjective && (
+                        <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                          <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+                            <Layers size={14} /> Project Objective
+                          </div>
+                          <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
+                            {previewProject.projectObjective}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Key Features */}
+                      {feats.length > 0 && (
+                        <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                          <div className="inline-flex items-center gap-2 text-xs font-bold text-amber-300 uppercase tracking-wider bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
+                            <Sparkles size={14} /> Key Features
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                            {feats.map((f, i) => (
+                              <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl bg-[#090d16] border border-slate-800/90 hover:border-emerald-500/30 transition-all">
+                                <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                                <span className="text-xs text-slate-200 leading-normal">{f}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Modules & Requirements */}
+                      {(previewProject.modules || previewProject.requirements) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {previewProject.modules && (
+                            <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-2 shadow-lg">
+                              <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+                                <Layers size={13} /> Modules
+                              </div>
+                              <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{previewProject.modules}</p>
+                            </div>
+                          )}
+                          {previewProject.requirements && (
+                            <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-2 shadow-lg">
+                              <div className="inline-flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider bg-cyan-500/10 px-3 py-1 rounded-lg border border-cyan-500/20">
+                                <ShieldCheck size={13} /> Requirements
+                              </div>
+                              <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{previewProject.requirements}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Limitations */}
+                      {previewProject.limitations && (
+                        <div className="bg-amber-950/20 border border-amber-500/30 rounded-2xl p-5 space-y-2 shadow-lg">
+                          <div className="inline-flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
+                            <ShieldCheck size={14} /> Known Limitations
+                          </div>
+                          <p className="text-xs text-amber-200/90 leading-relaxed whitespace-pre-wrap">{previewProject.limitations}</p>
+                        </div>
+                      )}
+
+                      {/* Admin Note */}
+                      {previewProject.adminNote && (
+                        <div className="bg-blue-950/20 border border-blue-500/30 rounded-2xl p-5 space-y-2 shadow-lg">
+                          <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider bg-blue-500/10 px-3 py-1 rounded-lg border border-blue-500/20">
+                            <Pencil size={14} /> Admin Note
+                          </div>
+                          <p className="text-xs text-blue-200/90 leading-relaxed whitespace-pre-wrap">{previewProject.adminNote}</p>
+                        </div>
+                      )}
+
+                    </div>
+
+                    {/* RIGHT COLUMN: Drive Links, Tech Stack, Demo Links, Credentials, AI Report, Seller */}
+                    <div className="lg:col-span-5 space-y-5">
+
+                      {/* 1. Drive Links */}
+                      <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                        <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+                          <FolderCode size={14} /> Source & Delivery Links
+                        </div>
+                        <div className="space-y-2.5 pt-1">
+                          <div className="flex items-center justify-between p-3 rounded-xl bg-[#090d16] border border-slate-800">
+                            <span className="text-xs text-slate-400 font-semibold">Seller Source</span>
+                            {previewProject.sourceDriveLink ? (
+                              <a href={previewProject.sourceDriveLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 transition-all">
+                                <FolderCode size={13} /> Verify Link
+                              </a>
+                            ) : (
+                              <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">Not Uploaded</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between p-3 rounded-xl bg-[#090d16] border border-slate-800">
+                            <span className="text-xs text-slate-400 font-semibold">Admin Delivery</span>
+                            {previewProject.adminDriveLink ? (
+                              <a href={previewProject.adminDriveLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-all">
+                                <Rocket size={13} /> Delivery Link
+                              </a>
+                            ) : (
+                              <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-800 text-slate-500 border border-slate-700">Not Set Yet</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. Tech Stack */}
+                      <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                        <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+                          <Code2 size={14} /> Tech Stack
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {previewProject.technologies.split(',').map(t => (
+                            <span key={t} className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-wide">
+                              {t.trim()}
+                            </span>
+                          ))}
+                        </div>
+                        {(previewProject.frontend || previewProject.backend || previewProject.dbType || previewProject.framework || previewProject.libraries) && (
+                          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-800 text-xs">
+                            {previewProject.frontend && <TechDetail label="Frontend" value={previewProject.frontend} />}
+                            {previewProject.backend && <TechDetail label="Backend" value={previewProject.backend} />}
+                            {previewProject.dbType && <TechDetail label="Database" value={previewProject.dbType} />}
+                            {previewProject.framework && <TechDetail label="Framework" value={previewProject.framework} />}
+                            {previewProject.libraries && <div className="col-span-2"><TechDetail label="Libraries" value={previewProject.libraries} /></div>}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3. Demo & Social Links */}
+                      {(previewProject.demoUrl || previewProject.youtubeUrl || previewProject.tiktokUrl || previewProject.instagramUrl || previewProject.githubUrl) && (
+                        <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                          <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+                            <ExternalLink size={14} /> Live Demo & Social Links
+                          </div>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {previewProject.demoUrl && <LinkPill href={previewProject.demoUrl} label="🌐 Live Demo" color="emerald" />}
+                            {previewProject.youtubeUrl && <LinkPill href={previewProject.youtubeUrl} label="▶ YouTube" color="red" />}
+                            {previewProject.tiktokUrl && <LinkPill href={previewProject.tiktokUrl} label="♪ TikTok" color="pink" />}
+                            {previewProject.instagramUrl && <LinkPill href={previewProject.instagramUrl} label="📷 Instagram" color="purple" />}
+                            {previewProject.githubUrl && <LinkPill href={previewProject.githubUrl} label="⌥ GitHub" color="slate" />}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 4. Demo Credentials */}
+                      {credsData && (
+                        <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                          <div className="inline-flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider bg-cyan-500/10 px-3 py-1 rounded-lg border border-cyan-500/20">
+                            <ShieldCheck size={14} /> Demo Credentials
+                          </div>
+                          <div className="space-y-2 font-mono text-xs pt-1">
+                            {Object.entries(credsData).map(([k, v]) => (
+                              <div key={k} className="flex items-center justify-between p-2.5 rounded-xl bg-[#090d16] border border-slate-800">
+                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{k}</span>
+                                <span className="text-indigo-300 font-bold select-all">{String(v)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 5. AI Valuation Report */}
+                      {aiData && (
+                        <div className="bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-[#0f172a] border border-indigo-500/30 rounded-2xl p-5 space-y-3 shadow-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+                              <Rocket size={14} /> AI Valuation Report
+                            </div>
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-500 text-white shadow-sm">
+                              {previewProject.aiComplexityGrade}
+                            </span>
+                          </div>
+                          <div className="space-y-2 pt-1">
+                            <div className="flex items-center justify-between p-3 rounded-xl bg-[#090d16] border border-slate-800">
+                              <span className="text-xs text-slate-400">Suggested Price Range</span>
+                              <span className="text-sm font-black text-indigo-300">Rs. {aiData.suggestedRange?.min} – {aiData.suggestedRange?.max}</span>
+                            </div>
+                            {previewProject.aiCalculatedPrice && (
+                              <div className="flex items-center justify-between p-3 rounded-xl bg-[#090d16] border border-slate-800">
+                                <span className="text-xs text-slate-400">AI Suggested Price</span>
+                                <span className="text-sm font-black text-emerald-400">Rs. {previewProject.aiCalculatedPrice}</span>
+                              </div>
+                            )}
+                            {aiData.justificationList && aiData.justificationList.length > 0 && (
+                              <div className="pt-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Valuation Breakdown</span>
+                                <ul className="space-y-1">
+                                  {aiData.justificationList.map((j: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
+                                      <span>{j}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 6. Seller Profile */}
+                      {previewProject.user && (
+                        <div className="bg-[#0f172a]/70 border border-slate-800/90 rounded-2xl p-5 space-y-3 shadow-lg">
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Seller Profile</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold text-base shrink-0">
+                              {previewProject.user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-white text-sm truncate">{previewProject.user.name}</h4>
+                              {previewProject.user.email && <p className="text-xs text-slate-400 truncate">{previewProject.user.email}</p>}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* ── STICKY FOOTER ACTIONS ── */}
+                <div className="sticky bottom-0 z-30 px-6 py-4 bg-[#0f172a]/95 backdrop-blur-xl border-t border-slate-800 flex items-center justify-end gap-3 shrink-0">
+                  {['PENDING', 'CHANGES_REQUESTED'].includes(previewProject.status) && (
+                    <>
+                      <button
+                        onClick={() => { updateProjectStatusAdmin(previewProject.id, 'ACTIVE'); setPreviewProject(null) }}
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-extrabold py-3 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/40 transition-all active:scale-[0.98]"
+                      >
+                        <CheckCircle2 size={16} /> Approve & Publish
+                      </button>
+                      <button
+                        onClick={() => { updateProjectStatusAdmin(previewProject.id, 'CHANGES_REQUESTED', true); setPreviewProject(null) }}
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-extrabold py-3 px-5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
+                      >
+                        <Pencil size={16} /> Request Changes
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setPreviewProject(null)}
+                    className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition-all active:scale-[0.98] shrink-0"
+                  >
+                    Close
+                  </button>
+                </div>
+
+              </motion.div>
+            </motion.div>
+          )
+        })()}
+      </AnimatePresence>
+
     </div>
   )
 }
+
+// ── Helper sub-components ──
+function SectionLabel({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center justify-center w-5 h-5 rounded-md bg-indigo-500/15 text-indigo-400">{icon}</div>
+      <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{label}</span>
+      <div className="flex-1 h-px bg-slate-800" />
+    </div>
+  )
+}
+
+function InfoBlock({ label, icon, children, accent }: { label: string; icon: React.ReactNode; children: React.ReactNode; accent?: boolean }) {
+  return (
+    <div className={`rounded-2xl overflow-hidden bg-[#0f172a]/70 border ${accent ? 'border-indigo-500/30' : 'border-slate-800'}`}>
+      <div className={`flex items-center gap-2 px-4 py-2.5 ${accent ? 'bg-indigo-500/10' : 'bg-slate-900/60'}`}>
+        <span className={accent ? 'text-indigo-400' : 'text-slate-400'}>{icon}</span>
+        <span className={`text-[10px] font-black uppercase tracking-wider ${accent ? 'text-indigo-300' : 'text-slate-400'}`}>{label}</span>
+      </div>
+      <div className="px-4 py-3 bg-[#090d16]/40">{children}</div>
+    </div>
+  )
+}
+
+function TechDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl px-3 py-2.5 bg-[#090d16] border border-slate-800">
+      <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-0.5">{label}</div>
+      <div className="text-xs font-semibold text-slate-200">{value}</div>
+    </div>
+  )
+}
+
+function LinkPill({ href, label, color }: { href: string; label: string; color: string }) {
+  const colors: Record<string, { bg: string; border: string; text: string }> = {
+    emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
+    red: { bg: 'bg-rose-500/10', border: 'border-rose-500/30', text: 'text-rose-400' },
+    pink: { bg: 'bg-pink-500/10', border: 'border-pink-500/30', text: 'text-pink-400' },
+    purple: { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-300' },
+    slate: { bg: 'bg-slate-800', border: 'border-slate-700', text: 'text-slate-300' },
+  }
+  const c = colors[color] || colors.slate
+  return (
+    <a
+      href={href} target="_blank" rel="noreferrer"
+      className={`inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all hover:opacity-80 active:scale-95 border ${c.bg} ${c.border} ${c.text}`}
+    >
+      {label} <ExternalLink size={11} />
+    </a>
+  )
+}
+
+
+

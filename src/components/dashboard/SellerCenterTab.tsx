@@ -532,8 +532,6 @@ export default function SellerCenterTab({ user }: { user: User }) {
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', marginBottom: '8px' }}>YouTube Demo</label>
                       <input type="url" className="input-field" value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} />
                     </div>
-                    <div><label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', marginBottom: '8px' }}>GitHub (Must be PRIVATE)</label><input type="url" className="input-field" value={formData.githubUrl} onChange={e => setFormData({...formData, githubUrl: e.target.value})} /></div>
-                    <div><label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', marginBottom: '8px' }}>LinkedIn</label><input type="url" className="input-field" value={formData.linkedinUrl} onChange={e => setFormData({...formData, linkedinUrl: e.target.value})} /></div>
                   </div>
                 </div>
 
@@ -552,10 +550,81 @@ export default function SellerCenterTab({ user }: { user: User }) {
 
                 {/* Section H */}
                 <div>
-                  <h3 style={{ fontSize: '16px', color: '#a5b4fc', marginBottom: '16px', borderBottom: '1px solid rgba(165,180,252,0.2)', paddingBottom: '8px' }}>Section H — Pricing</h3>
+                  <h3 style={{ fontSize: '16px', color: '#a5b4fc', marginBottom: '16px', borderBottom: '1px solid rgba(165,180,252,0.2)', paddingBottom: '8px' }}>Section H — Pricing & AI Valuation Helper</h3>
+                  
+                  {/* AI Suggested Pricing Helper Box */}
+                  {(() => {
+                    let baseMin = 1200
+                    let baseMax = 2200
+
+                    if (formData.projectType === 'AI/ML') { baseMin += 1800; baseMax += 3500 }
+                    else if (formData.projectType === 'Mobile Application') { baseMin += 1400; baseMax += 2800 }
+                    else if (formData.projectType === 'Web Application') { baseMin += 1000; baseMax += 2200 }
+
+                    const featureCount = formData.features ? formData.features.split('\n').filter(Boolean).length : 0
+                    baseMin += featureCount * 200
+                    baseMax += featureCount * 400
+
+                    if (formData.backend) { baseMin += 400; baseMax += 800 }
+                    if (formData.dbType) { baseMin += 500; baseMax += 1000 }
+
+                    const suggestedPrice = Math.round((baseMin + baseMax) / 2 / 100) * 100
+                    const est = { min: baseMin, max: baseMax, suggested: Math.max(1500, suggestedPrice) }
+
+                    return (
+                      <div style={{
+                        background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(6,182,212,0.1))',
+                        border: '1px solid rgba(99,102,241,0.3)',
+                        borderRadius: '14px',
+                        padding: '16px',
+                        marginBottom: '16px',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 800, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            🤖 AI Valuation Helper
+                          </span>
+                          <span style={{ fontSize: '13px', fontWeight: 800, color: '#67e8f9' }}>
+                            Fair Range: Rs. {est.min.toLocaleString()} – Rs. {est.max.toLocaleString()}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                          Suggested market price based on project type ({formData.projectType || 'General'}), tech stack & features.
+                        </p>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={() => setFormData({ ...formData, originalPrice: est.suggested })}
+                          style={{
+                            background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                            color: '#ffffff',
+                            fontWeight: 700,
+                            fontSize: '12px',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '6px 14px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ⚡ Apply AI Suggested Price (Rs. {est.suggested.toLocaleString()})
+                        </button>
+                      </div>
+                    )
+                  })()}
+
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', marginBottom: '8px' }}>Expected Price (Rs.) *</label>
-                    <input type="number" required min={0} className="input-field" value={formData.originalPrice} onChange={e => setFormData({...formData, originalPrice: Number(e.target.value)})} />
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      className="input-field"
+                      placeholder="e.g. 2500"
+                      value={formData.originalPrice === 0 ? '' : formData.originalPrice}
+                      onChange={e => {
+                        const val = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0)
+                        setFormData({...formData, originalPrice: val})
+                      }}
+                    />
                   </div>
                 </div>
 
