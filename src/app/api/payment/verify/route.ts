@@ -58,34 +58,11 @@ export async function POST(req: NextRequest) {
         }
 
         const newCount = referrer.successfulPaidReferrals + 1
-        let referrerPackage = referrer.packageType
-        let referrerExpiry = referrer.planExpiresAt || new Date()
-        let unlockedMessage = ''
-
-        // Milestone Automation:
-        // 8 paid referrals -> Yearly (Elite AI) Pass
-        // 5 paid referrals -> Semester Pass
-        if (newCount >= 8) {
-          referrerPackage = 'ELITE_AI'
-          const exp = new Date(referrerExpiry > new Date() ? referrerExpiry : new Date())
-          exp.setFullYear(exp.getFullYear() + 1)
-          referrerExpiry = exp
-          unlockedMessage = '🎉 Milestone Reached! 8 friends used your referral code. You have unlocked 1 Year Elite AI Pass for FREE!'
-        } else if (newCount >= 5 && (referrerPackage === 'FREE' || referrerPackage === 'SEMESTER_PASS')) {
-          referrerPackage = 'SEMESTER_PASS'
-          const exp = new Date(referrerExpiry > new Date() ? referrerExpiry : new Date())
-          exp.setMonth(exp.getMonth() + 6)
-          referrerExpiry = exp
-          unlockedMessage = '🎉 Milestone Reached! 5 friends used your referral code. You have unlocked 6 Months Semester Pass for FREE!'
-        }
 
         await prisma.user.update({
           where: { id: referrer.id },
           data: {
             successfulPaidReferrals: newCount,
-            packageType: referrerPackage,
-            subscriptionExpiresAt: referrerExpiry,
-            planExpiresAt: referrerExpiry,
           }
         })
 
@@ -99,13 +76,13 @@ export async function POST(req: NextRequest) {
           }
         })
 
-        // Notify referrer if milestone unlocked
-        if (unlockedMessage) {
+        // Notify referrer if milestone threshold reached
+        if (newCount >= 5) {
           await prisma.notification.create({
             data: {
               type: 'SYSTEM',
-              title: 'Free Pass Unlocked! 🎁',
-              message: unlockedMessage,
+              title: 'Milestone Unlocked! 🎁',
+              message: `🎉 Great news! ${newCount} friends have upgraded using your referral code. You can now claim your Free Premium Pass in your Dashboard!`,
               link: '/dashboard'
             }
           }).catch(() => {})

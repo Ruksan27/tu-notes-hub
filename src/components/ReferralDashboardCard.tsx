@@ -17,6 +17,7 @@ export default function ReferralDashboardCard({ user, onUserUpdate }: ReferralDa
   const [generating, setGenerating] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+  const [claimingMilestone, setClaimingMilestone] = useState<'SEMESTER_PASS' | 'ELITE_AI' | null>(null)
 
   const paidCount = user.successfulPaidReferrals || 0
   const referralLink = currentCode ? `https://tunoteshub.me/register?ref=${currentCode}` : ''
@@ -64,6 +65,45 @@ export default function ReferralDashboardCard({ user, onUserUpdate }: ReferralDa
       `Hey! Use my referral code "${currentCode}" to get 10% OFF on TU Notes Hub premium plans: ${referralLink}`
     )
     window.open(`https://wa.me/?text=${text}`, '_blank')
+  }
+
+  // Claim Reward Handler
+  const handleClaimPass = async (milestone: 'SEMESTER_PASS' | 'ELITE_AI') => {
+    setClaimingMilestone(milestone)
+    try {
+      const res = await fetch('/api/user/referral/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ milestone })
+      })
+      const data = await res.json()
+      if (res.ok && data.user) {
+        toast.success(data.message || 'Pass claimed & activated successfully! 🎉')
+        
+        // Update local user state in parent component & localStorage
+        if (onUserUpdate) {
+          onUserUpdate({
+            successfulPaidReferrals: data.user.successfulPaidReferrals,
+            packageType: data.user.packageType
+          })
+        }
+        try {
+          const stored = localStorage.getItem('tu_user')
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            parsed.successfulPaidReferrals = data.user.successfulPaidReferrals
+            parsed.packageType = data.user.packageType
+            localStorage.setItem('tu_user', JSON.stringify(parsed))
+          }
+        } catch {}
+      } else {
+        toast.error(data.error || 'Failed to claim pass')
+      }
+    } catch {
+      toast.error('Network error while claiming pass')
+    } finally {
+      setClaimingMilestone(null)
+    }
   }
 
   // Progress calculations
@@ -212,39 +252,125 @@ export default function ReferralDashboardCard({ user, onUserUpdate }: ReferralDa
         )}
       </div>
 
-      {/* Milestone Progress Tracker */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-        {/* Milestone 1: 5 Referrals */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
-            <span style={{ color: paidCount >= 5 ? '#4ade80' : '#fcd34d' }}>
-              🎓 Milestone 1: Free Semester Pass
-            </span>
-            <span>{paidCount}/5</span>
+      {/* Milestone Progress Tracker & Claim Actions */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+        
+        {/* Milestone 1: 5 Referrals -> Free Semester Pass */}
+        <div style={{
+          background: paidCount >= 5 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${paidCount >= 5 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255,255,255,0.08)'}`,
+          borderRadius: '16px',
+          padding: '18px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          gap: '12px'
+        }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+              <span style={{ color: paidCount >= 5 ? '#4ade80' : '#fcd34d' }}>
+                🎓 Milestone 1: Free Semester Pass
+              </span>
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>{paidCount}/5</span>
+            </div>
+            <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '999px', overflow: 'hidden', marginBottom: '10px' }}>
+              <div style={{ width: `${semesterProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #10b981)', transition: 'width 0.5s ease' }} />
+            </div>
+            <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+              Get 5 paid referrals to unlock 6 Months Semester Pass.
+            </p>
           </div>
-          <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{ width: `${semesterProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #10b981)', transition: 'width 0.5s ease' }} />
-          </div>
-          <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '8px 0 0 0' }}>
-            {paidCount >= 5 ? '🎉 Unlocked & Active (Semester Pass granted!)' : `Get 5 paid referrals to unlock 6 Months Semester Pass.`}
-          </p>
+
+          {/* Claim Button for Milestone 1 */}
+          {paidCount >= 5 ? (
+            <button
+              onClick={() => handleClaimPass('SEMESTER_PASS')}
+              disabled={claimingMilestone !== null}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '11px 16px',
+                fontSize: '13.5px',
+                fontWeight: 800,
+                cursor: claimingMilestone !== null ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {claimingMilestone === 'SEMESTER_PASS' ? '⏳ Activating Pass...' : '🎁 Claim Semester Pass Now!'}
+            </button>
+          ) : (
+            <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
+              Need {5 - paidCount} more referral{5 - paidCount > 1 ? 's' : ''} to unlock
+            </div>
+          )}
         </div>
 
-        {/* Milestone 2: 8 Referrals */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
-            <span style={{ color: paidCount >= 8 ? '#4ade80' : '#38bdf8' }}>
-              🚀 Milestone 2: Free Yearly Elite AI Pass
-            </span>
-            <span>{paidCount}/8</span>
+        {/* Milestone 2: 8 Referrals -> Free Yearly Elite AI Pass */}
+        <div style={{
+          background: paidCount >= 8 ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${paidCount >= 8 ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255,255,255,0.08)'}`,
+          borderRadius: '16px',
+          padding: '18px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          gap: '12px'
+        }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+              <span style={{ color: paidCount >= 8 ? '#4ade80' : '#38bdf8' }}>
+                🚀 Milestone 2: Free Yearly Elite AI Pass
+              </span>
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>{paidCount}/8</span>
+            </div>
+            <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '999px', overflow: 'hidden', marginBottom: '10px' }}>
+              <div style={{ width: `${eliteProgress}%`, height: '100%', background: 'linear-gradient(90deg, #38bdf8, #818cf8)', transition: 'width 0.5s ease' }} />
+            </div>
+            <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+              Get 8 paid referrals to unlock 1 Year Elite AI Pass.
+            </p>
           </div>
-          <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{ width: `${eliteProgress}%`, height: '100%', background: 'linear-gradient(90deg, #38bdf8, #818cf8)', transition: 'width 0.5s ease' }} />
-          </div>
-          <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '8px 0 0 0' }}>
-            {paidCount >= 8 ? '🎉 Unlocked & Active (Yearly Pass granted!)' : `Get 8 paid referrals to unlock 1 Year Elite AI Pass.`}
-          </p>
+
+          {/* Claim Button for Milestone 2 */}
+          {paidCount >= 8 ? (
+            <button
+              onClick={() => handleClaimPass('ELITE_AI')}
+              disabled={claimingMilestone !== null}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '11px 16px',
+                fontSize: '13.5px',
+                fontWeight: 800,
+                cursor: claimingMilestone !== null ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 16px rgba(14, 165, 233, 0.4)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {claimingMilestone === 'ELITE_AI' ? '⏳ Activating Pass...' : '🚀 Claim Elite AI Pass Now!'}
+            </button>
+          ) : (
+            <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
+              Need {8 - paidCount} more referral{8 - paidCount > 1 ? 's' : ''} to unlock
+            </div>
+          )}
         </div>
+
       </div>
     </div>
   )
