@@ -3439,38 +3439,23 @@ function UploadTab({ user }: { user?: any }) {
             const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
             const rt = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'raw'
             
-            // Chunked upload implementation (bypasses server size limits up to 100MB)
-            const chunkSize = 6 * 1024 * 1024
-            const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
-            let finalUrl = ''
+            const cf = new FormData()
+            cf.append('file', noteFile)
+            cf.append('api_key', apiKey)
+            cf.append('timestamp', String(timestamp))
+            cf.append('signature', signature)
+            cf.append('folder', sf)
             
-            for (let start = 0; start < noteFile.size; start += chunkSize) {
-              const end = Math.min(start + chunkSize, noteFile.size)
-              const chunk = noteFile.slice(start, end)
-              
-              const cf = new FormData()
-              cf.append('file', chunk)
-              cf.append('api_key', apiKey)
-              cf.append('timestamp', String(timestamp))
-              cf.append('signature', signature)
-              cf.append('folder', sf)
-              
-              const headers: Record<string, string> = {}
-              if (noteFile.size > chunkSize) {
-                headers['X-Unique-Upload-Id'] = uniqueUploadId
-                headers['Content-Range'] = `bytes ${start}-${end - 1}/${noteFile.size}`
-              }
-              
-              const cr = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${rt}/upload`, {
-                method: 'POST',
-                headers,
-                body: cf
-              })
-              
-              const cd = await cr.json()
-              if (!cr.ok) { toast.dismiss('upload-progress'); toast.error(cd.error?.message || 'Upload failed'); setUploading(false); return }
-              if (cd.secure_url) finalUrl = cd.secure_url
+            const cr = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${rt}/upload`, {
+              method: 'POST',
+              body: cf
+            })
+            
+            const cd = await cr.json()
+            if (!cr.ok || !cd.secure_url) {
+              toast.dismiss('upload-progress'); toast.error(cd.error?.message || 'Cloudinary upload failed'); setUploading(false); return
             }
+            finalUrl = cd.secure_url
             
             if (!finalUrl) throw new Error('Failed to get secure URL')
             cloudinaryUrl = finalUrl; fileSize = `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
@@ -3671,55 +3656,30 @@ function UploadTab({ user }: { user?: any }) {
         }
         const { timestamp, signature, cloudName, apiKey, folder: signedFolder } = await sigRes.json()
 
-        // Step 2: Upload directly to Cloudinary using chunked upload
-        const chunkSize = 6 * 1024 * 1024 // Cloudinary requires chunks > 5MB
-        const uniqueUploadId = Math.random().toString(36).substring(2) + Date.now().toString(36)
-        let finalUrl = ''
+        // Step 2: Upload directly to Cloudinary
+        const cloudForm = new FormData()
+        cloudForm.append('file', fileToUpload)
+        cloudForm.append('api_key', apiKey)
+        cloudForm.append('timestamp', String(timestamp))
+        cloudForm.append('signature', signature)
+        cloudForm.append('folder', signedFolder)
+
+        const cloudRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+          { 
+            method: 'POST', 
+            body: cloudForm 
+          }
+        )
+        const cloudData = await cloudRes.json()
         
-        for (let start = 0; start < fileToUpload.size; start += chunkSize) {
-          const end = Math.min(start + chunkSize, fileToUpload.size)
-          const chunk = fileToUpload.slice(start, end)
-          
-          const cloudForm = new FormData()
-          cloudForm.append('file', chunk)
-          cloudForm.append('api_key', apiKey)
-          cloudForm.append('timestamp', String(timestamp))
-          cloudForm.append('signature', signature)
-          cloudForm.append('folder', signedFolder)
-          
-          const headers: Record<string, string> = {}
-          if (fileToUpload.size > chunkSize) {
-            headers['X-Unique-Upload-Id'] = uniqueUploadId
-            headers['Content-Range'] = `bytes ${start}-${end - 1}/${fileToUpload.size}`
-          }
-
-          const cloudRes = await fetch(
-            `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-            { 
-              method: 'POST', 
-              headers,
-              body: cloudForm 
-            }
-          )
-          const cloudData = await cloudRes.json()
-          
-          if (!cloudRes.ok) {
-            toast.dismiss('upload-progress'); toast.error(cloudData.error?.message || 'Cloudinary upload failed')
-            setUploading(false)
-            return
-          }
-          if (cloudData.secure_url) {
-            finalUrl = cloudData.secure_url
-          }
-        }
-
-        if (!finalUrl) {
-          toast.dismiss('upload-progress'); toast.error('Cloudinary upload failed to complete')
+        if (!cloudRes.ok || !cloudData.secure_url) {
+          toast.dismiss('upload-progress'); toast.error(cloudData.error?.message || 'Cloudinary upload failed')
           setUploading(false)
           return
         }
 
-        cloudinaryUrl = finalUrl
+        cloudinaryUrl = cloudData.secure_url
         fileSize = `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
       } catch (err: any) {
         toast.dismiss('upload-progress')

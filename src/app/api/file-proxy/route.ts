@@ -33,18 +33,26 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch file' }, { status: response.status })
     }
 
+    const filename = searchParams.get('filename')
     const contentType = response.headers.get('content-type') || 'application/octet-stream'
-    const body = await response.arrayBuffer()
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    return new NextResponse(body, {
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'public, max-age=3600',
+      'Content-Length': buffer.length.toString(),
+    }
+
+    if (filename) {
+      const cleanName = decodeURIComponent(filename).replace(/[^a-zA-Z0-9_\-.]/g, '_')
+      headers['Content-Disposition'] = `attachment; filename="${cleanName}"; filename*=UTF-8''${encodeURIComponent(cleanName)}`
+    }
+
+    return new NextResponse(buffer, {
       status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Access-Control-Allow-Origin': '*',
-        // Cache for 1 hour
-        'Cache-Control': 'public, max-age=3600',
-        'Content-Length': body.byteLength.toString(),
-      },
+      headers
     })
   } catch (error) {
     console.error('[FILE_PROXY]', error)

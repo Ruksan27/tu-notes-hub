@@ -59,7 +59,7 @@ export default function DownloadPage() {
   const [ready, setReady] = useState(false)
   const [driveContentType, setDriveContentType] = useState('')
 
-  const getCleanDownloadFileName = (title: string) => {
+  const getCleanDownloadFileName = (title: string, rawUrl = '') => {
     const cleanTitle = (title || 'Document')
       .replace(/\b(old|new)\s*syllabus\b/gi, '')
       .replace(/\b(old|new)_syllabus\b/gi, '')
@@ -69,7 +69,17 @@ export default function DownloadPage() {
       .replace(/_+/g, '_')
       .replace(/^_+|_+$/g, '')
 
-    return `tunoteshub_${cleanTitle || 'Document'}`
+    let ext = 'pdf'
+    if (rawUrl) {
+      const match = rawUrl.split('?')[0].match(/\.(pdf|docx|doc|pptx|ppt|xlsx|xls|zip|rar|txt|png|jpg|jpeg|webp|gif)$/i)
+      if (match) ext = match[1].toLowerCase()
+    }
+
+    const name = `tunoteshub_${cleanTitle || 'Document'}`
+    if (new RegExp(`\\.${ext}$`, 'i').test(name)) {
+      return name
+    }
+    return `${name}.${ext}`
   }
 
   const getFinalDownloadUrl = (url: string, proxyUrl: string, title: string, isNote = false) => {
@@ -79,8 +89,8 @@ export default function DownloadPage() {
       return match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : url
     }
 
-    // Create a clean filename
-    const fileName = getCleanDownloadFileName(title)
+    // Create a clean filename with correct extension (.pdf, .docx, .pptx, .png, etc.)
+    const fileName = getCleanDownloadFileName(title, url)
 
     // If it's a Cloudinary image, route through our image signing API
     if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
@@ -90,17 +100,22 @@ export default function DownloadPage() {
 
     const targetNoteId = getNoteTargetId(params)
 
-    // For PDFs from Cloudinary:
-    // - Notes: serve directly from Cloudinary (avoids proxy + Windows Defender false-positive)
-    // - Past Papers: add watermark (branding on exam papers)
-    if (url.toLowerCase().endsWith('.pdf') && !url.includes('drive.google.com')) {
-      if (isNote && url.includes('res.cloudinary.com')) {
-        // Direct Cloudinary download — no proxy, no Defender flag
-        // Add fl_attachment with clean filename via Cloudinary's download transformation
-        const dlName = fileName.replace(/[^a-zA-Z0-9_-]/g, '_')
+    // For PDFs from Cloudinary / external:
+    const isPdfUrl = url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/') || url.includes('application/pdf')
+    if (isPdfUrl && !url.includes('drive.google.com')) {
+      // Cloudinary /image/upload/ supports fl_attachment parameter
+      if (isNote && url.includes('/image/upload/')) {
+        const rawName = fileName.replace(/[^a-zA-Z0-9_\-.]/g, '_')
+        const dlName = rawName.toLowerCase().endsWith('.pdf') ? rawName : `${rawName}.pdf`
         return url.replace('/upload/', `/upload/fl_attachment:${dlName}/`)
       }
+      // For /raw/upload/ (fl_attachment causes HTTP 400 on raw assets), route through watermark API
       return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${encodeURIComponent(fileName)}`
+    }
+
+    // For all other file types (DOCX, PPTX, ZIP, TXT etc.), route via file-proxy with attachment filename
+    if (proxyUrl.includes('/api/file-proxy')) {
+      return `${proxyUrl}&filename=${encodeURIComponent(fileName)}`
     }
 
     return proxyUrl

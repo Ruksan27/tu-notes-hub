@@ -120,7 +120,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '')
 
-  const fileName = `tunoteshub_${parsedTitle || 'book'}`
+  const fileName = `tunoteshub_${parsedTitle || 'book'}.pdf`
 
   if (rawUrl.includes('res.cloudinary.com') && rawUrl.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
     const parts = rawUrl.split('/upload/')
@@ -130,7 +130,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
       const footerLink = `l_text:Arial_22:tunoteshub.me,co_black,o_50/fl_layer_apply,g_south_east,x_15,y_15`
       downloadUrl = `${parts[0]}/upload/fl_attachment:${fileName}/${diagonalWatermark}/${footerLink}/${parts[1]}`
     }
-  } else if (rawUrl.toLowerCase().endsWith('.pdf') || isDrive) {
+  } else if (rawUrl.toLowerCase().includes('.pdf') || isDrive) {
     // Route through universal watermark API for PDFs and Drive files
     downloadUrl = `/api/download/watermark?fileUrl=${encodeURIComponent(rawUrl)}&bookId=${book.id}&filename=${encodeURIComponent(fileName)}`
   } else {

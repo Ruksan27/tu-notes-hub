@@ -51,12 +51,15 @@ export async function GET(req: NextRequest) {
     try {
       pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
     } catch (e) {
-      // Not a PDF (image, etc.) — return original with download header
-      console.warn('[Watermark] Not a valid PDF, returning original:', (e as Error).message)
-      return new NextResponse(arrayBuffer, {
+      // Not a PDF (DOCX, PPTX, image, zip etc.) — return original file directly as attachment
+      console.warn('[Watermark] Not a valid PDF, returning original file attachment:', (e as Error).message)
+      const buffer = Buffer.from(arrayBuffer)
+      const safeName = filename.replace(/[^a-zA-Z0-9_\-.]/g, '_')
+      return new NextResponse(buffer, {
         headers: {
           'Content-Type': contentType || 'application/octet-stream',
-          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Disposition': `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(safeName)}`,
+          'Content-Length': String(buffer.length),
           'Cache-Control': 'no-store',
         }
       })
@@ -162,6 +165,7 @@ export async function GET(req: NextRequest) {
 
     // 6. Save and return
     const pdfBytes = await pdfDoc.save()
+    const pdfBuffer = Buffer.from(pdfBytes)
 
     // Build a clean ASCII filename (RFC 5987 for UTF-8 safe name)
     // filename already has tunoteshub_ prefix from the client, just sanitize
@@ -173,11 +177,11 @@ export async function GET(req: NextRequest) {
     // RFC 5987 encoded version for non-ASCII support
     const encodedName = encodeURIComponent(downloadName)
 
-    return new NextResponse(pdfBytes as any, {
+    return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${downloadName}"; filename*=UTF-8''${encodedName}`,
-        'Content-Length': String(pdfBytes.byteLength),
+        'Content-Length': String(pdfBuffer.length),
         'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'no-store, no-cache, must-revalidate',
         'Pragma': 'no-cache',
