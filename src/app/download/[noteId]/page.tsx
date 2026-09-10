@@ -55,7 +55,7 @@ export default function DownloadPage() {
   const [mounted, setMounted] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
   const [countdown, setCountdown] = useState(0)
-  const [note, setNote] = useState<{ title: string; cloudinaryUrl: string; extractedText?: string | null } | null>(null)
+  const [note, setNote] = useState<{ title: string; cloudinaryUrl: string; extractedText?: string | null; noteType?: string | null } | null>(null)
   const [ready, setReady] = useState(false)
   const [driveContentType, setDriveContentType] = useState('')
 
@@ -72,26 +72,35 @@ export default function DownloadPage() {
     return `tunoteshub_${cleanTitle || 'Document'}`
   }
 
-  const getFinalDownloadUrl = (url: string, proxyUrl: string, title: string) => {
+  const getFinalDownloadUrl = (url: string, proxyUrl: string, title: string, isNote = false) => {
     if (!url) return ''
     if (url.includes('drive.google.com')) {
       const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
       return match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : url
     }
 
-    // Create a clean filename: "tunoteshub_2025_BOARD_EXAM_Computer_Graphics_and_Animation"
+    // Create a clean filename
     const fileName = getCleanDownloadFileName(title)
 
-    // If it's a Cloudinary image, route it through our custom image API to securely sign the URL
+    // If it's a Cloudinary image, route through our image signing API
     if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
       const targetNoteId = getNoteTargetId(params)
       return `/api/download/image?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${fileName}`
     }
 
     const targetNoteId = getNoteTargetId(params)
-    // If it's a PDF, route it through our custom watermarking API
+
+    // For PDFs from Cloudinary:
+    // - Notes: serve directly from Cloudinary (avoids proxy + Windows Defender false-positive)
+    // - Past Papers: add watermark (branding on exam papers)
     if (url.toLowerCase().endsWith('.pdf') && !url.includes('drive.google.com')) {
-      return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${fileName}`
+      if (isNote && url.includes('res.cloudinary.com')) {
+        // Direct Cloudinary download — no proxy, no Defender flag
+        // Add fl_attachment with clean filename via Cloudinary's download transformation
+        const dlName = fileName.replace(/[^a-zA-Z0-9_-]/g, '_')
+        return url.replace('/upload/', `/upload/fl_attachment:${dlName}/`)
+      }
+      return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${encodeURIComponent(fileName)}`
     }
 
     return proxyUrl
@@ -141,6 +150,9 @@ export default function DownloadPage() {
     }
   }, [targetNoteId])
 
+  // Derived: past papers have no noteType field; notes always have noteType set
+  const isPastPaper = note ? !note.noteType : false
+
   useEffect(() => {
     const fileUrl = note?.cloudinaryUrl || ''
     if (!fileUrl.includes('drive.google.com')) {
@@ -182,7 +194,7 @@ export default function DownloadPage() {
       setDownloadAdActive(false)
       // Trigger actual download programmatically
       if (note?.cloudinaryUrl) {
-        const downloadHref = getFinalDownloadUrl(note.cloudinaryUrl, proxiedUrl, note.title)
+        const downloadHref = getFinalDownloadUrl(note.cloudinaryUrl, proxiedUrl, note.title, !isPastPaper)
         const fileName = getCleanDownloadFileName(note.title)
 
         const link = document.createElement('a')
@@ -202,12 +214,14 @@ export default function DownloadPage() {
   // Active view tab state: 'text' or 'original'
   const [activeTab, setActiveTab] = useState<'text' | 'original'>('text')
 
-  // Auto-switch to original tab if no extractedText is available
+  // Auto-switch to original tab if no extractedText, or if this is a Note (not a past paper)
+  // The OCR model produces TU exam-paper JSON — only meaningful for past papers
+
   useEffect(() => {
-    if (note && !note.extractedText) {
+    if (note && (!note.extractedText || !isPastPaper)) {
       setActiveTab('original')
     }
-  }, [note])
+  }, [note, isPastPaper])
 
   const isImage = !isDriveLink && (
     fileUrl.toLowerCase().includes('.png') ||
@@ -255,7 +269,7 @@ export default function DownloadPage() {
   const handleStartDownload = () => {
     if (isPaid) {
       if (fileUrl) {
-        const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl, note?.title || '')
+        const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl, note?.title || '', !isPastPaper)
         const fileName = getCleanDownloadFileName(note?.title || '')
 
         const link = document.createElement('a')
@@ -493,8 +507,8 @@ export default function DownloadPage() {
             </div>
           ) : (
             <>
-              {/* Tab Controls (Only shown if extractedText exists) */}
-              {note?.extractedText && (
+              {/* Tab Controls — Only shown for Past Papers that have been OCR'd */}
+              {isPastPaper && note?.extractedText && (
                 <div className="mobile-dl-tab-container" style={{
                   display: 'flex',
                   background: 'rgba(255,255,255,0.03)',
@@ -554,7 +568,7 @@ export default function DownloadPage() {
                   </div>
                 )}
                 {fileUrl ? (
-                  activeTab === 'text' && note?.extractedText ? (
+                  activeTab === 'text' && isPastPaper && note?.extractedText ? (
                     <div
                       className="extracted-text-container"
                       style={{

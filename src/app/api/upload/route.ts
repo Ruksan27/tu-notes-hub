@@ -38,21 +38,9 @@ export async function POST(req: NextRequest) {
         }
       })
 
-      // Trigger OCR asynchronously in background so response returns instantly!
-      if (extractText && cloudinaryUrl) {
-        void (async () => {
-          try {
-            console.log(`[BACKGROUND OCR] Starting text extraction for Note ${note.id}...`)
-            const text = await extractTextFromPdfUrl(cloudinaryUrl)
-            if (text) {
-              await prisma.note.update({ where: { id: note.id }, data: { extractedText: text } })
-              console.log(`[BACKGROUND OCR SUCCESS] Updated text for Note ${note.id}`)
-            }
-          } catch (ocrErr) {
-            console.error(`[BACKGROUND OCR ERROR] Failed for Note ${note.id}:`, ocrErr)
-          }
-        })()
-      }
+      // NOTE: OCR is intentionally NOT triggered for Notes.
+      // The extractTextFromPdfUrl() model is trained for TU exam-paper format (JSON with groups/questions/options).
+      // Running it on regular study notes produces wrong structured output. OCR is for Past Papers only.
 
       return NextResponse.json({ note, message: 'Study Note uploaded successfully' })
     }
@@ -72,7 +60,7 @@ export async function POST(req: NextRequest) {
         }
       })
 
-      // Trigger OCR asynchronously in background so response returns instantly!
+      // Trigger OCR for PAST_PAPER only — the model is trained for TU exam-paper JSON format.
       if (extractText && cloudinaryUrl) {
         void (async () => {
           try {

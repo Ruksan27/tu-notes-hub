@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
     const fileUrl = url.searchParams.get('fileUrl')
     const noteId = url.searchParams.get('noteId')
     const bookId = url.searchParams.get('bookId')
-    const filename = url.searchParams.get('filename') || 'TUNotes_Document'
+    // Decode — the client URL-encodes the filename param
+    const rawFilename = url.searchParams.get('filename') || 'TUNotes_Document'
+    const filename = decodeURIComponent(rawFilename)
 
     if (!fileUrl) {
       return NextResponse.json({ error: 'Missing fileUrl parameter' }, { status: 400 })
@@ -161,23 +163,24 @@ export async function GET(req: NextRequest) {
     // 6. Save and return
     const pdfBytes = await pdfDoc.save()
 
-    const cleanName = filename
-      .replace(/\b(old|new)\s*syllabus\b/gi, '')
-      .replace(/\b(old|new)_syllabus\b/gi, '')
-      .replace(/\s*\(\s*(old|new)\s*\)/gi, '')
-      .replace(/^(tunoteshub|tunotes)_/gi, '')
-      .replace(/[^a-zA-Z0-9_-]/g, '_')
+    // Build a clean ASCII filename (RFC 5987 for UTF-8 safe name)
+    // filename already has tunoteshub_ prefix from the client, just sanitize
+    const safeAscii = filename
+      .replace(/[^a-zA-Z0-9_\-.]/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_+|_+$/g, '')
-
-    const baseName = cleanName ? `tunoteshub_${cleanName}` : 'tunoteshub_document'
-    const downloadName = baseName.endsWith('.pdf') ? baseName : `${baseName}.pdf`
+    const downloadName = safeAscii.endsWith('.pdf') ? safeAscii : `${safeAscii}.pdf`
+    // RFC 5987 encoded version for non-ASCII support
+    const encodedName = encodeURIComponent(downloadName)
 
     return new NextResponse(pdfBytes as any, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${downloadName}"`,
-        'Cache-Control': 'no-store',
+        'Content-Disposition': `attachment; filename="${downloadName}"; filename*=UTF-8''${encodedName}`,
+        'Content-Length': String(pdfBytes.byteLength),
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
       }
     })
 

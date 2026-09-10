@@ -382,7 +382,8 @@ export default function SubjectRow({
                   cursor: 'pointer',
                   pointerEvents: 'auto',
                 }}>
-                  ✅ MCQs
+                  ✅ MCQs ({mcqs.length})
+
                 </span>
               </Link>
             )}

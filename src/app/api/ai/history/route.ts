@@ -7,7 +7,8 @@ export async function GET() {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const history = await getUserAiHistory(user.id)
+    const uid = user.id || user.userId
+    const history = await getUserAiHistory(uid)
     return NextResponse.json({ history })
   } catch (error) {
     console.error('[AI_HISTORY_GET]', error)
@@ -24,7 +25,8 @@ export async function DELETE(req: NextRequest) {
     const id = searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'Missing history item ID' }, { status: 400 })
 
-    await deleteUserAiHistoryItem(user.id, id)
+    const uid = user.id || user.userId
+    await deleteUserAiHistoryItem(uid, id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[AI_HISTORY_DELETE]', error)

@@ -12,6 +12,8 @@ import BecomeSellerTab from '@/components/dashboard/BecomeSellerTab'
 import SellerCenterTab from '@/components/dashboard/SellerCenterTab'
 import ProfileTab from '@/components/dashboard/ProfileTab'
 import { getNoteSlug, getPaperSlug } from '@/lib/slugs'
+import QRCode from 'qrcode'
+
 
 type Tab = 'overview' | 'compare' | 'payment' | 'become-seller' | 'seller-center' | 'profile'
 
@@ -567,6 +569,8 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
   const [selectedPaperIds, setSelectedPaperIds] = useState<string[]>([])
   const [report, setReport] = useState<any>(null)
   const [mcqs, setMcqs] = useState<any[] | null>(null)
+  const [mcqDisplayTitle, setMcqDisplayTitle] = useState('') // subject name for MCQ header
+  const [mcqFromHistory, setMcqFromHistory] = useState(false) // true = from history, keep form visible
   const [loading, setLoading] = useState(false)
   const [generatingMcqs, setGeneratingMcqs] = useState(false)
 
@@ -574,6 +578,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
   const [historyList, setHistoryList] = useState<any[]>([])
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('')
 
   const currentSubject = subjects.find((s) => s.id === selectedSubjectId)
 
@@ -581,7 +586,11 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 
   useEffect(() => {
     loadHistory()
+    QRCode.toDataURL('https://tunoteshub.me', { width: 250, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } })
+      .then(url => setQrCodeDataUrl(url))
+      .catch(console.error)
   }, [])
+
 
   async function loadHistory() {
     setLoadingHistory(true)
@@ -608,16 +617,22 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 
   function openHistoryItem(item: any) {
     if (item.type === 'EXAM_REPORT') {
-      setReport(item.data)
+      const reportData = item.data || {}
+      setReport(reportData)
       setMcqs(null)
+      setMcqFromHistory(false)
       setShowHistoryModal(false)
-      toast.info(`Loaded report: ${item.subjectTitle}`)
+      toast.info(`📊 Loaded exam report: ${item.subjectTitle}`)
     } else if (item.type === 'MCQ_SET') {
       const mcqData = item.data?.mcqs || (Array.isArray(item.data) ? item.data : [])
+      const years: number[] = item.data?.years || []
+      const yearStr = years.length > 0 ? ` (${years.join(', ')})` : ''
       setMcqs(mcqData)
+      setMcqDisplayTitle(`${item.subjectTitle}${yearStr}`)
+      setMcqFromHistory(true) // keep form visible
       setReport(null)
       setShowHistoryModal(false)
-      toast.info(`Loaded MCQs: ${item.subjectTitle}`)
+      toast.info(`📝 Loaded ${mcqData.length} MCQs: ${item.subjectTitle}${yearStr}`)
     }
   }
 
@@ -643,7 +658,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 
   async function handleGenerateMcqs() {
     if (selectedPaperIds.length < 2) { toast.error('Select at least 2 papers'); return }
-    setGeneratingMcqs(true); setMcqs(null)
+    setGeneratingMcqs(true); setMcqs(null); setMcqFromHistory(false)
     try {
       const res = await fetch('/api/ai/mcq-generate', {
         method: 'POST',
@@ -653,8 +668,12 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
       const data = await res.json()
       if (res.ok) {
         setMcqs(data.mcqs)
+        // Build display title with years
+        const selPapers = currentSubject?.pastPapers.filter(p => selectedPaperIds.includes(p.id)) || []
+        const years = selPapers.map(p => p.year).sort().join(', ')
+        setMcqDisplayTitle(`${currentSubject?.title || 'Subject'}${years ? ` (${years})` : ''}`)
         loadHistory()
-        toast.success('Generated 10 MCQs & Saved for 7 days! 🎉')
+        toast.success(`Generated ${data.mcqs?.length || 0} MCQs & Saved for 7 days! 🎉`)
       } else {
         toast.error(data.error || 'Failed to generate MCQs')
       }
@@ -798,7 +817,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Form card — hidden once report is generated */}
+      {/* Form card — hidden once report is generated. If MCQs loaded from history, keep form visible */}
       {!report && (
         <div className="glass-card p-6 sm:p-8 space-y-6 max-w-4xl mx-auto">
           {/* Header */}
@@ -952,11 +971,17 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
       {mcqs && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" id="ai-mcq-container" style={{ padding: '32px', marginBottom: '24px' }}>
           <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-            <h3 className="text-xl font-bold">📝 Generated MCQs for {currentSubject?.title}</h3>
+            <div>
+              <h3 className="text-xl font-bold">📝 {mcqDisplayTitle || currentSubject?.title || 'Subject'} — MCQ Set</h3>
+              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '4px' }}>
+                {mcqs.length} Questions {mcqFromHistory ? '· Loaded from 7-day history' : '· Freshly generated'}
+              </p>
+            </div>
+
             <div style={{ display: 'flex', gap: '8px' }} className="hide-on-print">
               <button className="btn btn-outline" onClick={() => { setShowHistoryModal(true); loadHistory(); }} style={{ fontSize: '12px', padding: '6px 14px' }}>📜 History ({historyList.length})</button>
               <button className="btn btn-outline" onClick={downloadPDF} style={{ fontSize: '12px', padding: '6px 14px' }}>💾 Save PDF</button>
-              <button className="btn btn-outline" onClick={() => setMcqs(null)} style={{ fontSize: '12px', padding: '6px 14px' }}>← Close MCQs</button>
+              <button className="btn btn-outline" onClick={() => { setMcqs(null); setMcqFromHistory(false) }} style={{ fontSize: '12px', padding: '6px 14px' }}>← Close MCQs</button>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -997,7 +1022,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
               </div>
               <div style={{ textAlign: 'center' }}>
                 <img
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tunoteshub.me"
+                  src={qrCodeDataUrl || "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tunoteshub.me"}
                   alt="QR Code"
                   style={{ width: '90px', height: '90px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', padding: '4px' }}
                 />
@@ -1021,9 +1046,8 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
             <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <h3 className="text-xl font-bold">📊 {report.subject} — AI Report</h3>
-                {report.fromCache && (
-                  <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '999px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)' }}>⚡ Cached</span>
-                )}
+                <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '999px', background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }}>✨ Fresh AI</span>
+
               </div>
               <div style={{ display: 'flex', gap: '8px' }} className="hide-on-print">
                 <button className="btn btn-outline" onClick={() => { setReport(null); setSelectedPaperIds([]) }} style={{ fontSize: '12px', padding: '6px 14px' }}>← New Analysis</button>
@@ -1111,7 +1135,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tunoteshub.me"
+                    src={qrCodeDataUrl || "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tunoteshub.me"}
                     alt="QR Code"
                     style={{ width: '90px', height: '90px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', padding: '4px' }}
                   />
@@ -1155,31 +1179,53 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
               </div>
             ) : (
               <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-                {historyList.map((item) => (
-                  <div key={item.id} className="p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-indigo-500/40 transition flex items-center justify-between flex-wrap gap-3">
-                    <div className="space-y-1 flex-1 min-w-[200px]">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${item.type === 'EXAM_REPORT' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
-                          {item.type === 'EXAM_REPORT' ? '📊 EXAM PREDICTION' : '📝 10 MCQ SET'}
-                        </span>
-                        <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Auto-deletes in {item.daysRemaining} {item.daysRemaining === 1 ? 'day' : 'days'}
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-sm text-slate-100">{item.subjectTitle}</h4>
-                      <p className="text-[11px] text-slate-400">Created: {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
+                {historyList.map((item) => {
+                  const years: number[] = item.type === 'MCQ_SET'
+                    ? (item.data?.years || [])
+                    : (item.data?._years || [])
+                  const mcqCount = item.type === 'MCQ_SET' ? (item.data?.totalCount || item.data?.mcqs?.length || 0) : 0
+                  return (
+                    <div key={item.id} className="p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-indigo-500/40 transition">
+                      <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="space-y-1.5 flex-1 min-w-[180px]">
+                          {/* Type badge + expiry */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${item.type === 'EXAM_REPORT' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                              {item.type === 'EXAM_REPORT' ? '📊 EXAM PREDICTION' : `📝 MCQ SET${mcqCount > 0 ? ` (${mcqCount}Q)` : ''}`}
+                            </span>
+                            <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {item.daysRemaining === 1 ? 'Expires tomorrow' : `${item.daysRemaining} days left`}
+                            </span>
+                          </div>
+                          {/* Subject name */}
+                          <h4 className="font-bold text-sm text-white">{item.subjectTitle}</h4>
+                          {/* Year pills */}
+                          {years.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {years.map((yr) => (
+                                <span key={yr} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-700/60 text-slate-300 border border-slate-600/40">
+                                  {yr}
+                                </span>
+                              ))}
+                              <span className="text-[10px] text-slate-500">paper{years.length !== 1 ? 's' : ''} analyzed</span>
+                            </div>
+                          )}
+                          {/* Created time */}
+                          <p className="text-[11px] text-slate-500">{new Date(item.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
 
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => openHistoryItem(item)} className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
-                        👁️ Load & View
-                      </button>
-                      <button onClick={(e) => deleteHistoryItem(item.id, e)} className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition text-xs cursor-pointer" title="Delete from history">
-                        🗑️
-                      </button>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openHistoryItem(item)} className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                            👁️ Load & View
+                          </button>
+                          <button onClick={(e) => deleteHistoryItem(item.id, e)} className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition text-xs cursor-pointer" title="Delete from history">
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </motion.div>

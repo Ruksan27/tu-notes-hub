@@ -3,12 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { analyzePastPapers, extractTextFromPdfUrl } from '@/lib/gemini'
-import {
-  buildComparisonKey,
-  getCachedComparison,
-  saveComparisonReport,
-  saveUserAiHistory,
-} from '@/lib/cacheDb'
+import { saveUserAiHistory } from '@/lib/cacheDb'
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,15 +23,6 @@ export async function POST(req: NextRequest) {
 
     if (!subjectId || !paperIds?.length) {
       return NextResponse.json({ error: 'Subject and papers are required' }, { status: 400 })
-    }
-
-    // ── Cache Check ──────────────────────────────────────────────
-    const cacheKey = buildComparisonKey(subjectId, paperIds)
-    const cached = await getCachedComparison(cacheKey)
-    if (cached) {
-      // Also save to user history on cache hit so it appears in history
-      saveUserAiHistory(user.id, 'EXAM_REPORT', cached.subject || 'Exam Subject', cached).catch(console.error)
-      return NextResponse.json({ report: cached, fromCache: true })
     }
 
     // ── DB Lookup ────────────────────────────────────────────────
@@ -79,12 +65,15 @@ export async function POST(req: NextRequest) {
       papersData.push({ year: paper.year, text })
     }
 
-    // ── AI Analysis ──────────────────────────────────────────────
+    // ── Fresh AI Analysis (Every time fresh output) ───────────────
     const report = await analyzePastPapers(subject.title, papersData)
 
-    // ── Save to Cache & User History (fire-and-forget) ────────────
-    saveComparisonReport(cacheKey, subject.title, report).catch(console.error)
-    saveUserAiHistory(user.id, 'EXAM_REPORT', subject.title, report).catch(console.error)
+    // ── Save Fresh Report to User 7-Day History ───────────────────
+    const uid = user.id || user.userId
+    const usedYears = papers.map((p) => p.year).sort()
+    if (uid) {
+      saveUserAiHistory(uid, 'EXAM_REPORT', subject.title, { ...report, _years: usedYears }).catch(console.error)
+    }
 
     return NextResponse.json({ report, fromCache: false })
 

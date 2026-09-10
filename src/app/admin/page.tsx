@@ -3455,12 +3455,15 @@ function UploadTab({ user }: { user?: any }) {
               cf.append('signature', signature)
               cf.append('folder', sf)
               
+              const headers: Record<string, string> = {}
+              if (noteFile.size > chunkSize) {
+                headers['X-Unique-Upload-Id'] = uniqueUploadId
+                headers['Content-Range'] = `bytes ${start}-${end - 1}/${noteFile.size}`
+              }
+              
               const cr = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${rt}/upload`, {
                 method: 'POST',
-                headers: {
-                  'X-Unique-Upload-Id': uniqueUploadId,
-                  'Content-Range': `bytes ${start}-${end - 1}/${noteFile.size}`
-                },
+                headers,
                 body: cf
               })
               
@@ -3684,14 +3687,17 @@ function UploadTab({ user }: { user?: any }) {
           cloudForm.append('signature', signature)
           cloudForm.append('folder', signedFolder)
           
+          const headers: Record<string, string> = {}
+          if (fileToUpload.size > chunkSize) {
+            headers['X-Unique-Upload-Id'] = uniqueUploadId
+            headers['Content-Range'] = `bytes ${start}-${end - 1}/${fileToUpload.size}`
+          }
+
           const cloudRes = await fetch(
             `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
             { 
               method: 'POST', 
-              headers: {
-                'X-Unique-Upload-Id': uniqueUploadId,
-                'Content-Range': `bytes ${start}-${end - 1}/${fileToUpload.size}`
-              },
+              headers,
               body: cloudForm 
             }
           )

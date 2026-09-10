@@ -216,6 +216,10 @@ export async function saveUserAiHistory(
   subjectTitle: string,
   data: any
 ): Promise<void> {
+  if (!userId) {
+    console.warn('[CacheDB] saveUserAiHistory skipped: userId is empty or undefined')
+    return
+  }
   try {
     const db = getDb()
     await ensureGeneratedHistoryTable()
@@ -232,11 +236,13 @@ export async function saveUserAiHistory(
 }
 
 export async function getUserAiHistory(userId: string): Promise<any[]> {
+  if (!userId) return []
   try {
     const db = getDb()
     await ensureGeneratedHistoryTable()
     // Cleanup expired records
     db.execute('DELETE FROM ai_generated_history WHERE expires_at <= NOW() LIMIT 100').catch(() => {})
+
 
     const rows = await db.execute(
       `SELECT id, type, subject_title, data_json, created_at, expires_at,

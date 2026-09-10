@@ -24,11 +24,15 @@ export async function POST(req: NextRequest) {
       if (!paper) return NextResponse.json({ error: 'Past paper not found' }, { status: 404 })
       url = paper.cloudinaryUrl
     } else if (type === 'note') {
-      const note = await prisma.note.findUnique({ where: { id } })
-      if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
-      url = note.cloudinaryUrl
+      // OCR is intentionally blocked for Notes.
+      // extractTextFromPdfUrl() produces TU exam-paper JSON (groups/questions/options) —
+      // that format makes no sense for regular study notes/books.
+      // OCR should only be run on Past Papers.
+      return NextResponse.json({
+        error: 'OCR is only supported for Past Papers, not Notes. The OCR model is trained for TU exam-paper format (questions, options, answers). Running it on notes wastes AI quota and returns garbage output.'
+      }, { status: 400 })
     } else {
-      return NextResponse.json({ error: 'Invalid type for OCR' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid type for OCR. Only "pastpaper" is supported.' }, { status: 400 })
     }
 
     if (!url) {

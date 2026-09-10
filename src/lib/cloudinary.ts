@@ -29,14 +29,19 @@ export async function uploadToCloudinary(
     api_secret: account.api_secret,
   })
 
+  const uploadOptions: any = {
+    folder,
+    resource_type: resourceType,
+  }
+
+  if (resourceType === 'image') {
+    uploadOptions.allowed_formats = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'bmp', 'tiff']
+  }
+
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
-        {
-          folder,
-          resource_type: resourceType,
-          allowed_formats: resourceType === 'raw' ? ['pdf', 'docx', 'doc', 'pptx', 'ppt', 'txt'] : ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'bmp', 'tiff'],
-        },
+        uploadOptions,
         (error, result) => {
           if (error || !result) return reject(error || new Error('Upload failed'))
           resolve({ url: result.secure_url, publicId: result.public_id })

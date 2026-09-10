@@ -30,6 +30,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
     }
 
+    // Fetch existing MCQs from Database for this subject
+    const existingDbMcqs = await prisma.mCQ.findMany({
+      where: { subjectId },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const formattedExistingMcqs = existingDbMcqs.map((m: any) => ({
+      question: m.question,
+      options: typeof m.options === 'string' ? JSON.parse(m.options) : (Array.isArray(m.options) ? m.options : []),
+      correctOption: m.correctOption,
+      explanation: m.explanation || '',
+      year: m.year || null,
+      source: 'Database'
+    }))
+
     const papers = await prisma.pastPaper.findMany({
       where: { id: { in: paperIds }, subjectId },
       orderBy: { year: 'asc' },
@@ -65,15 +80,53 @@ export async function POST(req: NextRequest) {
     }
 
     // ── AI Analysis ──────────────────────────────────────────────
-    const mcqs = await generateMcqs(subject.title, papersData)
+    const newAiMcqs = await generateMcqs(subject.title, papersData)
+
+    // Save newly generated MCQs into DB for permanent record
+    if (Array.isArray(newAiMcqs) && newAiMcqs.length > 0) {
+      try {
+        const mcqInsertData = newAiMcqs.map((m: any) => ({
+          question: m.question,
+          options: m.options,
+          correctOption: typeof m.correctOption === 'number' ? m.correctOption : 0,
+          explanation: m.explanation || null,
+          subjectId: subject.id,
+        }))
+        await prisma.mCQ.createMany({ data: mcqInsertData })
+      } catch (dbErr) {
+        console.warn('[AI_MCQ_SAVE_DB_WARN]', dbErr)
+      }
+    }
+
+    // Combine newly generated AI MCQs + Previous DB MCQs
+    const allMcqs = [...newAiMcqs, ...formattedExistingMcqs]
+
+    // Deduplicate MCQs by question text
+    const uniqueMcqs: any[] = []
+    const seenQuestions = new Set<string>()
+    for (const item of allMcqs) {
+      const qKey = item.question?.trim().toLowerCase()
+      if (qKey && !seenQuestions.has(qKey)) {
+        seenQuestions.add(qKey)
+        uniqueMcqs.push(item)
+      }
+    }
 
     // ── Save to User History (fire-and-forget) ────────────────────
-    saveUserAiHistory(user.id, 'MCQ_SET', subject.title, { mcqs, subjectTitle: subject.title }).catch(console.error)
+    const uid = user.id || user.userId
+    const usedYears = papers.map((p) => p.year).sort()
+    if (uid) {
+      saveUserAiHistory(uid, 'MCQ_SET', subject.title, {
+        mcqs: uniqueMcqs,
+        subjectTitle: subject.title,
+        years: usedYears,
+        totalCount: uniqueMcqs.length,
+      }).catch(console.error)
+    }
 
-    return NextResponse.json({ mcqs })
+    return NextResponse.json({ mcqs: uniqueMcqs })
   } catch (error) {
     console.error('[AI_MCQ_GENERATE]', error)
     return NextResponse.json({ error: 'AI MCQ generation failed. Please try again.' }, { status: 500 })
   }
 }
-
