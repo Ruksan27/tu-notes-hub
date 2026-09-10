@@ -40,8 +40,36 @@ export default async function LeaderboardPage() {
     console.error('Failed to load leaderboard users:', error)
   }
 
+  const getInitials = (name: string) => {
+    if (!name) return 'ST'
+    const parts = name.trim().split(/\s+/)
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    }
+    return name.substring(0, 2).toUpperCase()
+  }
+
   const top3 = topContributors.slice(0, 3)
   const remaining = topContributors.slice(3)
+
+  // Reorder top 3 into Olympic Podium order: [Rank 2 (Silver), Rank 1 (Gold), Rank 3 (Bronze)]
+  let podiumOrder: Array<{ user: typeof topContributors[0]; rank: number }> = []
+  if (top3.length === 3) {
+    podiumOrder = [
+      { user: top3[1], rank: 2 },
+      { user: top3[0], rank: 1 },
+      { user: top3[2], rank: 3 },
+    ]
+  } else if (top3.length === 2) {
+    podiumOrder = [
+      { user: top3[1], rank: 2 },
+      { user: top3[0], rank: 1 },
+    ]
+  } else if (top3.length === 1) {
+    podiumOrder = [
+      { user: top3[0], rank: 1 },
+    ]
+  }
 
   return (
     <div style={{ minHeight: '100vh', padding: '60px 20px 100px', background: 'var(--clr-bg)' }}>
@@ -114,142 +142,177 @@ export default async function LeaderboardPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '20px',
-            marginBottom: '48px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
+            gap: '24px',
+            alignItems: 'end',
+            marginBottom: '56px',
+            marginTop: '20px',
           }}
         >
-          {top3.map((user, index) => {
-            const isFirst = index === 0
-            const isSecond = index === 1
-            const isThird = index === 2
+          {podiumOrder.map(({ user, rank }) => {
+            const isRank1 = rank === 1
+            const isRank2 = rank === 2
 
-            const badgeColor = isFirst ? '#f59e0b' : isSecond ? '#94a3b8' : '#f97316'
-            const borderColor = isFirst
-              ? 'rgba(245, 158, 11, 0.4)'
-              : isSecond
-              ? 'rgba(148, 163, 184, 0.3)'
-              : 'rgba(249, 115, 22, 0.3)'
+            const initials = getInitials(user.name)
 
-            const bgGlow = isFirst
-              ? 'radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%)'
-              : 'none'
+            const badgeTitle = isRank1 ? '🥇 #1 Champion' : isRank2 ? '🥈 #2 Runner-Up' : '🥉 #3 Contributor'
+            const badgeBg = isRank1
+              ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+              : isRank2
+              ? 'linear-gradient(135deg, #94a3b8, #64748b)'
+              : 'linear-gradient(135deg, #f97316, #c2410c)'
+
+            const borderColor = isRank1
+              ? 'rgba(245, 158, 11, 0.6)'
+              : isRank2
+              ? 'rgba(148, 163, 184, 0.4)'
+              : 'rgba(249, 115, 22, 0.4)'
+
+            const cardBg = isRank1
+              ? 'linear-gradient(180deg, rgba(245, 158, 11, 0.16) 0%, rgba(15, 23, 42, 0.95) 100%)'
+              : isRank2
+              ? 'linear-gradient(180deg, rgba(148, 163, 184, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%)'
+              : 'linear-gradient(180deg, rgba(249, 115, 22, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%)'
+
+            const glowShadow = isRank1
+              ? '0 20px 50px rgba(245, 158, 11, 0.25), 0 0 0 1.5px rgba(245, 158, 11, 0.5)'
+              : isRank2
+              ? '0 12px 32px rgba(148, 163, 184, 0.15), 0 0 0 1px rgba(148, 163, 184, 0.3)'
+              : '0 12px 32px rgba(249, 115, 22, 0.15), 0 0 0 1px rgba(249, 115, 22, 0.3)'
+
+            const avatarSize = isRank1 ? '84px' : '72px'
+            const avatarBorderColor = isRank1 ? '#f59e0b' : isRank2 ? '#94a3b8' : '#f97316'
+            const initialsBg = isRank1
+              ? 'linear-gradient(135deg, #b45309 0%, #f59e0b 100%)'
+              : isRank2
+              ? 'linear-gradient(135deg, #334155 0%, #64748b 100%)'
+              : 'linear-gradient(135deg, #7c2d12 0%, #ea580c 100%)'
 
             return (
               <div
                 key={user.id}
                 className="glass-card hover-lift"
                 style={{
-                  padding: '28px 24px',
-                  borderRadius: '20px',
-                  border: `1px solid ${borderColor}`,
+                  padding: isRank1 ? '38px 24px 30px' : '28px 20px',
+                  borderRadius: '24px',
+                  border: `1.5px solid ${borderColor}`,
                   position: 'relative',
                   overflow: 'hidden',
                   textAlign: 'center',
-                  background: 'rgba(15, 23, 42, 0.7)',
+                  background: cardBg,
+                  boxShadow: glowShadow,
+                  transform: isRank1 ? 'translateY(-14px)' : 'none',
+                  zIndex: isRank1 ? 2 : 1,
                 }}
               >
-                {/* Glow for 1st place */}
-                {isFirst && (
+                {/* Glow for Rank 1 */}
+                {isRank1 && (
                   <div
                     style={{
                       position: 'absolute',
                       inset: 0,
-                      background: bgGlow,
+                      background: 'radial-gradient(circle at 50% 0%, rgba(245,158,11,0.22) 0%, transparent 75%)',
                       pointerEvents: 'none',
                     }}
                   />
                 )}
 
-                {/* Rank Badge */}
+                {/* Rank Badge Header */}
                 <div
                   style={{
                     position: 'absolute',
                     top: '16px',
                     right: '16px',
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: badgeColor,
-                    color: '#0f172a',
+                    padding: '4px 12px',
+                    borderRadius: '999px',
+                    background: badgeBg,
+                    color: '#ffffff',
                     fontWeight: 900,
-                    fontSize: '15px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: `0 4px 12px ${badgeColor}66`,
+                    fontSize: isRank1 ? '13px' : '12px',
+                    boxShadow: `0 4px 14px ${avatarBorderColor}55`,
+                    letterSpacing: '0.3px',
                   }}
                 >
-                  #{index + 1}
+                  {badgeTitle}
                 </div>
 
-                {/* Avatar */}
-                <div style={{ marginBottom: '16px', position: 'relative', display: 'inline-block' }}>
+                {/* Avatar with Crown for #1 */}
+                <div style={{ marginBottom: '16px', marginTop: isRank1 ? '8px' : '12px', position: 'relative', display: 'inline-block' }}>
+                  {isRank1 && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '-16px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontSize: '28px',
+                        lineHeight: 1,
+                        zIndex: 10,
+                        filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))',
+                        userSelect: 'none',
+                      }}
+                    >
+                      👑
+                    </span>
+                  )}
+
                   {user.avatarUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={user.avatarUrl}
                       alt={user.name}
                       style={{
-                        width: '72px',
-                        height: '72px',
+                        width: avatarSize,
+                        height: avatarSize,
                         borderRadius: '50%',
                         objectFit: 'cover',
-                        border: `3px solid ${badgeColor}`,
+                        border: `3px solid ${avatarBorderColor}`,
+                        boxShadow: `0 0 20px ${avatarBorderColor}66`,
                       }}
                     />
                   ) : (
                     <div
                       style={{
-                        width: '72px',
-                        height: '72px',
+                        width: avatarSize,
+                        height: avatarSize,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
-                        border: `3px solid ${badgeColor}`,
+                        background: initialsBg,
+                        border: `3px solid ${avatarBorderColor}`,
                         color: '#ffffff',
-                        fontWeight: 800,
-                        fontSize: '28px',
+                        fontWeight: 900,
+                        fontSize: isRank1 ? '30px' : '25px',
+                        letterSpacing: '1px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        boxShadow: `0 0 20px ${avatarBorderColor}66`,
                       }}
                     >
-                      {user.name ? user.name[0].toUpperCase() : 'U'}
+                      {initials}
                     </div>
-                  )}
-
-                  {isFirst && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '-12px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        fontSize: '22px',
-                      }}
-                    >
-                      👑
-                    </span>
                   )}
                 </div>
 
                 {/* Name */}
                 <h3
                   style={{
-                    fontSize: '18px',
-                    fontWeight: 800,
+                    fontSize: isRank1 ? '20px' : '17px',
+                    fontWeight: 900,
                     color: '#ffffff',
                     margin: '0 0 4px 0',
+                    fontFamily: 'var(--font-display)',
                   }}
                 >
                   {user.name}
                 </h3>
 
-                {/* College / Info */}
+                {/* College / Campus */}
                 <p
                   style={{
                     fontSize: '12.5px',
-                    color: 'var(--clr-text-3)',
-                    margin: '0 0 16px 0',
+                    color: isRank1 ? '#fde68a' : 'var(--clr-text-3)',
+                    margin: '0 0 18px 0',
+                    fontWeight: 500,
                   }}
                 >
                   {user.college || 'TU Student'}
@@ -261,16 +324,17 @@ export default async function LeaderboardPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '6px 16px',
+                    padding: isRank1 ? '8px 20px' : '6px 16px',
                     borderRadius: '999px',
-                    background: 'rgba(250, 204, 21, 0.12)',
-                    border: '1px solid rgba(250, 204, 21, 0.3)',
-                    color: '#facc15',
-                    fontWeight: 800,
-                    fontSize: '15px',
+                    background: isRank1 ? 'rgba(250, 204, 21, 0.2)' : isRank2 ? 'rgba(148, 163, 184, 0.15)' : 'rgba(249, 115, 22, 0.15)',
+                    border: `1.5px solid ${borderColor}`,
+                    color: isRank1 ? '#fef08a' : isRank2 ? '#e2e8f0' : '#ffedd5',
+                    fontWeight: 900,
+                    fontSize: isRank1 ? '15px' : '14px',
+                    boxShadow: isRank1 ? '0 4px 14px rgba(245,158,11,0.25)' : 'none',
                   }}
                 >
-                  <Star style={{ width: '15px', height: '15px', fill: '#facc15' }} />
+                  <Star style={{ width: '15px', height: '15px', fill: isRank1 ? '#facc15' : isRank2 ? '#cbd5e1' : '#fb923c', color: 'transparent' }} />
                   <span>{user.rewardPoints.toLocaleString()} Points</span>
                 </div>
               </div>
@@ -327,10 +391,11 @@ export default async function LeaderboardPage() {
                   <td style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt={user.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={user.avatarUrl} alt={user.name} style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover' }} />
                       ) : (
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#1e3a8a', color: '#93c5fd', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>
-                          {user.name ? user.name[0].toUpperCase() : 'U'}
+                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', border: `1.5px solid ${idx === 0 ? '#f59e0b' : idx === 1 ? '#94a3b8' : idx === 2 ? '#f97316' : 'rgba(255,255,255,0.1)'}` }}>
+                          {getInitials(user.name)}
                         </div>
                       )}
                       <span style={{ fontWeight: 600, color: '#ffffff' }}>{user.name}</span>

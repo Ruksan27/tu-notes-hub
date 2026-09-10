@@ -174,9 +174,9 @@ export default function StudentNoteUploadPage() {
       // Upload file if selected
       if (uploadMode === 'file' && selectedFile) {
         if (fileSizeMB <= 10) {
-          toast.loading(`⚡ Uploading file (${fileSizeMB.toFixed(1)}MB) to Cloudinary...`, { toastId: 'file-upload' });
+          toast.loading(`⚡ Uploading file (${fileSizeMB.toFixed(1)}MB)...`, { toastId: 'file-upload' });
         } else {
-          toast.loading(`☁️ Uploading large file (${fileSizeMB.toFixed(1)}MB) to Google Drive...`, { toastId: 'file-upload' });
+          toast.loading(`☁️ Uploading file (${fileSizeMB.toFixed(1)}MB)...`, { toastId: 'file-upload' });
         }
 
         const formData = new FormData();
@@ -197,11 +197,7 @@ export default function StudentNoteUploadPage() {
         }
 
         finalFileUrl = uploadData.url;
-        if (uploadData.storage === 'CLOUDINARY') {
-          toast.success('✅ File saved to Cloudinary!');
-        } else {
-          toast.success('✅ File saved to Google Drive!');
-        }
+        toast.success('✅ File uploaded successfully!');
       }
 
       if (!finalFileUrl) {
@@ -245,7 +241,7 @@ export default function StudentNoteUploadPage() {
       if (data.remainingUploadsToday !== undefined) {
         setRemainingUploads(data.remainingUploadsToday);
       }
-      toast.success('🎉 Material submitted! Gemini OCR & Points will be processed upon Admin approval.');
+      toast.success('🎉 Material submitted for review!');
 
     } catch (err: any) {
       console.error(err);
@@ -311,7 +307,7 @@ export default function StudentNoteUploadPage() {
               Upload Notes, MCQs & Past Papers
             </h1>
             <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0, maxWidth: '540px', lineHeight: 1.6 }}>
-              Share handwritten notes, solution sets, MCQs, or past papers across any faculty. Earn up to <strong style={{ color: '#67e8f9' }}>+25 Points</strong> upon Admin verification!
+              Share handwritten notes, solution sets, MCQs, or past papers across any faculty. Earn reward points upon Admin verification!
             </p>
           </div>
 
@@ -320,7 +316,7 @@ export default function StudentNoteUploadPage() {
             padding: '16px 20px', borderRadius: '16px', textAlign: 'center', minWidth: '160px',
           }}>
             <div style={{ fontSize: '30px', lineHeight: 1, marginBottom: '4px' }}>🎁</div>
-            <div style={{ color: '#67e8f9', fontWeight: 800, fontSize: '18px' }}>Up to +25 PTS</div>
+            <div style={{ color: '#67e8f9', fontWeight: 800, fontSize: '18px' }}>Earn Rewards</div>
             <div style={{ color: '#64748b', fontSize: '11px', marginTop: '2px' }}>Per Verified Material</div>
           </div>
         </div>
@@ -359,11 +355,11 @@ export default function StudentNoteUploadPage() {
             padding: '18px 20px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#a5b4fc', fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}>
-              <Clock style={{ width: '16px', height: '16px' }} /> Verification & OCR AI Pipeline
+              <Clock style={{ width: '16px', height: '16px' }} /> Verification Pipeline
             </div>
             <ul style={{ paddingLeft: '18px', margin: 0, color: '#94a3b8', fontSize: '13px', lineHeight: 1.7 }}>
               <li>🛡️ <strong>Daily Upload Limit:</strong> Max 4 uploads per user / day</li>
-              <li>🤖 <strong>Automated OCR:</strong> Gemini AI extracts text on Approval</li>
+              <li>⚡ <strong>Quick Review:</strong> Points credited on Admin approval</li>
               <li>🔒 <strong>Account Required:</strong> Must be logged in to claim points</li>
             </ul>
           </div>
@@ -391,7 +387,7 @@ export default function StudentNoteUploadPage() {
               Account Login Required to Upload Materials
             </h2>
             <p style={{ color: '#94a3b8', fontSize: '15px', maxWidth: '500px', margin: '0 auto 28px auto', lineHeight: 1.6 }}>
-              Please log in or create a free TU Notes Hub account to submit your study materials, MCQs, or past papers and automatically earn <strong style={{ color: '#67e8f9' }}>+50 reward points</strong>!
+              Please log in or create a free TU Notes Hub account to submit your study materials, MCQs, or past papers and earn reward points!
             </p>
             <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link
@@ -438,7 +434,7 @@ export default function StudentNoteUploadPage() {
               Material Submitted for Review!
             </h2>
             <p style={{ color: '#94a3b8', fontSize: '15px', maxWidth: '520px', margin: '0 auto 24px auto', lineHeight: 1.6 }}>
-              Your submission has been queued for Admin verification. Once approved, Gemini AI will extract the OCR text and <strong style={{ color: '#67e8f9' }}>+50 Reward Points</strong> will be credited to your account!
+              Your submission has been queued for Admin verification. Once approved, reward points will be credited to your account!
             </p>
             {remainingUploads !== null && (
               <div style={{
