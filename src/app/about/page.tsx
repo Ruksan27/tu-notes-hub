@@ -457,7 +457,7 @@ export default async function AboutPage() {
         </div>
 
         {/* ── SOCIAL MEDIA COMMUNITY ── */}
-        <div style={{ marginBottom: '52px' }}>
+        <div id="community" style={{ marginBottom: '52px', scrollMarginTop: '80px' }}>
           <div className="text-center" style={{ marginBottom: '24px' }}>
             <div className="badge badge-elite" style={{ marginBottom: '10px' }}>🌐 CONNECT WITH US</div>
             <h2 style={{ fontSize: 'clamp(22px, 4vw, 30px)', fontFamily: 'var(--font-display)', fontWeight: 800 }}>Follow Our Community</h2>
