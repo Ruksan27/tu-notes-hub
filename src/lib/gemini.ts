@@ -14,14 +14,13 @@ function getValidKeys() {
   return keys
 }
 
-const API_KEYS = getValidKeys()
-
-let currentKeyIndex = 0
+let globalKeyIndex = 0
 
 export function getNextApiKey(): string {
-  if (API_KEYS.length === 0) return ''
-  const key = API_KEYS[currentKeyIndex]
-  currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length
+  const keys = getValidKeys()
+  if (keys.length === 0) return ''
+  const key = keys[globalKeyIndex % keys.length]
+  globalKeyIndex = (globalKeyIndex + 1) % keys.length
   return key
 }
 
@@ -34,6 +33,10 @@ async function callOfficialGemini(
 ): Promise<string> {
   const keys = getValidKeys()
   if (keys.length === 0) return ''
+
+  // Rotate starting key for every request across all available API keys
+  const startKeyIdx = globalKeyIndex
+  globalKeyIndex = (globalKeyIndex + 1) % keys.length
 
   try {
     // Construct parts array for the SDK
@@ -53,32 +56,53 @@ async function callOfficialGemini(
     
     // Valid Google Generative AI Models
     const modelsToRace = [
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.5-pro',
-      'gemini-1.5-flash', // Keep as final fallback
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash-lite',
     ]
     
     const promises = modelsToRace.map(async (model, index) => {
-      // Rotate through available API keys for each request
-      const apiKey = keys[index % keys.length]
-      const genAI = new GoogleGenerativeAI(apiKey)
+      // Pick a distinct API key rotated per request and per model index
+      const keyIdx = (startKeyIdx + index) % keys.length
+      const apiKey = keys[keyIdx]
       
-      const geminiModel = genAI.getGenerativeModel({
-        model: model,
-        systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
-      })
-      
-      const result = await geminiModel.generateContent(parts)
-      const text = result.response.text()
-      if (text) {
-        console.log(`[Gemini SDK] ✅ ${model} answered!`)
-        return text
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey)
+        const geminiModel = genAI.getGenerativeModel({
+          model: model,
+          systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
+        })
+        
+        const result = await geminiModel.generateContent(parts)
+        const text = result.response.text()
+        if (text) {
+          console.log(`[Gemini SDK] ✅ ${model} (Key #${keyIdx + 1}/${keys.length}) answered!`)
+          return text
+        }
+      } catch (err: any) {
+        // If rate limit (429) or quota error occurs, retry immediately with next key
+        if (err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('quota')) {
+          console.warn(`[Gemini SDK] Key #${keyIdx + 1} hit quota/429 on ${model}. Retrying with next key...`)
+          const fallbackKey = keys[(keyIdx + 1) % keys.length]
+          const genAI = new GoogleGenerativeAI(fallbackKey)
+          const geminiModel = genAI.getGenerativeModel({
+            model: model,
+            systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
+          })
+          const result = await geminiModel.generateContent(parts)
+          const text = result.response.text()
+          if (text) {
+            console.log(`[Gemini SDK Fallback] ✅ ${model} (Fallback Key) answered!`)
+            return text
+          }
+        }
+        throw err
       }
       throw new Error(`Empty response from ${model}`)
     })
 
-    // RACE! Whichever Gemini model answers first without 503 error, wins!
+    // RACE! Whichever Gemini model answers first without error, wins!
     const fastestResponse = await Promise.any(promises)
     return fastestResponse
 
@@ -195,13 +219,17 @@ export async function* callGeminiStream(
   if (keys.length === 0) throw new Error('No API keys available')
 
   const modelsToTry = [
-    'gemini-3.5-flash-lite',
+    'gemini-2.0-flash',
     'gemini-1.5-flash',
+    'gemini-2.0-flash-lite',
   ]
+
+  const startIdx = globalKeyIndex
+  globalKeyIndex = (globalKeyIndex + 1) % keys.length
 
   for (let i = 0; i < modelsToTry.length; i++) {
     const model = modelsToTry[i]
-    const apiKey = keys[i % keys.length]
+    const apiKey = keys[(startIdx + i) % keys.length]
     const genAI = new GoogleGenerativeAI(apiKey)
     
     const geminiModel = genAI.getGenerativeModel({
@@ -391,6 +419,119 @@ If any question is a Multiple Choice Question (MCQ), ALWAYS extract its 4 option
   return rawResponse.replace(/```json|```/g, '').trim()
 }
 
+function repairJsonString(input: string): string {
+  let s = input
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .trim()
+
+  const firstBrace = s.search(/[\{\[]/)
+  const lastBrace = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'))
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    s = s.substring(firstBrace, lastBrace + 1)
+  }
+
+  // Remove trailing commas before closing braces/brackets
+  s = s.replace(/,\s*([\}\]])/g, '$1')
+
+  // Escape single backslashes that are not valid JSON escape sequences
+  s = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, '\\\\')
+
+  // Escape literal unescaped control characters inside quotes
+  let inString = false
+  let escaped = false
+  let result = ''
+
+  for (let i = 0; i < s.length; i++) {
+    const char = s[i]
+
+    if (char === '"' && !escaped) {
+      inString = !inString
+      result += char
+    } else if (char === '\\' && !escaped) {
+      escaped = true
+      result += char
+    } else {
+      if (escaped) escaped = false
+      
+      if (inString) {
+        if (char === '\n') result += '\\n'
+        else if (char === '\r') result += '\\r'
+        else if (char === '\t') result += '\\t'
+        else if (char.charCodeAt(0) < 32) result += ''
+        else result += char
+      } else {
+        result += char
+      }
+    }
+  }
+
+  return result
+}
+
+function autoCloseJson(str: string): string {
+  const stack: string[] = []
+  let inString = false
+  let escaped = false
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i]
+    if (char === '"' && !escaped) {
+      inString = !inString
+    } else if (char === '\\' && !escaped) {
+      escaped = true
+    } else {
+      if (escaped) escaped = false
+      if (!inString) {
+        if (char === '{') stack.push('}')
+        else if (char === '[') stack.push(']')
+        else if (char === '}' || char === ']') stack.pop()
+      }
+    }
+  }
+
+  let closed = str
+  if (inString) closed += '"'
+  while (stack.length > 0) {
+    closed += stack.pop()
+  }
+  return closed
+}
+
+export function extractMcqsWithRegex(raw: string): any[] {
+  const mcqs: any[] = []
+  
+  // Find all MCQ objects inside the string
+  const objectBlocks = raw.match(/\{[^{}]*"question"[^{}]*\}/gi) || []
+  
+  for (const block of objectBlocks) {
+    try {
+      const qMatch = block.match(/"question"\s*:\s*"([^"]+)"/i)
+      const corrMatch = block.match(/"correctOption"\s*:\s*(\d+)/i)
+      const expMatch = block.match(/"explanation"\s*:\s*"([^"]+)"/i)
+      const optionsMatch = block.match(/"options"\s*:\s*\[([^\]]+)\]/i)
+
+      if (qMatch && optionsMatch) {
+        const rawOpts = optionsMatch[1].match(/"([^"]+)"/g)?.map(o => o.slice(1, -1)) || []
+        if (rawOpts.length >= 2) {
+          mcqs.push({
+            question: qMatch[1],
+            options: rawOpts,
+            correctOption: corrMatch ? parseInt(corrMatch[1], 10) : 0,
+            explanation: expMatch ? expMatch[1] : ''
+          })
+        }
+      }
+    } catch {
+      continue
+    }
+  }
+
+  return mcqs
+}
+
 // Robust helper to parse AI-generated JSON (handles LaTeX backslashes, markdown blocks, control chars)
 export function cleanAndParseJSON(raw: string): any {
   if (!raw) throw new Error('AI returned an empty response string')
@@ -408,26 +549,30 @@ export function cleanAndParseJSON(raw: string): any {
     cleaned = cleaned.substring(firstBrace, lastBrace + 1)
   }
 
+  // Attempt 1: Standard JSON parse
   try {
     return JSON.parse(cleaned)
   } catch (err1) {
-    // Fix unescaped backslashes in LaTeX formulas (e.g. \Delta, \frac, \theta, \alpha, \sum)
-    const fixedBackslashes = cleaned.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, '\\\\')
-
+    // Attempt 2: Repaired JSON string (escaped control chars, trailing commas, single backslashes)
     try {
-      return JSON.parse(fixedBackslashes)
+      const repaired = repairJsonString(cleaned)
+      return JSON.parse(repaired)
     } catch (err2) {
-      // Sanitize unescaped control characters inside strings
-      const sanitized = fixedBackslashes.replace(/[\u0000-\u001F\u007F-\u009F]/g, (ch) => {
-        if (ch === '\n') return '\\n'
-        if (ch === '\r') return '\\r'
-        if (ch === '\t') return '\\t'
-        return ''
-      })
-
+      // Attempt 3: Auto-close truncated JSON
       try {
-        return JSON.parse(sanitized)
+        const repaired = repairJsonString(cleaned)
+        const closed = autoCloseJson(repaired)
+        return JSON.parse(closed)
       } catch (err3) {
+        // Attempt 4: MCQ Regex Fallback
+        if (raw.toLowerCase().includes('question')) {
+          const fallbackMcqs = extractMcqsWithRegex(raw)
+          if (fallbackMcqs.length > 0) {
+            console.warn(`[cleanAndParseJSON] Extracted ${fallbackMcqs.length} MCQs via regex fallback.`)
+            return fallbackMcqs
+          }
+        }
+
         console.error('[cleanAndParseJSON Failed]', {
           error: (err1 as Error)?.message,
           rawSample: raw.slice(0, 400)
@@ -526,7 +671,14 @@ Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra te
 `
 
   const raw = await callGemini(prompt)
-  return cleanAndParseJSON(raw)
+  try {
+    const parsed = cleanAndParseJSON(raw)
+    return Array.isArray(parsed) ? parsed : (parsed?.mcqs || [])
+  } catch (err) {
+    console.warn('[generateMcqs] JSON parse failed, attempting regex extraction fallback...')
+    const fallback = extractMcqsWithRegex(raw)
+    return fallback
+  }
 }
 
 // Generate MCQs directly from an image (question paper photo)
@@ -558,6 +710,13 @@ Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra te
 `
 
   const raw = await callGemini(prompt, undefined, images)
-  return cleanAndParseJSON(raw)
+  try {
+    const parsed = cleanAndParseJSON(raw)
+    return Array.isArray(parsed) ? parsed : (parsed?.mcqs || [])
+  } catch (err) {
+    console.warn('[generateMcqsFromImage] JSON parse failed, attempting regex extraction fallback...')
+    const fallback = extractMcqsWithRegex(raw)
+    return fallback
+  }
 }
 

@@ -594,6 +594,41 @@ function ManageMaterialsTab() {
   const [ocrRunningId, setOcrRunningId] = useState<string | null>(null)
   const [showAddMcq, setShowAddMcq] = useState(false)
   const [newMcq, setNewMcq] = useState<any>({ question: '', options: ['', '', '', ''], correctOption: 0, explanation: '', year: new Date().getFullYear(), examCategory: 'BOARD_EXAM' })
+  const [showAiGenerateMcqModal, setShowAiGenerateMcqModal] = useState(false)
+  const [aiMcqPaperIds, setAiMcqPaperIds] = useState<string[]>([])
+  const [generatingAdminMcqs, setGeneratingAdminMcqs] = useState(false)
+
+  async function handleAdminGenerateMcqs() {
+    if (aiMcqPaperIds.length < 1) {
+      toast.error('Please select at least 1 past paper to generate MCQs from')
+      return
+    }
+    setGeneratingAdminMcqs(true)
+    try {
+      const res = await fetch('/api/ai/mcq-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subjectId, paperIds: aiMcqPaperIds }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(`✨ Successfully generated & saved ${data.mcqs?.length || 0} MCQs to DB! 🎉`)
+        setShowAiGenerateMcqModal(false)
+        setAiMcqPaperIds([])
+        if (subjectId) {
+          const mcqRes = await fetch(`/api/mcq/${subjectId}`)
+          const mcqData = await mcqRes.json()
+          setMcqs(mcqData.mcqs || [])
+        }
+      } else {
+        toast.error(data.error || 'Failed to generate MCQs')
+      }
+    } catch {
+      toast.error('AI MCQ generation failed')
+    } finally {
+      setGeneratingAdminMcqs(false)
+    }
+  }
   
   // Paper Viewer & Text Editor modal states
   const [viewPaperItem, setViewPaperItem] = useState<{ id: string; type: 'pastpaper' | 'note'; title: string; extractedText: string; cloudinaryUrl: string } | null>(null)
@@ -1566,6 +1601,16 @@ function ManageMaterialsTab() {
                 )}
                 <button
                   className="btn btn-sm"
+                  style={{ background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.4)', fontSize: '12px', fontWeight: 600 }}
+                  onClick={() => {
+                    setAiMcqPaperIds(pastPapers.map((p: any) => p.id))
+                    setShowAiGenerateMcqModal(true)
+                  }}
+                >
+                  ✨ Auto-Generate from Papers
+                </button>
+                <button
+                  className="btn btn-sm"
                   style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', fontSize: '12px', fontWeight: 600 }}
                   onClick={() => setShowAddMcq(true)}
                 >
@@ -2103,6 +2148,71 @@ function ManageMaterialsTab() {
               </button>
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* ── AI MCQ Generator Modal ── */}
+      {showAiGenerateMcqModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', padding: '20px' }} onClick={() => setShowAiGenerateMcqModal(false)}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '28px', borderRadius: '20px', background: '#0f172a', border: '1px solid rgba(168,85,247,0.3)', boxShadow: '0 25px 50px -12px rgba(168,85,247,0.25)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '22px' }}>✨</span>
+                <h4 style={{ fontWeight: 800, fontSize: '18px', color: '#c084fc', margin: 0 }}>Auto-Generate MCQs from Past Papers</h4>
+              </div>
+              <button style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '18px', cursor: 'pointer' }} onClick={() => setShowAiGenerateMcqModal(false)}>✕</button>
+            </div>
+            <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '18px', lineHeight: '1.5' }}>
+              Select past paper PDFs to analyze with AI. Questions will be extracted, turned into 4-option MCQs with explanations, and saved permanently to this subject's question bank.
+            </p>
+            
+            {pastPapers.length === 0 ? (
+              <div style={{ fontSize: '13px', color: '#f87171', padding: '16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', marginBottom: '20px' }}>
+                ⚠️ No past papers uploaded for this subject yet. Upload past paper PDFs first to auto-generate MCQs!
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', marginBottom: '24px', paddingRight: '4px' }}>
+                {pastPapers.map((paper: any) => {
+                  const isChecked = aiMcqPaperIds.includes(paper.id)
+                  return (
+                    <label key={paper.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: isChecked ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.03)', border: isChecked ? '1px solid rgba(168,85,247,0.4)' : '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', color: '#f8fafc', fontWeight: 600, transition: 'all 0.2s' }}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        style={{ accentColor: '#c084fc', width: '16px', height: '16px' }}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setAiMcqPaperIds(prev => [...prev, paper.id])
+                          } else {
+                            setAiMcqPaperIds(prev => prev.filter(id => id !== paper.id))
+                          }
+                        }}
+                      />
+                      <span>📄 Year {paper.year} Exam Paper ({paper.title || 'Past Paper'})</span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }} onClick={() => setShowAiGenerateMcqModal(false)}>Cancel</button>
+              <button
+                className="btn btn-sm"
+                disabled={generatingAdminMcqs || aiMcqPaperIds.length === 0}
+                style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)', color: '#fff', fontWeight: 700, padding: '8px 18px' }}
+                onClick={handleAdminGenerateMcqs}
+              >
+                {generatingAdminMcqs ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="animate-spin" style={{ display: 'inline-block' }}>⚙️</span> Generating MCQs...
+                  </span>
+                ) : (
+                  `✨ Generate & Save (${aiMcqPaperIds.length} papers)`
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
