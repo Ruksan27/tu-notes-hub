@@ -173,13 +173,13 @@ export async function DELETE(req: Request) {
     }
 
     // Create or find a placeholder "Deleted User" to keep records intact
-    let placeholderUser = await prisma.user.findUnique({ where: { email: 'deleted@tunoteshub.com' } })
+    let placeholderUser = await prisma.user.findUnique({ where: { email: 'deleted@tunoteshub.me' } })
     if (!placeholderUser) {
       const bcrypt = await import('bcryptjs')
       placeholderUser = await prisma.user.create({
         data: {
           name: 'Deleted User',
-          email: 'deleted@tunoteshub.com',
+          email: 'deleted@tunoteshub.me',
           password: await bcrypt.hash(Math.random().toString(36), 10),
           role: 'STUDENT'
         }

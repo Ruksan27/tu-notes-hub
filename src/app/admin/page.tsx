@@ -317,7 +317,7 @@ export default function AdminPage() {
               <div className="nav-dropdown" style={{ top: 'calc(100% + 6px)', right: 0 }}>
                 <div className="nav-drop-header">
                   <p style={{ fontWeight: 600, color: 'var(--clr-text-1)', fontSize: '14px' }}>{user.name}</p>
-                  <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '2px' }}>{user.email || 'admin@tunoteshub.com'}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '2px' }}>{user.email || 'admin@tunoteshub.me'}</p>
                 </div>
                 <div className="nav-drop-divider" />
                 <button onClick={() => { setTab('overview'); setDropOpen(false) }} className="nav-drop-item">
