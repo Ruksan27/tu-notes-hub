@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import Image from 'next/image'
+import ReferralDashboardCard from '@/components/ReferralDashboardCard'
 
 export default function ProfileTab() {
   const [user, setUser] = useState<any>(null)
@@ -207,67 +208,10 @@ export default function ProfileTab() {
       </div>
 
       {/* ── Referral System Card ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-        <div style={{
-          background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '16px', padding: '24px'
-        }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', margin: '0 0 12px 0' }}>
-            🤝 Invite Friends, Earn Points!
-          </h3>
-          <p style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 16px 0', lineHeight: 1.5 }}>
-            Share your referral code with friends. When they use it, you both earn <strong>+100 PTS</strong>!
-          </p>
-          <div style={{ background: '#050a14', padding: '12px 16px', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Your Referral Code</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#67e8f9', letterSpacing: '1px' }}>
-                {user.referralCode || 'GEN-XXXXX'}
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(user.referralCode || '')
-                toast.info('Referral code copied to clipboard!')
-              }}
-              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
-            >
-              Copy Code
-            </button>
-          </div>
-        </div>
-
-        {!user.referredById && (
-          <div style={{
-            background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '16px', padding: '24px'
-          }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', margin: '0 0 12px 0' }}>
-              🎁 Redeem a Referral Code
-            </h3>
-            <p style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 16px 0', lineHeight: 1.5 }}>
-              Were you invited by a friend? Enter their code here to instantly receive <strong>+100 PTS</strong>.
-            </p>
-            <form onSubmit={handleRedeemReferral} style={{ display: 'flex', gap: '8px' }}>
-              <input
-                type="text"
-                placeholder="Enter Code (e.g., 550e8400...)"
-                value={referralCodeInput}
-                onChange={e => setReferralCodeInput(e.target.value)}
-                style={{ flex: 1, background: '#050a14', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '10px 14px', color: '#fff', fontSize: '13px', outline: 'none' }}
-                required
-              />
-              <button
-                type="submit"
-                disabled={redeemingReferral}
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '10px', padding: '0 20px', fontSize: '13px', fontWeight: 700, cursor: redeemingReferral ? 'not-allowed' : 'pointer', opacity: redeemingReferral ? 0.7 : 1 }}
-              >
-                {redeemingReferral ? '...' : 'Redeem'}
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
+      <ReferralDashboardCard
+        user={user}
+        onUserUpdate={(updated) => setUser((prev: any) => ({ ...prev, ...updated }))}
+      />
 
       <div className="admin-card p-6 sm:p-8" style={{ background: 'var(--clr-bg-800)', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-lg)' }}>
         <div style={{ marginBottom: '24px' }}>

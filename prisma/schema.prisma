@@ -155,6 +155,7 @@ model Payment {
   amount        Int
   status        String   @default("PENDING") // PENDING | COMPLETED | FAILED
   packageBought Package
+  referralCode  String?
   createdAt     DateTime @default(now())
 }
 

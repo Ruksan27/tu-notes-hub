@@ -106,6 +106,11 @@ export default function PricingPlans() {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreePrivacy, setAgreePrivacy] = useState(false)
 
+  // Referral Code discount states
+  const [referralInput, setReferralInput] = useState('')
+  const [appliedReferral, setAppliedReferral] = useState<{ code: string; referrerName: string; discountPercentage: number } | null>(null)
+  const [validatingCode, setValidatingCode] = useState(false)
+
   interface SiteSettings {
     paymentQrUrl?: string
   }
@@ -177,6 +182,42 @@ export default function PricingPlans() {
     setDone(false)
     setAgreeTerms(false)
     setAgreePrivacy(false)
+    setReferralInput('')
+    setAppliedReferral(null)
+    setValidatingCode(false)
+  }
+
+  async function handleApplyReferral() {
+    if (!referralInput.trim()) return
+    setValidatingCode(true)
+    try {
+      const res = await fetch('/api/referral/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referralCode: referralInput.trim() }),
+      })
+      const data = await res.json()
+      if (res.ok && data.valid) {
+        setAppliedReferral({
+          code: referralInput.trim().toUpperCase(),
+          referrerName: data.referrerName || 'a friend',
+          discountPercentage: data.discountPercentage || 10,
+        })
+        toast.success(data.message || '🎉 10% Discount applied!')
+      } else {
+        toast.error(data.error || 'Invalid referral code')
+      }
+    } catch {
+      toast.error('Failed to validate referral code')
+    } finally {
+      setValidatingCode(false)
+    }
+  }
+
+  function calculateDiscountedPrice(priceStr: string, discountPct: number): number {
+    const orig = parseInt(priceStr.replace(/\D/g, ''), 10) || 0
+    const discount = Math.round((orig * discountPct) / 100)
+    return Math.max(0, orig - discount)
   }
 
   async function handleCheckoutSubmit(e: React.FormEvent) {
@@ -195,6 +236,9 @@ export default function PricingPlans() {
       const formData = new FormData()
       formData.append('transactionId', txnId)
       formData.append('packageType', selectedPlan.id)
+      if (appliedReferral) {
+        formData.append('referralCode', appliedReferral.code)
+      }
       if (screenshot) {
         formData.append('screenshot', screenshot)
       }
@@ -631,13 +675,79 @@ export default function PricingPlans() {
                         )}
                         <div style={{ position: 'absolute', border: '4px solid #10b981', inset: '0px', pointerEvents: 'none' }}></div>
                       </div>
-                      <span style={{ color: '#000', fontSize: '14px', fontWeight: 800 }}>
-                        {selectedPlan.price} {selectedPlan.priceNote}
+                      <span style={{ color: '#000', fontSize: '14px', fontWeight: 800, textAlign: 'center' }}>
+                        {appliedReferral ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <span style={{ textDecoration: 'line-through', color: '#64748b', fontSize: '12px' }}>
+                              {selectedPlan.price} {selectedPlan.priceNote}
+                            </span>
+                            <span style={{ color: '#15803d', fontSize: '15px', fontWeight: 900 }}>
+                              Rs. {calculateDiscountedPrice(selectedPlan.price, appliedReferral.discountPercentage)} {selectedPlan.priceNote} (10% OFF)
+                            </span>
+                          </div>
+                        ) : (
+                          `${selectedPlan.price} ${selectedPlan.priceNote}`
+                        )}
                       </span>
                     </div>
                     <p style={{ color: 'var(--clr-text-2)', fontSize: '12px', marginTop: '12px', textAlign: 'center', maxWidth: '340px' }}>
-                      Scan the QR code with eSewa, Khalti, or FonePay, complete the transfer of <strong>{selectedPlan.price}</strong>, and enter reference below.
+                      Scan the QR code with eSewa, Khalti, or FonePay, complete transfer of <strong>{appliedReferral ? `Rs. ${calculateDiscountedPrice(selectedPlan.price, appliedReferral.discountPercentage)}` : selectedPlan.price}</strong>, and enter reference below.
                     </p>
+                  </div>
+
+                  {/* ── Referral Code & Discount Box ── */}
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--clr-border)', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--clr-text-2)', marginBottom: '8px' }}>
+                      🎟️ Have a Referral Code? (Get 10% OFF)
+                    </label>
+                    {appliedReferral ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '10px 14px', borderRadius: '8px' }}>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#4ade80' }}>
+                            ✓ Code &quot;{appliedReferral.code}&quot; Applied!
+                          </div>
+                          <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '2px' }}>
+                            Referrer: <strong>{appliedReferral.referrerName}</strong> (10% discount applied)
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setAppliedReferral(null); setReferralInput('') }}
+                          style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 700 }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                          type="text"
+                          className="input-field"
+                          placeholder="Enter Referral Code (e.g. TU-7X9P)"
+                          value={referralInput}
+                          onChange={(e) => setReferralInput(e.target.value)}
+                          style={{ flex: 1, padding: '10px 14px', fontSize: '13px' }}
+                        />
+                        <button
+                          type="button"
+                          disabled={validatingCode || !referralInput.trim()}
+                          onClick={handleApplyReferral}
+                          style={{
+                            background: 'linear-gradient(135deg, #10b981, #059669)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '0 18px',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            cursor: validatingCode || !referralInput.trim() ? 'not-allowed' : 'pointer',
+                            opacity: validatingCode || !referralInput.trim() ? 0.6 : 1,
+                          }}
+                        >
+                          {validatingCode ? 'Checking...' : 'Apply'}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Inputs */}

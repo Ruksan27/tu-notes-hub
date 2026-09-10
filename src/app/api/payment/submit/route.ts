@@ -14,16 +14,19 @@ export async function POST(req: NextRequest) {
     const contentType = req.headers.get('content-type') || ''
     let transactionId = ''
     let packageType = ''
+    let referralCode: string | null = null
     let screenshot: File | null = null
 
     if (contentType.includes('application/json')) {
       const body = await req.json()
       transactionId = body.transactionId
       packageType = body.packageType
+      referralCode = body.referralCode || null
     } else if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData()
       transactionId = formData.get('transactionId') as string
       packageType = formData.get('packageType') as string
+      referralCode = (formData.get('referralCode') as string) || null
       screenshot = formData.get('screenshot') as File | null
     }
 
@@ -46,6 +49,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'This transaction ID has already been used' }, { status: 409 })
     }
 
+    let finalAmount = PACKAGE_PRICES[packageType]
+    let validReferralCode: string | null = null
+
+    // Validate referral code if provided
+    if (referralCode && typeof referralCode === 'string' && referralCode.trim()) {
+      const cleanCode = referralCode.trim()
+      const referrer = await prisma.user.findUnique({
+        where: { referralCode: cleanCode },
+        select: { id: true, referralCode: true }
+      })
+
+      if (referrer && referrer.id !== user.userId) {
+        validReferralCode = cleanCode
+        // 10% Discount applied
+        const discount = Math.round(finalAmount * 0.10)
+        finalAmount = Math.max(0, finalAmount - discount)
+      }
+    }
+
     let screenshotUrl: string | undefined
     if (screenshot) {
       const buffer = Buffer.from(await screenshot.arrayBuffer())
@@ -58,9 +80,10 @@ export async function POST(req: NextRequest) {
         userId: user.userId,
         transactionId,
         screenshotUrl: screenshotUrl || null,
-        amount: PACKAGE_PRICES[packageType],
+        amount: finalAmount,
         status: 'PENDING',
         packageBought: packageType as 'SEMESTER_PASS' | 'ELITE_AI',
+        referralCode: validReferralCode,
       },
     })
 
@@ -69,13 +92,15 @@ export async function POST(req: NextRequest) {
       data: {
         type: 'PAYMENT',
         title: 'New Payment Pending',
-        message: `${user.name} submitted a payment of Rs. ${PACKAGE_PRICES[packageType]} for ${packageType}.`,
+        message: `${user.name} submitted payment of Rs. ${finalAmount} for ${packageType}${validReferralCode ? ` (Referral Code: ${validReferralCode})` : ''}.`,
         link: '/admin?tab=payments'
       }
     })
 
     return NextResponse.json({
       message: 'Payment submitted! Admin will verify within 24 hours and activate your plan.',
+      finalAmount,
+      referralApplied: Boolean(validReferralCode)
     })
   } catch (error) {
     console.error('[PAYMENT_SUBMIT]', error)

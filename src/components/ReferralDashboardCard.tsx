@@ -1,41 +1,79 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'react-toastify'
 
 interface ReferralDashboardCardProps {
   user: {
-    referralCode: string
-    successfulPaidReferrals: number
-    packageType: string
+    referralCode?: string | null
+    successfulPaidReferrals?: number
+    packageType?: string
   }
+  onUserUpdate?: (updatedFields: Partial<ReferralDashboardCardProps['user']>) => void
 }
 
-export default function ReferralDashboardCard({ user }: ReferralDashboardCardProps) {
-  const [copied, setCopied] = useState(false)
-  const referralLink = `https://tunoteshub.me/register?ref=${user.referralCode || 'MYCODE'}`
-  const paidCount = user.successfulPaidReferrals || 0
+export default function ReferralDashboardCard({ user, onUserUpdate }: ReferralDashboardCardProps) {
+  const [currentCode, setCurrentCode] = useState<string>(user.referralCode || '')
+  const [generating, setGenerating] = useState(false)
+  const [copiedCode, setCopiedCode] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
 
-  const handleCopy = () => {
+  const paidCount = user.successfulPaidReferrals || 0
+  const referralLink = currentCode ? `https://tunoteshub.me/register?ref=${currentCode}` : ''
+
+  const handleGenerateCode = async () => {
+    setGenerating(true)
+    try {
+      const res = await fetch('/api/user/referral/generate', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.referralCode) {
+        setCurrentCode(data.referralCode)
+        toast.success(data.message || 'New Referral Code generated! 🎉')
+        if (onUserUpdate) {
+          onUserUpdate({ referralCode: data.referralCode })
+        }
+      } else {
+        toast.error(data.error || 'Failed to generate code')
+      }
+    } catch {
+      toast.error('Network error while generating code')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleCopyCode = () => {
+    if (!currentCode) return
+    navigator.clipboard.writeText(currentCode)
+    setCopiedCode(true)
+    toast.info('Referral Code copied to clipboard!')
+    setTimeout(() => setCopiedCode(false), 3000)
+  }
+
+  const handleCopyLink = () => {
+    if (!referralLink) return
     navigator.clipboard.writeText(referralLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 3000)
+    setCopiedLink(true)
+    toast.info('Referral Link copied to clipboard!')
+    setTimeout(() => setCopiedLink(false), 3000)
   }
 
   const handleWhatsAppShare = () => {
+    if (!currentCode) return
     const text = encodeURIComponent(
-      `Hey! Use my referral link to get 10% OFF on TU Notes Hub premium plans & past paper predictions: ${referralLink}`
+      `Hey! Use my referral code "${currentCode}" to get 10% OFF on TU Notes Hub premium plans: ${referralLink}`
     )
     window.open(`https://wa.me/?text=${text}`, '_blank')
   }
 
-  // Calculate Progress percentages
+  // Progress calculations
   const semesterProgress = Math.min(100, Math.round((paidCount / 5) * 100))
   const eliteProgress = Math.min(100, Math.round((paidCount / 8) * 100))
 
   return (
     <div style={{
       background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(17, 34, 64, 0.9))',
-      border: '1px solid rgba(56, 189, 248, 0.2)',
+      border: '1px solid rgba(56, 189, 248, 0.25)',
       borderRadius: '20px',
       padding: '24px',
       color: '#fff',
@@ -43,13 +81,13 @@ export default function ReferralDashboardCard({ user }: ReferralDashboardCardPro
       marginBottom: '24px'
     }}>
       {/* Title */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
           <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🎁</span> Refer & Earn Free Premium Plans
+            <span>🎁</span> Refer Friends & Earn Free Premium Plans
           </h3>
           <p style={{ fontSize: '13px', color: '#94a3b8', margin: '4px 0 0 0' }}>
-            Share your link with friends. They get <strong>10% OFF</strong>, and you unlock free Semester & AI plans!
+            Friends get <strong>10% OFF</strong> when upgrading, and you unlock free Semester & Elite AI passes!
           </p>
         </div>
         <div style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 800, color: '#38bdf8' }}>
@@ -57,54 +95,121 @@ export default function ReferralDashboardCard({ user }: ReferralDashboardCardPro
         </div>
       </div>
 
-      {/* Referral Link Box */}
+      {/* Code Generation & Action Box */}
       <div style={{
-        display: 'flex',
-        gap: '10px',
-        background: 'rgba(0, 0, 0, 0.3)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        padding: '10px 14px',
-        borderRadius: '12px',
-        alignItems: 'center',
+        background: 'rgba(0, 0, 0, 0.35)',
+        border: '1px dashed rgba(56, 189, 248, 0.3)',
+        borderRadius: '14px',
+        padding: '16px',
         marginBottom: '24px',
-        flexWrap: 'wrap'
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
       }}>
-        <span style={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {referralLink}
-        </span>
-        <button
-          onClick={handleCopy}
-          style={{
-            background: copied ? '#22c55e' : '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          {copied ? '✓ Copied!' : '📋 Copy Link'}
-        </button>
-        <button
-          onClick={handleWhatsAppShare}
-          style={{
-            background: '#25d366',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          💬 Share on WhatsApp
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
+              Your Unique Referral Code
+            </div>
+            <div style={{ fontSize: '22px', fontWeight: 900, color: currentCode ? '#38bdf8' : '#64748b', letterSpacing: '1px', marginTop: '2px' }}>
+              {currentCode || 'No Code Generated Yet'}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={handleGenerateCode}
+              disabled={generating}
+              style={{
+                background: 'linear-gradient(135deg, #0284c7, #2563eb)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '9px 16px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: generating ? 'not-allowed' : 'pointer',
+                opacity: generating ? 0.7 : 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              {generating ? '⏳ Generating...' : currentCode ? '⚡ Regenerate Code' : '✨ Generate Code'}
+            </button>
+
+            {currentCode && (
+              <button
+                onClick={handleCopyCode}
+                style={{
+                  background: copiedCode ? '#22c55e' : 'rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '8px',
+                  padding: '9px 16px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {copiedCode ? '✓ Copied!' : '📋 Copy Code'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {currentCode && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'space-between',
+            background: 'rgba(255,255,255,0.04)',
+            padding: '10px 14px',
+            borderRadius: '10px',
+            gap: '10px',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ fontSize: '12.5px', color: '#cbd5e1', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+              🔗 {referralLink}
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={handleCopyLink}
+                style={{
+                  background: copiedLink ? '#22c55e' : '#3b82f6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                {copiedLink ? '✓ Copied Link!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={handleWhatsAppShare}
+                style={{
+                  background: '#25d366',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                💬 WhatsApp
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Milestone Progress Tracker */}
@@ -113,7 +218,7 @@ export default function ReferralDashboardCard({ user }: ReferralDashboardCardPro
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
             <span style={{ color: paidCount >= 5 ? '#4ade80' : '#fcd34d' }}>
-              🎓 Milestone 1: Semester Pass (6 Months)
+              🎓 Milestone 1: Free Semester Pass
             </span>
             <span>{paidCount}/5</span>
           </div>
@@ -121,7 +226,7 @@ export default function ReferralDashboardCard({ user }: ReferralDashboardCardPro
             <div style={{ width: `${semesterProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #10b981)', transition: 'width 0.5s ease' }} />
           </div>
           <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '8px 0 0 0' }}>
-            {paidCount >= 5 ? '🎉 Unlocked & Active!' : `Need ${5 - paidCount} more paid referral(s) to unlock.`}
+            {paidCount >= 5 ? '🎉 Unlocked & Active (Semester Pass granted!)' : `Get 5 paid referrals to unlock 6 Months Semester Pass.`}
           </p>
         </div>
 
@@ -129,7 +234,7 @@ export default function ReferralDashboardCard({ user }: ReferralDashboardCardPro
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
             <span style={{ color: paidCount >= 8 ? '#4ade80' : '#38bdf8' }}>
-              🚀 Milestone 2: Elite AI Plan (1 Year)
+              🚀 Milestone 2: Free Yearly Elite AI Pass
             </span>
             <span>{paidCount}/8</span>
           </div>
@@ -137,7 +242,7 @@ export default function ReferralDashboardCard({ user }: ReferralDashboardCardPro
             <div style={{ width: `${eliteProgress}%`, height: '100%', background: 'linear-gradient(90deg, #38bdf8, #818cf8)', transition: 'width 0.5s ease' }} />
           </div>
           <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '8px 0 0 0' }}>
-            {paidCount >= 8 ? '🎉 Unlocked & Active!' : `Need ${8 - paidCount} more paid referral(s) to unlock.`}
+            {paidCount >= 8 ? '🎉 Unlocked & Active (Yearly Pass granted!)' : `Get 8 paid referrals to unlock 1 Year Elite AI Pass.`}
           </p>
         </div>
       </div>

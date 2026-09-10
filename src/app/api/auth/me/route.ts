@@ -30,6 +30,7 @@ export async function GET() {
         rewardPoints: true,
         referralCode: true,
         referredById: true,
+        successfulPaidReferrals: true,
       }
     })
 
