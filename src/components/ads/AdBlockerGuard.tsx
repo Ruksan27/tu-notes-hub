@@ -1,40 +1,60 @@
 'use client'
 // src/components/ads/AdBlockerGuard.tsx
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
+
+// Only trigger AdBlocker warning when free users browse or view notes & study materials
+const NOTE_ROUTES = [
+  '/faculties',
+  '/faculty',
+  '/note',
+  '/notes',
+  '/paper',
+  '/projects',
+  '/mcq',
+  '/download',
+]
 
 export default function AdBlockerGuard() {
   const [detected, setDetected] = useState(false)
   const [dismissed, setDismissed] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
-    // Paid users get ad-free experience — skip ad blocker detection
+    // 1. Only run detection when user is browsing/viewing notes or study materials
+    const isNotesBrowsingPage = NOTE_ROUTES.some((route) => pathname?.startsWith(route))
+    if (!isNotesBrowsingPage) {
+      setDetected(false)
+      return
+    }
+
+    // 2. Paid users (SEMESTER_PASS, ELITE_AI) & Admins get an ad-free experience — skip check
     try {
       const stored = localStorage.getItem('tu_user')
       if (stored) {
         const user = JSON.parse(stored)
         const pkg = user?.packageType ?? 'FREE'
-        // Skip for paid users AND admins
-        if (pkg === 'SEMESTER_PASS' || pkg === 'ELITE_AI' || user?.role === 'ADMIN') return
+        if (pkg === 'SEMESTER_PASS' || pkg === 'ELITE_AI' || user?.role === 'ADMIN') {
+          setDetected(false)
+          return
+        }
       }
     } catch {}
 
-    // Skip in development
+    // Skip in development mode unless explicitly needed
     if (process.env.NODE_ENV === 'development') return
 
-    // Skip if user already dismissed this session
+    // 3. Skip if user already dismissed the warning during this session
     if (sessionStorage.getItem('adblock_dismissed')) return
 
-    // Use two independent checks — only flag if BOTH confirm an ad blocker
-    // This prevents false positives from Edge Tracking Prevention (which blocks
-    // the AdSense script but does NOT collapse DOM elements)
+    // 4. Double-check detection logic — prevent false positives from tracking protection
     const bait = document.createElement('div')
     bait.className = 'adsbox google-ads ad-placement pub_300x250 doubleclick'
     bait.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;pointer-events:none;'
     bait.innerHTML = '&nbsp;'
     document.body.appendChild(bait)
 
-    // Wait 500ms to let ad blockers apply their filters
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       try {
         const style = window.getComputedStyle(bait)
         const isHidden =
@@ -44,19 +64,15 @@ export default function AdBlockerGuard() {
           style.visibility === 'hidden' ||
           style.opacity === '0'
 
-        // Second check: attempt to load a known ad-network image pixel
-        // If it loads → no ad blocker. If blocked → ad blocker confirmed.
         if (isHidden) {
           const img = new Image()
           img.onload = () => {
-            // Image loaded = NOT a real ad blocker (just Edge Tracking Prevention hiding DOM)
-            // Don't show the overlay
+            // Image loaded = not a real ad blocker
           }
           img.onerror = () => {
-            // Both DOM hidden AND network blocked = real ad blocker
+            // DOM hidden + network request blocked = confirmed ad blocker
             setDetected(true)
           }
-          // Use a tiny transparent tracking pixel from Google's ad network
           img.src = 'https://pagead2.googlesyndication.com/pagead/1x1.gif?' + Date.now()
         }
       } catch {}
@@ -64,7 +80,9 @@ export default function AdBlockerGuard() {
         try { document.body.removeChild(bait) } catch {}
       }
     }, 500)
-  }, [])
+
+    return () => clearTimeout(timer)
+  }, [pathname])
 
   const handleDismiss = () => {
     try { sessionStorage.setItem('adblock_dismissed', '1') } catch {}
@@ -82,7 +100,7 @@ export default function AdBlockerGuard() {
         </h2>
         <p style={{ color: 'var(--clr-text-2)', marginBottom: '24px', lineHeight: 1.7 }}>
           TU Notes Hub is <strong style={{ color: 'var(--clr-text-1)' }}>100% free</strong> for all students.
-          Ads keep this platform running. Please disable your AdBlocker to continue.
+          Ads keep this platform running. Please disable your AdBlocker to continue reading notes.
         </p>
         <div style={{
           background: 'rgba(239,68,68,0.1)',
