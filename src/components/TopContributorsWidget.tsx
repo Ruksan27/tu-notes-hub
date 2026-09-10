@@ -176,9 +176,10 @@ export default function TopContributorsWidget({ limit = 3 }: { limit?: number })
 
                   {/* Avatar Photo OR First+Last Initials Circle */}
                   {user.avatarUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={user.avatarUrl}
-                      alt={user.name}
+                      alt={user.name || 'User avatar'}
                       style={{
                         width: '34px',
                         height: '34px',
