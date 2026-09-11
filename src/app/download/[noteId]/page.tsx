@@ -55,7 +55,7 @@ export default function DownloadPage() {
   const [mounted, setMounted] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
   const [countdown, setCountdown] = useState(0)
-  const [note, setNote] = useState<{ title: string; cloudinaryUrl: string; extractedText?: string | null; noteType?: string | null } | null>(null)
+  const [note, setNote] = useState<{ title: string; cloudinaryUrl: string; extractedText?: string | null; noteType?: string | null; subject?: any; isPastPaper?: boolean } | null>(null)
   const [ready, setReady] = useState(false)
   const [driveContentType, setDriveContentType] = useState('')
 
@@ -318,6 +318,29 @@ export default function DownloadPage() {
     setDownloadAdActive(true)
   }
 
+  const getDisplayTitle = () => {
+    if (!note) return 'Loading document...'
+    if (note.isPastPaper || !note.noteType) {
+      return note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
+    }
+    const facCode = note.subject?.semester?.faculty?.id?.toUpperCase() || 'BCA'
+    const semName = note.subject?.semester?.name
+      ? (note.subject.semester.name.toLowerCase().includes('semester') ? note.subject.semester.name : `${note.subject.semester.name} Semester`)
+      : (note.subject?.semester?.order ? `${note.subject.semester.order}th Semester` : '')
+    const subTitle = note.subject?.title ? note.subject.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim() : ''
+    const cleanNoteTitle = note.title ? note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim() : ''
+
+    const isSubIncluded = subTitle && cleanNoteTitle.toLowerCase().includes(subTitle.toLowerCase())
+    const parts = [
+      `TU ${facCode}`,
+      semName,
+      !isSubIncluded ? subTitle : '',
+      cleanNoteTitle
+    ].filter(Boolean)
+
+    return parts.join(' — ')
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', background: '#0b0f19', position: 'relative' }}>
 
@@ -400,7 +423,7 @@ export default function DownloadPage() {
             <div className="mobile-dl-card-inner" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: '20px' }}>
               <div style={{ flex: 1 }}>
                 <span className="mobile-dl-badge" style={{ display: 'inline-flex', marginBottom: '10px', fontSize: '11px', fontWeight: 800, padding: '4px 10px', background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px', letterSpacing: '0.05em' }}>TU OFFICIAL RESOURCE</span>
-                <h2 className="mobile-dl-title" style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>{note?.title ? note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '') : 'Loading document...'}</h2>
+                <h2 className="mobile-dl-title" style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>{getDisplayTitle()}</h2>
               </div>
 
               {/* Download Button (Triggers 15s Ad Lock Modal) */}

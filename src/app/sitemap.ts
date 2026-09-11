@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
-import { getProjectSlug, getNoteSlug, getPaperSlug, getSemesterPath } from '@/lib/slugs'
+import { getProjectSlug, getNoteSlug, getPaperSlug, getSemesterPath, slugify } from '@/lib/slugs'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tunoteshub.me'
@@ -158,6 +158,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   })
 
+  // 5.5. Dynamic MCQ Practice Pages
+  const subjectsWithMcqs = await prisma.subject.findMany({
+    where: { mcqs: { some: {} } },
+    select: {
+      id: true,
+      title: true,
+      code: true,
+      semester: {
+        select: {
+          order: true,
+          facultyId: true,
+          faculty: { select: { id: true, systemType: true } },
+        },
+      },
+    },
+  })
+
+  const mcqRoutes: MetadataRoute.Sitemap = subjectsWithMcqs.map((subj) => {
+    const semPath = getSemesterPath(
+      subj.semester?.facultyId || subj.semester?.faculty?.id,
+      subj.semester?.order,
+      subj.semester?.faculty?.systemType
+    )
+    const subSlug = slugify(subj.title) || slugify(subj.code)
+    const url = semPath ? `${baseUrl}${semPath}/${subSlug}/mcq` : `${baseUrl}/mcq/${subj.id}`
+    return {
+      url,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    }
+  })
+
   // 6. Blogs & Articles
   const staticBlogs: MetadataRoute.Sitemap = [
     {
@@ -187,6 +220,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...projectRoutes,
     ...noteRoutes,
     ...paperRoutes,
+    ...mcqRoutes,
     ...blogRoutes,
   ]
 }

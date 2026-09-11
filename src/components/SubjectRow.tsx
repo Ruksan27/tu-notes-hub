@@ -155,6 +155,8 @@ export default function SubjectRow({
   const cheatsheets = subject.cheatsheets
   const solutionBooks = subject.solutionBooks || []
   const mcqs = subject.mcqs || []
+  const subSlug = slugify(subject.title) || slugify(subject.code)
+  const mcqUrl = semPath ? `${semPath}/${subSlug}/mcq` : `/mcq/${subject.id}`
 
   const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus') => {
     if (activeTab === tabName) {
@@ -365,7 +367,7 @@ export default function SubjectRow({
 
             {mcqs.length > 0 && (
               <Link
-                href={`/mcq/${subject.id}`}
+                href={mcqUrl}
                 onClick={e => e.stopPropagation()}
                 style={{ textDecoration: 'none', pointerEvents: 'auto', zIndex: 10, position: 'relative' }}
               >
@@ -674,7 +676,7 @@ export default function SubjectRow({
                 <div>
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>✅ MCQ Answers</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
-                    <Link href={`/mcq/${subject.id}`} style={{ textDecoration: 'none' }}>
+                    <Link href={mcqUrl} style={{ textDecoration: 'none' }}>
                       <motion.div
                         variants={cardItemVariants}
                         whileHover={{ scale: 1.04, y: -3, boxShadow: '0 8px 24px rgba(99,102,241,0.25)' }}

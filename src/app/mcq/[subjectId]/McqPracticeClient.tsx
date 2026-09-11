@@ -250,7 +250,8 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
     .replace(/\s*(old syllabus|new syllabus)/gi, '')
     .trim()
 
-  const facultyName = subject.semester?.faculty?.name || 'Bachelor of Computer Application'
+  const facCode = subject.semester?.faculty?.id?.toUpperCase() || 'BCA'
+  const facultyName = subject.semester?.faculty?.name || 'Bachelor in Computer Application'
   const semName = subject.semester?.name
     ? subject.semester.name.toLowerCase().includes('semester')
       ? subject.semester.name
@@ -260,12 +261,12 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
     : '5th Semester'
 
   const shareText = encodeURIComponent(
-    `TU ${facultyName} ${semName} ${cleanTitle} (${subject.code}) MCQs with Answers — TU Notes Hub`
+    `TU ${facCode} ${semName} ${cleanTitle} (${subject.code}) MCQs with Answers — TU Notes Hub`
   )
 
   const yearDisplay = years.length > 0 ? years.join(', ') : '2026'
   const categoryDisplay = categories.length > 0 ? categories.map(c => formatCategoryText(String(c))).join(' / ') : 'BOARD EXAM'
-  const dynamicHeading = `${yearDisplay} ${categoryDisplay} — ${cleanTitle}`
+  const dynamicHeading = `TU ${facCode} ${semName} — ${yearDisplay} ${categoryDisplay} — ${cleanTitle} MCQs`
 
   return (
     <div
@@ -530,7 +531,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                   fontFamily: 'sans-serif',
                 }}
               >
-                {yearDisplay}
+                {yearDisplay} {categoryDisplay}
               </p>
             </div>
 
@@ -549,8 +550,8 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div><strong>Bachelor in Computer Application</strong></div>
-                <div><strong>Course Title:</strong> {cleanTitle}</div>
+                <div><strong>Faculty:</strong> {facultyName} ({facCode})</div>
+                <div><strong>Course Title:</strong> {cleanTitle} (MCQs)</div>
                 <div><strong>Code No:</strong> {subject.code}</div>
                 <div><strong>Semester:</strong> {semName}</div>
               </div>

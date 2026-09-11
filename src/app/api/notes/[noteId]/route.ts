@@ -1,3 +1,4 @@
+// src/app/api/notes/[noteId]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { extractProjectId, slugify, getPaperSlug, getNoteSlug } from '@/lib/slugs'
@@ -7,7 +8,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
   const noteId = extractProjectId(rawNoteId)
 
   // 1. Direct ID lookup for Note
-  const note = await prisma.note.findUnique({ where: { id: noteId } })
+  const note = await prisma.note.findUnique({
+    where: { id: noteId },
+    include: {
+      subject: {
+        include: {
+          semester: {
+            include: { faculty: true }
+          }
+        }
+      }
+    }
+  })
   if (note) {
     await prisma.note.update({ where: { id: note.id }, data: { downloadCount: { increment: 1 } } })
     return NextResponse.json(note)
@@ -16,17 +28,47 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
   // 2. Direct ID lookup for Past Paper
   const paper = await prisma.pastPaper.findUnique({
     where: { id: noteId },
-    include: { subject: true }
+    include: {
+      subject: {
+        include: {
+          semester: {
+            include: { faculty: true }
+          }
+        }
+      }
+    }
   })
   if (paper) {
+    const facCode = paper.subject?.semester?.faculty?.id?.toUpperCase() || 'TU'
+    const semName = paper.subject?.semester?.name
+      ? (paper.subject.semester.name.toLowerCase().includes('semester') ? paper.subject.semester.name : `${paper.subject.semester.name} Semester`)
+      : (paper.subject?.semester?.order ? `${paper.subject.semester.order}th Semester` : '')
+    const examText = paper.examType ? paper.examType.replace(/_/g, ' ') : 'BOARD EXAM'
+    const yearText = `${paper.year} ${examText}`
+    const cleanSubTitle = paper.subject?.title
+      ? paper.subject.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()
+      : 'Question Paper'
+
+    const title = [
+      `TU ${facCode}`,
+      semName,
+      yearText,
+      `${cleanSubTitle} Question Paper`
+    ].filter(Boolean).join(' — ')
+
     return NextResponse.json({
-      title: `${paper.year} ${paper.examType.replace('_', ' ')} — ${paper.subject.title}`,
+      id: paper.id,
+      title,
+      year: paper.year,
+      examType: paper.examType,
+      subject: paper.subject,
       cloudinaryUrl: paper.cloudinaryUrl,
-      extractedText: paper.extractedText || null
+      extractedText: paper.extractedText || null,
+      isPastPaper: true
     })
   }
 
-  // 3. Robust Bulletproof Slug lookup for Notes (matches all URL variations)
+  // 3. Robust Bulletproof Slug lookup for Notes
   const allNotes = await prisma.note.findMany({
     include: { subject: { include: { semester: { include: { faculty: true } } } } }
   })
@@ -74,10 +116,32 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
   })
 
   if (matchedPaper) {
+    const facCode = matchedPaper.subject?.semester?.faculty?.id?.toUpperCase() || 'TU'
+    const semName = matchedPaper.subject?.semester?.name
+      ? (matchedPaper.subject.semester.name.toLowerCase().includes('semester') ? matchedPaper.subject.semester.name : `${matchedPaper.subject.semester.name} Semester`)
+      : (matchedPaper.subject?.semester?.order ? `${matchedPaper.subject.semester.order}th Semester` : '')
+    const examText = matchedPaper.examType ? matchedPaper.examType.replace(/_/g, ' ') : 'BOARD EXAM'
+    const yearText = `${matchedPaper.year} ${examText}`
+    const cleanSubTitle = matchedPaper.subject?.title
+      ? matchedPaper.subject.title.replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '').trim()
+      : 'Question Paper'
+
+    const title = [
+      `TU ${facCode}`,
+      semName,
+      yearText,
+      `${cleanSubTitle} Question Paper`
+    ].filter(Boolean).join(' — ')
+
     return NextResponse.json({
-      title: `${matchedPaper.year} ${matchedPaper.examType.replace('_', ' ')} — ${matchedPaper.subject.title}`,
+      id: matchedPaper.id,
+      title,
+      year: matchedPaper.year,
+      examType: matchedPaper.examType,
+      subject: matchedPaper.subject,
       cloudinaryUrl: matchedPaper.cloudinaryUrl,
-      extractedText: matchedPaper.extractedText || null
+      extractedText: matchedPaper.extractedText || null,
+      isPastPaper: true
     })
   }
 

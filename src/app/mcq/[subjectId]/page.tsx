@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { slugify, getSemesterPath } from '@/lib/slugs'
 import McqPracticeClient from './McqPracticeClient'
 
 interface Props {
@@ -51,7 +52,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = `Official Tribhuvan University (TU) ${facultyName} ${semName} ${cleanTitle} (${subject.code}) past paper MCQs ${yearsText} with verified answers, explanations, and free PDF download.`
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
-  const url = `${baseUrl}/mcq/${subject.id}`
+  const semPath = getSemesterPath(
+    subject.semester?.facultyId,
+    subject.semester?.order,
+    subject.semester?.faculty?.systemType
+  )
+  const canonicalUrl = semPath
+    ? `${baseUrl}${semPath}/${slugify(subject.title) || slugify(subject.code)}/mcq`
+    : `${baseUrl}/mcq/${subject.id}`
 
   return {
     title,
@@ -66,12 +74,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `TU Notes Hub MCQs`
     ],
     alternates: {
-      canonical: url,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title,
       description,
-      url,
+      url: canonicalUrl,
       siteName: 'TU Notes Hub',
       type: 'article',
       images: [
