@@ -3565,7 +3565,7 @@ function UploadTab({ user }: { user?: any }) {
             if (!cr.ok || !cd.secure_url) {
               toast.dismiss('upload-progress'); toast.error(cd.error?.message || 'Cloudinary upload failed'); setUploading(false); return
             }
-            finalUrl = cd.secure_url
+            const finalUrl = cd.secure_url
             
             if (!finalUrl) throw new Error('Failed to get secure URL')
             cloudinaryUrl = finalUrl; fileSize = `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`

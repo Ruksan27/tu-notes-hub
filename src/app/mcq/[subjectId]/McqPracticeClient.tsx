@@ -22,7 +22,7 @@ export interface Subject {
   semester?: {
     name?: string
     order?: number
-    faculty?: { name?: string; systemType?: string }
+    faculty?: { id?: string; name?: string; systemType?: string }
   }
 }
 

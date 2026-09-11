@@ -1270,7 +1270,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
                             fontWeight: 600,
                             display: 'flex',
                             alignItems: 'center',
-                            justify: 'space-between',
+                            justifyContent: 'space-between',
                             gap: '10px'
                           }}
                         >
