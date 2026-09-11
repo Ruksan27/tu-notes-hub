@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { extractProjectId, slugify, getPaperSlug, getNoteSlug } from '@/lib/slugs'
+import { fixCloudinaryUrl } from '@/lib/utils'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ noteId: string }> }) {
   const { noteId: rawNoteId } = await params
@@ -68,7 +69,35 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
     })
   }
 
-  // 3. Robust Bulletproof Slug lookup for Notes
+  // 3. Direct ID lookup for Cheatsheet
+  const cheatsheet = await prisma.cheatsheet.findUnique({
+    where: { id: noteId },
+    include: {
+      subject: {
+        include: {
+          semester: {
+            include: { faculty: true }
+          }
+        }
+      }
+    }
+  })
+  if (cheatsheet) {
+    const rawFiles = Array.isArray(cheatsheet.files) ? (cheatsheet.files as any[]) : []
+    const filesArr = rawFiles.map(f => typeof f === 'object' && f?.url ? { ...f, url: fixCloudinaryUrl(f.url) } : f)
+    const firstFileUrl = filesArr.length > 0 ? (typeof filesArr[0] === 'string' ? filesArr[0] : filesArr[0].url) : ''
+    return NextResponse.json({
+      id: cheatsheet.id,
+      title: cheatsheet.title,
+      content: cheatsheet.content || null,
+      files: filesArr,
+      cloudinaryUrl: fixCloudinaryUrl(firstFileUrl) || '',
+      subject: cheatsheet.subject,
+      isCheatsheet: true
+    })
+  }
+
+  // 4. Robust Bulletproof Slug lookup for Notes
   const allNotes = await prisma.note.findMany({
     include: { subject: { include: { semester: { include: { faculty: true } } } } }
   })
@@ -98,7 +127,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
     return NextResponse.json(matchedNote)
   }
 
-  // 4. Robust Bulletproof Slug lookup for Past Papers
+  // 5. Robust Bulletproof Slug lookup for Past Papers
   const allPapers = await prisma.pastPaper.findMany({
     include: { subject: { include: { semester: { include: { faculty: true } } } } }
   })
@@ -142,6 +171,41 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
       cloudinaryUrl: matchedPaper.cloudinaryUrl,
       extractedText: matchedPaper.extractedText || null,
       isPastPaper: true
+    })
+  }
+
+  // 6. Robust Bulletproof Slug lookup for Cheatsheets
+  const allCheatsheets = await prisma.cheatsheet.findMany({
+    include: { subject: { include: { semester: { include: { faculty: true } } } } }
+  })
+  const matchedCs = allCheatsheets.find((cs) => {
+    const titleSlug = slugify(cs.title || '')
+    const subTitleSlug = slugify(`${cs.subject?.title || ''} ${cs.title || ''}`)
+    const subCodeSlug = cs.subject?.code ? slugify(`${cs.subject.code} ${cs.title || ''}`) : ''
+    return (
+      titleSlug === rawNoteId ||
+      titleSlug === cleanRaw ||
+      subTitleSlug === rawNoteId ||
+      subTitleSlug === cleanRaw ||
+      subCodeSlug === rawNoteId ||
+      subCodeSlug === cleanRaw ||
+      (titleSlug.length > 2 && rawNoteId.includes(titleSlug)) ||
+      (titleSlug.length > 2 && cleanRaw.includes(titleSlug))
+    )
+  })
+
+  if (matchedCs) {
+    const rawFiles = Array.isArray(matchedCs.files) ? (matchedCs.files as any[]) : []
+    const filesArr = rawFiles.map(f => typeof f === 'object' && f?.url ? { ...f, url: fixCloudinaryUrl(f.url) } : f)
+    const firstFileUrl = filesArr.length > 0 ? (typeof filesArr[0] === 'string' ? filesArr[0] : filesArr[0].url) : ''
+    return NextResponse.json({
+      id: matchedCs.id,
+      title: matchedCs.title,
+      content: matchedCs.content || null,
+      files: filesArr,
+      cloudinaryUrl: fixCloudinaryUrl(firstFileUrl) || '',
+      subject: matchedCs.subject,
+      isCheatsheet: true
     })
   }
 

@@ -25,11 +25,13 @@ export async function GET(req: NextRequest) {
   try {
     const response = await fetch(safeUrl, {
       headers: {
-        'User-Agent': 'TUNotesHub/1.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*',
       },
     })
 
     if (!response.ok) {
+      console.error('[FILE_PROXY_ERROR]', safeUrl, response.status)
       return NextResponse.json({ error: 'Failed to fetch file' }, { status: response.status })
     }
 

@@ -7,6 +7,7 @@ import MarkdownPaperViewer from '@/components/MarkdownPaperViewer'
 import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
 import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
 import DocLoadingProgress from '@/components/DocLoadingProgress'
+import { fixCloudinaryUrl } from '@/lib/utils'
 
 function extractDriveFileId(link: string): string | null {
   const patterns = [
@@ -55,7 +56,7 @@ export default function DownloadPage() {
   const [mounted, setMounted] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
   const [countdown, setCountdown] = useState(0)
-  const [note, setNote] = useState<{ title: string; cloudinaryUrl: string; extractedText?: string | null; noteType?: string | null; subject?: any; isPastPaper?: boolean } | null>(null)
+  const [note, setNote] = useState<{ title: string; cloudinaryUrl: string; extractedText?: string | null; noteType?: string | null; subject?: any; isPastPaper?: boolean; isCheatsheet?: boolean; content?: string | null; files?: any[] } | null>(null)
   const [ready, setReady] = useState(false)
   const [driveContentType, setDriveContentType] = useState('')
 
@@ -109,7 +110,11 @@ export default function DownloadPage() {
         const dlName = rawName.toLowerCase().endsWith('.pdf') ? rawName : `${rawName}.pdf`
         return url.replace('/upload/', `/upload/fl_attachment:${dlName}/`)
       }
-      // For /raw/upload/ (fl_attachment causes HTTP 400 on raw assets), route through watermark API
+      // For /raw/upload/ Cloudinary PDFs, route through file-proxy (watermark API gets 401 from Cloudinary raw assets)
+      if (url.includes('res.cloudinary.com') && url.includes('/raw/upload/')) {
+        return `/api/file-proxy?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(fileName)}`
+      }
+      // For other PDFs (non-Cloudinary), try watermark API with fallback to direct redirect
       return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${encodeURIComponent(fileName)}`
     }
 
@@ -181,10 +186,7 @@ export default function DownloadPage() {
       .catch(() => setDriveContentType(''))
   }, [note?.cloudinaryUrl])
 
-  let fileUrl = note?.cloudinaryUrl || ''
-  if (fileUrl.startsWith('http://')) {
-    fileUrl = fileUrl.replace('http://', 'https://')
-  }
+  let fileUrl = fixCloudinaryUrl(note?.cloudinaryUrl || '')
 
   const isDriveLink = fileUrl.includes('drive.google.com')
   const drivePreviewUrl = isDriveLink ? getDrivePreviewUrl(fileUrl) : ''
@@ -233,8 +235,13 @@ export default function DownloadPage() {
   // The OCR model produces TU exam-paper JSON — only meaningful for past papers
 
   useEffect(() => {
-    if (note && (!note.extractedText || !isPastPaper)) {
-      setActiveTab('original')
+    if (note) {
+      // Cheatsheets with content default to 'text' tab to show cheatsheet text
+      if (note.isCheatsheet && note.content) {
+        setActiveTab('text')
+      } else if (!note.extractedText || !isPastPaper) {
+        setActiveTab('original')
+      }
     }
   }, [note, isPastPaper])
 
@@ -269,19 +276,33 @@ export default function DownloadPage() {
   // Drive files render from our own proxy. Images and PDFs can be shown directly,
   // while Office docs/presentations use the Docs viewer with the proxied file URL.
   const driveId = extractDriveFileId(fileUrl)
+  const googleDocsViewer = `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
   const previewUrl = isDriveLink
     ? (driveId
       ? `https://docs.google.com/gview?url=${encodeURIComponent(`https://drive.google.com/uc?export=download&id=${driveId}`)}&embedded=true`
-      : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`)
-    : (isImage || isPdf)
-      ? proxiedUrl
-      : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
+      : googleDocsViewer)
+    : isPdf
+      ? googleDocsViewer
+      : isImage
+        ? proxiedUrl
+        : googleDocsViewer
 
   const fallbackPreviewUrl = isDriveOfficeDoc
     ? `https://docs.google.com/gview?url=${encodeURIComponent(driveProxyUrl)}&embedded=true`
-    : ''
+    : proxiedUrl
 
   const handleStartDownload = () => {
+    if (!fileUrl && note?.isCheatsheet && note?.content) {
+      const element = document.createElement('a')
+      const file = new Blob([note.content], { type: 'text/plain;charset=utf-8' })
+      element.href = URL.createObjectURL(file)
+      element.download = `${getCleanDownloadFileName(note.title || 'cheatsheet')}.txt`
+      document.body.appendChild(element)
+      element.click()
+      document.body.removeChild(element)
+      return
+    }
+
     if (isPaid) {
       if (fileUrl) {
         const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl, note?.title || '', !isPastPaper)
@@ -320,6 +341,19 @@ export default function DownloadPage() {
 
   const getDisplayTitle = () => {
     if (!note) return 'Loading document...'
+    if (note.isCheatsheet) {
+      const facCode = note.subject?.semester?.faculty?.id?.toUpperCase() || 'TU'
+      const semName = note.subject?.semester?.name
+        ? (note.subject.semester.name.toLowerCase().includes('semester') ? note.subject.semester.name : `${note.subject.semester.name} Semester`)
+        : (note.subject?.semester?.order ? `${note.subject.semester.order}th Semester` : '')
+      const subTitle = note.subject?.title ? note.subject.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim() : ''
+      return [
+        `TU ${facCode}`,
+        semName,
+        subTitle,
+        `${note.title} (Cheatsheet)`
+      ].filter(Boolean).join(' — ')
+    }
     if (note.isPastPaper || !note.noteType) {
       return note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
     }
@@ -432,10 +466,10 @@ export default function DownloadPage() {
                   <div style={{ padding: '14px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', textAlign: 'center', color: '#fff' }}>
                     ⏳ Loading...
                   </div>
-                ) : ready && fileUrl ? (
+                ) : ready && (fileUrl || (note?.isCheatsheet && note?.content)) ? (
                   <button onClick={handleStartDownload} className="mobile-dl-btn desktop-dl-btn active:scale-[0.98] transition-all hover:bg-blue-500"
                     style={{ cursor: 'pointer', background: '#2563eb', color: '#fff', border: '1px solid #3b82f6', boxShadow: '0 2px 8px rgba(37,99,235,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="main-text">Download PDF</span>
+                    <span className="main-text">{fileUrl ? 'Download PDF' : '📥 Download Cheatsheet Text'}</span>
                   </button>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--clr-text-3)', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
@@ -481,13 +515,13 @@ export default function DownloadPage() {
 
                 {/* Messenger Share */}
                 <a
-                  href={`fb-messenger://share/?link=${encodeURIComponent(currentUrl)}`}
+                  href="https://www.facebook.com/dialog/send?link="
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mobile-dl-share-btn"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '12px', borderRadius: '8px',
-                    background: 'rgba(0,178,255,0.1)', border: '1px solid rgba(0,178,255,0.2)', color: '#00B2FF', fontSize: '14px', fontWeight: 700, textDecoration: 'none'
+                    background: 'rgba(0,132,255,0.1)', border: '1px solid rgba(0,132,255,0.2)', color: '#0084FF', fontSize: '14px', fontWeight: 700, textDecoration: 'none'
                   }}
                 >
                   <span>Messenger</span>
@@ -511,23 +545,69 @@ export default function DownloadPage() {
             </div>
           </div>
 
-          {/* Conditional Display: Show Ads & Countdown Block first, then show preview */}
-          {!ready ? (
-            <div className="glass-card" style={{ flex: 1, minHeight: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '32px', padding: '40px', textAlign: 'center', border: '1px dashed var(--clr-border)' }}>
+          {/* Ad Block Banner */}
+          {!isPaid && (
+            <div style={{ marginTop: '8px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '20px' }}>🛡️</span>
+              <p style={{ fontSize: '12px', color: '#fca5a5', margin: 0, lineHeight: 1.4 }}>
+                <strong>Support TU Notes Hub:</strong> If you use an Ad Blocker, please consider whitelisting our website or upgrading to Elite AI Pass to support free student access!
+              </p>
+            </div>
+          )}
 
-              {/* Countdown Circular Block */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                <div className="countdown-circle flex-center" style={{ width: '80px', height: '80px', fontSize: '28px', background: 'var(--grad-brand)', boxShadow: '0 8px 24px rgba(99,102,241,0.3)' }}>
-                  {countdown}
-                </div>
-                <p style={{ color: 'var(--clr-text-2)', fontSize: '14px', fontWeight: 600 }}>
-                  Securing server connection and loading ads...
-                </p>
-              </div>
+          {/* Ad Unit (Above Document Preview) */}
+          {!isPaid && (
+            <div style={{ margin: '8px 0' }}>
+              <AdUnit type="banner" slot="download-page-top" />
+            </div>
+          )}
 
-              {/* Large Inline Ad Unit inside download screen */}
+          {/* Ad Gate / Timer View */}
+          {downloadAdActive ? (
+            <div style={{ flex: 1, minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--clr-bg-surface-1)', borderRadius: '16px', border: '1px solid var(--clr-border)', padding: '40px', textTransform: 'none' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
+              <h3 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '8px' }}>
+                {downloadAdCountdown > 0 ? `Preparing Your Download (${downloadAdCountdown}s)` : 'Download Ready!'}
+              </h3>
+              <p style={{ color: 'var(--clr-text-3)', fontSize: '14px', marginBottom: '24px', textAlign: 'center', maxWidth: '480px' }}>
+                {downloadAdCountdown > 0 ? 'Please wait while we generate your secure download link. Sponsored ads support server hosting.' : 'Click below to download your file.'}
+              </p>
+
+              {downloadAdCountdown === 0 && (
+                <button
+                  onClick={() => {
+                    setDownloadAdActive(false)
+                    if (fileUrl) {
+                      const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl, note?.title || '', !isPastPaper)
+                      const link = document.createElement('a')
+                      link.href = downloadHref
+                      link.target = '_blank'
+                      link.download = getCleanDownloadFileName(note?.title || '')
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                    } else if (note?.isCheatsheet && note?.content) {
+                      const element = document.createElement('a')
+                      const file = new Blob([note.content], { type: 'text/plain;charset=utf-8' })
+                      element.href = URL.createObjectURL(file)
+                      element.download = `${getCleanDownloadFileName(note.title || 'cheatsheet')}.txt`
+                      document.body.appendChild(element)
+                      element.click()
+                      document.body.removeChild(element)
+                    }
+                  }}
+                  className="btn btn-primary active:scale-95 transition-all"
+                  style={{ padding: '14px 32px', fontSize: '15px', fontWeight: 800, background: 'var(--grad-brand)', border: 'none', borderRadius: '12px', boxShadow: '0 4px 20px rgba(99,102,241,0.4)', cursor: 'pointer' }}
+                >
+                  🚀 Download Now
+                </button>
+              )}
+
+              {/* Sponsored Ad inside Gate */}
               <div style={{
-                width: '100%', maxWidth: '640px',
+                marginTop: '32px',
+                width: '100%',
+                maxWidth: '650px',
                 background: 'rgba(255,255,255,0.02)',
                 border: '1px solid var(--clr-border)',
                 borderRadius: '12px',
@@ -535,18 +615,13 @@ export default function DownloadPage() {
                 boxShadow: 'var(--shadow-glow)',
               }}>
                 <p style={{ fontSize: '10px', color: 'var(--clr-text-3)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>Sponsored Advertisement</p>
-                <AdUnit type="large-rectangle" slot="countdown-middle-ad" />
-                <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginTop: '16px' }}>
-                  🎯 <strong style={{ color: 'var(--clr-primary-h)' }}>Elite AI Pass — Rs. 199/year</strong> |
-                  Instant downloads without waiting + Full PDF solution views.
-                </p>
+                <AdUnit type="medium-rectangle" slot="download-gate-ad" />
               </div>
-
             </div>
           ) : (
             <>
-              {/* Tab Controls — Only shown for Past Papers that have been OCR'd */}
-              {isPastPaper && note?.extractedText && (
+              {/* Tab Controls — Shown when both original file and text content exist */}
+              {fileUrl && (note?.content || note?.extractedText) && (
                 <div className="mobile-dl-tab-container" style={{
                   display: 'flex',
                   background: 'rgba(255,255,255,0.03)',
@@ -556,32 +631,12 @@ export default function DownloadPage() {
                   border: '1px solid rgba(255,255,255,0.05)'
                 }}>
                   <button
-                    onClick={() => setActiveTab('text')}
-                    className="mobile-dl-tab-btn"
-                    style={{
-                      flex: 1,
-                      padding: '8px 12px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      borderRadius: '8px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: activeTab === 'text' ? 'var(--grad-brand)' : 'transparent',
-                      color: activeTab === 'text' ? '#fff' : 'var(--clr-text-3)',
-                      boxShadow: activeTab === 'text' ? '0 4px 16px rgba(99,102,241,0.3)' : 'none',
-                      transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                  >
-                    Smart AI Text
-                  </button>
-                  <button
                     onClick={() => setActiveTab('original')}
                     className="mobile-dl-tab-btn"
                     style={{
                       flex: 1,
-                      padding: '8px 12px',
-                      fontSize: '11px',
+                      padding: '10px 16px',
+                      fontSize: '12px',
                       fontWeight: 700,
                       borderRadius: '8px',
                       border: 'none',
@@ -590,22 +645,62 @@ export default function DownloadPage() {
                       color: activeTab === 'original' ? '#fff' : 'var(--clr-text-3)',
                       boxShadow: activeTab === 'original' ? '0 4px 16px rgba(99,102,241,0.3)' : 'none',
                       transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
                     }}
                   >
-                    Original File
+                    📄 Original File
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('text')}
+                    className="mobile-dl-tab-btn"
+                    style={{
+                      flex: 1,
+                      padding: '10px 16px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: activeTab === 'text' ? 'var(--grad-brand)' : 'transparent',
+                      color: activeTab === 'text' ? '#fff' : 'var(--clr-text-3)',
+                      boxShadow: activeTab === 'text' ? '0 4px 16px rgba(99,102,241,0.3)' : 'none',
+                      transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                    }}
+                  >
+                    {note?.isCheatsheet ? '📝 Cheatsheet Text' : '✨ Smart AI Text'}
                   </button>
                 </div>
               )}
 
-              {/* Document Preview (Only displayed after countdown) */}
-              <div style={{ flex: 1, minHeight: '850px', height: '100%', borderRadius: '16px', border: '1px solid var(--clr-border)', overflow: 'hidden', background: '#121824', position: 'relative' }}>
+              {/* Document Preview */}
+              <div style={{ flex: 1, minHeight: '850px', height: '100%', borderRadius: '16px', border: '1px solid var(--clr-border)', overflow: 'hidden', background: '#121824', position: 'relative', display: 'flex', flexDirection: 'column' }}>
                 {isDocLoading && (
                   <div style={{ position: 'absolute', inset: 0, zIndex: 20, background: '#090d16' }}>
                     <DocLoadingProgress onComplete={() => setIsDocLoading(false)} />
                   </div>
                 )}
-                {fileUrl ? (
+                {activeTab === 'original' && fileUrl && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '12px', color: 'var(--clr-text-3)' }}>
+                    <span>📄 Previewing Original Document File</span>
+                    <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      🔗 Open File in New Tab ↗
+                    </a>
+                  </div>
+                )}
+                {activeTab === 'text' && note?.isCheatsheet && note?.content ? (
+                  <div style={{ width: '100%', height: '100%', overflowY: 'auto', padding: '30px', background: '#0f172a', color: '#fff' }}>
+                    <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <span className="badge badge-elite" style={{ fontSize: '11px', padding: '6px 14px', width: 'fit-content' }}>✨ ELITE AI CHEATSHEET</span>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px' }}>
+                        <h4 style={{ fontSize: '12px', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', fontWeight: 700 }}>📝 Cheatsheet Content</h4>
+                        <div style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--clr-text-1)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {note.content}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : fileUrl ? (
                   activeTab === 'text' && isPastPaper && note?.extractedText ? (
                     <div
                       className="extracted-text-container"
@@ -688,6 +783,32 @@ export default function DownloadPage() {
                       }}
                     />
                   )
+                ) : note?.isCheatsheet && note?.content ? (
+                  <div style={{ width: '100%', height: '100%', overflowY: 'auto', padding: '30px', background: '#0f172a', color: '#fff' }}>
+                    <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <span className="badge badge-elite" style={{ fontSize: '11px', padding: '6px 14px', width: 'fit-content' }}>✨ ELITE AI CHEATSHEET</span>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px' }}>
+                        <h4 style={{ fontSize: '12px', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', fontWeight: 700 }}>📝 Cheatsheet Content</h4>
+                        <div style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--clr-text-1)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {note.content}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : note?.files && note.files.length > 0 ? (
+                  <div style={{ width: '100%', height: '100%', overflowY: 'auto', padding: '30px', background: '#0f172a', color: '#fff' }}>
+                    <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <h4 style={{ fontSize: '14px', color: '#a5b4fc', fontWeight: 700 }}>📁 Attached Files ({note.files.length})</h4>
+                      {note.files.map((f: any, idx: number) => (
+                        <div key={idx} style={{ padding: '16px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(255,255,255,0.08)' }}>
+                          <span style={{ fontWeight: 600, fontSize: '14px' }}>📄 {f.name || `File ${idx + 1}`}</span>
+                          <a href={f.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ textDecoration: 'none' }}>
+                            📥 Download / View File
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ) : (
                   <DocLoadingProgress />
                 )}

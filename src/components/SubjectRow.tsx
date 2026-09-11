@@ -106,6 +106,7 @@ export default function SubjectRow({
   systemType?: string
 }) {
   const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus' | null>(null)
+  const [isEliteAI, setIsEliteAI] = useState(false)
   const [selectedCheatsheet, setSelectedCheatsheet] = useState<Cheatsheet | null>(null)
 
   useEffect(() => {
@@ -590,73 +591,71 @@ export default function SubjectRow({
                   {/* Blurred preview cards for non-elite, full interactive cards for elite */}
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px', filter: isEliteAI ? 'none' : 'blur(6px)', userSelect: isEliteAI ? 'auto' : 'none', pointerEvents: isEliteAI ? 'auto' : 'none' }}>
                     {cheatsheets.map(cs => (
-                      <motion.div 
-                        key={cs.id} 
-                        variants={cardItemVariants} 
-                        onClick={() => {
-                          if (isEliteAI) setSelectedCheatsheet(cs)
-                        }}
-                        className="glass-card" 
-                        whileHover={isEliteAI ? { scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.25)' } : {}}
-                        whileTap={isEliteAI ? { scale: 0.98 } : {}}
-                        style={{ 
-                          padding: '18px', 
-                          margin: 0, 
-                          borderRadius: '14px', 
-                          background: 'linear-gradient(145deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.05) 100%)', 
-                          border: '1px solid rgba(99,102,241,0.3)', 
-                          boxShadow: '0 4px 20px rgba(99,102,241,0.08)', 
-                          position: 'relative', 
-                          overflow: 'hidden',
-                          cursor: isEliteAI ? 'pointer' : 'default',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justify: 'space-between',
-                          gap: '12px'
-                        }}>
-                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.8), transparent)', opacity: 0.7 }} />
-                        
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <span className="badge badge-elite" style={{ fontSize: '9px', padding: '4px 10px', borderRadius: '20px' }}>✨ ELITE AI ONLY</span>
-                            {cs.files && Array.isArray(cs.files) && cs.files.length > 0 && (
-                              <span style={{ fontSize: '11px', color: '#a5b4fc', fontWeight: 600 }}>📎 {cs.files.length} File{cs.files.length > 1 ? 's' : ''}</span>
+                      <Link key={cs.id} href={getResourceLink(cs.title, 'cheatsheet', cs.id)} style={{ textDecoration: 'none' }}>
+                        <motion.div 
+                          variants={cardItemVariants} 
+                          className="glass-card" 
+                          whileHover={isEliteAI ? { scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.25)' } : {}}
+                          whileTap={isEliteAI ? { scale: 0.98 } : {}}
+                          style={{ 
+                            padding: '18px', 
+                            margin: 0, 
+                            borderRadius: '14px', 
+                            background: 'linear-gradient(145deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.05) 100%)', 
+                            border: '1px solid rgba(99,102,241,0.3)', 
+                            boxShadow: '0 4px 20px rgba(99,102,241,0.08)', 
+                            position: 'relative', 
+                            overflow: 'hidden',
+                            cursor: isEliteAI ? 'pointer' : 'default',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            gap: '12px'
+                          }}>
+                          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.8), transparent)', opacity: 0.7 }} />
+                          
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <span className="badge badge-elite" style={{ fontSize: '9px', padding: '4px 10px', borderRadius: '20px' }}>✨ ELITE AI ONLY</span>
+                              {cs.files && Array.isArray(cs.files) && cs.files.length > 0 && (
+                                <span style={{ fontSize: '11px', color: '#a5b4fc', fontWeight: 600 }}>📎 {cs.files.length} File{cs.files.length > 1 ? 's' : ''}</span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-text-1)', margin: '0 0 8px', lineHeight: 1.4 }}>{cs.title}</p>
+                            {cs.content && (
+                              <p style={{ 
+                                fontSize: '12px', 
+                                color: 'var(--clr-text-2)', 
+                                margin: 0, 
+                                display: '-webkit-box', 
+                                WebkitLineClamp: 3, 
+                                WebkitBoxOrient: 'vertical', 
+                                overflow: 'hidden', 
+                                lineHeight: 1.5
+                              }}>
+                                {cs.content}
+                              </p>
                             )}
                           </div>
-                          <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-text-1)', margin: '0 0 8px', lineHeight: 1.4 }}>{cs.title}</p>
-                          {cs.content && (
-                            <p style={{ 
-                              fontSize: '12px', 
-                              color: 'var(--clr-text-2)', 
-                              margin: 0, 
-                              display: '-webkit-box', 
-                              WebkitLineClamp: 3, 
-                              WebkitBoxOrient: 'vertical', 
-                              overflow: 'hidden', 
-                              lineHeight: 1.5
-                            }}>
-                              {cs.content}
-                            </p>
-                          )}
-                        </div>
 
-                        <div style={{
-                          padding: '8px 12px',
-                          borderRadius: '8px',
-                          background: 'rgba(99, 102, 241, 0.15)',
-                          border: '1px solid rgba(99, 102, 241, 0.3)',
-                          color: '#a5b4fc',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          textAlign: 'center',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}>
-                          📖 Open Cheatsheet →
-                        </div>
-                      </motion.div>
+                          <div style={{
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(99, 102, 241, 0.15)',
+                            border: '1px solid rgba(99, 102, 241, 0.3)',
+                            color: '#a5b4fc',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px'
+                          }}>
+                            📖 Open Cheatsheet →
+                          </div>
+                        </motion.div>
+                      </Link>
                     ))}
                   </motion.div>
 

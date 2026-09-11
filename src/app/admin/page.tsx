@@ -15,6 +15,7 @@ import AdminNotifications from '@/components/admin/AdminNotifications'
 import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
 import MarkdownPaperViewer from '@/components/MarkdownPaperViewer'
 import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
+import { fixCloudinaryUrl } from '@/lib/utils'
 type AdminTab = 'overview' | 'payments' | 'faculties' | 'semesters' | 'upload' | 'stats' | 'users' | 'materials' | 'projects' | 'sellers' | 'settings' | 'pricing' | 'seo' | 'backup' | 'blogs' | 'mapping'
 
 interface Payment {
@@ -631,8 +632,8 @@ function ManageMaterialsTab() {
   }
   
   // Paper Viewer & Text Editor modal states
-  const [viewPaperItem, setViewPaperItem] = useState<{ id: string; type: 'pastpaper' | 'note'; title: string; extractedText: string; cloudinaryUrl: string } | null>(null)
-  const [viewPaperMode, setViewPaperMode] = useState<'PREVIEW' | 'EDIT'>('PREVIEW')
+  const [viewPaperItem, setViewPaperItem] = useState<{ id: string; type: 'pastpaper' | 'note' | 'cheatsheet'; title: string; extractedText: string; cloudinaryUrl: string; files?: any[] } | null>(null)
+  const [viewPaperMode, setViewPaperMode] = useState<'PREVIEW' | 'FILE' | 'EDIT'>('PREVIEW')
   const [editTextValue, setEditTextValue] = useState('')
   const [savingPaperText, setSavingPaperText] = useState(false)
 
@@ -698,10 +699,29 @@ function ManageMaterialsTab() {
     }
   }
 
-  function openPaperViewer(item: any, type: 'pastpaper' | 'note', title: string) {
-    setViewPaperItem({ id: item.id, type, title, extractedText: item.extractedText || '', cloudinaryUrl: item.cloudinaryUrl })
-    setEditTextValue(item.extractedText || '')
-    setViewPaperMode('PREVIEW')
+  function openPaperViewer(item: any, type: 'pastpaper' | 'note' | 'cheatsheet', title: string) {
+    const textVal = item.extractedText || item.content || ''
+    let filesArr: any[] = []
+    if (Array.isArray(item.files)) {
+      filesArr = item.files
+    } else if (typeof item.files === 'string') {
+      try { filesArr = JSON.parse(item.files) } catch {}
+    }
+    filesArr = filesArr.map(f => typeof f === 'object' && f?.url ? { ...f, url: fixCloudinaryUrl(f.url) } : (typeof f === 'string' ? fixCloudinaryUrl(f) : f))
+
+    const rawUrl = item.cloudinaryUrl || (filesArr.length > 0 && filesArr[0]?.url ? filesArr[0].url : (typeof filesArr[0] === 'string' ? filesArr[0] : ''))
+    const cUrl = fixCloudinaryUrl(rawUrl)
+
+    setViewPaperItem({
+      id: item.id,
+      type,
+      title,
+      extractedText: textVal,
+      cloudinaryUrl: cUrl,
+      files: filesArr
+    })
+    setEditTextValue(textVal)
+    setViewPaperMode((cUrl || filesArr.length > 0) ? 'FILE' : 'PREVIEW')
   }
 
   async function handleSavePaperText() {
@@ -1735,8 +1755,9 @@ function ManageMaterialsTab() {
                         <td style={{ fontSize: '12px' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
                         <td>
                           <div style={{ display: 'flex', gap: '6px' }}>
-                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(c, 'cheatsheet')}>✏️ Edit</button>
-                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id, 'cheatsheet', c.title)}>🗑️ Delete</button>
+                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '11px' }} onClick={() => openPaperViewer(c, 'cheatsheet', c.title)}>👁️ View</button>
+                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', fontSize: '11px' }} onClick={() => openEdit(c, 'cheatsheet')}>✏️ Edit</button>
+                            <button className="btn btn-sm btn-danger" style={{ fontSize: '11px' }} onClick={() => handleDelete(c.id, 'cheatsheet', c.title)}>🗑️ Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -1764,21 +1785,16 @@ function ManageMaterialsTab() {
                     </tr>
                   </thead>
                   <tbody>
-                    {solutionBooks.map(b => (
-                      <tr key={b.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <td style={{ padding: '16px' }}>
-                          <div style={{ fontWeight: 600 }}>{b.title}</div>
-                          {b.fileSize && <div style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginTop: '4px' }}>{b.fileSize}</div>}
+                    {solutionBooks.map((b: any) => (
+                      <tr key={b.id} style={{ borderBottom: '1px solid var(--clr-border)' }}>
+                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>{b.title}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span className={`badge ${b.isPremium ? 'badge-elite' : 'badge-success'}`}>
+                            {b.isPremium ? '💎 Premium' : '🔓 Free'}
+                          </span>
                         </td>
-                        <td style={{ padding: '16px' }}>
-                          {b.isPremium ? <span className="badge badge-elite" style={{ fontSize: '10px' }}>PREMIUM</span> : <span className="badge badge-free" style={{ fontSize: '10px' }}>FREE</span>}
-                        </td>
-                        <td style={{ padding: '16px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <a href={b.cloudinaryUrl} target="_blank" rel="noreferrer" className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.05)' }}>👁️ View</a>
-                            <button className="btn btn-sm" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openEdit(b, 'solutionbook')}>✏️ Edit</button>
-                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(b.id, 'solutionbook', b.title)}>🗑️ Delete</button>
-                          </div>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(b.id, 'solutionbook', b.title)}>🗑️ Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -1806,13 +1822,25 @@ function ManageMaterialsTab() {
                   📄 Paper View &amp; AI Text Editor — {viewPaperItem.title}
                 </h3>
                 <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', margin: '2px 0 0' }}>
-                  Preview formatted paper sheet or edit raw extracted text/JSON directly.
+                  Preview formatted paper sheet, original file, or edit raw extracted text/JSON directly.
                 </p>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {/* View Mode Toggle */}
                 <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '3px', border: '1px solid var(--clr-border)' }}>
+                  {(viewPaperItem.cloudinaryUrl || (viewPaperItem.files && viewPaperItem.files.length > 0)) && (
+                    <button
+                      className="btn btn-xs"
+                      style={{
+                        background: viewPaperMode === 'FILE' ? 'var(--grad-brand)' : 'transparent',
+                        color: '#fff', fontWeight: 700, padding: '5px 12px', borderRadius: '6px'
+                      }}
+                      onClick={() => setViewPaperMode('FILE')}
+                    >
+                      📄 Original File
+                    </button>
+                  )}
                   <button
                     className="btn btn-xs"
                     style={{
@@ -1821,7 +1849,7 @@ function ManageMaterialsTab() {
                     }}
                     onClick={() => setViewPaperMode('PREVIEW')}
                   >
-                    👁️ Formatted View
+                    👁️ Text / Formatted
                   </button>
                   <button
                     className="btn btn-xs"
@@ -1858,9 +1886,77 @@ function ManageMaterialsTab() {
 
             {/* Modal Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', background: viewPaperMode === 'PREVIEW' ? '#0f172a' : 'transparent' }}>
-              {viewPaperMode === 'PREVIEW' ? (
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
+              {viewPaperMode === 'FILE' ? (
+                <div style={{ width: '100%', height: '100%', minHeight: '550px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {viewPaperItem.cloudinaryUrl ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <span style={{ fontSize: '12px', color: '#a5b4fc', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
+                          📁 File: {viewPaperItem.cloudinaryUrl}
+                        </span>
+                        <a href={viewPaperItem.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ textDecoration: 'none' }}>
+                          🔗 Open File in New Tab
+                        </a>
+                      </div>
+                      {viewPaperItem.cloudinaryUrl.match(/\.(png|jpg|jpeg|webp|gif)($|\?)/i) ? (
+                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', borderRadius: '12px', overflow: 'auto', padding: '20px' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={viewPaperItem.cloudinaryUrl} alt={viewPaperItem.title} style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '8px' }} />
+                        </div>
+                      ) : (() => {
+                        // For Cloudinary raw/PDF files, embed through file-proxy (bypasses X-Frame-Options)
+                        // For others, use Google Docs viewer
+                        const isCloudinaryRaw = viewPaperItem.cloudinaryUrl.includes('res.cloudinary.com')
+                        const embedSrc = isCloudinaryRaw
+                          ? `/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}`
+                          : `https://docs.google.com/gview?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}&embedded=true`
+                        return (
+                          <iframe
+                            src={embedSrc}
+                            style={{ width: '100%', height: '600px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
+                            title={viewPaperItem.title}
+                          />
+                        )
+                      })()}
+                    </>
+                  ) : viewPaperItem.files && viewPaperItem.files.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <h4 style={{ fontSize: '14px', color: '#a5b4fc', fontWeight: 700 }}>📁 Attached Files ({viewPaperItem.files.length})</h4>
+                      {viewPaperItem.files.map((f: any, idx: number) => {
+                        const fUrl = typeof f === 'string' ? f : (f.url || '')
+                        const fName = typeof f === 'string' ? `File ${idx + 1}` : (f.name || `File ${idx + 1}`)
+                        return (
+                          <div key={idx} style={{ padding: '16px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontWeight: 600, fontSize: '14px', color: '#fff' }}>📄 {fName}</span>
+                            <a href={fUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ textDecoration: 'none' }}>
+                              🔗 Open / Download File
+                            </a>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--clr-text-3)' }}>
+                      <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
+                      <p style={{ fontSize: '15px', color: 'var(--clr-text-2)' }}>No original file attached to this item.</p>
+                    </div>
+                  )}
+                </div>
+              ) : viewPaperMode === 'PREVIEW' ? (
+                <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                   {(() => {
+                    // Cheatsheets — show content text directly
+                    if (viewPaperItem.type === 'cheatsheet' && viewPaperItem.extractedText) {
+                      return (
+                        <div style={{ maxWidth: '800px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <span className="badge badge-elite" style={{ fontSize: '11px', padding: '4px 12px', width: 'fit-content' }}>✨ CHEATSHEET CONTENT</span>
+                          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '24px', fontSize: '14px', lineHeight: 1.7, color: 'var(--clr-text-1)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {viewPaperItem.extractedText}
+                          </div>
+                        </div>
+                      )
+                    }
+
                     if (!viewPaperItem.extractedText || !viewPaperItem.extractedText.trim()) {
                       return (
                         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--clr-text-3)' }}>
@@ -3547,7 +3643,7 @@ function UploadTab({ user }: { user?: any }) {
             const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
             
             const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
-            const rt = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'raw'
+            const rt = ['jpg','jpeg','png','webp','pdf'].includes(ext) ? 'image' : 'auto'
             
             const cf = new FormData()
             cf.append('file', noteFile)
@@ -3607,8 +3703,8 @@ function UploadTab({ user }: { user?: any }) {
 
           for (let i = 0; i < sheetFiles.length; i++) {
             const file = sheetFiles[i]
-            const isRaw = !['jpg', 'jpeg', 'png', 'webp'].includes(file.name.split('.').pop()?.toLowerCase() || '')
-            const resourceType = isRaw ? 'raw' : 'image'
+            const ext = file.name.split('.').pop()?.toLowerCase() || ''
+            const resourceType = ['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(ext) ? 'image' : 'auto'
 
             const formData = new FormData()
             formData.append('file', file)

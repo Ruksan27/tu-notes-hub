@@ -23,3 +23,20 @@ export function extractIdFromSlug(slugOrId: string): string {
   if (uuidMatch?.[1]) return uuidMatch[1]
   return slugOrId
 }
+
+export function fixCloudinaryUrl(url: string | null | undefined): string {
+  if (!url) return ''
+  let clean = url.trim()
+  if (clean.startsWith('http://')) {
+    clean = clean.replace('http://', 'https://')
+  }
+  // Convert Cloudinary raw PDF/image URLs to image URLs (raw URLs return HTTP 401 on Cloudinary CDN)
+  if (clean.includes('res.cloudinary.com') && clean.includes('/raw/upload/')) {
+    const pathNoQuery = clean.split('?')[0]
+    const ext = pathNoQuery.split('.').pop()?.toLowerCase() || ''
+    if (ext === 'pdf' || ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+      clean = clean.replace('/raw/upload/', '/image/upload/')
+    }
+  }
+  return clean
+}

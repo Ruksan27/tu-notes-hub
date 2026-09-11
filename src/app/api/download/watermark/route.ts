@@ -34,13 +34,24 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const response = await fetch(fetchUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TUNotesHub/1.0)' }
-    })
+    let response: Response
+    try {
+      response = await fetch(fetchUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': '*/*'
+        }
+      })
+      if (!response.ok) {
+        response = await fetch(fetchUrl)
+      }
+    } catch {
+      response = await fetch(fetchUrl)
+    }
 
     if (!response.ok) {
-      console.error(`[Watermark] Failed to fetch: ${fetchUrl} → ${response.status}`)
-      return NextResponse.json({ error: 'Failed to fetch the original file' }, { status: response.status })
+      console.warn(`[Watermark] Failed to fetch: ${fetchUrl} → ${response.status}. Redirecting directly to file.`)
+      return NextResponse.redirect(fetchUrl, 302)
     }
 
     const contentType = response.headers.get('Content-Type') || ''
