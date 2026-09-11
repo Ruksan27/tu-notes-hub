@@ -651,14 +651,24 @@ Return STRICTLY valid JSON only (no markdown, no extra text):
   return cleanAndParseJSON(raw)
 }
 
-// Generate MCQs based on past papers
+// Generate MCQs based on past papers and existing subject MCQs
 export async function generateMcqs(
   subjectTitle: string,
-  papersText: Array<{ year: number; text: string }>
+  papersText: Array<{ year: number; text: string }>,
+  referenceMcqs?: Array<{ question: string; options: string[]; correctOption?: number; explanation?: string | null }>
 ): Promise<any[]> {
   const papersContext = papersText
     .map((p) => `=== YEAR ${p.year} ===\n${p.text}`)
     .join('\n\n')
+
+  let referenceContext = ''
+  if (referenceMcqs && referenceMcqs.length > 0) {
+    const sampleMcqs = referenceMcqs.slice(0, 15)
+    referenceContext = `\n=== EXISTING PAST MCQs FOR THIS SUBJECT (Use as reference style guide & avoid duplicates) ===\n` +
+      sampleMcqs.map((m, i) => `${i + 1}. Q: ${m.question}\n   Options: ${Array.isArray(m.options) ? m.options.join(', ') : m.options}`).join('\n')
+  }
+
+  const hasReference = referenceMcqs && referenceMcqs.length > 0
 
   const prompt = `
 You are an expert TU (Tribhuvan University) examiner.
@@ -666,9 +676,16 @@ You are an expert TU (Tribhuvan University) examiner.
 Analyze these past exam papers for subject: "${subjectTitle}"
 
 ${papersContext}
+${referenceContext}
 
 Task:
-Generate 10 high-yield Multiple Choice Questions (MCQs) that are highly likely to appear in future exams based on the concepts tested in these past papers.
+Generate 10 high-yield Multiple Choice Questions (MCQs) that are highly likely to appear in future TU exams based on the concepts tested in these past papers.
+
+Guidelines:
+1. ${hasReference 
+    ? 'Use the existing past MCQs as reference to learn the question pattern, syllabus scope, and difficulty. Generate new, high-yield questions without creating exact duplicates.' 
+    : 'Since no prior MCQs are stored in the database, extract key concepts, topics, and question patterns directly from the provided past question papers and convert them into high-yield MCQs.'}
+2. Ensure options are realistic, clear, accurate, and unambiguous.
 
 IMPORTANT: Ensure all LaTeX/math symbols use valid JSON escape sequences (e.g. \\\\Delta instead of \\Delta).
 Return STRICTLY valid JSON only as an ARRAY of objects (no markdown, no extra text):

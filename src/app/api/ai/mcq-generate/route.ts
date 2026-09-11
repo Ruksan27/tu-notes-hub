@@ -70,8 +70,22 @@ export async function POST(req: NextRequest) {
       papersData.push({ year: paper.year, text })
     }
 
+    // ── Fetch Existing DB MCQs as Style Reference ──────────────────
+    const dbReferenceMcqs = await prisma.mCQ.findMany({
+      where: { subjectId },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    })
+
+    const referenceMcqs = dbReferenceMcqs.map((m: any) => ({
+      question: m.question,
+      options: typeof m.options === 'string' ? JSON.parse(m.options) : (Array.isArray(m.options) ? m.options : []),
+      correctOption: m.correctOption,
+      explanation: m.explanation || ''
+    }))
+
     // ── AI Analysis ──────────────────────────────────────────────
-    const newAiMcqs = await generateMcqs(subject.title, papersData)
+    const newAiMcqs = await generateMcqs(subject.title, papersData, referenceMcqs)
 
     // ── ADMIN ONLY: Save to Public DB ───────────────────────────
     if (shouldSaveToDb) {
@@ -96,12 +110,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ── STUDENT / ELITE USER: Save to 7-day Cache ONLY ───────────
-    const existingDbMcqs = await prisma.mCQ.findMany({
-      where: { subjectId },
-      orderBy: { createdAt: 'desc' }
-    })
-
-    const formattedExistingMcqs = existingDbMcqs.map((m: any) => ({
+    const formattedExistingMcqs = dbReferenceMcqs.map((m: any) => ({
       question: m.question,
       options: typeof m.options === 'string' ? JSON.parse(m.options) : (Array.isArray(m.options) ? m.options : []),
       correctOption: m.correctOption,
