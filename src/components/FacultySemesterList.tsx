@@ -73,8 +73,11 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
           const totalNotes = sem.subjects.reduce((sum: number, s: any) => sum + s.notes.filter((n: any) => n.noteType !== 'SYLLABUS').length, 0)
           const totalPapers = sem.subjects.reduce((sum: number, s: any) => sum + s.pastPapers.length, 0)
           const totalSheets = sem.subjects.reduce((sum: number, s: any) => sum + s.cheatsheets.length, 0)
-          // Count total number of MCQ questions across all subjects in this semester
-          const totalMcqs = sem.subjects.reduce((sum: number, s: any) => sum + (s.mcqs ? s.mcqs.length : 0), 0)
+          // Count total number of unique MCQ sets (by year+examCategory) across all subjects in this semester
+          const totalMcqs = sem.subjects.reduce((sum: number, s: any) => {
+            if (!s.mcqs || s.mcqs.length === 0) return sum
+            return sum + new Set(s.mcqs.map((m: any) => `${m.year}-${m.examCategory}`)).size
+          }, 0)
           const totalSyllabus = sem.subjects.reduce((sum: number, s: any) => sum + s.notes.filter((n: any) => n.noteType === 'SYLLABUS').length, 0)
 
           const ord = sem.order === 1 ? '1st' : sem.order === 2 ? '2nd' : sem.order === 3 ? '3rd' : `${sem.order}th`

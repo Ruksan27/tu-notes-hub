@@ -106,14 +106,14 @@ export default function SubjectRow({
   systemType?: string
 }) {
   const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus' | null>(null)
-  const [isEliteAI, setIsEliteAI] = useState(false)
+  const [selectedCheatsheet, setSelectedCheatsheet] = useState<Cheatsheet | null>(null)
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('tu_user')
       if (stored) {
         const u = JSON.parse(stored)
-        setIsEliteAI(u?.packageType === 'ELITE_AI')
+        setIsEliteAI(u?.packageType === 'ELITE_AI' || u?.role === 'ADMIN' || u?.role === 'CHILD_ADMIN')
       }
     } catch {}
   }, [])
@@ -155,6 +155,7 @@ export default function SubjectRow({
   const cheatsheets = subject.cheatsheets
   const solutionBooks = subject.solutionBooks || []
   const mcqs = subject.mcqs || []
+  const mcqSetsCount = new Set(mcqs.map((m: any) => `${m.year}-${m.examCategory}`)).size
   const subSlug = slugify(subject.title) || slugify(subject.code)
   const mcqUrl = semPath ? `${semPath}/${subSlug}/mcq` : `/mcq/${subject.id}`
 
@@ -205,7 +206,7 @@ export default function SubjectRow({
     else if (guides.length > 0) setActiveTab('guide')
     else if (syllabusFiles.length > 0) setActiveTab('syllabus')
     else if (cheatsheets.length > 0) setActiveTab('cheatsheets')
-    else if (mcqs.length > 0) setActiveTab('mcqs')
+    else if (mcqSetsCount > 0) setActiveTab('mcqs')
   }
 
   return (
@@ -275,7 +276,7 @@ export default function SubjectRow({
         </div>
 
         {/* Action Toggles */}
-        {(notes.length > 0 || labWorks.length > 0 || projectWorks.length > 0 || projects.length > 0 || pastPapers.length > 0 || guides.length > 0 || syllabusFiles.length > 0 || solutionBooks.length > 0 || cheatsheets.length > 0 || mcqs.length > 0) && (
+        {(notes.length > 0 || labWorks.length > 0 || projectWorks.length > 0 || projects.length > 0 || pastPapers.length > 0 || guides.length > 0 || syllabusFiles.length > 0 || solutionBooks.length > 0 || cheatsheets.length > 0 || mcqSetsCount > 0) && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
             {notes.length > 0 && (
               <button
@@ -365,14 +366,14 @@ export default function SubjectRow({
               </button>
             )}
 
-            {mcqs.length > 0 && (
+            {mcqSetsCount > 0 && (
               <Link
                 href={mcqUrl}
                 onClick={e => e.stopPropagation()}
                 style={{ textDecoration: 'none', pointerEvents: 'auto', zIndex: 10, position: 'relative' }}
               >
                 <span style={{
-                  ...getPillStyle('mcqs', mcqs.length),
+                  ...getPillStyle('mcqs', mcqSetsCount),
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -384,7 +385,7 @@ export default function SubjectRow({
                   cursor: 'pointer',
                   pointerEvents: 'auto',
                 }}>
-                  ✅ MCQs ({mcqs.length})
+                  ✅ MCQs ({mcqSetsCount})
 
                 </span>
               </Link>
@@ -586,47 +587,75 @@ export default function SubjectRow({
                 <div style={{ position: 'relative' }}>
                   <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📋 Cheatsheets</h4>
 
-                  {/* Blurred preview cards always shown */}
-                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px', filter: isEliteAI ? 'none' : 'blur(6px)', userSelect: isEliteAI ? 'auto' : 'none', pointerEvents: isEliteAI ? 'auto' : 'none' }}>
+                  {/* Blurred preview cards for non-elite, full interactive cards for elite */}
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px', filter: isEliteAI ? 'none' : 'blur(6px)', userSelect: isEliteAI ? 'auto' : 'none', pointerEvents: isEliteAI ? 'auto' : 'none' }}>
                     {cheatsheets.map(cs => (
-                      <motion.div key={cs.id} variants={cardItemVariants} className="glass-card" style={{ padding: '18px', margin: 0, borderRadius: '14px', background: 'linear-gradient(145deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.03) 100%)', border: '1px solid rgba(99,102,241,0.3)', boxShadow: '0 4px 20px rgba(99,102,241,0.08)', position: 'relative', overflow: 'hidden' }}>
+                      <motion.div 
+                        key={cs.id} 
+                        variants={cardItemVariants} 
+                        onClick={() => {
+                          if (isEliteAI) setSelectedCheatsheet(cs)
+                        }}
+                        className="glass-card" 
+                        whileHover={isEliteAI ? { scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.25)' } : {}}
+                        whileTap={isEliteAI ? { scale: 0.98 } : {}}
+                        style={{ 
+                          padding: '18px', 
+                          margin: 0, 
+                          borderRadius: '14px', 
+                          background: 'linear-gradient(145deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.05) 100%)', 
+                          border: '1px solid rgba(99,102,241,0.3)', 
+                          boxShadow: '0 4px 20px rgba(99,102,241,0.08)', 
+                          position: 'relative', 
+                          overflow: 'hidden',
+                          cursor: isEliteAI ? 'pointer' : 'default',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justify: 'space-between',
+                          gap: '12px'
+                        }}>
                         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.8), transparent)', opacity: 0.7 }} />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
-                          <div style={{ alignSelf: 'flex-start' }}>
-                            <span className="badge badge-elite" style={{ fontSize: '9px', padding: '4px 10px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px', letterSpacing: '0.05em', borderRadius: '20px', boxShadow: '0 2px 8px rgba(99,102,241,0.2)' }}>✨ ELITE AI ONLY</span>
-                          </div>
-                          <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-text-1)', margin: 0, lineHeight: 1.4 }}>{cs.title}</p>
-                        </div>
-                        {cs.content && <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5 }}>{cs.content}</p>}
                         
-                        {/* Attached Files List */}
-                        {cs.files && Array.isArray(cs.files) && cs.files.length > 0 && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-primary-h)' }}>📎 Attached Files ({cs.files.length}):</span>
-                            {cs.files.map((file: CheatsheetFile, fi: number) => {
-                              const isImg = file.url?.match(/\.(jpg|jpeg|png|webp)/i) || file.type?.includes('image')
-                              const isPdf = file.url?.endsWith('.pdf') || file.name?.endsWith('.pdf')
-                              return (
-                                <a
-                                  key={fi}
-                                  href={file.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px',
-                                    background: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)',
-                                    fontSize: '12px', color: 'var(--clr-text-2)', textDecoration: 'none'
-                                  }}
-                                >
-                                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {isImg ? '🖼️' : isPdf ? '📄' : '📝'} {file.name || `File ${fi + 1}`}
-                                  </span>
-                                  <span style={{ fontSize: '10px', color: 'var(--clr-primary-h)', fontWeight: 600, flexShrink: 0 }}>View ↗</span>
-                                </a>
-                              )
-                            })}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span className="badge badge-elite" style={{ fontSize: '9px', padding: '4px 10px', borderRadius: '20px' }}>✨ ELITE AI ONLY</span>
+                            {cs.files && Array.isArray(cs.files) && cs.files.length > 0 && (
+                              <span style={{ fontSize: '11px', color: '#a5b4fc', fontWeight: 600 }}>📎 {cs.files.length} File{cs.files.length > 1 ? 's' : ''}</span>
+                            )}
                           </div>
-                        )}
+                          <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-text-1)', margin: '0 0 8px', lineHeight: 1.4 }}>{cs.title}</p>
+                          {cs.content && (
+                            <p style={{ 
+                              fontSize: '12px', 
+                              color: 'var(--clr-text-2)', 
+                              margin: 0, 
+                              display: '-webkit-box', 
+                              WebkitLineClamp: 3, 
+                              WebkitBoxOrient: 'vertical', 
+                              overflow: 'hidden', 
+                              lineHeight: 1.5
+                            }}>
+                              {cs.content}
+                            </p>
+                          )}
+                        </div>
+
+                        <div style={{
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          background: 'rgba(99, 102, 241, 0.15)',
+                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                          color: '#a5b4fc',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}>
+                          📖 Open Cheatsheet →
+                        </div>
                       </motion.div>
                     ))}
                   </motion.div>
@@ -642,9 +671,10 @@ export default function SubjectRow({
                       justifyContent: 'center',
                       zIndex: 10,
                       gap: '10px',
-                      background: 'rgba(9, 11, 22, 0.6)',
-                      backdropFilter: 'blur(2px)',
+                      background: 'rgba(9, 11, 22, 0.65)',
+                      backdropFilter: 'blur(3px)',
                       borderRadius: '12px',
+                      padding: '20px',
                     }}>
                       <div style={{ fontSize: '32px' }}>🔒</div>
                       <p style={{ fontSize: '15px', fontWeight: 800, color: '#fff', margin: 0 }}>Elite AI Plan Required</p>
@@ -698,6 +728,219 @@ export default function SubjectRow({
               )}
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Cheatsheet Full Modal */}
+      <AnimatePresence>
+        {selectedCheatsheet && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+              background: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(8px)',
+            }}
+            onClick={() => setSelectedCheatsheet(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: '680px',
+                maxHeight: '85vh',
+                display: 'flex',
+                flexDirection: 'column',
+                background: 'linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%)',
+                border: '1px solid rgba(99, 102, 241, 0.35)',
+                borderRadius: '20px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(99, 102, 241, 0.2)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Modal Header */}
+              <div
+                style={{
+                  padding: '20px 24px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        background: 'rgba(6, 182, 212, 0.15)',
+                        color: 'var(--clr-accent)',
+                        fontWeight: 700,
+                        fontSize: '11px',
+                      }}
+                    >
+                      {subject.code}
+                    </span>
+                    <span className="badge badge-elite" style={{ fontSize: '9px', padding: '3px 8px' }}>
+                      ✨ ELITE AI CHEATSHEET
+                    </span>
+                  </div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', margin: 0 }}>
+                    {selectedCheatsheet.title}
+                  </h3>
+                </div>
+
+                <button
+                  onClick={() => setSelectedCheatsheet(null)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#fff',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 700,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div
+                style={{
+                  padding: '24px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '20px',
+                }}
+              >
+                {/* Content text */}
+                {selectedCheatsheet.content && (
+                  <div>
+                    <h5
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#a5b4fc',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      📝 Cheatsheet Content
+                    </h5>
+                    <div
+                      style={{
+                        padding: '16px',
+                        borderRadius: '12px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        fontSize: '13px',
+                        color: 'var(--clr-text-1)',
+                        lineHeight: 1.6,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {selectedCheatsheet.content}
+                    </div>
+                  </div>
+                )}
+
+                {/* Attached Files */}
+                {selectedCheatsheet.files && Array.isArray(selectedCheatsheet.files) && selectedCheatsheet.files.length > 0 && (
+                  <div>
+                    <h5
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#67e8f9',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      📎 Attached Resource Files ({selectedCheatsheet.files.length})
+                    </h5>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+                      {selectedCheatsheet.files.map((file: CheatsheetFile, fi: number) => {
+                        const isImg = file.url?.match(/\.(jpg|jpeg|png|webp)/i) || file.type?.includes('image')
+                        const isPdf = file.url?.endsWith('.pdf') || file.name?.endsWith('.pdf')
+                        return (
+                          <div
+                            key={fi}
+                            style={{
+                              padding: '14px',
+                              borderRadius: '12px',
+                              background: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '10px',
+                            }}
+                          >
+                            {/* Image preview if image */}
+                            {isImg && (
+                              <div style={{ borderRadius: '8px', overflow: 'hidden', maxHeight: '180px', background: '#000' }}>
+                                <img src={file.url} alt={file.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                              </div>
+                            )}
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {isImg ? '🖼️' : isPdf ? '📄' : '📝'} {file.name || `File ${fi + 1}`}
+                              </span>
+                              {file.size && <span style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>{file.size}</span>}
+                            </div>
+
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                padding: '8px 14px',
+                                borderRadius: '8px',
+                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                color: '#fff',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                textDecoration: 'none',
+                                textAlign: 'center',
+                              }}
+                            >
+                              Open / Download ↗
+                            </a>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </motion.div>
