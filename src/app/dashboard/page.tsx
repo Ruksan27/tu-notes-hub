@@ -714,6 +714,171 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
 
 
   async function downloadPDF() {
+    if (mcqs && mcqs.length > 0) {
+      // Build a crisp Official MCQ Answer Sheet & Solution Set HTML for PDF
+      const printWindow = window.open('', '_blank', 'width=900,height=700')
+      if (!printWindow) { toast.error('Popup blocked. Please allow popups to save PDF.'); return }
+
+      // 1. Generate Answer Key Quick Reference Table (e.g. Q1: B | Q2: A | ...)
+      const answerKeyCells = mcqs.map((m: any, idx: number) => {
+        const letter = String.fromCharCode(65 + (typeof m.correctOption === 'number' ? m.correctOption : 0))
+        return `<td style="border:1px solid #cbd5e1; padding:6px 10px; text-align:center; font-size:12px; background:#ffffff;"><strong>Q${idx + 1}</strong>: <span style="color:#16a34a; font-weight:800;">${letter}</span></td>`
+      })
+
+      const answerKeyRows: string[] = []
+      for (let i = 0; i < answerKeyCells.length; i += 5) {
+        answerKeyRows.push(`<tr>${answerKeyCells.slice(i, i + 5).join('')}</tr>`)
+      }
+
+      // 2. Generate Question Cards HTML
+      const questionsHtml = mcqs.map((m: any, i: number) => {
+        const optionsHtml = (m.options || []).map((opt: string, idx: number) => {
+          const letter = String.fromCharCode(65 + idx)
+          const isCorrect = m.correctOption === idx
+
+          if (isCorrect) {
+            return `
+              <div style="background:#dcfce7 !important; border:1.5px solid #22c55e !important; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:700; color:#15803d !important; display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                <span><strong>${letter}.</strong> ${opt}</span>
+                <span style="background:#16a34a; color:#ffffff; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:800; text-transform:uppercase;">✓ Correct Answer</span>
+              </div>
+            `
+          } else {
+            return `
+              <div style="background:#f8fafc !important; border:1px solid #e2e8f0 !important; padding:10px 14px; border-radius:8px; font-size:13px; color:#334155 !important; margin-bottom:4px;">
+                <strong>${letter}.</strong> ${opt}
+              </div>
+            `
+          }
+        }).join('')
+
+        const explanationHtml = m.explanation ? `
+          <div style="margin-top:10px; padding:10px 14px; background:#f0f9ff !important; border:1px solid #bae6fd !important; border-radius:8px; font-size:12px; color:#0369a1 !important;">
+            <strong style="color:#0284c7;">💡 Explanation:</strong> ${m.explanation}
+          </div>
+        ` : ''
+
+        return `
+          <div style="background:#ffffff !important; border:1px solid #cbd5e1 !important; border-radius:12px; padding:18px; margin-bottom:16px; page-break-inside:avoid; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:12px;">
+              <span style="background:#e0e7ff; color:#3730a3; font-weight:900; font-size:12px; padding:4px 8px; border-radius:6px; shrink:0;">Q${i + 1}</span>
+              <p style="font-weight:800; font-size:15px; color:#0f172a !important; margin:0; line-height:1.4;">${m.question}</p>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              ${optionsHtml}
+            </div>
+            ${explanationHtml}
+          </div>
+        `
+      }).join('')
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>TU Notes Hub — MCQ Answer Sheet & Solution Set</title>
+          <meta charset="utf-8"/>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { background: #ffffff !important; color: #1e293b !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; }
+            
+            .print-watermark {
+              display: block !important;
+              position: fixed; top: 50%; left: 50%;
+              transform: translate(-50%, -50%) rotate(-35deg);
+              font-size: 76px; font-weight: 900;
+              color: rgba(99, 102, 241, 0.06) !important;
+              white-space: nowrap; pointer-events: none; z-index: 9999;
+              letter-spacing: 0.05em;
+            }
+
+            @page { size: A4; margin: 12mm; }
+          </style>
+        </head>
+        <body>
+          <div class="print-watermark">TU Notes Hub</div>
+
+          <!-- Document Header -->
+          <div style="border-bottom: 2px solid #4f46e5; padding-bottom: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0;">📚 TU Notes Hub — MCQ Answer Sheet</h2>
+              <p style="font-size: 14px; font-weight: 700; color: #4338ca; margin-top: 4px; margin-bottom: 0;">${mcqDisplayTitle || currentSubject?.title || 'Subject'}</p>
+              <p style="font-size: 12px; color: #64748b; margin-top: 2px; margin-bottom: 0;">Total Questions: ${mcqs.length} | Solutions &amp; Explanations</p>
+            </div>
+            <div style="text-align: right;">
+              <span style="background: #dcfce7; border: 1px solid #86efac; color: #15803d; font-weight: 800; font-size: 11px; padding: 5px 12px; border-radius: 999px; display: inline-block;">
+                ✓ Answer Key Included
+              </span>
+            </div>
+          </div>
+
+          <!-- Answer Key Summary Reference Box -->
+          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px; margin-bottom: 22px; page-break-inside: avoid;">
+            <h4 style="font-size: 12px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em;">
+              🎯 Answer Key Quick Reference
+            </h4>
+            <table style="width: 100%; border-collapse: collapse; background: #ffffff; border-radius: 6px; overflow: hidden;">
+              <tbody>
+                ${answerKeyRows.join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Question & Solution List -->
+          <div>
+            ${questionsHtml}
+          </div>
+
+          <!-- Footer with QR Code -->
+          <div style="margin-top: 30px; border-top: 2px solid #4f46e5; padding-top: 16px; display: flex; justify-content: space-between; align-items: center; page-break-inside: avoid;">
+            <div>
+              <p style="font-weight: 800; font-size: 15px; color: #0f172a; margin: 0 0 2px 0;">📚 TU Notes Hub</p>
+              <p style="font-size: 12px; color: #64748b; margin: 0 0 2px 0;">Free TU Notes, Exam Predictions &amp; Question Bank</p>
+              <p style="font-size: 11px; color: #4f46e5; font-weight: 700; margin: 0;">https://tunoteshub.me</p>
+            </div>
+            <div style="text-align: center;">
+              <img src="${qrCodeDataUrl || "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tunoteshub.me"}" style="width: 75px; height: 75px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 3px;" alt="QR Code" />
+              <p style="font-size: 10px; color: #4f46e5; font-weight: 700; margin: 2px 0 0 0;">Scan to visit</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `)
+
+      printWindow.document.close()
+      const images = printWindow.document.getElementsByTagName('img')
+      let loadedCount = 0
+      const totalImages = images.length
+      
+      const doPrint = () => {
+        setTimeout(() => {
+          printWindow.focus()
+          printWindow.print()
+        }, 400)
+      }
+
+      if (totalImages === 0) {
+        doPrint()
+      } else {
+        for (let i = 0; i < totalImages; i++) {
+          if (images[i].complete) {
+            loadedCount++
+            if (loadedCount === totalImages) doPrint()
+          } else {
+            images[i].onload = () => {
+              loadedCount++
+              if (loadedCount === totalImages) doPrint()
+            }
+            images[i].onerror = () => {
+              loadedCount++
+              if (loadedCount === totalImages) doPrint()
+            }
+          }
+        }
+      }
+      return
+    }
+
     const reportEl = document.getElementById('ai-report-container') || document.getElementById('ai-mcq-container')
     if (!reportEl) { toast.error('Report not found'); return }
 

@@ -54,12 +54,11 @@ async function callOfficialGemini(
       }
     }
     
-    // Valid Google Generative AI Models
+    // Valid Top Gemini Models
     const modelsToRace = [
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro',
-      'gemini-2.0-flash-lite',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.5-pro',
     ]
     
     const promises = modelsToRace.map(async (model, index) => {
@@ -290,32 +289,45 @@ export async function callGemini(
   userContent.push({ type: 'text', text: prompt })
   messages.push({ role: 'user', content: userContent })
 
-  // 2. Fallback to Nvidia
+  // 2. Fallback to Nvidia API
   const nvidiaModels = hasImages 
     ? ['meta/llama-3.2-11b-vision-instruct']
-    : ['meta/llama-3.1-70b-instruct', 'meta/llama-3.1-8b-instruct']
+    : ['meta/llama-3.3-70b-instruct', 'meta/llama-3.1-70b-instruct', 'nvidia/llama-3.1-nemotron-70b-instruct']
     
   for (const m of nvidiaModels) {
     try {
       const text = await callNvidia(m, messages)
-      if (text) return text
-    } catch (e) { continue }
-  }
-  console.warn('[Nvidia] failed or returned empty, falling back to Groq')
-
-  // 3. Fallback to Groq
-  if (!hasImages) { // Groq vision is limited, use text models
-    const groqModels = ['llama-3.1-70b-versatile', 'llama3-8b-8192']
-    for (const m of groqModels) {
-      try {
-        const text = await callGroq(m, messages)
-        if (text) return text
-      } catch (e) { continue }
+      if (text) {
+        console.log(`[Nvidia Fallback] ✅ ${m} answered!`)
+        return text
+      }
+    } catch (e: any) {
+      console.warn(`[Nvidia] ${m} failed:`, e?.message || e)
+      continue
     }
-    console.warn('[Groq] failed or returned empty')
   }
+  console.warn('[Nvidia] all models failed or returned empty, falling back to Groq...')
 
-  throw new Error('All AI models failed. Please check your API keys or try again later.')
+  // 3. Fallback to Groq API
+  const groqModels = hasImages
+    ? ['llama-3.2-11b-vision-preview']
+    : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768']
+
+  for (const m of groqModels) {
+    try {
+      const text = await callGroq(m, messages)
+      if (text) {
+        console.log(`[Groq Fallback] ✅ ${m} answered!`)
+        return text
+      }
+    } catch (e: any) {
+      console.warn(`[Groq] ${m} failed:`, e?.message || e)
+      continue
+    }
+  }
+  console.warn('[Groq] all models failed or returned empty')
+
+  throw new Error('All AI providers (Gemini, Nvidia, Groq) failed to respond. Please check your API keys or try again later.')
 }
 
 // Dedicated Multi-Provider Helper for High Reliability AI Tasks
