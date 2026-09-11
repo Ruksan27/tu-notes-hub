@@ -26,17 +26,24 @@ export interface Subject {
   }
 }
 
+function formatCategoryText(type?: string | null) {
+  if (!type) return 'BOARD EXAM'
+  switch (type.toUpperCase()) {
+    case 'BOARD_EXAM': return 'BOARD EXAM'
+    case 'INTERNAL_EXAM': return 'INTERNAL EXAM'
+    case 'BACK_PAPER': return 'BACK PAPER'
+    default: return type.toUpperCase()
+  }
+}
+
 function McqItem({
   mcq,
   index,
-  paperTheme,
 }: {
   mcq: MCQ
   index: number
-  paperTheme: 'light' | 'dark'
 }) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
-  const isLight = paperTheme === 'light'
 
   return (
     <div
@@ -44,7 +51,7 @@ function McqItem({
       style={{
         marginBottom: '28px',
         paddingBottom: '20px',
-        borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
       }}
     >
       {/* Question Text */}
@@ -52,7 +59,7 @@ function McqItem({
         style={{
           fontSize: '15px',
           fontWeight: 800,
-          color: isLight ? '#0f172a' : '#f8fafc',
+          color: '#0f172a',
           lineHeight: 1.6,
           margin: '0 0 14px 0',
           fontFamily: 'Inter, system-ui, sans-serif',
@@ -70,25 +77,25 @@ function McqItem({
 
           let bg = 'transparent'
           let border = '1px solid transparent'
-          let textColor = isLight ? '#334155' : '#cbd5e1'
+          let textColor = '#334155'
           let fontWeight = 500
           let badgeText = ''
           let badgeBg = ''
 
           if (isCorrect) {
-            bg = isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.16)'
-            border = isLight ? '1px solid #86efac' : '1px solid rgba(16, 185, 129, 0.4)'
-            textColor = isLight ? '#15803d' : '#34d399'
+            bg = '#fef9c3' // Soft Yellow / Amber highlight matching official paper screenshot
+            border = '1px solid #fde047'
+            textColor = '#854d0e'
             fontWeight = 700
             badgeText = '✓ Correct Answer'
-            badgeBg = isLight ? '#16a34a' : 'rgba(16, 185, 129, 0.3)'
+            badgeBg = '#ca8a04'
           } else if (selectedOption !== null && isSelected && !isCorrect) {
-            bg = isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.15)'
-            border = isLight ? '1px solid #fca5a5' : '1px solid rgba(239, 68, 68, 0.4)'
-            textColor = isLight ? '#b91c1c' : '#f87171'
+            bg = '#fee2e2'
+            border = '1px solid #fca5a5'
+            textColor = '#b91c1c'
             fontWeight = 600
             badgeText = '✕ Your Choice'
-            badgeBg = isLight ? '#dc2626' : 'rgba(239, 68, 68, 0.3)'
+            badgeBg = '#dc2626'
           }
 
           return (
@@ -140,19 +147,19 @@ function McqItem({
       {mcq.explanation && (
         <div
           style={{
-            marginTop: '12px',
+            marginTop: '14px',
             marginLeft: '12px',
             padding: '12px 16px',
-            background: isLight ? '#f8fafc' : 'rgba(56, 189, 248, 0.08)',
-            border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(56, 189, 248, 0.25)',
-            borderLeft: `4px solid ${isLight ? '#0284c7' : '#38bdf8'}`,
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderLeft: '4px solid #0284c7',
             borderRadius: '6px',
             fontSize: '13px',
-            color: isLight ? '#334155' : '#7dd3fc',
+            color: '#334155',
             lineHeight: 1.6,
           }}
         >
-          <strong style={{ fontWeight: 700, color: isLight ? '#0369a1' : '#38bdf8' }}>💡 Explanation:</strong>{' '}
+          <strong style={{ fontWeight: 700, color: '#0369a1' }}>💡 Explanation:</strong>{' '}
           <span style={{ fontStyle: 'italic' }}>{mcq.explanation}</span>
         </div>
       )}
@@ -165,7 +172,6 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
   const [filterYear, setFilterYear] = useState('all')
   const [currentUrl, setCurrentUrl] = useState('')
   const [isPaid, setIsPaid] = useState(false)
-  const paperTheme = 'light'
 
   // Download ad modal states
   const [downloadAdActive, setDownloadAdActive] = useState(false)
@@ -232,6 +238,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
 
   const mcqs = subject.mcqs || []
   const years = Array.from(new Set(mcqs.map(m => m.year).filter(Boolean))).sort((a, b) => (b as number) - (a as number))
+  const categories = Array.from(new Set(mcqs.map(m => m.examCategory).filter(Boolean)))
 
   const filtered = mcqs.filter(m => {
     if (filterYear !== 'all' && String(m.year) !== filterYear) return false
@@ -256,7 +263,9 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
     `TU ${facultyName} ${semName} ${cleanTitle} (${subject.code}) MCQs with Answers — TU Notes Hub`
   )
 
-  const isLight = paperTheme === 'light'
+  const yearDisplay = years.length > 0 ? years.join(', ') : '2026'
+  const categoryDisplay = categories.length > 0 ? categories.map(c => formatCategoryText(String(c))).join(' / ') : 'BOARD EXAM'
+  const dynamicHeading = `${yearDisplay} ${categoryDisplay} — ${cleanTitle}`
 
   return (
     <div
@@ -276,10 +285,12 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
         }
       `}</style>
 
-      {/* Top Leaderboard Ad */}
-      <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
-        <AdUnit type="leaderboard" slot="mcq-top-banner" />
-      </div>
+      {/* Top Leaderboard Ad (Free Users Only) */}
+      {!isPaid && (
+        <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
+          <AdUnit type="leaderboard" slot="mcq-top-banner" />
+        </div>
+      )}
 
       <div
         className="mcq-page-grid"
@@ -296,66 +307,164 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
           boxSizing: 'border-box',
         }}
       >
-        {/* ── Main Left Column (Official TU Paper Sheet Format) ── */}
+        {/* ── Main Left Column ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-          {/* Top Control Bar (Theme & Download Actions) */}
+          {/* Resource Banner Card */}
           <div
             className="glass-card"
             style={{
-              padding: '12px 20px',
+              padding: '24px 28px',
+              borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(15, 23, 42, 0.85)',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
-              borderRadius: '12px',
+              flexDirection: 'column',
+              gap: '16px',
             }}
           >
-            {/* Breadcrumb Info */}
-            <div style={{ fontSize: '12px', color: 'var(--clr-text-3)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Link href="/" style={{ color: 'var(--clr-text-3)', textDecoration: 'none' }}>Home</Link>
-              <span>/</span>
-              <span>{semName}</span>
-              <span>/</span>
-              <span style={{ color: '#a5b4fc', fontWeight: 700 }}>{cleanTitle} ({subject.code})</span>
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              {years.length > 1 && (
-                <select
-                  value={filterYear}
-                  onChange={e => setFilterYear(e.target.value)}
-                  className="input-field"
-                  style={{ padding: '6px 12px', fontSize: '13px', minWidth: '120px', cursor: 'pointer', borderRadius: '8px' }}
-                >
-                  <option value="all">All Years</option>
-                  {years.map(y => (
-                    <option key={String(y)} value={String(y)}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              )}
+            {/* Top Row: Badge + Download PDF */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  background: 'rgba(6,182,212,0.15)',
+                  color: '#06b6d4',
+                  border: '1px solid rgba(6,182,212,0.3)',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                TU OFFICIAL RESOURCE
+              </span>
               <button
                 onClick={handleStartDownload}
                 className="btn btn-primary"
                 style={{
                   padding: '8px 18px',
                   fontSize: '13px',
-                  fontWeight: 800,
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+                  fontWeight: 700,
+                  borderRadius: '8px',
+                  background: '#2563eb',
                   border: 'none',
+                  color: '#fff',
+                  cursor: 'pointer',
                 }}
               >
-                ⬇️ Download PDF
+                Download PDF
               </button>
+            </div>
+
+            {/* Dynamic Heading */}
+            <h1
+              style={{
+                fontSize: '20px',
+                fontWeight: 900,
+                color: '#ffffff',
+                margin: 0,
+                lineHeight: 1.35,
+                fontFamily: 'Inter, system-ui, sans-serif',
+              }}
+            >
+              {dynamicHeading}
+            </h1>
+
+            {/* Share Section */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px' }}>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: 'var(--clr-text-3)',
+                  display: 'block',
+                  marginBottom: '10px',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                SHARE RESOURCE
+              </span>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <a
+                  href={`https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(currentUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: '#064e3b',
+                    border: '1px solid #047857',
+                    color: '#34d399',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    padding: '8px 24px',
+                    borderRadius: '8px',
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    minWidth: '100px',
+                  }}
+                >
+                  WhatsApp
+                </a>
+                <a
+                  href="https://www.instagram.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: '#831843',
+                    border: '1px solid #be185d',
+                    color: '#f472b6',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    padding: '8px 24px',
+                    borderRadius: '8px',
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    minWidth: '100px',
+                  }}
+                >
+                  Instagram
+                </a>
+                <a
+                  href={`fb-messenger://share/?link=${encodeURIComponent(currentUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: '#0c4a6e',
+                    border: '1px solid #0369a1',
+                    color: '#38bdf8',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    padding: '8px 24px',
+                    borderRadius: '8px',
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    minWidth: '100px',
+                  }}
+                >
+                  Messenger
+                </a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(currentUrl); alert('Link copied!') }}
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#cbd5e1',
+                    fontWeight: 700,
+                    padding: '8px 24px',
+                    borderRadius: '8px',
+                    flex: 1,
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    minWidth: '100px',
+                  }}
+                >
+                  Copy Link
+                </button>
+              </div>
             </div>
           </div>
 
@@ -363,12 +472,12 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
           <div
             className="tu-paper-sheet"
             style={{
-              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.95)',
-              color: isLight ? '#0f172a' : '#ffffff',
+              background: '#ffffff',
+              color: '#0f172a',
               padding: '40px 48px',
               borderRadius: '16px',
-              border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.1)',
-              boxShadow: isLight ? '0 10px 30px rgba(0,0,0,0.25)' : '0 10px 40px rgba(0,0,0,0.5)',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
               position: 'relative',
               boxSizing: 'border-box',
             }}
@@ -383,7 +492,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                   margin: '0 0 4px 0',
                   textTransform: 'uppercase',
                   fontFamily: 'serif, Georgia, Times, sans-serif',
-                  color: isLight ? '#000000' : '#ffffff',
+                  color: '#000000',
                 }}
               >
                 TRIBHUVAN UNIVERSITY
@@ -393,7 +502,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                   fontSize: '15px',
                   fontWeight: 600,
                   margin: '0 0 2px 0',
-                  color: isLight ? '#334155' : '#94a3b8',
+                  color: '#334155',
                   fontFamily: 'sans-serif',
                 }}
               >
@@ -406,7 +515,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                   letterSpacing: '0.5px',
                   margin: '0 0 4px 0',
                   textTransform: 'uppercase',
-                  color: isLight ? '#000000' : '#e2e8f0',
+                  color: '#000000',
                   fontFamily: 'sans-serif',
                 }}
               >
@@ -417,11 +526,11 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                   fontSize: '16px',
                   fontWeight: 800,
                   margin: 0,
-                  color: isLight ? '#000000' : '#fbbf24',
+                  color: '#000000',
                   fontFamily: 'sans-serif',
                 }}
               >
-                {years.length > 0 ? years.join(', ') : '2026'}
+                {yearDisplay}
               </p>
             </div>
 
@@ -431,7 +540,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                borderBottom: `2px solid ${isLight ? '#0f172a' : 'rgba(255,255,255,0.2)'}`,
+                borderBottom: '2px solid #0f172a',
                 paddingBottom: '16px',
                 marginBottom: '20px',
                 fontSize: '14px',
@@ -459,7 +568,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                   fontSize: '17px',
                   fontWeight: 900,
                   margin: '0 0 4px 0',
-                  color: isLight ? '#0f172a' : '#ffffff',
+                  color: '#0f172a',
                 }}
               >
                 Group A (Multiple Choice Questions)
@@ -468,7 +577,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                 style={{
                   fontSize: '13px',
                   fontStyle: 'italic',
-                  color: isLight ? '#475569' : '#94a3b8',
+                  color: '#475569',
                   margin: 0,
                 }}
               >
@@ -485,10 +594,10 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
               <div>
                 {filtered.map((m, i) => (
                   <div key={m.id}>
-                    <McqItem mcq={m} index={i} paperTheme={paperTheme} />
+                    <McqItem mcq={m} index={i} />
 
-                    {/* High CPM In-Feed Ad every 5 questions */}
-                    {(i + 1) % 5 === 0 && i !== filtered.length - 1 && (
+                    {/* High CPM In-Feed Ad every 5 questions (Free Users Only) */}
+                    {!isPaid && (i + 1) % 5 === 0 && i !== filtered.length - 1 && (
                       <div style={{ margin: '20px 0' }}>
                         <AdUnit type="inline" slot={`mcq-infeed-ad-${i + 1}`} />
                       </div>
@@ -497,48 +606,6 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                 ))}
               </div>
             )}
-
-            {/* Footer Share Bar inside Paper */}
-            <div
-              style={{
-                borderTop: `1px solid ${isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)'}`,
-                paddingTop: '16px',
-                marginTop: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '12px',
-              }}
-            >
-              <span style={{ fontSize: '11px', fontWeight: 700, color: isLight ? '#64748b' : 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Share Official Resource:
-              </span>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <a
-                  href={`https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(currentUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ background: '#128c7e', color: '#fff', textDecoration: 'none', fontWeight: 700, padding: '6px 14px', borderRadius: '6px', fontSize: '12px' }}
-                >
-                  WhatsApp
-                </a>
-                <a
-                  href="https://www.instagram.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ background: '#E1306C', color: '#fff', textDecoration: 'none', fontWeight: 700, padding: '6px 14px', borderRadius: '6px', fontSize: '12px' }}
-                >
-                  Instagram
-                </a>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(currentUrl); alert('Link copied!') }}
-                  style={{ background: isLight ? '#f1f5f9' : 'rgba(255,255,255,0.08)', color: isLight ? '#0f172a' : '#cbd5e1', border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.12)', fontWeight: 700, padding: '6px 14px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
-                >
-                  Copy Link
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -553,96 +620,167 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
             top: '80px',
           }}
         >
-          {/* Top High CTR Ad Slot */}
-          <div
-            className="glass-card"
-            style={{ padding: '16px', textAlign: 'center', borderRadius: '16px' }}
-          >
-            <p
+          {/* 1. TOP CARD: Upgrade to Elite Banner (ALWAYS ON TOP for free users) */}
+          {!isPaid && (
+            <div
+              className="glass-card"
               style={{
-                fontSize: '10px',
-                color: 'var(--clr-text-3)',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                margin: '0 0 10px 0',
-                fontWeight: 700,
+                padding: '24px',
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.12))',
+                border: '1px solid rgba(99,102,241,0.3)',
+                borderRadius: '16px',
+                boxShadow: '0 8px 32px rgba(99,102,241,0.15)',
               }}
             >
-              SPONSORED ADVERTISEMENT
-            </p>
-            <AdUnit type="medium-rectangle" slot="mcq-sidebar-top-ad" />
-          </div>
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 800,
+                  color: 'var(--clr-text-1)',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                💎 Upgrade to Elite Pass
+              </h3>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--clr-text-3)',
+                  marginBottom: '16px',
+                  lineHeight: 1.6,
+                }}
+              >
+                Instant PDF downloads, AI Exam Predictor, unlimited MCQ practice & zero ads.
+              </p>
+              <Link
+                href="/pricing"
+                className="btn btn-primary"
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  textDecoration: 'none',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                  boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+                }}
+              >
+                Unlock Now →
+              </Link>
+            </div>
+          )}
 
-          {/* High CPM Half-Page / Skyscraper Ad Slot (300x600 - Highest RPM) */}
-          <div
-            className="glass-card"
-            style={{ padding: '16px', textAlign: 'center', borderRadius: '16px' }}
-          >
-            <p
-              style={{
-                fontSize: '10px',
-                color: 'var(--clr-text-3)',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                margin: '0 0 10px 0',
-                fontWeight: 700,
-              }}
-            >
-              SPONSORED CONTENT
-            </p>
-            <AdUnit type="half-page" slot="mcq-sidebar-skyscraper-ad" />
-          </div>
+          {/* 2. FOUR HIGH-CPM ADS SECTIONS (Free Users Only) */}
+          {!isPaid && (
+            <>
+              {/* Ad Section 1 */}
+              <div
+                className="glass-card"
+                style={{ padding: '16px', textAlign: 'center', borderRadius: '16px' }}
+              >
+                <p
+                  style={{
+                    fontSize: '10px',
+                    color: 'var(--clr-text-3)',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    margin: '0 0 10px 0',
+                    fontWeight: 700,
+                  }}
+                >
+                  SPONSORED ADVERTISEMENT
+                </p>
+                <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad-1" />
+              </div>
 
-          {/* Upgrade to Elite Banner */}
-          <div
-            className="glass-card"
-            style={{
-              padding: '24px',
-              background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1))',
-              border: '1px solid rgba(99,102,241,0.25)',
-              borderRadius: '16px',
-            }}
-          >
-            <h3
+              {/* Ad Section 2 - Half-Page Skyscraper */}
+              <div
+                className="glass-card"
+                style={{ padding: '16px', textAlign: 'center', borderRadius: '16px' }}
+              >
+                <p
+                  style={{
+                    fontSize: '10px',
+                    color: 'var(--clr-text-3)',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    margin: '0 0 10px 0',
+                    fontWeight: 700,
+                  }}
+                >
+                  SPONSORED CONTENT
+                </p>
+                <AdUnit type="half-page" slot="mcq-sidebar-ad-2" />
+              </div>
+
+              {/* Ad Section 3 */}
+              <div
+                className="glass-card"
+                style={{ padding: '16px', textAlign: 'center', borderRadius: '16px' }}
+              >
+                <p
+                  style={{
+                    fontSize: '10px',
+                    color: 'var(--clr-text-3)',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    margin: '0 0 10px 0',
+                    fontWeight: 700,
+                  }}
+                >
+                  RECOMMENDED
+                </p>
+                <AdUnit type="large-rectangle" slot="mcq-sidebar-ad-3" />
+              </div>
+
+              {/* Ad Section 4 */}
+              <div
+                className="glass-card"
+                style={{ padding: '16px', textAlign: 'center', borderRadius: '16px' }}
+              >
+                <p
+                  style={{
+                    fontSize: '10px',
+                    color: 'var(--clr-text-3)',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    margin: '0 0 10px 0',
+                    fontWeight: 700,
+                  }}
+                >
+                  SPONSORED
+                </p>
+                <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad-4" />
+              </div>
+            </>
+          )}
+
+          {/* Paid User Mode Badge (Semester Pass / Elite AI Users Only) */}
+          {isPaid && (
+            <div
+              className="glass-card"
               style={{
-                fontSize: '16px',
-                fontWeight: 800,
-                color: 'var(--clr-text-1)',
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              💎 Upgrade to Elite Pass
-            </h3>
-            <p
-              style={{
-                fontSize: '13px',
-                color: 'var(--clr-text-3)',
-                marginBottom: '16px',
-                lineHeight: 1.6,
-              }}
-            >
-              Instant PDF downloads, AI Exam Predictor, unlimited MCQ practice & zero ads.
-            </p>
-            <Link
-              href="/pricing"
-              className="btn btn-primary"
-              style={{
-                display: 'block',
+                padding: '24px',
+                background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))',
+                border: '1px solid rgba(16,185,129,0.25)',
+                borderRadius: '16px',
                 textAlign: 'center',
-                textDecoration: 'none',
-                padding: '10px 16px',
-                borderRadius: '10px',
-                fontSize: '13px',
-                fontWeight: 700,
-                background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
               }}
             >
-              Unlock Now →
-            </Link>
-          </div>
+              <span style={{ fontSize: '32px' }}>👑</span>
+              <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#34d399', margin: '8px 0 4px' }}>
+                Ad-Free Premium Mode
+              </h4>
+              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', margin: 0, lineHeight: 1.5 }}>
+                You are an active Pass holder. All ads and countdown timers are disabled for you!
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
