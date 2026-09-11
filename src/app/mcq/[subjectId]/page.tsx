@@ -40,13 +40,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .trim()
 
   const facultyName = subject.semester?.faculty?.name || 'Bachelor in Computer Application (BCA)'
-  const semName = subject.semester?.name ? (subject.semester.name.toLowerCase().includes('semester') ? subject.semester.name : `${subject.semester.name} Semester`) : (subject.semester?.order ? `${subject.semester.order}th Semester` : '5th Semester')
+  const semName = subject.semester?.name 
+    ? (subject.semester.name.toLowerCase().includes('semester') ? subject.semester.name : `${subject.semester.name} Semester`) 
+    : (subject.semester?.order ? `${subject.semester.order}th Semester` : '5th Semester')
   
   const years = Array.from(new Set(subject.mcqs.map(m => m.year).filter(Boolean))).sort((a, b) => (b as number) - (a as number))
-  const yearsText = years.length > 0 ? `(${years.join(', ')})` : ''
+  const yearsText = years.length > 0 ? `(${years.join(', ')} Board Exam)` : ''
 
-  const title = `${cleanTitle} (${subject.code}) MCQs with Answers & Solutions | ${semName} ${facultyName} — TU Notes Hub`
-  const description = `Practice past year multiple choice questions (MCQs) for ${cleanTitle} (${subject.code}), ${semName}, ${facultyName} Tribhuvan University ${yearsText}. Verified answers with step-by-step explanations and PDF download.`
+  const title = `TU ${facultyName} ${semName} ${cleanTitle} (${subject.code}) MCQs with Answers ${yearsText} — TU Notes Hub`
+  const description = `Official Tribhuvan University (TU) ${facultyName} ${semName} ${cleanTitle} (${subject.code}) past paper MCQs ${yearsText} with verified answers, explanations, and free PDF download.`
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
   const url = `${baseUrl}/mcq/${subject.id}`
@@ -55,12 +57,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     keywords: [
-      `${cleanTitle} MCQs`,
-      `${subject.code} MCQs`,
-      `TU ${cleanTitle} questions`,
-      `${semName} MCQs`,
-      `${facultyName} MCQs`,
-      `Tribhuvan University ${cleanTitle} MCQ answers`,
+      `TU ${cleanTitle} MCQs`,
+      `${facultyName} ${semName} MCQs`,
+      `${cleanTitle} ${subject.code} past paper MCQs`,
+      `TU ${subject.code} solved MCQs`,
+      `${cleanTitle} multiple choice questions with answers`,
+      `Tribhuvan University ${cleanTitle} ${yearsText}`,
       `TU Notes Hub MCQs`
     ],
     alternates: {
@@ -77,7 +79,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: `${baseUrl}/og-image.png`,
           width: 1200,
           height: 630,
-          alt: `${cleanTitle} MCQs — TU Notes Hub`,
+          alt: `${cleanTitle} (${subject.code}) MCQs — TU Notes Hub`,
         },
       ],
     },
@@ -104,16 +106,20 @@ export default async function McqPage({ params }: Props) {
     .replace(/\s*(old syllabus|new syllabus)/gi, '')
     .trim()
 
-  const semName = subject.semester?.name ? (subject.semester.name.toLowerCase().includes('semester') ? subject.semester.name : `${subject.semester.name} Semester`) : (subject.semester?.order ? `${subject.semester.order}th Semester` : '5th Semester')
+  const semName = subject.semester?.name 
+    ? (subject.semester.name.toLowerCase().includes('semester') ? subject.semester.name : `${subject.semester.name} Semester`) 
+    : (subject.semester?.order ? `${subject.semester.order}th Semester` : '5th Semester')
   const facultyName = subject.semester?.faculty?.name || 'Bachelor in Computer Application (BCA)'
 
-  // Schema.org FAQ / Quiz Structured Data for Google Rich Results
-  const jsonLd = {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
+
+  // Structured Data (FAQPage + BreadcrumbList) for maximum Google SEO Rich Snippets
+  const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    name: `${cleanTitle} (${subject.code}) MCQs — ${semName}`,
-    description: `Official Tribhuvan University multiple choice questions with answers for ${cleanTitle} (${subject.code}).`,
-    mainEntity: (subject.mcqs || []).slice(0, 10).map((m) => ({
+    name: `TU ${facultyName} ${semName} ${cleanTitle} (${subject.code}) MCQs`,
+    description: `Official Tribhuvan University past paper multiple choice questions with verified answers and explanations for ${cleanTitle} (${subject.code}).`,
+    mainEntity: (subject.mcqs || []).slice(0, 15).map((m) => ({
       '@type': 'Question',
       name: m.question,
       acceptedAnswer: {
@@ -123,11 +129,46 @@ export default async function McqPage({ params }: Props) {
     }))
   }
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: baseUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: facultyName,
+        item: `${baseUrl}/faculties`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: semName,
+        item: `${baseUrl}/faculties`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
+        name: `${cleanTitle} (${subject.code}) MCQs`,
+        item: `${baseUrl}/mcq/${subject.id}`,
+      },
+    ],
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <McqPracticeClient initialSubject={subject as any} />
     </>

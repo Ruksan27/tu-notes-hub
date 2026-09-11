@@ -18,11 +18,15 @@ export async function POST(req: NextRequest) {
       }, { status: 403 })
     }
 
-    const { subjectId, paperIds } = await req.json()
+    const { subjectId, paperIds, saveToDb } = await req.json()
 
     if (!subjectId || !paperIds?.length) {
       return NextResponse.json({ error: 'Subject and papers are required' }, { status: 400 })
     }
+
+    const isAdmin = user.role === 'ADMIN'
+    const shouldSaveToDb = isAdmin && Boolean(saveToDb)
+    const minPapers = shouldSaveToDb ? 1 : 2
 
     // ── DB Lookup ────────────────────────────────────────────────
     const subject = await prisma.subject.findUnique({ where: { id: subjectId } })
@@ -30,28 +34,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
     }
 
-    // Fetch existing MCQs from Database for this subject
-    const existingDbMcqs = await prisma.mCQ.findMany({
-      where: { subjectId },
-      orderBy: { createdAt: 'desc' }
-    })
-
-    const formattedExistingMcqs = existingDbMcqs.map((m: any) => ({
-      question: m.question,
-      options: typeof m.options === 'string' ? JSON.parse(m.options) : (Array.isArray(m.options) ? m.options : []),
-      correctOption: m.correctOption,
-      explanation: m.explanation || '',
-      year: m.year || null,
-      source: 'Database'
-    }))
-
     const papers = await prisma.pastPaper.findMany({
       where: { id: { in: paperIds }, subjectId },
       orderBy: { year: 'asc' },
     })
 
-    if (papers.length < 2) {
-      return NextResponse.json({ error: 'Please select at least 2 past papers to generate MCQs' }, { status: 400 })
+    if (papers.length < minPapers) {
+      return NextResponse.json({ 
+        error: `Please select at least ${minPapers} past paper${minPapers > 1 ? 's' : ''} to generate MCQs` 
+      }, { status: 400 })
     }
 
     // ── Extract Text ─────────────────────────────────────────────
@@ -82,23 +73,44 @@ export async function POST(req: NextRequest) {
     // ── AI Analysis ──────────────────────────────────────────────
     const newAiMcqs = await generateMcqs(subject.title, papersData)
 
-    // Save newly generated MCQs into DB for permanent record
-    if (Array.isArray(newAiMcqs) && newAiMcqs.length > 0) {
-      try {
-        const mcqInsertData = newAiMcqs.map((m: any) => ({
-          question: m.question,
-          options: m.options,
-          correctOption: typeof m.correctOption === 'number' ? m.correctOption : 0,
-          explanation: m.explanation || null,
-          subjectId: subject.id,
-        }))
-        await prisma.mCQ.createMany({ data: mcqInsertData })
-      } catch (dbErr) {
-        console.warn('[AI_MCQ_SAVE_DB_WARN]', dbErr)
+    // ── ADMIN ONLY: Save to Public DB ───────────────────────────
+    if (shouldSaveToDb) {
+      if (Array.isArray(newAiMcqs) && newAiMcqs.length > 0) {
+        try {
+          const defaultYear = papers[papers.length - 1]?.year || new Date().getFullYear()
+          const mcqInsertData = newAiMcqs.map((m: any) => ({
+            question: m.question,
+            options: typeof m.options === 'string' ? m.options : JSON.stringify(m.options),
+            correctOption: typeof m.correctOption === 'number' ? m.correctOption : 0,
+            explanation: m.explanation || null,
+            subjectId: subject.id,
+            year: typeof m.year === 'number' ? m.year : defaultYear,
+            examCategory: 'BOARD_EXAM',
+          }))
+          await prisma.mCQ.createMany({ data: mcqInsertData })
+        } catch (dbErr) {
+          console.warn('[AI_MCQ_SAVE_DB_WARN]', dbErr)
+        }
       }
+      return NextResponse.json({ mcqs: newAiMcqs })
     }
 
-    // Combine newly generated AI MCQs + Previous DB MCQs
+    // ── STUDENT / ELITE USER: Save to 7-day Cache ONLY ───────────
+    const existingDbMcqs = await prisma.mCQ.findMany({
+      where: { subjectId },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const formattedExistingMcqs = existingDbMcqs.map((m: any) => ({
+      question: m.question,
+      options: typeof m.options === 'string' ? JSON.parse(m.options) : (Array.isArray(m.options) ? m.options : []),
+      correctOption: m.correctOption,
+      explanation: m.explanation || '',
+      year: m.year || null,
+      source: 'Database'
+    }))
+
+    // Combine newly generated AI MCQs + Previous DB MCQs for personal study
     const allMcqs = [...newAiMcqs, ...formattedExistingMcqs]
 
     // Deduplicate MCQs by question text
@@ -112,7 +124,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Save to User History (fire-and-forget) ────────────────────
+    // Save to User History (7-day cache, fire-and-forget)
     const uid = user.id || user.userId
     const usedYears = papers.map((p) => p.year).sort()
     if (uid) {

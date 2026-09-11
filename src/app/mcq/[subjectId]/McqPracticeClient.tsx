@@ -1,6 +1,6 @@
 'use client'
 // src/app/mcq/[subjectId]/McqPracticeClient.tsx
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AdUnit from '@/components/ads/AdUnit'
 
@@ -26,323 +26,134 @@ export interface Subject {
   }
 }
 
-function formatExamType(type: string) {
-  switch (type) {
-    case 'BOARD_EXAM': return 'Board Exam'
-    case 'INTERNAL_EXAM': return 'Internal Exam'
-    case 'BACK_PAPER': return 'Back Paper'
-    default: return type || 'Board Exam'
-  }
-}
-
-function McqCard({
+function McqItem({
   mcq,
   index,
-  practiceMode,
+  paperTheme,
 }: {
   mcq: MCQ
   index: number
-  practiceMode: boolean
+  paperTheme: 'light' | 'dark'
 }) {
-  const [selected, setSelected] = useState<number | null>(null)
-  const [revealed, setRevealed] = useState(false)
-
-  const handleSelect = useCallback(
-    (idx: number) => {
-      if (!practiceMode) return
-      if (revealed) return
-      setSelected(idx)
-      setRevealed(true)
-    },
-    [practiceMode, revealed]
-  )
-
-  const reset = () => {
-    setSelected(null)
-    setRevealed(false)
-  }
-
-  const isCorrect = selected !== null && selected === mcq.correctOption
-  const isWrong = selected !== null && selected !== mcq.correctOption
+  const [selectedOption, setSelectedOption] = useState<number | null>(null)
+  const isLight = paperTheme === 'light'
 
   return (
     <div
+      id={`question-${index + 1}`}
       style={{
-        background: 'rgba(255,255,255,0.025)',
-        border: `1px solid ${revealed && isWrong ? 'rgba(239,68,68,0.3)' : revealed && isCorrect ? 'rgba(16,185,129,0.35)' : 'rgba(255,255,255,0.07)'}`,
-        borderRadius: '16px',
-        padding: '22px 24px',
-        transition: 'border-color 0.3s',
+        marginBottom: '28px',
+        paddingBottom: '20px',
+        borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
       }}
     >
-      {/* Question header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
-        <span
-          style={{
-            minWidth: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            background: 'rgba(99,102,241,0.15)',
-            border: '1px solid rgba(99,102,241,0.3)',
-            color: '#a5b4fc',
-            fontWeight: 800,
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          {index + 1}
-        </span>
-        <div style={{ flex: 1 }}>
-          <p
-            style={{
-              fontWeight: 700,
-              fontSize: '15px',
-              color: 'var(--clr-text-1)',
-              lineHeight: 1.6,
-              margin: 0,
-            }}
-          >
-            {mcq.question}
-          </p>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-            {mcq.year && (
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '2px 10px',
-                  borderRadius: '999px',
-                  background: 'rgba(245,158,11,0.12)',
-                  color: '#fbbf24',
-                  border: '1px solid rgba(245,158,11,0.25)',
-                }}
-              >
-                📅 {mcq.year}
-              </span>
-            )}
-            {mcq.examCategory && (
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '2px 10px',
-                  borderRadius: '999px',
-                  background: 'rgba(99,102,241,0.12)',
-                  color: '#a5b4fc',
-                  border: '1px solid rgba(99,102,241,0.25)',
-                }}
-              >
-                {formatExamType(mcq.examCategory)}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Question Text */}
+      <h3
+        style={{
+          fontSize: '15px',
+          fontWeight: 800,
+          color: isLight ? '#0f172a' : '#f8fafc',
+          lineHeight: 1.6,
+          margin: '0 0 14px 0',
+          fontFamily: 'Inter, system-ui, sans-serif',
+        }}
+      >
+        {index + 1}. {mcq.question}
+      </h3>
 
-      {/* Options */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* Options List matching official paper format */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '12px' }}>
         {mcq.options.map((opt, idx) => {
-          const isThis = idx === mcq.correctOption
-          const isThisSelected = selected === idx
+          const isCorrect = idx === mcq.correctOption
+          const isSelected = selectedOption === idx
+          const optionLetter = String.fromCharCode(97 + idx) // 'a', 'b', 'c', 'd'
 
-          let bg = 'rgba(255,255,255,0.03)'
-          let border = '1px solid rgba(255,255,255,0.08)'
-          let color = 'var(--clr-text-2)'
-          let labelBg = 'rgba(255,255,255,0.06)'
-          let labelColor = 'var(--clr-text-3)'
-          let cursor = practiceMode && !revealed ? 'pointer' : 'default'
+          let bg = 'transparent'
+          let border = '1px solid transparent'
+          let textColor = isLight ? '#334155' : '#cbd5e1'
+          let fontWeight = 500
+          let badgeText = ''
+          let badgeBg = ''
 
-          if (revealed) {
-            if (isThis) {
-              bg = 'rgba(16,185,129,0.12)'
-              border = '1px solid rgba(16,185,129,0.4)'
-              color = '#34d399'
-              labelBg = 'rgba(16,185,129,0.2)'
-              labelColor = '#34d399'
-            } else if (isThisSelected && !isThis) {
-              bg = 'rgba(239,68,68,0.1)'
-              border = '1px solid rgba(239,68,68,0.35)'
-              color = '#f87171'
-              labelBg = 'rgba(239,68,68,0.2)'
-              labelColor = '#f87171'
-            }
-          } else if (!practiceMode) {
-            // Static mode — always highlight correct
-            if (isThis) {
-              bg = 'rgba(16,185,129,0.1)'
-              border = '1px solid rgba(16,185,129,0.35)'
-              color = '#34d399'
-              labelBg = 'rgba(16,185,129,0.18)'
-              labelColor = '#34d399'
-            }
+          if (isCorrect) {
+            bg = isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.16)'
+            border = isLight ? '1px solid #86efac' : '1px solid rgba(16, 185, 129, 0.4)'
+            textColor = isLight ? '#15803d' : '#34d399'
+            fontWeight = 700
+            badgeText = '✓ Correct Answer'
+            badgeBg = isLight ? '#16a34a' : 'rgba(16, 185, 129, 0.3)'
+          } else if (selectedOption !== null && isSelected && !isCorrect) {
+            bg = isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.15)'
+            border = isLight ? '1px solid #fca5a5' : '1px solid rgba(239, 68, 68, 0.4)'
+            textColor = isLight ? '#b91c1c' : '#f87171'
+            fontWeight = 600
+            badgeText = '✕ Your Choice'
+            badgeBg = isLight ? '#dc2626' : 'rgba(239, 68, 68, 0.3)'
           }
 
           return (
-            <button
+            <div
               key={idx}
-              onClick={() => handleSelect(idx)}
-              disabled={!practiceMode || revealed}
+              onClick={() => setSelectedOption(idx)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'space-between',
                 gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '10px',
+                padding: '9px 16px',
+                borderRadius: '8px',
                 background: bg,
                 border,
-                color,
-                cursor,
-                textAlign: 'left',
-                width: '100%',
-                transition: 'all 0.2s ease',
-                fontWeight: 600,
+                color: textColor,
+                cursor: 'pointer',
                 fontSize: '14px',
-                lineHeight: 1.5,
-              }}
-              onMouseEnter={(e) => {
-                if (practiceMode && !revealed) {
-                  ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.1)'
-                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.3)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (practiceMode && !revealed) {
-                  ;(e.currentTarget as HTMLButtonElement).style.background = bg
-                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = border.replace('1px solid ', '')
-                }
+                fontWeight,
+                transition: 'all 0.15s ease',
               }}
             >
-              <span
-                style={{
-                  minWidth: '26px',
-                  height: '26px',
-                  borderRadius: '6px',
-                  background: labelBg,
-                  color: labelColor,
-                  fontWeight: 800,
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  transition: 'all 0.2s',
-                }}
-              >
-                {String.fromCharCode(65 + idx)}
-              </span>
-              <span style={{ flex: 1 }}>{opt}</span>
-              {revealed && isThis && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontWeight: 700, minWidth: '20px' }}>{optionLetter})</span>
+                <span style={{ lineHeight: 1.5 }}>{opt}</span>
+              </div>
+              {badgeText && (
                 <span
                   style={{
                     fontSize: '11px',
                     fontWeight: 800,
-                    padding: '2px 8px',
+                    padding: '3px 10px',
                     borderRadius: '6px',
-                    background: 'rgba(16,185,129,0.25)',
-                    color: '#34d399',
-                    border: '1px solid rgba(16,185,129,0.4)',
+                    background: badgeBg,
+                    color: '#ffffff',
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
                   }}
                 >
-                  ✓ Correct
+                  {badgeText}
                 </span>
               )}
-              {revealed && isThisSelected && !isThis && (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    background: 'rgba(239,68,68,0.2)',
-                    color: '#f87171',
-                    border: '1px solid rgba(239,68,68,0.35)',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                  }}
-                >
-                  ✗ Wrong
-                </span>
-              )}
-            </button>
+            </div>
           )
         })}
       </div>
 
-      {/* Explanation */}
-      {revealed && mcq.explanation && (
+      {/* Explanation Box */}
+      {mcq.explanation && (
         <div
           style={{
-            marginTop: '14px',
-            padding: '14px 16px',
-            background: 'rgba(6,182,212,0.08)',
-            border: '1px solid rgba(6,182,212,0.2)',
-            borderRadius: '10px',
-            borderLeft: '3px solid #06b6d4',
+            marginTop: '12px',
+            marginLeft: '12px',
+            padding: '12px 16px',
+            background: isLight ? '#f8fafc' : 'rgba(56, 189, 248, 0.08)',
+            border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(56, 189, 248, 0.25)',
+            borderLeft: `4px solid ${isLight ? '#0284c7' : '#38bdf8'}`,
+            borderRadius: '6px',
+            fontSize: '13px',
+            color: isLight ? '#334155' : '#7dd3fc',
+            lineHeight: 1.6,
           }}
         >
-          <p style={{ fontSize: '12px', fontWeight: 800, color: '#22d3ee', marginBottom: '4px' }}>
-            💡 Explanation
-          </p>
-          <p style={{ fontSize: '13px', color: 'var(--clr-text-2)', margin: 0, lineHeight: 1.6 }}>
-            {mcq.explanation}
-          </p>
-        </div>
-      )}
-
-      {/* Static mode explanation */}
-      {!practiceMode && mcq.explanation && (
-        <div
-          style={{
-            marginTop: '14px',
-            padding: '14px 16px',
-            background: 'rgba(6,182,212,0.06)',
-            border: '1px solid rgba(6,182,212,0.15)',
-            borderRadius: '10px',
-            borderLeft: '3px solid rgba(6,182,212,0.5)',
-          }}
-        >
-          <p style={{ fontSize: '12px', fontWeight: 800, color: '#22d3ee', marginBottom: '4px' }}>
-            💡 Explanation
-          </p>
-          <p style={{ fontSize: '13px', color: 'var(--clr-text-2)', margin: 0, lineHeight: 1.6 }}>
-            {mcq.explanation}
-          </p>
-        </div>
-      )}
-
-      {/* Try Again (practice mode) */}
-      {practiceMode && revealed && (
-        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            onClick={reset}
-            style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              color: 'var(--clr-text-3)',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '8px',
-              padding: '5px 12px',
-              cursor: 'pointer',
-            }}
-          >
-            🔄 Try Again
-          </button>
-          {isCorrect ? (
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>
-              🎉 Correct! Great job.
-            </span>
-          ) : (
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#f87171' }}>
-              ❌ Wrong! The correct answer is{' '}
-              <strong>{String.fromCharCode(65 + mcq.correctOption)}</strong>.
-            </span>
-          )}
+          <strong style={{ fontWeight: 700, color: isLight ? '#0369a1' : '#38bdf8' }}>💡 Explanation:</strong>{' '}
+          <span style={{ fontStyle: 'italic' }}>{mcq.explanation}</span>
         </div>
       )}
     </div>
@@ -352,10 +163,9 @@ function McqCard({
 export default function McqPracticeClient({ initialSubject }: { initialSubject: Subject }) {
   const [subject] = useState<Subject>(initialSubject)
   const [filterYear, setFilterYear] = useState('all')
-  const [filterCategory, setFilterCategory] = useState('all')
   const [currentUrl, setCurrentUrl] = useState('')
   const [isPaid, setIsPaid] = useState(false)
-  const [practiceMode, setPracticeMode] = useState(false)
+  const paperTheme = 'light'
 
   // Download ad modal states
   const [downloadAdActive, setDownloadAdActive] = useState(false)
@@ -422,11 +232,9 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
 
   const mcqs = subject.mcqs || []
   const years = Array.from(new Set(mcqs.map(m => m.year).filter(Boolean))).sort((a, b) => (b as number) - (a as number))
-  const categories = Array.from(new Set(mcqs.map(m => m.examCategory).filter(Boolean)))
 
   const filtered = mcqs.filter(m => {
     if (filterYear !== 'all' && String(m.year) !== filterYear) return false
-    if (filterCategory !== 'all' && m.examCategory !== filterCategory) return false
     return true
   })
 
@@ -435,7 +243,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
     .replace(/\s*(old syllabus|new syllabus)/gi, '')
     .trim()
 
-  const facultyName = subject.semester?.faculty?.name || 'Bachelor in Computer Application (BCA)'
+  const facultyName = subject.semester?.faculty?.name || 'Bachelor of Computer Application'
   const semName = subject.semester?.name
     ? subject.semester.name.toLowerCase().includes('semester')
       ? subject.semester.name
@@ -443,10 +251,12 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
     : subject.semester?.order
     ? `${subject.semester.order}th Semester`
     : '5th Semester'
-  const yearText = years.length > 0 ? years.join(', ') : 'Past Board Exams'
+
   const shareText = encodeURIComponent(
-    `MCQ Answers & Solutions — ${cleanTitle} (${subject.code}), ${semName} | TU Notes Hub`
+    `TU ${facultyName} ${semName} ${cleanTitle} (${subject.code}) MCQs with Answers — TU Notes Hub`
   )
+
+  const isLight = paperTheme === 'light'
 
   return (
     <div
@@ -459,16 +269,14 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
       }}
     >
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 992px) {
           .mcq-page-grid { grid-template-columns: 1fr !important; padding: 12px 16px !important; }
           .mcq-sidebar { display: none !important; }
-        }
-        .mcq-option-btn:hover:not(:disabled) {
-          transform: translateX(2px);
+          .tu-paper-sheet { padding: 24px 20px !important; }
         }
       `}</style>
 
-      {/* Top Ad */}
+      {/* Top Leaderboard Ad */}
       <div style={{ padding: '16px 24px 0', display: 'flex', justifyContent: 'center' }}>
         <AdUnit type="leaderboard" slot="mcq-top-banner" />
       </div>
@@ -488,190 +296,39 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
           boxSizing: 'border-box',
         }}
       >
-        {/* ── Main Left ── */}
+        {/* ── Main Left Column (Official TU Paper Sheet Format) ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-          {/* Header Card */}
+          {/* Top Control Bar (Theme & Download Actions) */}
           <div
             className="glass-card"
             style={{
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-            }}
-          >
-            {/* Breadcrumbs */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span
-                className="badge badge-semester"
-                style={{ fontSize: '11px', fontWeight: 700 }}
-              >
-                🎓 {facultyName}
-              </span>
-              <span
-                className="badge badge-primary"
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  background: 'rgba(99,102,241,0.15)',
-                  color: '#a5b4fc',
-                  border: '1px solid rgba(99,102,241,0.3)',
-                }}
-              >
-                📚 {semName}
-              </span>
-              {years.length > 0 && (
-                <span
-                  className="badge"
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    background: 'rgba(16,185,129,0.12)',
-                    color: '#34d399',
-                    border: '1px solid rgba(16,185,129,0.25)',
-                  }}
-                >
-                  📅 {years.join(', ')}
-                </span>
-              )}
-              <span
-                className="badge"
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  background: 'rgba(6,182,212,0.12)',
-                  color: '#22d3ee',
-                  border: '1px solid rgba(6,182,212,0.25)',
-                }}
-              >
-                📝 {filtered.length} Questions
-              </span>
-            </div>
-
-            {/* Title row */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '16px',
-              }}
-            >
-              <div>
-                <h1
-                  style={{
-                    fontSize: '22px',
-                    fontWeight: 900,
-                    color: 'var(--clr-text-1)',
-                    margin: '0 0 6px 0',
-                    lineHeight: 1.3,
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  {cleanTitle}{' '}
-                  <span style={{ color: 'var(--clr-text-3)', fontWeight: 600 }}>
-                    ({subject.code})
-                  </span>
-                </h1>
-                <p style={{ fontSize: '13px', color: 'var(--clr-text-3)', margin: 0, lineHeight: 1.5 }}>
-                  Official Tribhuvan University (TU) past paper MCQs with verified answers — {semName}
-                </p>
-              </div>
-              <button
-                onClick={handleStartDownload}
-                className="btn btn-primary"
-                style={{
-                  padding: '10px 20px',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                ⬇️ Download PDF
-              </button>
-            </div>
-
-            {/* Share Bar */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px' }}>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: 'var(--clr-text-3)',
-                  display: 'block',
-                  marginBottom: '10px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                Share Resource:
-              </span>
-              <div className="flex items-center gap-3 max-md:gap-1.5 max-md:w-full">
-                <a
-                  href={`https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(currentUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1"
-                  style={{ background: '#128c7e', color: '#fff', textDecoration: 'none', fontWeight: 700, border: 'none', display: 'flex', justifyContent: 'center' }}
-                >
-                  <span className="truncate">WhatsApp</span>
-                </a>
-                <a
-                  href="https://www.instagram.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1"
-                  style={{ background: '#E1306C', color: '#fff', textDecoration: 'none', fontWeight: 700, border: 'none', display: 'flex', justifyContent: 'center' }}
-                >
-                  <span className="truncate">Instagram</span>
-                </a>
-                <a
-                  href={`fb-messenger://share/?link=${encodeURIComponent(currentUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1"
-                  style={{ background: '#00B2FF', color: '#fff', textDecoration: 'none', fontWeight: 700, border: 'none', display: 'flex', justifyContent: 'center' }}
-                >
-                  <span className="truncate">Messenger</span>
-                </a>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(currentUrl); alert('Link copied!') }}
-                  className="btn btn-sm max-md:!px-1 max-md:!text-[9px] max-md:flex-1"
-                  style={{ background: 'rgba(255,255,255,0.07)', color: 'var(--clr-text-2)', border: '1px solid rgba(255,255,255,0.12)', fontWeight: 700, display: 'flex', justifyContent: 'center' }}
-                >
-                  <span className="truncate">Copy Link</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Controls bar */}
-          <div
-            className="glass-card"
-            style={{
-              padding: '14px 20px',
+              padding: '12px 20px',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              flexWrap: 'wrap',
               justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              borderRadius: '12px',
             }}
           >
-            {/* Filters */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Breadcrumb Info */}
+            <div style={{ fontSize: '12px', color: 'var(--clr-text-3)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Link href="/" style={{ color: 'var(--clr-text-3)', textDecoration: 'none' }}>Home</Link>
+              <span>/</span>
+              <span>{semName}</span>
+              <span>/</span>
+              <span style={{ color: '#a5b4fc', fontWeight: 700 }}>{cleanTitle} ({subject.code})</span>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               {years.length > 1 && (
                 <select
                   value={filterYear}
                   onChange={e => setFilterYear(e.target.value)}
                   className="input-field"
-                  style={{ padding: '6px 12px', fontSize: '13px', minWidth: '120px', cursor: 'pointer' }}
+                  style={{ padding: '6px 12px', fontSize: '13px', minWidth: '120px', cursor: 'pointer', borderRadius: '8px' }}
                 >
                   <option value="all">All Years</option>
                   {years.map(y => (
@@ -681,129 +338,269 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                   ))}
                 </select>
               )}
-              {categories.length > 1 && (
-                <select
-                  value={filterCategory}
-                  onChange={e => setFilterCategory(e.target.value)}
-                  className="input-field"
-                  style={{ padding: '6px 12px', fontSize: '13px', minWidth: '140px', cursor: 'pointer' }}
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map(c => (
-                    <option key={String(c)} value={String(c)}>
-                      {formatExamType(String(c))}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            {/* Mode Toggle */}
-            <div
-              style={{
-                display: 'flex',
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '10px',
-                padding: '3px',
-                gap: '2px',
-              }}
-            >
               <button
-                onClick={() => setPracticeMode(false)}
+                onClick={handleStartDownload}
+                className="btn btn-primary"
                 style={{
-                  padding: '7px 14px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 700,
+                  padding: '8px 18px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  borderRadius: '10px',
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
                   border: 'none',
-                  background: !practiceMode
-                    ? 'linear-gradient(135deg, rgba(99,102,241,0.8), rgba(139,92,246,0.8))'
-                    : 'transparent',
-                  color: !practiceMode ? '#fff' : 'var(--clr-text-3)',
-                  transition: 'all 0.2s',
                 }}
               >
-                📄 Study Mode
-              </button>
-              <button
-                onClick={() => setPracticeMode(true)}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: practiceMode
-                    ? 'linear-gradient(135deg, rgba(16,185,129,0.8), rgba(5,150,105,0.8))'
-                    : 'transparent',
-                  color: practiceMode ? '#fff' : 'var(--clr-text-3)',
-                  transition: 'all 0.2s',
-                }}
-              >
-                🎯 Practice Mode
+                ⬇️ Download PDF
               </button>
             </div>
           </div>
 
-          {/* Mode hint */}
-          {practiceMode && (
-            <div
-              style={{
-                padding: '12px 16px',
-                background: 'rgba(16,185,129,0.07)',
-                border: '1px solid rgba(16,185,129,0.2)',
-                borderRadius: '10px',
-                fontSize: '13px',
-                color: '#34d399',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <span>🎯</span>
-              <span>Practice Mode: Tap an option to check your answer. Correct answers reveal instantly!</span>
-            </div>
-          )}
-
-          {/* MCQ List */}
-          {filtered.length === 0 ? (
-            <div
-              className="glass-card"
-              style={{ padding: '60px', textAlign: 'center' }}
-            >
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
-              <p style={{ color: 'var(--clr-text-3)', fontSize: '15px' }}>
-                No MCQs match the selected filters.
+          {/* 📜 Official TU Question Paper Sheet Container */}
+          <div
+            className="tu-paper-sheet"
+            style={{
+              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.95)',
+              color: isLight ? '#0f172a' : '#ffffff',
+              padding: '40px 48px',
+              borderRadius: '16px',
+              border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.1)',
+              boxShadow: isLight ? '0 10px 30px rgba(0,0,0,0.25)' : '0 10px 40px rgba(0,0,0,0.5)',
+              position: 'relative',
+              boxSizing: 'border-box',
+            }}
+          >
+            {/* Header Title Centered */}
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h1
+                style={{
+                  fontSize: '24px',
+                  fontWeight: 900,
+                  letterSpacing: '1px',
+                  margin: '0 0 4px 0',
+                  textTransform: 'uppercase',
+                  fontFamily: 'serif, Georgia, Times, sans-serif',
+                  color: isLight ? '#000000' : '#ffffff',
+                }}
+              >
+                TRIBHUVAN UNIVERSITY
+              </h1>
+              <p
+                style={{
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  margin: '0 0 2px 0',
+                  color: isLight ? '#334155' : '#94a3b8',
+                  fontFamily: 'sans-serif',
+                }}
+              >
+                {facultyName}
+              </p>
+              <h2
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 900,
+                  letterSpacing: '0.5px',
+                  margin: '0 0 4px 0',
+                  textTransform: 'uppercase',
+                  color: isLight ? '#000000' : '#e2e8f0',
+                  fontFamily: 'sans-serif',
+                }}
+              >
+                OFFICE OF THE DEAN
+              </h2>
+              <p
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 800,
+                  margin: 0,
+                  color: isLight ? '#000000' : '#fbbf24',
+                  fontFamily: 'sans-serif',
+                }}
+              >
+                {years.length > 0 ? years.join(', ') : '2026'}
               </p>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {filtered.map((m, i) => (
-                <McqCard
-                  key={m.id}
-                  mcq={m}
-                  index={i}
-                  practiceMode={practiceMode}
-                />
-              ))}
+
+            {/* Official Meta Info Table */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                borderBottom: `2px solid ${isLight ? '#0f172a' : 'rgba(255,255,255,0.2)'}`,
+                paddingBottom: '16px',
+                marginBottom: '20px',
+                fontSize: '14px',
+                lineHeight: 1.6,
+                fontFamily: 'sans-serif',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div><strong>Bachelor in Computer Application</strong></div>
+                <div><strong>Course Title:</strong> {cleanTitle}</div>
+                <div><strong>Code No:</strong> {subject.code}</div>
+                <div><strong>Semester:</strong> {semName}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'right' }}>
+                <div><strong>Full Marks: 60</strong></div>
+                <div><strong>Pass Marks: 24</strong></div>
+                <div><strong>Time: 3 hours</strong></div>
+              </div>
             </div>
-          )}
+
+            {/* Group A Header */}
+            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+              <h3
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 900,
+                  margin: '0 0 4px 0',
+                  color: isLight ? '#0f172a' : '#ffffff',
+                }}
+              >
+                Group A (Multiple Choice Questions)
+              </h3>
+              <p
+                style={{
+                  fontSize: '13px',
+                  fontStyle: 'italic',
+                  color: isLight ? '#475569' : '#94a3b8',
+                  margin: 0,
+                }}
+              >
+                Attempt all questions. Correct answers are highlighted in yellow.
+              </p>
+            </div>
+
+            {/* Questions List */}
+            {filtered.length === 0 ? (
+              <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748b' }}>
+                No MCQs available for the selected filter.
+              </div>
+            ) : (
+              <div>
+                {filtered.map((m, i) => (
+                  <div key={m.id}>
+                    <McqItem mcq={m} index={i} paperTheme={paperTheme} />
+
+                    {/* High CPM In-Feed Ad every 5 questions */}
+                    {(i + 1) % 5 === 0 && i !== filtered.length - 1 && (
+                      <div style={{ margin: '20px 0' }}>
+                        <AdUnit type="inline" slot={`mcq-infeed-ad-${i + 1}`} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Footer Share Bar inside Paper */}
+            <div
+              style={{
+                borderTop: `1px solid ${isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)'}`,
+                paddingTop: '16px',
+                marginTop: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+              }}
+            >
+              <span style={{ fontSize: '11px', fontWeight: 700, color: isLight ? '#64748b' : 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Share Official Resource:
+              </span>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <a
+                  href={`https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(currentUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ background: '#128c7e', color: '#fff', textDecoration: 'none', fontWeight: 700, padding: '6px 14px', borderRadius: '6px', fontSize: '12px' }}
+                >
+                  WhatsApp
+                </a>
+                <a
+                  href="https://www.instagram.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ background: '#E1306C', color: '#fff', textDecoration: 'none', fontWeight: 700, padding: '6px 14px', borderRadius: '6px', fontSize: '12px' }}
+                >
+                  Instagram
+                </a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(currentUrl); alert('Link copied!') }}
+                  style={{ background: isLight ? '#f1f5f9' : 'rgba(255,255,255,0.08)', color: isLight ? '#0f172a' : '#cbd5e1', border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.12)', fontWeight: 700, padding: '6px 14px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* ── Right Sidebar ── */}
-        <div className="mcq-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'sticky', top: '80px' }}>
+        {/* ── Right Sidebar (Ads & Upgrade) ── */}
+        <div
+          className="mcq-sidebar"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            position: 'sticky',
+            top: '80px',
+          }}
+        >
+          {/* Top High CTR Ad Slot */}
+          <div
+            className="glass-card"
+            style={{ padding: '16px', textAlign: 'center', borderRadius: '16px' }}
+          >
+            <p
+              style={{
+                fontSize: '10px',
+                color: 'var(--clr-text-3)',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                margin: '0 0 10px 0',
+                fontWeight: 700,
+              }}
+            >
+              SPONSORED ADVERTISEMENT
+            </p>
+            <AdUnit type="medium-rectangle" slot="mcq-sidebar-top-ad" />
+          </div>
 
-          {/* Upgrade card */}
+          {/* High CPM Half-Page / Skyscraper Ad Slot (300x600 - Highest RPM) */}
+          <div
+            className="glass-card"
+            style={{ padding: '16px', textAlign: 'center', borderRadius: '16px' }}
+          >
+            <p
+              style={{
+                fontSize: '10px',
+                color: 'var(--clr-text-3)',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                margin: '0 0 10px 0',
+                fontWeight: 700,
+              }}
+            >
+              SPONSORED CONTENT
+            </p>
+            <AdUnit type="half-page" slot="mcq-sidebar-skyscraper-ad" />
+          </div>
+
+          {/* Upgrade to Elite Banner */}
           <div
             className="glass-card"
             style={{
               padding: '24px',
-              background: 'linear-gradient(135deg, rgba(99,102,241,0.07), rgba(168,85,247,0.07))',
-              border: '1px solid rgba(99,102,241,0.18)',
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1))',
+              border: '1px solid rgba(99,102,241,0.25)',
+              borderRadius: '16px',
             }}
           >
             <h3
@@ -817,7 +614,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                 gap: '8px',
               }}
             >
-              💎 Upgrade to Elite
+              💎 Upgrade to Elite Pass
             </h3>
             <p
               style={{
@@ -827,7 +624,7 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                 lineHeight: 1.6,
               }}
             >
-              Instant PDF downloads, AI Exam Predictor, unlimited MCQ practice — no ads.
+              Instant PDF downloads, AI Exam Predictor, unlimited MCQ practice & zero ads.
             </p>
             <Link
               href="/pricing"
@@ -840,93 +637,11 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
                 borderRadius: '10px',
                 fontSize: '13px',
                 fontWeight: 700,
+                background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
               }}
             >
               Unlock Now →
             </Link>
-          </div>
-
-          {/* Quick Stats */}
-          <div
-            className="glass-card"
-            style={{ padding: '20px' }}
-          >
-            <p
-              style={{
-                fontSize: '11px',
-                fontWeight: 800,
-                color: 'var(--clr-text-3)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                marginBottom: '14px',
-              }}
-            >
-              Quick Stats
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {[
-                { label: 'Total Questions', value: mcqs.length, color: '#a5b4fc' },
-                { label: 'Years Covered', value: years.length > 0 ? years.join(', ') : '—', color: '#fbbf24' },
-                { label: 'Showing Now', value: filtered.length, color: '#34d399' },
-              ].map(stat => (
-                <div
-                  key={stat.label}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '8px 12px',
-                    background: 'rgba(255,255,255,0.03)',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                  }}
-                >
-                  <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600 }}>
-                    {stat.label}
-                  </span>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: stat.color }}>
-                    {stat.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Ad */}
-          <div
-            className="glass-card"
-            style={{ padding: '20px', textAlign: 'center' }}
-          >
-            <p
-              style={{
-                fontSize: '10px',
-                color: 'var(--clr-text-3)',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                marginBottom: '12px',
-              }}
-            >
-              Sponsored
-            </p>
-            <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad-1" />
-          </div>
-
-          <div
-            className="glass-card"
-            style={{ padding: '20px', textAlign: 'center' }}
-          >
-            <p
-              style={{
-                fontSize: '10px',
-                color: 'var(--clr-text-3)',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                marginBottom: '12px',
-              }}
-            >
-              Sponsored
-            </p>
-            <AdUnit type="medium-rectangle" slot="mcq-sidebar-ad-2" />
           </div>
         </div>
       </div>

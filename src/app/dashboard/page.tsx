@@ -666,7 +666,7 @@ function AICompareTool({ subjects, isElite }: { subjects: Subject[]; isElite: bo
       const res = await fetch('/api/ai/mcq-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subjectId: selectedSubjectId, paperIds: selectedPaperIds }),
+        body: JSON.stringify({ subjectId: selectedSubjectId, paperIds: selectedPaperIds, saveToDb: false }),
       })
       const data = await res.json()
       if (res.ok) {

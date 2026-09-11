@@ -608,7 +608,7 @@ function ManageMaterialsTab() {
       const res = await fetch('/api/ai/mcq-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subjectId, paperIds: aiMcqPaperIds }),
+        body: JSON.stringify({ subjectId, paperIds: aiMcqPaperIds, saveToDb: true }),
       })
       const data = await res.json()
       if (res.ok) {
