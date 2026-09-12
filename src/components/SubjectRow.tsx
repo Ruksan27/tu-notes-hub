@@ -116,22 +116,23 @@ export default function SubjectRow({
         const u = JSON.parse(stored)
         setIsEliteAI(u?.packageType === 'ELITE_AI' || u?.role === 'ADMIN' || u?.role === 'CHILD_ADMIN')
       }
-    } catch {}
+    } catch { }
   }, [])
 
   const semPath = getSemesterPath(facultyId, semesterOrder, systemType)
 
   const getResourceLink = (itemTitle: string, category: string, fallbackSlug: string) => {
     if (semPath) {
-      // Use clean subject title for SEO — "computer-graphics-and-animation" ranks better than "cacs305"
-      // slugify() already strips "(Old Syllabus)" / "(New Syllabus)" suffixes
       const subSlug = slugify(subject.title) || slugify(subject.code)
-      const rawItemSlug = slugify(itemTitle) || 'resource'
-      // Truncate item slug to keep URL clean (max 50 chars for item part)
+      let rawItemSlug = slugify(itemTitle) || 'resource'
+      if (['syllabus', 'notes', 'note', 'cheatsheet', 'mcq', 'books', 'lab-work'].includes(rawItemSlug)) {
+        const codePrefix = slugify(subject.code || subject.title)
+        rawItemSlug = `${codePrefix}-${rawItemSlug}`
+      }
       const itemSlug = rawItemSlug.length > 50
         ? rawItemSlug.substring(0, rawItemSlug.lastIndexOf('-', 50)) || rawItemSlug.substring(0, 50)
         : rawItemSlug
-      
+
       // SEO Mappings for URL category segment
       let seoCategory = category
       if (category === 'papers') {
@@ -139,7 +140,7 @@ export default function SubjectRow({
       } else if (category === 'guides') {
         seoCategory = 'books'
       }
-      
+
       return `${semPath}/${subSlug}/${seoCategory}/${itemSlug}`
     }
     return `/${category === 'papers' ? 'paper' : 'note'}/${fallbackSlug}`
@@ -183,8 +184,8 @@ export default function SubjectRow({
       background: isActive
         ? 'var(--grad-brand)'
         : hasItems
-        ? 'rgba(255, 255, 255, 0.03)'
-        : 'transparent',
+          ? 'rgba(255, 255, 255, 0.03)'
+          : 'transparent',
       color: isActive ? '#fff' : 'var(--clr-text-2)',
       display: 'flex',
       alignItems: 'center',
@@ -280,91 +281,118 @@ export default function SubjectRow({
         {(notes.length > 0 || labWorks.length > 0 || projectWorks.length > 0 || projects.length > 0 || pastPapers.length > 0 || guides.length > 0 || syllabusFiles.length > 0 || solutionBooks.length > 0 || cheatsheets.length > 0 || mcqSetsCount > 0) && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
             {notes.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('notes') }}
-                style={getPillStyle('notes', notes.length)}
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/notes` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('notes') }}
+                style={{ textDecoration: 'none' }}
               >
-                📄 Notes ({notes.length})
-              </button>
+                <span style={getPillStyle('notes', notes.length)}>
+                  📄 Notes ({notes.length})
+                </span>
+              </Link>
             )}
-            
+
             {labWorks.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('labWork') }}
-                style={getPillStyle('labWork', labWorks.length)}
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/lab-work` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('labWork') }}
+                style={{ textDecoration: 'none' }}
               >
-                🧪 Lab ({labWorks.length})
-              </button>
+                <span style={getPillStyle('labWork', labWorks.length)}>
+                  🧪 Lab ({labWorks.length})
+                </span>
+              </Link>
             )}
 
             {projectWorks.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('projectWork') }}
-                style={getPillStyle('projectWork', projectWorks.length)}
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/project-work` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('projectWork') }}
+                style={{ textDecoration: 'none' }}
               >
-                📁 Proj Work ({projectWorks.length})
-              </button>
+                <span style={getPillStyle('projectWork', projectWorks.length)}>
+                  📁 Proj Work ({projectWorks.length})
+                </span>
+              </Link>
             )}
 
             {projects.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('project') }}
-                style={getPillStyle('project', projects.length)}
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/project` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('project') }}
+                style={{ textDecoration: 'none' }}
               >
-                💻 Project ({projects.length})
-              </button>
+                <span style={getPillStyle('project', projects.length)}>
+                  💻 Project ({projects.length})
+                </span>
+              </Link>
             )}
 
             {pastPapers.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('pastPapers') }}
-                style={getPillStyle('pastPapers', pastPapers.length)}
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/question-paper` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('pastPapers') }}
+                style={{ textDecoration: 'none' }}
               >
-                📝 Papers ({pastPapers.length})
-              </button>
+                <span style={getPillStyle('pastPapers', pastPapers.length)}>
+                  📝 Papers ({pastPapers.length})
+                </span>
+              </Link>
             )}
 
             {guides.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('guide') }}
-                style={getPillStyle('guide', guides.length)}
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/books` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('guide') }}
+                style={{ textDecoration: 'none' }}
               >
-                📘 Books ({guides.length})
-              </button>
+                <span style={getPillStyle('guide', guides.length)}>
+                  📘 Books ({guides.length})
+                </span>
+              </Link>
             )}
 
             {syllabusFiles.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('syllabus') }}
-                style={{
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/syllabus` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('syllabus') }}
+                style={{ textDecoration: 'none' }}
+              >
+                <span style={{
                   ...getPillStyle('syllabus', syllabusFiles.length),
                   ...(activeTab === 'syllabus' ? {} : {
                     background: 'rgba(245, 158, 11, 0.08)',
                     border: '1px solid rgba(245, 158, 11, 0.3)',
                     color: '#fbbf24',
                   }),
-                }}
-              >
-                📋 Syllabus ({syllabusFiles.length})
-              </button>
+                }}>
+                  📋 Syllabus ({syllabusFiles.length})
+                </span>
+              </Link>
             )}
 
             {solutionBooks.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('solutionBooks') }}
-                style={getPillStyle('solutionBooks', solutionBooks.length)}
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/solution-book` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('solutionBooks') }}
+                style={{ textDecoration: 'none' }}
               >
-                📘 Solution ({solutionBooks.length})
-              </button>
+                <span style={getPillStyle('solutionBooks', solutionBooks.length)}>
+                  📘 Solution ({solutionBooks.length})
+                </span>
+              </Link>
             )}
 
             {cheatsheets.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTab('cheatsheets') }}
-                style={getPillStyle('cheatsheets', cheatsheets.length)}
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/cheatsheet` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('cheatsheets') }}
+                style={{ textDecoration: 'none' }}
               >
-                📋 Cheatsheet ({cheatsheets.length})
-              </button>
+                <span style={getPillStyle('cheatsheets', cheatsheets.length)}>
+                  📋 Cheatsheet ({cheatsheets.length})
+                </span>
+              </Link>
             )}
 
             {mcqSetsCount > 0 && (
@@ -556,7 +584,7 @@ export default function SubjectRow({
                   <h4 style={{ fontSize: '12px', color: '#fbbf24', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📋 Course Syllabus</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {syllabusFiles.map(note => (
-                      <Link key={note.id} href={getResourceLink(note.title, 'notes', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
+                      <Link key={note.id} href={getResourceLink(note.title, 'syllabus', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div
                           variants={cardItemVariants}
                           whileHover={{ scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(245,158,11,0.2)' }}
@@ -592,19 +620,19 @@ export default function SubjectRow({
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px', filter: isEliteAI ? 'none' : 'blur(6px)', userSelect: isEliteAI ? 'auto' : 'none', pointerEvents: isEliteAI ? 'auto' : 'none' }}>
                     {cheatsheets.map(cs => (
                       <Link key={cs.id} href={getResourceLink(cs.title, 'cheatsheet', cs.id)} style={{ textDecoration: 'none' }}>
-                        <motion.div 
-                          variants={cardItemVariants} 
-                          className="glass-card" 
+                        <motion.div
+                          variants={cardItemVariants}
+                          className="glass-card"
                           whileHover={isEliteAI ? { scale: 1.03, y: -2, boxShadow: '0 8px 24px rgba(99,102,241,0.25)' } : {}}
                           whileTap={isEliteAI ? { scale: 0.98 } : {}}
-                          style={{ 
-                            padding: '18px', 
-                            margin: 0, 
-                            borderRadius: '14px', 
-                            background: 'linear-gradient(145deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.05) 100%)', 
-                            border: '1px solid rgba(99,102,241,0.3)', 
-                            boxShadow: '0 4px 20px rgba(99,102,241,0.08)', 
-                            position: 'relative', 
+                          style={{
+                            padding: '18px',
+                            margin: 0,
+                            borderRadius: '14px',
+                            background: 'linear-gradient(145deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.05) 100%)',
+                            border: '1px solid rgba(99,102,241,0.3)',
+                            boxShadow: '0 4px 20px rgba(99,102,241,0.08)',
+                            position: 'relative',
                             overflow: 'hidden',
                             cursor: isEliteAI ? 'pointer' : 'default',
                             display: 'flex',
@@ -613,7 +641,7 @@ export default function SubjectRow({
                             gap: '12px'
                           }}>
                           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.8), transparent)', opacity: 0.7 }} />
-                          
+
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                               <span className="badge badge-elite" style={{ fontSize: '9px', padding: '4px 10px', borderRadius: '20px' }}>✨ ELITE AI ONLY</span>
@@ -623,14 +651,14 @@ export default function SubjectRow({
                             </div>
                             <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--clr-text-1)', margin: '0 0 8px', lineHeight: 1.4 }}>{cs.title}</p>
                             {cs.content && (
-                              <p style={{ 
-                                fontSize: '12px', 
-                                color: 'var(--clr-text-2)', 
-                                margin: 0, 
-                                display: '-webkit-box', 
-                                WebkitLineClamp: 3, 
-                                WebkitBoxOrient: 'vertical', 
-                                overflow: 'hidden', 
+                              <p style={{
+                                fontSize: '12px',
+                                color: 'var(--clr-text-2)',
+                                margin: 0,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
                                 lineHeight: 1.5
                               }}>
                                 {cs.content}

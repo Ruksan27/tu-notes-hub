@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AdUnit from '@/components/ads/AdUnit'
+import Breadcrumb from '@/components/Breadcrumb'
 
 export interface MCQ {
   id: string
@@ -268,6 +269,10 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
   const categoryDisplay = categories.length > 0 ? categories.map(c => formatCategoryText(String(c))).join(' / ') : 'BOARD EXAM'
   const dynamicHeading = `TU ${facCode} ${semName} — ${yearDisplay} ${categoryDisplay} — ${cleanTitle} MCQs`
 
+  const facultyId = subject.semester?.faculty?.id || 'bca'
+  const semOrder = subject.semester?.order || 1
+  const semSlug = `${semOrder}${semOrder === 1 ? 'st' : semOrder === 2 ? 'nd' : semOrder === 3 ? 'rd' : 'th'}-semester`
+
   return (
     <div
       style={{
@@ -285,6 +290,19 @@ export default function McqPracticeClient({ initialSubject }: { initialSubject: 
           .tu-paper-sheet { padding: 24px 20px !important; }
         }
       `}</style>
+
+      {/* Breadcrumb */}
+      <div style={{ padding: '12px 24px 0', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+        <Breadcrumb
+          items={[
+            { label: 'Home', href: '/' },
+            { label: facCode, href: `/faculty/${facultyId}` },
+            { label: semName, href: `/faculty/${facultyId}/${semSlug}` },
+            { label: cleanTitle },
+            { label: 'MCQs' },
+          ]}
+        />
+      </div>
 
       {/* Top Leaderboard Ad (Free Users Only) */}
       {!isPaid && (

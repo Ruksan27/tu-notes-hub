@@ -7,7 +7,7 @@ import AdUnit from '@/components/ads/AdUnit'
 
 import SemesterSubjectFilter from '@/components/SemesterSubjectFilter'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export async function generateStaticParams() {
   const semesters = await prisma.semester.findMany({
@@ -75,6 +75,7 @@ export default async function SemesterPage({ params }: Props) {
               linkedSubject: {
                 include: {
                   notes: {
+                    where: { status: { not: 'REJECTED' } },
                     orderBy: { createdAt: 'desc' },
                     select: {
                       id: true,
@@ -98,7 +99,7 @@ export default async function SemesterPage({ params }: Props) {
                   },
                   cheatsheets: {
                     orderBy: { createdAt: 'desc' },
-                    select: { id: true, title: true, content: true, subjectId: true, createdAt: true }
+                    select: { id: true, title: true, content: true, files: true, subjectId: true, createdAt: true }
                   },
                   mcqs: {
                     orderBy: { createdAt: 'asc' },
@@ -119,6 +120,7 @@ export default async function SemesterPage({ params }: Props) {
                 }
               },
               notes: {
+                where: { status: { not: 'REJECTED' } },
                 orderBy: { createdAt: 'desc' },
                 select: {
                   id: true,
@@ -142,7 +144,7 @@ export default async function SemesterPage({ params }: Props) {
               },
               cheatsheets: {
                 orderBy: { createdAt: 'desc' },
-                select: { id: true, title: true, content: true, subjectId: true, createdAt: true }
+                select: { id: true, title: true, content: true, files: true, subjectId: true, createdAt: true }
               },
               mcqs: {
                 orderBy: { createdAt: 'asc' },

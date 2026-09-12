@@ -30,13 +30,17 @@ export function fixCloudinaryUrl(url: string | null | undefined): string {
   if (clean.startsWith('http://')) {
     clean = clean.replace('http://', 'https://')
   }
-  // Convert Cloudinary raw PDF/image URLs to image URLs (raw URLs return HTTP 401 on Cloudinary CDN)
+  // NOTE: Do NOT convert /raw/upload/ PDFs to /image/upload/ — Cloudinary returns 404
+  // for raw-type assets served via the image endpoint. The file-proxy handles signing
+  // /raw/upload/ PDFs correctly via Cloudinary SDK.
+  // Only convert raw IMAGE files (jpg, png, webp, gif) to image endpoint.
   if (clean.includes('res.cloudinary.com') && clean.includes('/raw/upload/')) {
     const pathNoQuery = clean.split('?')[0]
     const ext = pathNoQuery.split('.').pop()?.toLowerCase() || ''
-    if (ext === 'pdf' || ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
       clean = clean.replace('/raw/upload/', '/image/upload/')
     }
+    // PDFs: keep as /raw/upload/ — file-proxy will sign them
   }
   return clean
 }

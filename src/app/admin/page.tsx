@@ -61,6 +61,21 @@ function getShortFacultyName(name: string) {
     .replace('Bachelor of Arts', 'BA Arts')
 }
 
+function parseDriveLink(link: string): string | null {
+  if (!link) return null
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/uc\?(?:.*&)?id=([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+  ]
+  for (const pattern of patterns) {
+    const match = link.match(pattern)
+    if (match?.[1]) return match[1]
+  }
+  return null
+}
+
 export default function AdminPage() {
 
   const [user, setUser] = useState<{ role: string; name: string; email: string; packageType: string; adminFacultyId?: string; adminSemesterId?: string } | null>(null)
@@ -699,8 +714,8 @@ function ManageMaterialsTab() {
     }
   }
 
-  function openPaperViewer(item: any, type: 'pastpaper' | 'note' | 'cheatsheet', title: string) {
-    const textVal = item.extractedText || item.content || ''
+  function openPaperViewer(item: any, type: 'pastpaper' | 'note' | 'cheatsheet' | 'solutionbook', title: string) {
+    const textVal = item.extractedText || item.content || item.description || ''
     let filesArr: any[] = []
     if (Array.isArray(item.files)) {
       filesArr = item.files
@@ -1001,13 +1016,13 @@ function ManageMaterialsTab() {
     setEditItem(item)
     setEditType(type)
     if (type === 'note') {
-      setEditForm({ title: item.title, description: item.description || '', noteType: item.noteType, isPremium: item.isPremium, author: item.author || '' })
+      setEditForm({ title: item.title, description: item.description || '', noteType: item.noteType, isPremium: item.isPremium, author: item.author || '', cloudinaryUrl: item.cloudinaryUrl || '' })
     } else if (type === 'pastpaper') {
-      setEditForm({ year: item.year, examType: item.examType })
+      setEditForm({ year: item.year, examType: item.examType, cloudinaryUrl: item.cloudinaryUrl || '' })
     } else if (type === 'cheatsheet') {
       setEditForm({ title: item.title, content: item.content })
     } else if (type === 'solutionbook') {
-      setEditForm({ title: item.title, description: item.description || '', isPremium: item.isPremium, author: item.author || '' })
+      setEditForm({ title: item.title, description: item.description || '', isPremium: item.isPremium, author: item.author || '', cloudinaryUrl: item.cloudinaryUrl || '' })
     } else if (type === 'mcq') {
       const opts = Array.isArray(item.options) ? [...item.options] : (typeof item.options === 'string' ? JSON.parse(item.options) : ['', '', '', ''])
       while (opts.length < 4) opts.push('')
@@ -1514,8 +1529,9 @@ function ManageMaterialsTab() {
                       const hasText = Boolean(n.extractedText && n.extractedText.trim().length > 0)
                       const textLen = n.extractedText ? n.extractedText.length : 0
                       const isPending = n.status === 'PENDING'
-                      const isApproved = n.status === 'APPROVED' || !n.status
                       const isRejected = n.status === 'REJECTED'
+                      const isStudentSubmission = (n.awardedPoints && n.awardedPoints > 0) || isPending || isRejected || (n.author && n.author.includes('@') && !n.author.includes('admin'))
+                      const isApprovedSubmission = n.status === 'APPROVED' && isStudentSubmission
 
                       return (
                         <tr key={n.id} style={{ background: isPending ? 'rgba(245, 158, 11, 0.05)' : 'transparent' }}>
@@ -1526,7 +1542,7 @@ function ManageMaterialsTab() {
                           <td><span className="badge badge-semester" style={{ fontSize: '11px' }}>{n.noteType?.replace('_', ' ')}</span></td>
                           <td>
                             {isPending && <span className="badge" style={{ background: 'rgba(245,158,11,0.2)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.4)', fontSize: '11px' }}>⏳ PENDING</span>}
-                            {isApproved && <span className="badge badge-success" style={{ fontSize: '11px' }}>✅ APPROVED</span>}
+                            {isApprovedSubmission && <span className="badge badge-success" style={{ fontSize: '11px' }}>✅ APPROVED</span>}
                             {isRejected && (
                               <div>
                                 <span className="badge badge-low" style={{ fontSize: '11px' }}>❌ REJECTED</span>
@@ -1536,6 +1552,11 @@ function ManageMaterialsTab() {
                                   </div>
                                 )}
                               </div>
+                            )}
+                            {!isPending && !isRejected && !isApprovedSubmission && (
+                              <span className="badge" style={{ background: 'rgba(99,102,241,0.12)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)', fontSize: '11px' }}>
+                                🛡️ Official Upload
+                              </span>
                             )}
                           </td>
                           <td>
@@ -1787,14 +1808,39 @@ function ManageMaterialsTab() {
                   <tbody>
                     {solutionBooks.map((b: any) => (
                       <tr key={b.id} style={{ borderBottom: '1px solid var(--clr-border)' }}>
-                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>{b.title}</td>
+                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>
+                          <div>{b.title}</div>
+                          {b.author && <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>by {b.author}</div>}
+                        </td>
                         <td style={{ padding: '12px 16px' }}>
                           <span className={`badge ${b.isPremium ? 'badge-elite' : 'badge-success'}`}>
                             {b.isPremium ? '💎 Premium' : '🔓 Free'}
                           </span>
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(b.id, 'solutionbook', b.title)}>🗑️ Delete</button>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <button
+                              className="btn btn-sm"
+                              style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '11px' }}
+                              onClick={() => openPaperViewer(b, 'solutionbook', b.title)}
+                            >
+                              👁️ View
+                            </button>
+                            <button
+                              className="btn btn-sm"
+                              style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', fontSize: '11px' }}
+                              onClick={() => openEdit(b, 'solutionbook')}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              style={{ fontSize: '11px' }}
+                              onClick={() => handleDelete(b.id, 'solutionbook', b.title)}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1899,7 +1945,7 @@ function ManageMaterialsTab() {
                           🔗 Open File in New Tab
                         </a>
                         {/* Download original file */}
-                        <a href={`/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}&filename=${encodeURIComponent(viewPaperItem.title || 'download')}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-secondary ml-2" style={{ textDecoration: 'none' }}>
+                        <a href={`/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}&filename=${encodeURIComponent(viewPaperItem.title || 'download')}&download=true`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-secondary ml-2" style={{ textDecoration: 'none' }}>
                           📥 Download Original
                         </a>
                       </div>
@@ -1909,12 +1955,21 @@ function ManageMaterialsTab() {
                           <img src={viewPaperItem.cloudinaryUrl} alt={viewPaperItem.title} style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '8px' }} />
                         </div>
                       ) : (() => {
-                        // For Cloudinary raw/PDF files, embed through file-proxy (bypasses X-Frame-Options)
-                        // For others, use Google Docs viewer
                         const isCloudinaryRaw = viewPaperItem.cloudinaryUrl.includes('res.cloudinary.com')
-                        const embedSrc = isCloudinaryRaw
-                          ? `/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}`
-                          : `https://docs.google.com/gview?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}&embedded=true`
+                        const isDrive = viewPaperItem.cloudinaryUrl.includes('drive.google.com')
+                        let driveId: string | null = null
+                        if (isDrive) {
+                          const match = viewPaperItem.cloudinaryUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || viewPaperItem.cloudinaryUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+                          if (match?.[1]) driveId = match[1]
+                          else if (typeof parseDriveLink === 'function') driveId = parseDriveLink(viewPaperItem.cloudinaryUrl)
+                        }
+
+                        const embedSrc = isDrive && driveId
+                          ? `https://drive.google.com/file/d/${driveId}/preview`
+                          : isCloudinaryRaw
+                            ? `/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}#toolbar=0&navpanes=0`
+                            : `https://docs.google.com/gview?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}&embedded=true`
+
                         return (
                           <iframe
                             src={embedSrc}
@@ -2422,24 +2477,34 @@ function ManageMaterialsTab() {
                     <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author</label>
                     <input className="input-field" value={editForm.author || ''} onChange={e => setEditForm({ ...editForm, author: e.target.value })} />
                   </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>File URL (Cloudinary / Google Drive)</label>
+                    <input className="input-field" value={editForm.cloudinaryUrl || ''} onChange={e => setEditForm({ ...editForm, cloudinaryUrl: e.target.value })} placeholder="https://res.cloudinary.com/... or https://drive.google.com/..." />
+                  </div>
                 </>
               )}
 
               {editType === 'pastpaper' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Year</label>
-                    <input className="input-field" type="number" value={editForm.year || ''} onChange={e => setEditForm({ ...editForm, year: e.target.value })} />
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Year</label>
+                      <input className="input-field" type="number" value={editForm.year || ''} onChange={e => setEditForm({ ...editForm, year: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Type</label>
+                      <select className="input-field" value={editForm.examType || ''} onChange={e => setEditForm({ ...editForm, examType: e.target.value })} style={{ cursor: 'pointer' }}>
+                        <option value="BOARD_EXAM">🎓 Board Exam</option>
+                        <option value="INTERNAL_EXAM">🏫 Internal Exam</option>
+                        <option value="BACK_PAPER">🔄 Back Paper</option>
+                      </select>
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Exam Type</label>
-                    <select className="input-field" value={editForm.examType || ''} onChange={e => setEditForm({ ...editForm, examType: e.target.value })} style={{ cursor: 'pointer' }}>
-                      <option value="BOARD_EXAM">🎓 Board Exam</option>
-                      <option value="INTERNAL_EXAM">🏫 Internal Exam</option>
-                      <option value="BACK_PAPER">🔄 Back Paper</option>
-                    </select>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>File URL (Cloudinary / Google Drive)</label>
+                    <input className="input-field" value={editForm.cloudinaryUrl || ''} onChange={e => setEditForm({ ...editForm, cloudinaryUrl: e.target.value })} placeholder="https://res.cloudinary.com/... or https://drive.google.com/..." />
                   </div>
-                </div>
+                </>
               )}
 
               {editType === 'cheatsheet' && (
@@ -2477,6 +2542,10 @@ function ManageMaterialsTab() {
                       <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author</label>
                       <input className="input-field" value={editForm.author || ''} onChange={e => setEditForm({ ...editForm, author: e.target.value })} />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>File URL (Cloudinary / Google Drive)</label>
+                    <input className="input-field" value={editForm.cloudinaryUrl || ''} onChange={e => setEditForm({ ...editForm, cloudinaryUrl: e.target.value })} placeholder="https://res.cloudinary.com/... or https://drive.google.com/..." />
                   </div>
                 </>
               )}
@@ -3531,11 +3600,6 @@ function UploadTab({ user }: { user?: any }) {
     })
   }, [facultyId, user])
 
-  // Helper: extract Google Drive file ID from share link
-  function parseDriveLink(link: string): string | null {
-    const match = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
-    return match ? match[1] : null
-  }
   function normalizeDriveUrl(link: string): string {
     const fileId = parseDriveLink(link)
     return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : link
@@ -3962,7 +4026,7 @@ function UploadTab({ user }: { user?: any }) {
   }
 
   const typeOptions = [
-    { type: 'NOTE',          icon: '📄', label: 'Study Note', desc: 'Handwritten & PDF notes' },
+    { type: 'NOTE',          icon: '📄', label: 'Notes & Coursework', desc: 'Notes, Lab Reports, Projects & Guides' },
     { type: 'PAST_PAPER',    icon: '📝', label: 'Past Paper', desc: 'TU Exam Board papers' },
     { type: 'CHEATSHEET',    icon: '📋', label: 'Cheatsheet', desc: 'Quick exam revision' },
     { type: 'SOLUTION_BOOK', icon: '📚', label: 'Solution Book', desc: 'Full semester guide' },
@@ -4038,6 +4102,53 @@ function UploadTab({ user }: { user?: any }) {
               </button>
             ))}
           </div>
+
+          {contentType === 'NOTE' && (
+            <div className="mt-5 pt-4 border-t border-white/10">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+                Select Specific Format / Sub-type:
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { type: 'HANDWRITTEN', icon: '✍️', label: 'Handwritten Notes' },
+                  { type: 'SHORT_NOTES', icon: '📝', label: 'Short Notes' },
+                  { type: 'SLIDES_PPT', icon: '🖥️', label: 'Slides / PPTX' },
+                  { type: 'PROJECT_WORK', icon: '📁', label: 'Project Work' },
+                  { type: 'PROJECT', icon: '💻', label: 'Full Project' },
+                  { type: 'LAB_WORK', icon: '🧪', label: 'Lab Work' },
+                  { type: 'PDF_BOOK', icon: '📚', label: 'PDF Book' },
+                  { type: 'GUIDE', icon: '📘', label: 'Guide' },
+                  { type: 'SYLLABUS', icon: '📋', label: 'Syllabus' },
+                ].map(fmt => (
+                  <button
+                    key={fmt.type}
+                    type="button"
+                    onClick={() => setNoteType(fmt.type)}
+                    className={`
+                      flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer
+                      ${noteType === fmt.type
+                        ? 'bg-indigo-500/25 border-indigo-500 text-white shadow-md shadow-indigo-500/20'
+                        : 'bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/[0.08] hover:text-white'}
+                    `}
+                  >
+                    <span>{fmt.icon}</span>
+                    <span>{fmt.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-[11px] text-cyan-400 mt-3 flex items-center gap-1.5 font-medium">
+                ⚡ Target SEO Category URL: <code className="bg-black/40 text-cyan-300 px-2 py-0.5 rounded font-mono">{
+                  noteType === 'PROJECT' || noteType === 'PROJECT_WORK' ? '/faculty/[fac]/[sem]/[subject]/projects'
+                  : noteType === 'LAB_WORK' ? '/faculty/[fac]/[sem]/[subject]/lab-reports'
+                  : noteType === 'PDF_BOOK' ? '/faculty/[fac]/[sem]/[subject]/books'
+                  : noteType === 'SYLLABUS' ? '/faculty/[fac]/[sem]/[subject]/syllabus'
+                  : noteType === 'GUIDE' ? '/faculty/[fac]/[sem]/[subject]/guides'
+                  : '/faculty/[fac]/[sem]/[subject]/notes'
+                }</code>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ── STEP 2 & STEP 3: COURSE LOCATION & FILE SOURCE (2 Column Layout) ── */}

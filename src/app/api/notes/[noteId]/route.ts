@@ -114,8 +114,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
   // ── Default: try all types in order ──
 
   // 1. Direct ID lookup for Note
-  const note = await prisma.note.findUnique({
-    where: { id: noteId },
+  const note = await prisma.note.findFirst({
+    where: { id: noteId, status: { not: 'REJECTED' } },
     include: subjectInclude,
   })
   if (note) {
@@ -132,7 +132,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ not
   if (cheatsheet) return buildCheatsheetResponse(cheatsheet)
 
   // 4. Slug lookup for Notes
-  const allNotes = await prisma.note.findMany({ include: subjectInclude })
+  const allNotes = await prisma.note.findMany({
+    where: { status: { not: 'REJECTED' } },
+    include: subjectInclude
+  })
   const matchedNote = allNotes.find((n) => {
     const fullSlug = getNoteSlug(n)
     const titleSlug = slugify(n.title || '')

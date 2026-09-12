@@ -1,10 +1,12 @@
 // src/app/faculty/[slug]/[semester]/[...noteParams]/page.tsx
 import { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugs'
 import McqPracticeClient from '@/app/mcq/[subjectId]/McqPracticeClient'
 import DownloadPage from '@/app/download/[noteId]/page'
+
+const KNOWN_TYPES = ['cheatsheet', 'past-paper', 'note', 'mcq', 'notes', 'lab-work', 'project-work', 'projects', 'books', 'question-paper', 'solution-book', 'syllabus', 'guides']
 
 interface Props {
   params: Promise<{
@@ -133,6 +135,56 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
+  const subject = await resolveSubject(slug, semester, noteParams)
+  if (subject) {
+    const cleanTitle = subject.title
+      .replace(/\s*\(\s*(old syllabus|new syllabus|old|new)\s*\)/gi, '')
+      .replace(/\s*(old syllabus|new syllabus)/gi, '')
+      .trim()
+    const facultyName = subject.semester?.faculty?.name || slug.toUpperCase()
+    const semName = subject.semester?.name 
+      ? (subject.semester.name.toLowerCase().includes('semester') ? subject.semester.name : `${subject.semester.name} Semester`) 
+      : `${semester}`
+
+    const lastSeg = Array.isArray(noteParams) ? noteParams[noteParams.length - 1] : ''
+    let typeLabel = 'Study Notes & Materials'
+    let keywordLabel = 'study notes'
+
+    if (lastSeg === 'lab-work') { typeLabel = 'Lab Reports & Practical Works'; keywordLabel = 'lab reports' }
+    else if (lastSeg === 'project-work') { typeLabel = 'Project Work Reports & Documentation'; keywordLabel = 'project works' }
+    else if (lastSeg === 'projects') { typeLabel = 'Projects & Source Code'; keywordLabel = 'projects' }
+    else if (lastSeg === 'books' || lastSeg === 'guides') { typeLabel = 'Reference Books & Exam Guides'; keywordLabel = 'guides and books' }
+    else if (lastSeg === 'syllabus') { typeLabel = 'Official Course Syllabus'; keywordLabel = 'syllabus' }
+    else if (lastSeg === 'question-paper' || lastSeg === 'past-paper') { typeLabel = 'Past Question Papers'; keywordLabel = 'past paper questions' }
+    else if (lastSeg === 'cheatsheet') { typeLabel = 'Exam Revision Cheatsheet'; keywordLabel = 'cheatsheet' }
+    else if (lastSeg === 'solution-book') { typeLabel = 'Solution Book'; keywordLabel = 'solution book' }
+
+    const title = `TU ${facultyName} ${semName} ${cleanTitle} (${subject.code}) ${typeLabel} PDF — TU Notes Hub`
+    const description = `Download official Tribhuvan University (TU) ${facultyName} ${semName} ${cleanTitle} (${subject.code}) ${keywordLabel} PDF, exam guides, lab solutions, and project reports for free on TU Notes Hub.`
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tunoteshub.me'
+    const canonicalUrl = `${baseUrl}/faculty/${slug}/${semester}/${slugify(subject.title) || slugify(subject.code)}/${lastSeg || 'notes'}`
+
+    return {
+      title,
+      description,
+      keywords: [
+        `TU ${cleanTitle} ${typeLabel}`,
+        `${facultyName} ${semName} ${cleanTitle} ${keywordLabel}`,
+        `TU ${subject.code} ${keywordLabel} PDF`,
+        `Tribhuvan University ${cleanTitle} ${subject.code}`,
+        `TU Notes Hub ${cleanTitle}`
+      ],
+      alternates: { canonical: canonicalUrl },
+      openGraph: {
+        title,
+        description,
+        url: canonicalUrl,
+        siteName: 'TU Notes Hub',
+        type: 'article',
+      },
+    }
+  }
+
   return {
     title: 'Download Study Material | TU Notes Hub',
     description: 'Download verified Tribhuvan University study notes, past papers, and solutions.',
@@ -222,6 +274,11 @@ export default async function DynamicNoteOrMcqPage({ params }: Props) {
         <McqPracticeClient initialSubject={subject as any} />
       </>
     )
+  }
+
+  const noteParamsArr = noteParams || []
+  if (noteParamsArr.length === 2 && KNOWN_TYPES.includes(noteParamsArr[1] as any) && noteParamsArr[1] !== 'mcq') {
+    redirect(`/faculty/${slug}/${semester}`)
   }
 
   return <DownloadPage />

@@ -8,6 +8,7 @@ import ExamPaperViewer, { ExamPaperData } from '@/components/ExamPaperViewer'
 import { parseLegacyMarkdownToExamData } from '@/lib/legacyParser'
 import DocLoadingProgress from '@/components/DocLoadingProgress'
 import { fixCloudinaryUrl } from '@/lib/utils'
+import Breadcrumb, { BreadcrumbItem } from '@/components/Breadcrumb'
 
 function extractDriveFileId(link: string): string | null {
   const patterns = [
@@ -41,16 +42,23 @@ function getDriveProxyUrl(link: string): string {
 
 import { extractIdFromSlug } from '@/lib/utils'
 
-const KNOWN_TYPES = ['cheatsheet', 'past-paper', 'note', 'mcq'] as const
+const KNOWN_TYPES = ['cheatsheet', 'past-paper', 'note', 'mcq', 'notes', 'lab-work', 'project-work', 'projects', 'books', 'question-paper', 'solution-book', 'syllabus', 'guides'] as const
 type ContentType = typeof KNOWN_TYPES[number] | null
 
 function getNoteTargetId(p: any): string {
   if (p?.noteParams && Array.isArray(p.noteParams) && p.noteParams.length > 0) {
-    // Filter out known type-segment keywords before building the slug
-    const filtered = (p.noteParams as string[]).filter(s => !KNOWN_TYPES.includes(s as any))
-    const subjectPart = filtered[0] || ''
-    const itemPart = filtered[filtered.length - 1] || ''
-    return extractIdFromSlug(subjectPart === itemPart ? subjectPart : `${subjectPart}-${itemPart}`)
+    const paramsArr = p.noteParams as string[]
+    if (paramsArr.length >= 3) {
+      const subjectPart = paramsArr[0] || ''
+      const itemPart = paramsArr[paramsArr.length - 1] || ''
+      return extractIdFromSlug(subjectPart === itemPart ? subjectPart : `${subjectPart}-${itemPart}`)
+    } else if (paramsArr.length === 2) {
+      const seg1 = paramsArr[1]
+      if (KNOWN_TYPES.includes(seg1 as any)) {
+        return ''
+      }
+      return extractIdFromSlug(seg1)
+    }
   }
   const raw = ((p?.noteSlug || p?.noteId) as string) || ''
   return extractIdFromSlug(raw)
@@ -108,7 +116,7 @@ export default function DownloadPage() {
     // Create a clean filename with correct extension (.pdf, .docx, .pptx, .png, etc.)
     const fileName = getCleanDownloadFileName(title, url)
 
-    // If it's a Cloudinary image, route through our image signing API
+    // If it's a Cloudinary image (non-PDF), route through our image signing API
     if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
       const targetNoteId = getNoteTargetId(params)
       return `/api/download/image?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${fileName}`
@@ -116,20 +124,15 @@ export default function DownloadPage() {
 
     const targetNoteId = getNoteTargetId(params)
 
-    // For PDFs from Cloudinary / external:
+    // For PDFs from Cloudinary: always route through file-proxy which handles URL signing.
+    // This fixes 401 errors from both /image/upload/ and /raw/upload/ Cloudinary PDFs.
     const isPdfUrl = url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/') || url.includes('application/pdf')
+    if (isPdfUrl && url.includes('res.cloudinary.com')) {
+      return `/api/file-proxy?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(fileName)}`
+    }
+
+    // Non-Cloudinary PDFs: watermark API
     if (isPdfUrl && !url.includes('drive.google.com')) {
-      // Cloudinary /image/upload/ supports fl_attachment parameter
-      if (isNote && url.includes('/image/upload/')) {
-        const rawName = fileName.replace(/[^a-zA-Z0-9_\-.]/g, '_')
-        const dlName = rawName.toLowerCase().endsWith('.pdf') ? rawName : `${rawName}.pdf`
-        return url.replace('/upload/', `/upload/fl_attachment:${dlName}/`)
-      }
-      // For /raw/upload/ Cloudinary PDFs, route through file-proxy (watermark API gets 401 from Cloudinary raw assets)
-      if (url.includes('res.cloudinary.com') && url.includes('/raw/upload/')) {
-        return `/api/file-proxy?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(fileName)}`
-      }
-      // For other PDFs (non-Cloudinary), try watermark API with fallback to direct redirect
       return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${encodeURIComponent(fileName)}`
     }
 
@@ -150,6 +153,7 @@ export default function DownloadPage() {
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [aiQuestion, setAiQuestion] = useState('')
   const [isDocLoading, setIsDocLoading] = useState(true)
+  const [docNotFound, setDocNotFound] = useState(false)
 
   const targetNoteId = getNoteTargetId(params)
 
@@ -179,11 +183,34 @@ export default function DownloadPage() {
     setMounted(true)
 
     if (targetNoteId) {
+      setIsDocLoading(true)
       const contentType = getContentType(params)
       const typeQuery = contentType ? `?type=${contentType}` : ''
       fetch(`/api/notes/${targetNoteId}${typeQuery}`)
-        .then((r) => r.json())
-        .then(setNote)
+        .then((r) => {
+          if (!r.ok) throw new Error('404')
+          return r.json()
+        })
+        .then((data) => {
+          if (data && !data.error && (data.title || data.id)) {
+            setNote(data)
+            setDocNotFound(false)
+          } else {
+            setNote(null)
+            setDocNotFound(true)
+          }
+        })
+        .catch(() => {
+          setNote(null)
+          setDocNotFound(true)
+        })
+        .finally(() => {
+          setIsDocLoading(false)
+        })
+    } else {
+      setNote(null)
+      setDocNotFound(true)
+      setIsDocLoading(false)
     }
   }, [targetNoteId])
 
@@ -248,6 +275,10 @@ export default function DownloadPage() {
   // Active view tab state: 'text' or 'original'
   const [activeTab, setActiveTab] = useState<'text' | 'original'>('text')
 
+  // Document Viewer toolbar state for image files
+  const [imageScale, setImageScale] = useState<number>(1)
+  const [imageRotate, setImageRotate] = useState<number>(0)
+
   // Auto-switch to original tab if no extractedText, or if this is a Note (not a past paper)
   // The OCR model produces TU exam-paper JSON — only meaningful for past papers
 
@@ -297,25 +328,26 @@ export default function DownloadPage() {
   // Use the proxied URL for Google Docs Viewer so it can bypass Cloudinary restrictions
   // Note: gview needs an absolute URL to work, but on localhost it will fail anyway.
   // In production, NEXT_PUBLIC_BASE_URL should be set.
+  const isLocalhost = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  )
   const absoluteProxiedUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}${proxiedUrl}` 
     : proxiedUrl
-
   const googleDocsViewer = `https://docs.google.com/gview?url=${encodeURIComponent(absoluteProxiedUrl)}&embedded=true`
-  
+  // For Cloudinary PDFs: use direct URL in iframe (public Cloudinary files load fine in iframes)
+  // gview fails on localhost since it can't access localhost URLs
   const previewUrl = isDriveLink
-    ? (driveId
-      ? `https://docs.google.com/gview?url=${encodeURIComponent(`https://drive.google.com/uc?export=download&id=${driveId}`)}&embedded=true`
-      : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`)
-    : isPdf
-      ? proxiedUrl
-      : isImage
-        ? proxiedUrl
-        : googleDocsViewer
+    ? driveProxyUrl
+    : (isPdf || isImage)
+      ? (isPdf ? `${proxiedUrl}#toolbar=0&navpanes=0` : proxiedUrl)
+      : googleDocsViewer
 
-  const fallbackPreviewUrl = isDriveOfficeDoc
-    ? `https://docs.google.com/gview?url=${encodeURIComponent(driveProxyUrl)}&embedded=true`
-    : proxiedUrl
+  const fallbackPreviewUrl = isDriveLink
+    ? (driveId ? `https://drive.google.com/file/d/${driveId}/preview` : drivePreviewUrl)
+    : isDriveOfficeDoc
+      ? `https://docs.google.com/gview?url=${encodeURIComponent(driveProxyUrl)}&embedded=true`
+      : proxiedUrl
 
   const handleStartDownload = () => {
     if (!fileUrl && note?.isCheatsheet && note?.content) {
@@ -366,7 +398,7 @@ export default function DownloadPage() {
   }
 
   const getDisplayTitle = () => {
-    if (!note) return 'Loading document...'
+    if (!note || !note.title) return 'Document Not Found'
     if (note.isCheatsheet) {
       const facCode = note.subject?.semester?.faculty?.id?.toUpperCase() || 'TU'
       const semName = note.subject?.semester?.name
@@ -381,14 +413,14 @@ export default function DownloadPage() {
       ].filter(Boolean).join(' — ')
     }
     if (note.isPastPaper || !note.noteType) {
-      return note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
+      return (note.title || 'Question Paper').replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
     }
     const facCode = note.subject?.semester?.faculty?.id?.toUpperCase() || 'BCA'
     const semName = note.subject?.semester?.name
       ? (note.subject.semester.name.toLowerCase().includes('semester') ? note.subject.semester.name : `${note.subject.semester.name} Semester`)
       : (note.subject?.semester?.order ? `${note.subject.semester.order}th Semester` : '')
     const subTitle = note.subject?.title ? note.subject.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim() : ''
-    const cleanNoteTitle = note.title ? note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim() : ''
+    const cleanNoteTitle = (note.title || 'Study Material').replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
 
     const isSubIncluded = subTitle && cleanNoteTitle.toLowerCase().includes(subTitle.toLowerCase())
     const parts = [
@@ -401,8 +433,91 @@ export default function DownloadPage() {
     return parts.join(' — ')
   }
 
+  if (!isDocLoading && (docNotFound || !note)) {
+    const slug = (params?.slug as string) || 'bca'
+    const semester = (params?.semester as string) || '1st-semester'
+    
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-[#070b14] text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-4xl mb-6 shadow-xl shadow-indigo-500/10">
+          📄❓
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-black text-white m-0 tracking-tight">
+          Document Not Found
+        </h1>
+        <p className="text-sm text-slate-400 max-w-md mt-3 mb-8 leading-relaxed">
+          The requested study material or document could not be found. It may have been updated, renamed, or moved.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <a
+            href={`/faculty/${slug}/${semester}`}
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-extrabold text-sm shadow-lg shadow-indigo-500/30 hover:opacity-90 transition-all text-decoration-none"
+          >
+            ⬅️ Back to {slug.toUpperCase()} {semester.replace('-', ' ')}
+          </a>
+          <a
+            href="/"
+            className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 font-extrabold text-sm hover:bg-white/10 hover:text-white transition-all text-decoration-none"
+          >
+            🏠 Go to Homepage
+          </a>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', background: '#0b0f19', position: 'relative' }}>
+
+      {/* Breadcrumb */}
+      {note && (() => {
+        const facultyId = note.subject?.semester?.faculty?.id || ''
+        const semOrder = note.subject?.semester?.order
+        const semSlug = semOrder
+          ? `${semOrder}${semOrder === 1 ? 'st' : semOrder === 2 ? 'nd' : semOrder === 3 ? 'rd' : 'th'}-semester`
+          : ''
+        const subjectTitle = note.subject?.title
+          ? note.subject.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
+          : ''
+        const facCode = facultyId.toUpperCase()
+        const semName = note.subject?.semester?.name
+          ? (note.subject.semester.name.toLowerCase().includes('semester')
+            ? note.subject.semester.name
+            : `${note.subject.semester.name} Semester`)
+          : (semOrder ? `${semOrder}th Semester` : '')
+
+        const cleanNoteTitle = note.title
+          ? note.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
+          : ''
+
+        // Determine note type label
+        let typeLabel = ''
+        if (note.isCheatsheet) typeLabel = 'Cheatsheet'
+        else if (note.isPastPaper || !note.noteType) typeLabel = 'Past Paper'
+        else if (note.noteType === 'PDF Book') typeLabel = 'PDF Book'
+        else if (note.noteType === 'Handwritten') typeLabel = 'Handwritten'
+        else if (note.noteType === 'Slides/PPTX') typeLabel = 'Slides'
+        else if (note.noteType === 'Short Notes') typeLabel = 'Short Notes'
+        else if (note.noteType === 'Project Work') typeLabel = 'Project Work'
+        else if (note.noteType === 'Lab Work') typeLabel = 'Lab Work'
+        else if (note.noteType === 'Syllabus') typeLabel = 'Syllabus'
+        else typeLabel = note.noteType || 'Note'
+
+        const items: BreadcrumbItem[] = [
+          { label: 'Home', href: '/' },
+          ...(facCode ? [{ label: facCode, href: `/faculty/${facultyId}` }] : []),
+          ...(semName && semSlug ? [{ label: semName, href: `/faculty/${facultyId}/${semSlug}` }] : []),
+          ...(subjectTitle ? [{ label: subjectTitle }] : []),
+          ...(typeLabel ? [{ label: typeLabel }] : []),
+          { label: cleanNoteTitle || 'Document' },
+        ]
+
+        return (
+          <div style={{ padding: '12px 24px 0', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+            <Breadcrumb items={items} />
+          </div>
+        )
+      })()}
 
       {/* Top Leaderboard Ad (Above the fold) - 728x90/970x90 */}
       {!isPaid && (
@@ -706,14 +821,7 @@ export default function DownloadPage() {
                     <DocLoadingProgress onComplete={() => setIsDocLoading(false)} />
                   </div>
                 )}
-                {activeTab === 'original' && fileUrl && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '12px', color: 'var(--clr-text-3)' }}>
-                    <span>📄 Previewing Original Document File</span>
-                    <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      🔗 Open File in New Tab ↗
-                    </a>
-                  </div>
-                )}
+
                 {activeTab === 'text' && note?.isCheatsheet && note?.content ? (
                   <div style={{ width: '100%', height: '100%', overflowY: 'auto', padding: '30px', background: '#0f172a', color: '#fff' }}>
                     <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -784,15 +892,33 @@ export default function DownloadPage() {
                         return <MarkdownPaperViewer content={note.extractedText} />
                       })()}
                     </div>
-                  ) : isImage ? (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={proxiedUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
-                    </div>
-                  ) : isDriveImage ? (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '20px' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={previewUrl} alt={note?.title || 'Document'} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                  ) : (isImage || isDriveImage) ? (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#1e293b' }}>
+                      {/* Document Toolbar Controls */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '8px 16px', background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: 600 }}>
+                        <span>🔍 Zoom: {Math.round(imageScale * 100)}%</span>
+                        <button onClick={() => setImageScale(s => Math.max(0.4, s - 0.2))} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 700 }}>-</button>
+                        <button onClick={() => setImageScale(s => Math.min(3, s + 0.2))} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 700 }}>+</button>
+                        <button onClick={() => setImageRotate(r => (r + 90) % 360)} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>🔄 Rotate</button>
+                        <button onClick={() => { setImageScale(1); setImageRotate(0) }} style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>↺ Reset</button>
+                      </div>
+                      {/* Viewport Area */}
+                      <div style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '30px' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={isDriveImage ? previewUrl : proxiedUrl}
+                          alt={note?.title || 'Document'}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            borderRadius: '6px',
+                            boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+                            transform: `scale(${imageScale}) rotate(${imageRotate}deg)`,
+                            transition: 'transform 0.2s ease-in-out'
+                          }}
+                        />
+                      </div>
                     </div>
                   ) : (
                     <iframe

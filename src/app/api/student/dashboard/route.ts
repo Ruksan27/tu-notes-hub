@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
         subjects: {
           include: {
             notes: {
+              where: { status: { not: 'REJECTED' } },
               orderBy: { createdAt: 'desc' },
             },
             pastPapers: {

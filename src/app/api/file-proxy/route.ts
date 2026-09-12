@@ -6,51 +6,38 @@ import { v2 as cloudinary } from 'cloudinary'
 
 export const dynamic = 'force-dynamic'
 
-// ---------------------------------------------------------------------------
-// Parse CLOUDINARY_ACCOUNTS (the same format used by /api/upload/signature)
-// Fall back to the individual env vars if the JSON array is absent.
-// ---------------------------------------------------------------------------
-// Store all parsed accounts so we can match the cloud_name from the URL
-let cloudinaryAccounts: Array<{ cloud_name: string; api_key: string; api_secret: string }> = []
-let defaultAccount: { cloud_name: string; api_key: string; api_secret: string } | null = null
+function getCloudinaryAccounts() {
+  let accounts: Array<{ cloud_name: string; api_key: string; api_secret: string }> = []
+  try {
+    const accountsStr = process.env.CLOUDINARY_ACCOUNTS || '[]'
+    const parsed = JSON.parse(accountsStr)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      accounts = parsed
+    }
+  } catch {}
 
-try {
-  const accountsStr = process.env.CLOUDINARY_ACCOUNTS || '[]'
-  const accounts = JSON.parse(accountsStr)
-  if (Array.isArray(accounts) && accounts.length > 0) {
-    cloudinaryAccounts = accounts
-    defaultAccount = accounts[0]
+  if (accounts.length === 0 && process.env.CLOUDINARY_API_SECRET) {
+    accounts = [{
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '',
+      api_key: process.env.CLOUDINARY_API_KEY || '',
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    }]
   }
-} catch {
-  // ignore parse errors
-}
-
-if (!defaultAccount && process.env.CLOUDINARY_API_SECRET) {
-  defaultAccount = {
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
-    api_key: process.env.CLOUDINARY_API_KEY || '',
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  }
-  cloudinaryAccounts = [defaultAccount]
-}
-
-if (cloudinaryAccounts.length === 0) {
-  console.warn(
-    '[FILE_PROXY] No Cloudinary credentials found. Set CLOUDINARY_ACCOUNTS or ' +
-    'CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET in .env.local'
-  )
+  return accounts
 }
 
 /**
  * Try to generate a signed Cloudinary URL for the given URL.
  * Works for BOTH /raw/upload/ and /image/upload/ paths.
+ * Tries 'authenticated' delivery type first, then 'upload' (public).
  * Falls back to the original URL if signing fails or credentials are missing.
  */
 function trySignCloudinaryUrl(rawUrl: string): string {
   // Already signed – nothing to do
   if (/\/s--/.test(rawUrl)) return rawUrl
 
-  if (cloudinaryAccounts.length === 0) return rawUrl
+  const accounts = getCloudinaryAccounts()
+  if (accounts.length === 0) return rawUrl
 
   const isRaw = rawUrl.includes('/raw/upload/')
   const isImage = rawUrl.includes('/image/upload/')
@@ -62,7 +49,7 @@ function trySignCloudinaryUrl(rawUrl: string): string {
     const urlCloudName = match ? match[1] : ''
 
     // Find the matching account, or fall back to default
-    const account = cloudinaryAccounts.find(a => a.cloud_name === urlCloudName) || defaultAccount
+    const account = accounts.find(a => a.cloud_name === urlCloudName) || accounts[0]
     if (!account?.api_secret) return rawUrl
 
     // Configure the SDK with the correct account credentials for this URL
@@ -87,22 +74,43 @@ function trySignCloudinaryUrl(rawUrl: string): string {
     // Strip leading version prefix for the public ID
     const publicId = withoutQuery.replace(/^v\d+\//, '')
 
-    // Assets uploaded without explicit type are type:'upload' (public)
-    const options: any = {
-      resource_type: isRaw ? 'raw' : 'image',
-      type: 'upload',
-      sign_url: true,
-      secure: true,
-    }
-    
-    if (version) {
-      options.version = version
+    if (isRaw) {
+      try {
+        const downloadUrl = cloudinary.utils.private_download_url(publicId, '', {
+          resource_type: 'raw',
+          type: 'upload',
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+        })
+        console.log('[FILE_PROXY_SIGN] Generated private download URL for raw asset:', downloadUrl)
+        return downloadUrl
+      } catch (err) {
+        console.warn('[FILE_PROXY_SIGN] private_download_url failed:', err)
+      }
     }
 
-    const signedUrl: string = cloudinary.url(publicId, options)
+    // For images, try standard signed URLs
+    for (const deliveryType of ['authenticated', 'upload'] as const) {
+      try {
+        const options: any = {
+          resource_type: isImage ? 'image' : 'raw',
+          type: deliveryType,
+          sign_url: true,
+          secure: true,
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+        }
+        
+        if (version) {
+          options.version = version
+        }
 
-    console.log('[FILE_PROXY_SIGN] signed URL:', signedUrl)
-    return signedUrl
+        const signedUrl: string = cloudinary.url(publicId, options)
+        return signedUrl
+      } catch (innerErr) {
+        // Try next type
+      }
+    }
+
+    return rawUrl
   } catch (e) {
     console.error('[FILE_PROXY_SIGN] failed, falling back to unsigned URL:', e)
     return rawUrl
@@ -154,6 +162,7 @@ export async function GET(req: NextRequest) {
     }
 
     const filename = searchParams.get('filename')
+    const isDownload = searchParams.get('download') === 'true'
     const contentType =
       response.headers.get('content-type') || 'application/octet-stream'
 
@@ -165,8 +174,11 @@ export async function GET(req: NextRequest) {
 
     if (filename) {
       const cleanName = decodeURIComponent(filename).replace(/[^a-zA-Z0-9_\-.]/g, '_')
+      const disposition = isDownload ? 'attachment' : 'inline'
       headers['Content-Disposition'] =
-        `attachment; filename="${cleanName}"; filename*=UTF-8''${encodeURIComponent(cleanName)}`
+        `${disposition}; filename="${cleanName}"; filename*=UTF-8''${encodeURIComponent(cleanName)}`
+    } else {
+      headers['Content-Disposition'] = 'inline'
     }
 
     // Stream directly – avoids loading the full PDF into memory

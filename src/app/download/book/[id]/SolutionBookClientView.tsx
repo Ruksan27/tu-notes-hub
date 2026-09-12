@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AdUnit from '@/components/ads/AdUnit'
 import DocLoadingProgress from '@/components/DocLoadingProgress'
+import Breadcrumb from '@/components/Breadcrumb'
 
 interface BookData {
   id: string
@@ -109,7 +110,7 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
     : `https://docs.google.com/gview?url=${encodeURIComponent(rawUrl)}&embedded=true`
   // For Cloudinary PDFs, use the URL directly — the browser will embed it properly in an iframe
   // We do NOT use /api/drive-proxy for Cloudinary as that can cause downloads
-  const proxyEmbedUrl = isDrive ? `/api/drive-proxy?url=${encodeURIComponent(rawUrl)}` : rawUrl
+  const proxyEmbedUrl = isDrive ? `/api/drive-proxy?url=${encodeURIComponent(rawUrl)}` : `/api/file-proxy?url=${encodeURIComponent(rawUrl)}#toolbar=0&navpanes=0`
   let downloadUrl = rawUrl
   const parsedTitle = (cleanTitle || '')
     .replace(/\b(old|new)\s*syllabus\b/gi, '')
@@ -191,20 +192,12 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
 
   // Get the correct embed URL based on viewMode
   const getActiveSourceUrl = () => {
-    // For Google Drive links, ALWAYS use Google Docs Viewer (gview) by default
-    // This bypasses 'Tracking Prevention' (third-party cookie blocking) in Edge/Safari!
     if (isDrive && driveId) {
       return gviewEmbedUrl
     }
 
     if (viewMode === 'drive' && driveId) return driveEmbedUrl
     if (viewMode === 'gview') return gviewEmbedUrl
-
-    // Fix: Cloudinary 'raw' URLs (PDFs/docs) auto-download in iframes if used directly.
-    // Force Google Docs Viewer for non-image Cloudinary files to prevent auto-download loop.
-    if (!isDrive && !isImage) {
-      return gviewEmbedUrl
-    }
 
     return proxyEmbedUrl
   }
@@ -214,15 +207,15 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
       <div style={{ maxWidth: '1600px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
         {/* BREADCRUMB */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px', color: 'var(--clr-text-3)' }}>
-          <Link href="/" style={{ color: 'var(--clr-text-3)' }}>Home</Link>
-          <span>/</span>
-          <Link href={`/faculty/${book.semester.facultyId}`} style={{ color: 'var(--clr-text-3)' }}>{facultyUpper}</Link>
-          <span>/</span>
-          <Link href={`/faculty/${book.semester.facultyId}/${semSlug}`} style={{ color: 'var(--clr-text-3)' }}>{semLabel}</Link>
-          <span>/</span>
-          <span style={{ color: 'var(--clr-text-1)' }}>{cleanTitle}</span>
-        </div>
+        <Breadcrumb
+          items={[
+            { label: 'Home', href: '/' },
+            { label: facultyUpper, href: `/faculty/${book.semester.facultyId}` },
+            { label: semLabel, href: `/faculty/${book.semester.facultyId}/${semSlug}` },
+            { label: 'Solution Books' },
+            { label: cleanTitle },
+          ]}
+        />
 
         {/* TOP TOOLBAR */}
         <div className="glass-card" style={{ padding: '20px 28px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>

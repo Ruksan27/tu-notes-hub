@@ -78,20 +78,33 @@ export async function GET(req: NextRequest) {
         contentType = (response.headers.get('content-type') || '').toLowerCase()
       } else {
         // If it's HTML but no confirm token, it might be a login page (restricted file)
-        // Return a clear error HTML page so the iframe isn't just blank!
+        // Return a clear styled HTML page so the iframe displays a helpful card instead of a raw 403 error!
         const errorHtml = `
+          <!DOCTYPE html>
           <html>
-            <body style="background: #090d16; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center;">
-              <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">🔒 Access Restricted</h2>
-              <p style="color: #94a3b8; max-width: 400px; line-height: 1.5; margin-bottom: 24px;">
-                This Google Drive file requires authentication or is restricted. We cannot display it securely inside the proxy viewer.
-              </p>
-              <a href="${url}" target="_blank" style="padding: 12px 24px; background: #6366f1; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Open directly in Google Drive</a>
+            <head>
+              <meta charset="utf-8" />
+              <style>
+                body { background: #090d16; color: white; font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; padding: 20px; box-sizing: border-box; }
+                .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 32px; border-radius: 16px; max-width: 480px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+                .btn { display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #6366f1, #06b6d4); color: white; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; margin-top: 16px; transition: transform 0.2s; }
+                .btn:hover { transform: scale(1.03); }
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <div style="font-size: 44px; margin-bottom: 12px;">🔒</div>
+                <h2 style="font-size: 20px; font-weight: 800; margin: 0 0 10px 0; color: #f8fafc;">Google Drive Access Restricted</h2>
+                <p style="color: #94a3b8; font-size: 13.5px; line-height: 1.6; margin: 0;">
+                  This Google Drive file permission is set to <strong>Private / Restricted</strong>. To view it inline, update Google Drive sharing settings to <strong>"Anyone with the link can view"</strong>, or click below to open directly.
+                </p>
+                <a href="${url}" target="_blank" class="btn">🔗 Open Directly in Google Drive ↗</a>
+              </div>
             </body>
           </html>
         `
         return new NextResponse(errorHtml, {
-          status: 403,
+          status: 200,
           headers: { 'Content-Type': 'text/html' }
         })
       }

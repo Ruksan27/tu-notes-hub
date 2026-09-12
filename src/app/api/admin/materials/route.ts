@@ -141,9 +141,13 @@ export async function PUT(request: Request) {
     let updated;
 
     if (type === 'note') {
-      const existingNote = await prisma.note.findUnique({ where: { id }, select: { status: true, author: true } })
+      const existingNote = await prisma.note.findUnique({ where: { id }, select: { status: true, author: true, cloudinaryUrl: true } })
       const newStatus = fields.status as 'PENDING' | 'APPROVED' | 'REJECTED' | undefined
       
+      if (fields.cloudinaryUrl && existingNote?.cloudinaryUrl && fields.cloudinaryUrl !== existingNote.cloudinaryUrl) {
+        await deleteFileFromStorage(existingNote.cloudinaryUrl)
+      }
+
       updated = await prisma.note.update({
         where: { id },
         data: {
@@ -152,6 +156,7 @@ export async function PUT(request: Request) {
           ...(fields.noteType !== undefined ? { noteType: fields.noteType } : {}),
           ...(fields.isPremium !== undefined ? { isPremium: fields.isPremium } : {}),
           ...(fields.author !== undefined ? { author: fields.author } : {}),
+          ...(fields.cloudinaryUrl !== undefined ? { cloudinaryUrl: fields.cloudinaryUrl } : {}),
           ...(fields.extractedText !== undefined ? { extractedText: fields.extractedText } : {}),
           ...(fields.status !== undefined ? { status: fields.status } : {}),
           ...(fields.rejectionReason !== undefined ? { rejectionReason: fields.rejectionReason } : {}),
@@ -182,11 +187,17 @@ export async function PUT(request: Request) {
         }
       }
     } else if (type === 'pastpaper') {
+      const existingPaper = await prisma.pastPaper.findUnique({ where: { id }, select: { cloudinaryUrl: true } })
+      if (fields.cloudinaryUrl && existingPaper?.cloudinaryUrl && fields.cloudinaryUrl !== existingPaper.cloudinaryUrl) {
+        await deleteFileFromStorage(existingPaper.cloudinaryUrl)
+      }
+
       updated = await prisma.pastPaper.update({
         where: { id },
         data: {
           ...(fields.year !== undefined ? { year: parseInt(fields.year) } : {}),
           ...(fields.examType !== undefined ? { examType: fields.examType } : {}),
+          ...(fields.cloudinaryUrl !== undefined ? { cloudinaryUrl: fields.cloudinaryUrl } : {}),
           ...(fields.extractedText !== undefined ? { extractedText: fields.extractedText } : {}),
         }
       })
@@ -199,13 +210,19 @@ export async function PUT(request: Request) {
         }
       })
     } else if (type === 'solutionbook') {
+      const existingBook = await prisma.solutionBook.findUnique({ where: { id }, select: { cloudinaryUrl: true } })
+      if (fields.cloudinaryUrl && existingBook?.cloudinaryUrl && fields.cloudinaryUrl !== existingBook.cloudinaryUrl) {
+        await deleteFileFromStorage(existingBook.cloudinaryUrl)
+      }
+
       updated = await prisma.solutionBook.update({
         where: { id },
         data: {
-          title: fields.title,
-          description: fields.description,
-          isPremium: fields.isPremium,
-          author: fields.author,
+          ...(fields.title !== undefined ? { title: fields.title } : {}),
+          ...(fields.description !== undefined ? { description: fields.description } : {}),
+          ...(fields.isPremium !== undefined ? { isPremium: fields.isPremium } : {}),
+          ...(fields.author !== undefined ? { author: fields.author } : {}),
+          ...(fields.cloudinaryUrl !== undefined ? { cloudinaryUrl: fields.cloudinaryUrl } : {}),
         }
       })
     } else if (type === 'mcq') {
