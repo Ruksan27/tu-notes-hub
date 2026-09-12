@@ -78,7 +78,7 @@ export default function BecomeSellerTab({ user }: { user: User }) {
       const data = await res.json()
       if (res.ok) {
         toast.success('Seller application submitted successfully! 🚀')
-        setTimeout(() => window.location.reload(), 1500)
+        router.refresh()
       } else {
         toast.error(data.error || 'Failed to submit application.')
       }

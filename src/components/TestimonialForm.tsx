@@ -35,9 +35,7 @@ export function TestimonialForm() {
       setRole('')
       setContent('')
       setRating(5)
-      setTimeout(() => {
-        window.location.reload()
-      }, 800)
+      router.refresh()
     } catch (err) {
       toast.error('Failed to submit review. Please try again.')
     } finally {

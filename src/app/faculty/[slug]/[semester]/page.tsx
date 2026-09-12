@@ -99,10 +99,11 @@ export default async function SemesterPage({ params }: Props) {
                   },
                   cheatsheets: {
                     orderBy: { createdAt: 'desc' },
-                    select: { id: true, title: true, content: true, files: true, subjectId: true, createdAt: true }
+                    select: { id: true, title: true, files: true, subjectId: true, createdAt: true }
                   },
                   mcqs: {
                     orderBy: { createdAt: 'asc' },
+                    select: { id: true, year: true, examCategory: true }
                   },
                   solutionBooks: {
                     orderBy: { createdAt: 'desc' },
@@ -144,10 +145,11 @@ export default async function SemesterPage({ params }: Props) {
               },
               cheatsheets: {
                 orderBy: { createdAt: 'desc' },
-                select: { id: true, title: true, content: true, files: true, subjectId: true, createdAt: true }
+                select: { id: true, title: true, files: true, subjectId: true, createdAt: true }
               },
               mcqs: {
                 orderBy: { createdAt: 'asc' },
+                select: { id: true, year: true, examCategory: true }
               },
             },
           },
