@@ -488,14 +488,15 @@ export default function DownloadPage() {
         let typeLabel = ''
         if (note.isCheatsheet) typeLabel = 'Cheatsheet'
         else if (note.isPastPaper || !note.noteType) typeLabel = 'Past Paper'
-        else if (note.noteType === 'PDF Book') typeLabel = 'PDF Book'
-        else if (note.noteType === 'Handwritten') typeLabel = 'Handwritten'
-        else if (note.noteType === 'Slides/PPTX') typeLabel = 'Slides'
-        else if (note.noteType === 'Short Notes') typeLabel = 'Short Notes'
-        else if (note.noteType === 'Project Work') typeLabel = 'Project Work'
-        else if (note.noteType === 'Lab Work') typeLabel = 'Lab Work'
-        else if (note.noteType === 'Syllabus') typeLabel = 'Syllabus'
-        else typeLabel = note.noteType || 'Note'
+        else if (note.noteType === 'PDF Book' || note.noteType === 'PDF_BOOK') typeLabel = 'PDF Book'
+        else if (note.noteType === 'Handwritten' || note.noteType === 'HANDWRITTEN') typeLabel = 'Handwritten Notes'
+        else if (note.noteType === 'Slides/PPTX' || note.noteType === 'SLIDES_PPT') typeLabel = 'Presentation Slides'
+        else if (note.noteType === 'Short Notes' || note.noteType === 'SHORT_NOTES') typeLabel = 'Short Notes'
+        else if (note.noteType === 'Project Work' || note.noteType === 'PROJECT_WORK') typeLabel = 'Project Work'
+        else if (note.noteType === 'Lab Work' || note.noteType === 'LAB_WORK') typeLabel = 'Lab Work'
+        else if (note.noteType === 'Lab Report' || note.noteType === 'LAB_REPORT') typeLabel = 'Lab Report'
+        else if (note.noteType === 'Syllabus' || note.noteType === 'SYLLABUS') typeLabel = 'Syllabus'
+        else typeLabel = note.noteType?.replace('_', ' ') || 'Note'
 
         const items: BreadcrumbItem[] = [
           { label: 'Home', href: '/' },

@@ -111,6 +111,62 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
   const [savingAdminLink, setSavingAdminLink] = useState(false)
   const [previewProject, setPreviewProject] = useState<ProjectItem | null>(null)
 
+  // AI Valuation State for Marketplace Projects
+  const [evaluatingPrice, setEvaluatingPrice] = useState(false)
+  const [aiValuationResult, setAiValuationResult] = useState<any>(null)
+  const [hasReportPdf, setHasReportPdf] = useState(true)
+  const [hasDocumentation, setHasDocumentation] = useState(true)
+  const [hasDemoVideo, setHasDemoVideo] = useState(false)
+  const [hasSqlScript, setHasSqlScript] = useState(true)
+
+  async function handleEvaluateProjectPrice() {
+    if (!formData.title && !formData.description && !formData.technologies) {
+      toast.error('Please enter a Project Title, Description, or Technologies first!')
+      return
+    }
+
+    setEvaluatingPrice(true)
+    const toastId = toast.loading('🤖 AI is evaluating project complexity & calculating fair price...')
+
+    try {
+      const res = await fetch('/api/ai/project-valuation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          technologies: formData.technologies,
+          sourceDriveLink: formData.sourceDriveLink,
+          features: formData.features,
+          demoUrl: formData.demoUrl,
+          hasReportPdf,
+          hasDocumentation,
+          hasDemoVideo,
+          hasSqlScript
+        })
+      })
+
+      const data = await res.json()
+      toast.dismiss(toastId)
+
+      if (res.ok && data.appraisal) {
+        setAiValuationResult(data.appraisal)
+        setFormData(f => ({
+          ...f,
+          originalPrice: data.appraisal.calculatedPriceNpr
+        }))
+        toast.success(`✨ Fair Price Calculated: Rs. ${data.appraisal.calculatedPriceNpr} (${data.appraisal.complexityGrade})`)
+      } else {
+        toast.error(data.error || 'Failed to evaluate price')
+      }
+    } catch (err: any) {
+      toast.dismiss(toastId)
+      toast.error(err.message || 'Network error during valuation')
+    } finally {
+      setEvaluatingPrice(false)
+    }
+  }
+
   useEffect(() => {
     if (externalSubTab) setActiveSubTab(externalSubTab)
   }, [externalSubTab])
@@ -983,6 +1039,102 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                     <p className="text-[10px] text-text3 mb-2.5">Emailed to buyer after payment approval</p>
                     <input className={`${INPUT_CLS} font-mono text-xs focus:border-warning ${formData.adminDriveLink ? 'border-warning/30' : ''}`} type="url" placeholder="https://drive.google.com/..." value={formData.adminDriveLink} onChange={e => setFormData({ ...formData, adminDriveLink: e.target.value })} />
                   </div>
+                </div>
+
+                {/* 🤖 AI PROJECT FAIR PRICING & COMPLEXITY APPRAISAL CARD */}
+                <div className="bg-gradient-to-br from-sky-500/10 to-indigo-500/10 border border-sky-500/30 rounded-2xl p-5 flex flex-col gap-4">
+                  <div className="flex justify-between items-center flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[22px]">🤖</span>
+                      <div>
+                        <h4 className="m-0 font-extrabold text-sky-400 text-[15px]">
+                          AI Project Complexity & Fair Price Evaluator
+                        </h4>
+                        <span className="text-xs text-slate-400">
+                          Student-friendly pricing bounded strictly between <strong>Rs. 1,500 (1.5k)</strong> and <strong>Rs. 9,999 (10k)</strong>.
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleEvaluateProjectPrice}
+                      disabled={evaluatingPrice}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 text-white font-extrabold text-[13px] border-none shadow-lg shadow-sky-500/30 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
+                    >
+                      {evaluatingPrice ? (
+                        <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Evaluating...</>
+                      ) : (
+                        '✨ Run Fair AI Pricing'
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Drive Deliverables Checklist for AI Context */}
+                  <div className="bg-black/20 p-3.5 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input type="checkbox" checked={hasReportPdf} onChange={e => setHasReportPdf(e.target.checked)} className="cursor-pointer" />
+                      📄 Report
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input type="checkbox" checked={hasDocumentation} onChange={e => setHasDocumentation(e.target.checked)} className="cursor-pointer" />
+                      📘 Setup Guide
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input type="checkbox" checked={hasSqlScript} onChange={e => setHasSqlScript(e.target.checked)} className="cursor-pointer" />
+                      🗄️ SQL DB Dump
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input type="checkbox" checked={hasDemoVideo} onChange={e => setHasDemoVideo(e.target.checked)} className="cursor-pointer" />
+                      🎥 Video Link
+                    </label>
+                  </div>
+
+                  {/* AI Valuation Result Card */}
+                  {aiValuationResult && (
+                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/80 border border-sky-400/40 rounded-xl p-4">
+                      <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`
+                            px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-white/10
+                            ${aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED' 
+                              ? 'bg-pink-500/20 text-pink-400' 
+                              : 'bg-sky-500/20 text-sky-400'}
+                          `}>
+                            GRADE: {aiValuationResult.complexityGrade}
+                          </span>
+                          <span className="text-sm font-extrabold text-emerald-400">
+                            Calculated Price: Rs. {aiValuationResult.calculatedPriceNpr}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            (Fair Range: Rs. {aiValuationResult.suggestedRange?.min} - Rs. {aiValuationResult.suggestedRange?.max})
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setFormData(f => ({ ...f, originalPrice: aiValuationResult.calculatedPriceNpr }))}
+                          className="text-[11px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg font-extrabold cursor-pointer hover:bg-emerald-500/25 transition-all"
+                        >
+                          ✅ Apply AI Price (Rs. {aiValuationResult.calculatedPriceNpr})
+                        </button>
+                      </div>
+
+                      {/* Justification List */}
+                      {aiValuationResult.justificationList && aiValuationResult.justificationList.length > 0 && (
+                        <div className="mt-2">
+                          <span className="text-[11px] font-extrabold text-slate-400 block mb-1">
+                            💡 Why this price? (Calculation Breakdown):
+                          </span>
+                          <ul className="m-0 pl-4 text-xs text-slate-300 leading-relaxed list-disc">
+                            {aiValuationResult.justificationList.map((reason: string, idx: number) => (
+                              <li key={idx}>{reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
                 </div>
 
                 {/* ── Pricing ── */}

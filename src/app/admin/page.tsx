@@ -1599,9 +1599,9 @@ function ManageMaterialsTab() {
                                 SLIDES_PPT: '🖥️ Slides/PPTX',
                                 SHORT_NOTES: '📝 Short Notes',
                                 PROJECT_WORK: '📁 Project Work',
-                                PROJECT: '💻 Project',
                                 GUIDE: '📘 Guide',
                                 LAB_WORK: '🧪 Lab Work',
+                                LAB_REPORT: '🔬 Lab Report',
                                 SYLLABUS: '📋 Syllabus',
                                 MCQ_FILE: '🎯 MCQ File'
                               } as Record<string, string>)[n.noteType] || n.noteType?.replace('_', ' ')}
@@ -4258,8 +4258,8 @@ function UploadTab({ user }: { user?: any }) {
                   { type: 'SHORT_NOTES', icon: '📝', label: 'Short Notes' },
                   { type: 'SLIDES_PPT', icon: '🖥️', label: 'Slides / PPTX' },
                   { type: 'PROJECT_WORK', icon: '📁', label: 'Project Work' },
-                  { type: 'PROJECT', icon: '💻', label: 'Full Project' },
                   { type: 'LAB_WORK', icon: '🧪', label: 'Lab Work' },
+                  { type: 'LAB_REPORT', icon: '🔬', label: 'Lab Report' },
                   { type: 'PDF_BOOK', icon: '📚', label: 'PDF Book' },
                   { type: 'GUIDE', icon: '📘', label: 'Guide' },
                   { type: 'SYLLABUS', icon: '📋', label: 'Syllabus' },
@@ -4623,125 +4623,6 @@ function UploadTab({ user }: { user?: any }) {
                 </div>
               )}
 
-              {/* 🤖 AI PROJECT FAIR PRICING & COMPLEXITY APPRAISAL CARD */}
-              {(noteType === 'PROJECT' || noteType === 'PROJECT_WORK') && (
-                <div className="bg-gradient-to-br from-sky-500/10 to-indigo-500/10 border border-sky-500/30 rounded-2xl p-5 flex flex-col gap-4">
-                  <div className="flex justify-between items-center flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[22px]">🤖</span>
-                      <div>
-                        <h4 className="m-0 font-extrabold text-sky-400 text-[15px]">
-                          AI Project Complexity & Fair Price Evaluator
-                        </h4>
-                        <span className="text-xs text-slate-400">
-                          Student-friendly pricing bounded strictly between <strong>Rs. 1,500 (1.5k)</strong> and <strong>Rs. 9,999 (10k)</strong>.
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleEvaluateProjectPrice}
-                      disabled={evaluatingPrice}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 text-white font-extrabold text-[13px] border-none shadow-lg shadow-sky-500/30 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
-                    >
-                      {evaluatingPrice ? (
-                        <><span className="spinner w-3.5 h-3.5" /> Evaluating...</>
-                      ) : (
-                        '✨ Run Fair AI Pricing'
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Drive Deliverables Checklist for AI Context */}
-                  <div className="bg-black/20 p-3.5 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                      <input type="checkbox" checked={hasReportPdf} onChange={e => setHasReportPdf(e.target.checked)} className="cursor-pointer" />
-                      📄 Report
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                      <input type="checkbox" checked={hasDocumentation} onChange={e => setHasDocumentation(e.target.checked)} className="cursor-pointer" />
-                      📘 Setup Guide
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                      <input type="checkbox" checked={hasSqlScript} onChange={e => setHasSqlScript(e.target.checked)} className="cursor-pointer" />
-                      🗄️ SQL DB Dump
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                      <input type="checkbox" checked={hasDemoVideo} onChange={e => setHasDemoVideo(e.target.checked)} className="cursor-pointer" />
-                      🎥 Video Link
-                    </label>
-                  </div>
-
-                  {/* AI Valuation Result Card */}
-                  {aiValuationResult && (
-                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/80 border border-sky-400/40 rounded-xl p-4">
-                      <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`
-                            px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-white/10
-                            ${aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED' 
-                              ? 'bg-pink-500/20 text-pink-400' 
-                              : 'bg-sky-500/20 text-sky-400'}
-                          `}>
-                            GRADE: {aiValuationResult.complexityGrade}
-                          </span>
-                          <span className="text-sm font-extrabold text-emerald-400">
-                            Calculated Price: Rs. {aiValuationResult.calculatedPriceNpr}
-                          </span>
-                          <span className="text-xs text-slate-400">
-                            (Fair Range: Rs. {aiValuationResult.suggestedRange?.min} - Rs. {aiValuationResult.suggestedRange?.max})
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setProjectPrice(String(aiValuationResult.calculatedPriceNpr))}
-                          className="text-[11px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg font-extrabold cursor-pointer hover:bg-emerald-500/25 transition-all"
-                        >
-                          ✅ Apply AI Price (Rs. {aiValuationResult.calculatedPriceNpr})
-                        </button>
-                      </div>
-
-                      {/* Justification List */}
-                      {aiValuationResult.justificationList && aiValuationResult.justificationList.length > 0 && (
-                        <div className="mt-2">
-                          <span className="text-[11px] font-extrabold text-slate-400 block mb-1">
-                            💡 Why this price? (Calculation Breakdown):
-                          </span>
-                          <ul className="m-0 pl-4 text-xs text-slate-300 leading-relaxed list-disc">
-                            {aiValuationResult.justificationList.map((reason: string, idx: number) => (
-                              <li key={idx}>{reason}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-
-                  {/* Manual Editable Price Input */}
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider mb-2 text-slate-400">
-                      💰 Selling Price (NPR) * — <span className="text-emerald-400">Editable (You can type any custom price)</span>
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-extrabold text-sky-400">NPR Rs.</span>
-                      <input
-                        className="w-full sm:w-[200px] bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-emerald-400 font-extrabold outline-none focus:border-cyan-400 focus:bg-black/40 transition-all"
-                        type="number"
-                        min="1500"
-                        max="9999"
-                        required
-                        value={projectPrice}
-                        onChange={e => setProjectPrice(e.target.value)}
-                        placeholder="e.g. 3500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {!isSolutionBook && <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--clr-text-3)' }}>Format</label>
@@ -4751,9 +4632,9 @@ function UploadTab({ user }: { user?: any }) {
                     <option value="SLIDES_PPT" style={{ background: 'var(--clr-bg-800)' }}>🖥️ Slides/PPTX</option>
                     <option value="SHORT_NOTES" style={{ background: 'var(--clr-bg-800)' }}>📝 Short Notes</option>
                     <option value="PROJECT_WORK" style={{ background: 'var(--clr-bg-800)' }}>📁 Project Work</option>
-                    <option value="PROJECT" style={{ background: 'var(--clr-bg-800)' }}>💻 Project</option>
                     <option value="GUIDE" style={{ background: 'var(--clr-bg-800)' }}>📘 Guide</option>
                     <option value="LAB_WORK" style={{ background: 'var(--clr-bg-800)' }}>🧪 Lab Work</option>
+                    <option value="LAB_REPORT" style={{ background: 'var(--clr-bg-800)' }}>🔬 Lab Report</option>
                     <option value="SYLLABUS" style={{ background: 'var(--clr-bg-800)' }}>📋 Syllabus</option>
                   </select>
                 </div>}

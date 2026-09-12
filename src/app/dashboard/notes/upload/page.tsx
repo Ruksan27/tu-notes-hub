@@ -608,6 +608,7 @@ export default function StudentNoteUploadPage() {
                   <option value="PROJECT_WORK">🛠️ Project Work / Report (+25 PTS)</option>
                   <option value="MCQ_FILE">🎯 MCQ Question Collection File (+15 PTS)</option>
                   <option value="LAB_WORK">⚡ Lab Work / Practical File (+15 PTS)</option>
+                  <option value="LAB_REPORT">🔬 Lab Report / Practical Report (+15 PTS)</option>
                   <option value="SHORT_NOTES">📋 Short Notes / Cheatsheet (+10 PTS)</option>
                   <option value="SLIDES_PPT">🖥️ Presentation Slides / PPT (+10 PTS)</option>
                   <option value="SYLLABUS">📊 Syllabus & Course Outline (+5 PTS)</option>
