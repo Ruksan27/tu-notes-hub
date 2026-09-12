@@ -602,6 +602,7 @@ function ManageMaterialsTab() {
   const [cheatsheets, setCheatsheets] = useState<any[]>([])
   const [solutionBooks, setSolutionBooks] = useState<any[]>([])
   const [mcqs, setMcqs] = useState<any[]>([])
+  const [noteTypeFilter, setNoteTypeFilter] = useState<string>('ALL')
   const [loading, setLoading] = useState(false)
   const [editItem, setEditItem] = useState<any>(null)
   const [editType, setEditType] = useState('')
@@ -647,8 +648,9 @@ function ManageMaterialsTab() {
   }
   
   // Paper Viewer & Text Editor modal states
-  const [viewPaperItem, setViewPaperItem] = useState<{ id: string; type: 'pastpaper' | 'note' | 'cheatsheet'; title: string; extractedText: string; cloudinaryUrl: string; files?: any[] } | null>(null)
+  const [viewPaperItem, setViewPaperItem] = useState<{ id: string; type: 'pastpaper' | 'note' | 'cheatsheet' | 'solutionbook'; title: string; extractedText: string; cloudinaryUrl: string; files?: any[] } | null>(null)
   const [viewPaperMode, setViewPaperMode] = useState<'PREVIEW' | 'FILE' | 'EDIT'>('PREVIEW')
+  const [selectedFileIdx, setSelectedFileIdx] = useState<number>(0)
   const [editTextValue, setEditTextValue] = useState('')
   const [savingPaperText, setSavingPaperText] = useState(false)
 
@@ -720,12 +722,22 @@ function ManageMaterialsTab() {
     if (Array.isArray(item.files)) {
       filesArr = item.files
     } else if (typeof item.files === 'string') {
-      try { filesArr = JSON.parse(item.files) } catch {}
+      try {
+        const parsed = JSON.parse(item.files)
+        if (Array.isArray(parsed)) filesArr = parsed
+      } catch {}
     }
-    filesArr = filesArr.map(f => typeof f === 'object' && f?.url ? { ...f, url: fixCloudinaryUrl(f.url) } : (typeof f === 'string' ? fixCloudinaryUrl(f) : f))
 
-    const rawUrl = item.cloudinaryUrl || (filesArr.length > 0 && filesArr[0]?.url ? filesArr[0].url : (typeof filesArr[0] === 'string' ? filesArr[0] : ''))
-    const cUrl = fixCloudinaryUrl(rawUrl)
+    filesArr = filesArr
+      .map(f => typeof f === 'object' && f?.url ? { ...f, url: fixCloudinaryUrl(f.url) } : (typeof f === 'string' ? { url: fixCloudinaryUrl(f), name: 'Attachment' } : f))
+      .filter(Boolean)
+
+    const primaryUrl = fixCloudinaryUrl(item.cloudinaryUrl || '')
+    if (primaryUrl && !filesArr.some(f => (typeof f === 'string' ? f : f?.url) === primaryUrl)) {
+      filesArr.unshift({ url: primaryUrl, name: title || 'Main Document' })
+    }
+
+    const cUrl = primaryUrl || (filesArr.length > 0 ? (typeof filesArr[0] === 'string' ? filesArr[0] : filesArr[0]?.url) : '')
 
     setViewPaperItem({
       id: item.id,
@@ -735,6 +747,7 @@ function ManageMaterialsTab() {
       cloudinaryUrl: cUrl,
       files: filesArr
     })
+    setSelectedFileIdx(0)
     setEditTextValue(textVal)
     setViewPaperMode((cUrl || filesArr.length > 0) ? 'FILE' : 'PREVIEW')
   }
@@ -1016,7 +1029,16 @@ function ManageMaterialsTab() {
     setEditItem(item)
     setEditType(type)
     if (type === 'note') {
-      setEditForm({ title: item.title, description: item.description || '', noteType: item.noteType, isPremium: item.isPremium, author: item.author || '', cloudinaryUrl: item.cloudinaryUrl || '' })
+      setEditForm({
+        title: item.title,
+        description: item.description || '',
+        noteType: item.noteType,
+        isPremium: item.isPremium,
+        author: item.author || '',
+        cloudinaryUrl: item.cloudinaryUrl || '',
+        status: item.status || 'APPROVED',
+        rejectionReason: item.rejectionReason || ''
+      })
     } else if (type === 'pastpaper') {
       setEditForm({ year: item.year, examType: item.examType, cloudinaryUrl: item.cloudinaryUrl || '' })
     } else if (type === 'cheatsheet') {
@@ -1293,25 +1315,31 @@ function ManageMaterialsTab() {
                           <td>
                             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                               {(() => {
-                                const url = s.cloudinaryUrl
+                                const url = s.cloudinaryUrl || (Array.isArray(s.files) && s.files[0]?.url)
                                 const isValid = url && url.trim() !== '' && url !== 'https://drive.google.com'
-                                let viewHref = url
-                                if (isValid && (url.endsWith('.pdf') || url.includes('/raw/upload/'))) {
-                                  viewHref = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}`
-                                }
                                 return isValid ? (
-                                  <a
-                                    href={viewHref}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="btn btn-sm btn-outline"
-                                    style={{ fontSize: '10px', padding: '3px 8px' }}
-                                  >
-                                    👁️ View File
-                                  </a>
+                                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                    <button
+                                      className="btn btn-sm"
+                                      style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.4)', fontSize: '10px', padding: '3px 8px' }}
+                                      onClick={() => openPaperViewer(s, 'note', s.title)}
+                                    >
+                                      👁️ View Original
+                                    </button>
+                                    <a
+                                      href={url.includes('res.cloudinary.com') && url.includes('/raw/') ? `/api/file-proxy?url=${encodeURIComponent(url)}` : url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="btn btn-sm btn-outline"
+                                      style={{ fontSize: '10px', padding: '3px 8px' }}
+                                      title="Open link in new browser tab"
+                                    >
+                                      🔗 Direct Link
+                                    </a>
+                                  </div>
                                 ) : (
                                   <span style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic' }}>
-                                    ⚠️ No File Link
+                                    ⚠️ No File Attached
                                   </span>
                                 )
                               })()}
@@ -1507,25 +1535,49 @@ function ManageMaterialsTab() {
           {/* Notes Section */}
           {notes.length > 0 && (
             <div>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                📄 Notes ({notes.length})
-              </h4>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-text-2)', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
+                  📄 Notes ({notes.length})
+                </h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 600 }}>Format Filter:</span>
+                  <select
+                    className="input-field"
+                    style={{ padding: '4px 12px', fontSize: '12px', borderRadius: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)' }}
+                    value={noteTypeFilter}
+                    onChange={e => setNoteTypeFilter(e.target.value)}
+                  >
+                    <option value="ALL">All Formats ({notes.length})</option>
+                    <option value="PDF_BOOK">📚 PDF Book ({notes.filter(n => n.noteType === 'PDF_BOOK').length})</option>
+                    <option value="HANDWRITTEN">✍️ Handwritten ({notes.filter(n => n.noteType === 'HANDWRITTEN').length})</option>
+                    <option value="SLIDES_PPT">🖥️ Slides/PPTX ({notes.filter(n => n.noteType === 'SLIDES_PPT').length})</option>
+                    <option value="SHORT_NOTES">📝 Short Notes ({notes.filter(n => n.noteType === 'SHORT_NOTES').length})</option>
+                    <option value="PROJECT_WORK">📁 Project Work ({notes.filter(n => n.noteType === 'PROJECT_WORK').length})</option>
+                    <option value="PROJECT">💻 Project ({notes.filter(n => n.noteType === 'PROJECT').length})</option>
+                    <option value="GUIDE">📘 Guide ({notes.filter(n => n.noteType === 'GUIDE').length})</option>
+                    <option value="LAB_WORK">🧪 Lab Work ({notes.filter(n => n.noteType === 'LAB_WORK').length})</option>
+                    <option value="SYLLABUS">📋 Syllabus ({notes.filter(n => n.noteType === 'SYLLABUS').length})</option>
+                  </select>
+                </div>
+              </div>
               <div className="table-wrap">
                 <table>
                   <thead>
                     <tr>
                       <th>Title</th>
-                      <th>Type</th>
+                      <th>Type / Format</th>
                       <th>Approval Status</th>
                       <th>Smart AI Status</th>
                       <th>Access</th>
                       <th>Downloads</th>
-                      <th>Date</th>
+                      <th>Upload Date</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {notes.map(n => {
+                    {notes
+                      .filter(n => noteTypeFilter === 'ALL' || n.noteType === noteTypeFilter)
+                      .map(n => {
                       const hasText = Boolean(n.extractedText && n.extractedText.trim().length > 0)
                       const textLen = n.extractedText ? n.extractedText.length : 0
                       const isPending = n.status === 'PENDING'
@@ -1539,7 +1591,22 @@ function ManageMaterialsTab() {
                             <div style={{ fontWeight: 600, maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
                             {n.author && <div style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>by {n.author}</div>}
                           </td>
-                          <td><span className="badge badge-semester" style={{ fontSize: '11px' }}>{n.noteType?.replace('_', ' ')}</span></td>
+                          <td>
+                            <span className="badge badge-semester" style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>
+                              {({
+                                PDF_BOOK: '📚 PDF Book',
+                                HANDWRITTEN: '✍️ Handwritten',
+                                SLIDES_PPT: '🖥️ Slides/PPTX',
+                                SHORT_NOTES: '📝 Short Notes',
+                                PROJECT_WORK: '📁 Project Work',
+                                PROJECT: '💻 Project',
+                                GUIDE: '📘 Guide',
+                                LAB_WORK: '🧪 Lab Work',
+                                SYLLABUS: '📋 Syllabus',
+                                MCQ_FILE: '🎯 MCQ File'
+                              } as Record<string, string>)[n.noteType] || n.noteType?.replace('_', ' ')}
+                            </span>
+                          </td>
                           <td>
                             {isPending && <span className="badge" style={{ background: 'rgba(245,158,11,0.2)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.4)', fontSize: '11px' }}>⏳ PENDING</span>}
                             {isApprovedSubmission && <span className="badge badge-success" style={{ fontSize: '11px' }}>✅ APPROVED</span>}
@@ -1572,7 +1639,10 @@ function ManageMaterialsTab() {
                           </td>
                           <td><span className={`badge ${n.isPremium ? 'badge-elite' : 'badge-success'}`}>{n.isPremium ? '💎 Premium' : '🔓 Free'}</span></td>
                           <td style={{ fontWeight: 600 }}>{n.downloadCount || 0}</td>
-                          <td style={{ fontSize: '12px' }}>{new Date(n.createdAt).toLocaleDateString()}</td>
+                          <td style={{ fontSize: '11px', color: 'var(--clr-text-2)', whiteSpace: 'nowrap' }}>
+                            <div>{new Date(n.createdAt).toLocaleDateString()}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--clr-text-3)' }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                          </td>
                           <td>
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                               {isPending && (
@@ -1934,73 +2004,124 @@ function ManageMaterialsTab() {
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', background: viewPaperMode === 'PREVIEW' ? '#0f172a' : 'transparent' }}>
               {viewPaperMode === 'FILE' ? (
                 <div style={{ width: '100%', height: '100%', minHeight: '550px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {viewPaperItem.cloudinaryUrl ? (
-                    <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                        <span style={{ fontSize: '12px', color: '#a5b4fc', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
-                          📁 File: {viewPaperItem.cloudinaryUrl}
-                        </span>
-                        {/* Open (viewer) */}
-                        <a href={viewPaperItem.cloudinaryUrl.includes('res.cloudinary.com') && viewPaperItem.cloudinaryUrl.includes('/raw/') ? `/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}` : viewPaperItem.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ textDecoration: 'none' }}>
-                          🔗 Open File in New Tab
-                        </a>
-                        {/* Download original file */}
-                        <a href={`/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}&filename=${encodeURIComponent(viewPaperItem.title || 'download')}&download=true`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-secondary ml-2" style={{ textDecoration: 'none' }}>
-                          📥 Download Original
-                        </a>
-                      </div>
-                      {viewPaperItem.cloudinaryUrl && viewPaperItem.cloudinaryUrl.match(/\.(png|jpg|jpeg|webp|gif)($|\?)/i) ? (
-                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', borderRadius: '12px', overflow: 'auto', padding: '20px' }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={viewPaperItem.cloudinaryUrl} alt={viewPaperItem.title} style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '8px' }} />
+                  {(() => {
+                    let filesArr: any[] = []
+                    if (Array.isArray(viewPaperItem.files) && viewPaperItem.files.length > 0) {
+                      filesArr = viewPaperItem.files.map((f: any) => typeof f === 'string' ? { url: f, name: 'Attachment' } : f)
+                      if (viewPaperItem.cloudinaryUrl && !filesArr.some((f: any) => (f?.url || f) === viewPaperItem.cloudinaryUrl)) {
+                        filesArr.unshift({ url: viewPaperItem.cloudinaryUrl, name: viewPaperItem.title || 'Main Document' })
+                      }
+                    } else if (viewPaperItem.cloudinaryUrl) {
+                      filesArr = [{ url: viewPaperItem.cloudinaryUrl, name: viewPaperItem.title }]
+                    }
+
+                    if (filesArr.length === 0) {
+                      return (
+                        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--clr-text-3)' }}>
+                          <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
+                          <p style={{ fontSize: '15px', color: 'var(--clr-text-2)' }}>No original file attached to this item.</p>
                         </div>
-                      ) : (() => {
-                        const isCloudinaryRaw = viewPaperItem.cloudinaryUrl.includes('res.cloudinary.com')
-                        const isDrive = viewPaperItem.cloudinaryUrl.includes('drive.google.com')
-                        let driveId: string | null = null
-                        if (isDrive) {
-                          const match = viewPaperItem.cloudinaryUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || viewPaperItem.cloudinaryUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/)
-                          if (match?.[1]) driveId = match[1]
-                          else if (typeof parseDriveLink === 'function') driveId = parseDriveLink(viewPaperItem.cloudinaryUrl)
-                        }
+                      )
+                    }
 
-                        const embedSrc = isDrive && driveId
-                          ? `https://drive.google.com/file/d/${driveId}/preview`
-                          : isCloudinaryRaw
-                            ? `/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}#toolbar=0&navpanes=0`
-                            : `https://docs.google.com/gview?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}&embedded=true`
+                    const activeFile = filesArr[selectedFileIdx] || filesArr[0]
+                    const activeUrl = typeof activeFile === 'string' ? activeFile : (activeFile.url || activeFile.path || '')
+                    const activeName = typeof activeFile === 'string' ? `File ${selectedFileIdx + 1}` : (activeFile.name || `File ${selectedFileIdx + 1}`)
+                    const isImage = Boolean(
+                      activeUrl.match(/\.(png|jpg|jpeg|webp|gif|bmp|svg)($|\?)/i) ||
+                      (activeUrl.includes('res.cloudinary.com') && activeUrl.includes('/image/upload/'))
+                    )
+                    const isCloudinaryRaw = activeUrl.includes('res.cloudinary.com')
+                    const isDrive = activeUrl.includes('drive.google.com')
 
-                        return (
+                    let driveId: string | null = null
+                    if (isDrive) {
+                      const match = activeUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || activeUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+                      if (match?.[1]) driveId = match[1]
+                    }
+
+                    const embedSrc = isDrive && driveId
+                      ? `/api/drive-proxy?id=${driveId}#toolbar=0&navpanes=0&scrollbar=0`
+                      : isCloudinaryRaw || activeUrl.toLowerCase().includes('.pdf') || activeUrl.includes('/raw/upload/')
+                        ? `/api/file-proxy?url=${encodeURIComponent(activeUrl)}#toolbar=0&navpanes=0&scrollbar=0`
+                        : `https://docs.google.com/gview?url=${encodeURIComponent(activeUrl)}&embedded=true`
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
+                        {/* Multi-file selector tabs */}
+                        {filesArr.length > 1 && (
+                          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontSize: '12px', color: '#a5b4fc', fontWeight: 700, display: 'flex', alignItems: 'center', marginRight: '6px' }}>
+                              📁 Attached Files ({filesArr.length}):
+                            </span>
+                            {filesArr.map((f: any, idx: number) => {
+                              const name = typeof f === 'string' ? `File ${idx + 1}` : (f.name || `File ${idx + 1}`)
+                              const isSelected = idx === selectedFileIdx
+                              return (
+                                <button
+                                  key={idx}
+                                  className="btn btn-xs"
+                                  style={{
+                                    background: isSelected ? 'var(--grad-brand)' : 'rgba(255,255,255,0.05)',
+                                    color: isSelected ? '#fff' : 'var(--clr-text-2)',
+                                    fontWeight: isSelected ? 700 : 500,
+                                    borderRadius: '6px',
+                                    padding: '5px 12px',
+                                    whiteSpace: 'nowrap',
+                                    border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.1)'
+                                  }}
+                                  onClick={() => setSelectedFileIdx(idx)}
+                                >
+                                  📄 {name}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {/* Active File Toolbar */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                          <span style={{ fontSize: '12px', color: '#a5b4fc', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
+                            📁 {activeName}: {activeUrl}
+                          </span>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <a
+                              href={activeUrl.includes('res.cloudinary.com') && activeUrl.includes('/raw/') ? `/api/file-proxy?url=${encodeURIComponent(activeUrl)}` : activeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-sm btn-primary"
+                              style={{ textDecoration: 'none' }}
+                            >
+                              🔗 Open File in New Tab
+                            </a>
+                            <a
+                              href={`/api/file-proxy?url=${encodeURIComponent(activeUrl)}&filename=${encodeURIComponent(activeName || 'download')}&download=true`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-sm btn-secondary"
+                              style={{ textDecoration: 'none' }}
+                            >
+                              📥 Download Original
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* Document Viewer (Image / PDF Iframe) */}
+                        {isImage ? (
+                          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', borderRadius: '12px', overflow: 'auto', padding: '20px' }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={activeUrl} alt={activeName} style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '8px' }} />
+                          </div>
+                        ) : (
                           <iframe
                             src={embedSrc}
                             style={{ width: '100%', height: '600px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
-                            title={viewPaperItem.title}
+                            title={activeName}
                           />
-                        )
-                      })()}
-                    </>
-                  ) : viewPaperItem.files && viewPaperItem.files.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <h4 style={{ fontSize: '14px', color: '#a5b4fc', fontWeight: 700 }}>📁 Attached Files ({viewPaperItem.files.length})</h4>
-                      {viewPaperItem.files.map((f: any, idx: number) => {
-                        const fUrl = typeof f === 'string' ? f : (f.url || '')
-                        const fName = typeof f === 'string' ? `File ${idx + 1}` : (f.name || `File ${idx + 1}`)
-                        return (
-                          <div key={idx} style={{ padding: '16px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ fontWeight: 600, fontSize: '14px', color: '#fff' }}>📄 {fName}</span>
-                            <a href={fUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ textDecoration: 'none' }}>
-                              🔗 Open / Download File
-                            </a>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--clr-text-3)' }}>
-                      <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
-                      <p style={{ fontSize: '15px', color: 'var(--clr-text-2)' }}>No original file attached to this item.</p>
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               ) : viewPaperMode === 'PREVIEW' ? (
                 <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
@@ -2446,13 +2567,15 @@ function ManageMaterialsTab() {
                     <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Title</label>
                     <input className="input-field" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
                   </div>
+
                   <div>
                     <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Description</label>
                     <textarea className="input-field" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} style={{ minHeight: '80px', resize: 'vertical' }} />
                   </div>
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
-                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Format</label>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Note Type / Format</label>
                       <select className="input-field" value={editForm.noteType || ''} onChange={e => setEditForm({ ...editForm, noteType: e.target.value })} style={{ cursor: 'pointer' }}>
                         <option value="PDF_BOOK">📚 PDF Book</option>
                         <option value="HANDWRITTEN">✍️ Handwritten</option>
@@ -2465,18 +2588,39 @@ function ManageMaterialsTab() {
                         <option value="SYLLABUS">📋 Syllabus</option>
                       </select>
                     </div>
+
                     <div>
-                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Access</label>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Access Level</label>
                       <select className="input-field" value={editForm.isPremium ? 'true' : 'false'} onChange={e => setEditForm({ ...editForm, isPremium: e.target.value === 'true' })} style={{ cursor: 'pointer' }}>
                         <option value="false">🔓 Free</option>
                         <option value="true">💎 Premium</option>
                       </select>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author</label>
-                    <input className="input-field" value={editForm.author || ''} onChange={e => setEditForm({ ...editForm, author: e.target.value })} />
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Approval Status</label>
+                      <select className="input-field" value={editForm.status || 'APPROVED'} onChange={e => setEditForm({ ...editForm, status: e.target.value })} style={{ cursor: 'pointer' }}>
+                        <option value="APPROVED">✅ Approved / Published</option>
+                        <option value="PENDING">⏳ Pending Review</option>
+                        <option value="REJECTED">❌ Rejected</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>Author / Uploader</label>
+                      <input className="input-field" value={editForm.author || ''} onChange={e => setEditForm({ ...editForm, author: e.target.value })} />
+                    </div>
                   </div>
+
+                  {editForm.status === 'REJECTED' && (
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: '#f87171' }}>Rejection Reason (Visible to Uploader)</label>
+                      <input className="input-field" style={{ border: '1px solid rgba(239, 68, 68, 0.4)' }} value={editForm.rejectionReason || ''} onChange={e => setEditForm({ ...editForm, rejectionReason: e.target.value })} placeholder="Reason for rejecting this note..." />
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-2)' }}>File URL (Cloudinary / Google Drive)</label>
                     <input className="input-field" value={editForm.cloudinaryUrl || ''} onChange={e => setEditForm({ ...editForm, cloudinaryUrl: e.target.value })} placeholder="https://res.cloudinary.com/... or https://drive.google.com/..." />

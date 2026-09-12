@@ -37,7 +37,7 @@ function getDriveDownloadUrl(link: string): string {
 }
 
 function getDriveProxyUrl(link: string): string {
-  return `/api/drive-proxy?url=${encodeURIComponent(link)}`
+  return `/api/drive-proxy?url=${encodeURIComponent(link)}#toolbar=0&navpanes=0&scrollbar=0`
 }
 
 import { extractIdFromSlug } from '@/lib/utils'
@@ -117,22 +117,16 @@ export default function DownloadPage() {
     const fileName = getCleanDownloadFileName(title, url)
 
     // If it's a Cloudinary image (non-PDF), route through our image signing API
-    if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
+    if (url.includes('res.cloudinary.com') && url.match(/\.(png|jpg|jpeg|webp|gif)$/i) && !url.toLowerCase().endsWith('.pdf')) {
       const targetNoteId = getNoteTargetId(params)
       return `/api/download/image?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${fileName}`
     }
 
     const targetNoteId = getNoteTargetId(params)
+    const isPdfUrl = url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/') || url.includes('application/pdf') || url.includes('drive.google.com')
 
-    // For PDFs from Cloudinary: always route through file-proxy which handles URL signing.
-    // This fixes 401 errors from both /image/upload/ and /raw/upload/ Cloudinary PDFs.
-    const isPdfUrl = url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/') || url.includes('application/pdf')
-    if (isPdfUrl && url.includes('res.cloudinary.com')) {
-      return `/api/file-proxy?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(fileName)}`
-    }
-
-    // Non-Cloudinary PDFs: watermark API
-    if (isPdfUrl && !url.includes('drive.google.com')) {
+    // All PDFs (Cloudinary, Google Drive, External): route through universal watermark API
+    if (isPdfUrl) {
       return `/api/download/watermark?fileUrl=${encodeURIComponent(url)}&noteId=${targetNoteId}&filename=${encodeURIComponent(fileName)}`
     }
 

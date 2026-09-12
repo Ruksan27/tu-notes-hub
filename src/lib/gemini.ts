@@ -57,8 +57,9 @@ async function callOfficialGemini(
     // Valid Top Gemini Models
     const modelsToRace = [
       'gemini-3.6-flash',
+      'gemini-3.5-flash',
       'gemini-3.5-flash-lite',
-      'gemini-3.5-pro',
+      'gemini-2.5-flash',
     ]
     
     const promises = modelsToRace.map(async (model, index) => {
@@ -210,52 +211,188 @@ export async function callGroq(
   return ''
 }
 
+// Helper to stream OpenAI-compatible SSE endpoints (Groq / Nvidia)
+async function* callOpenAICompatibleStream(
+  endpoint: string,
+  apiKey: string,
+  modelName: string,
+  messages: any[],
+  providerName: string,
+  timeoutMs = 45_000
+): AsyncGenerator<string, void, unknown> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: messages,
+        stream: true
+      }),
+      signal: controller.signal
+    })
+    clearTimeout(timer)
+
+    if (!res.ok) {
+      const errBody = await res.text()
+      console.warn(`[${providerName} Stream] ${modelName} → ${res.status}: ${errBody.substring(0, 150)}`)
+      return
+    }
+
+    if (!res.body) return
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (trimmed.startsWith('data: ')) {
+          const dataStr = trimmed.slice(6)
+          if (dataStr === '[DONE]') break
+          try {
+            const parsed = JSON.parse(dataStr)
+            const content = parsed.choices?.[0]?.delta?.content
+            if (content) {
+              yield content
+            }
+          } catch {
+            // Ignore partial lines
+          }
+        }
+      }
+    }
+  } catch (e: any) {
+    clearTimeout(timer)
+    console.warn(`[${providerName} Stream] ${modelName} error:`, e?.message || e)
+  }
+}
+
 export async function* callGeminiStream(
   prompt: string,
   systemInstruction?: string
 ): AsyncGenerator<string, void, unknown> {
   const keys = getValidKeys()
-  if (keys.length === 0) throw new Error('No API keys available')
 
   const modelsToTry = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-2.0-flash-lite',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-2.5-flash',
   ]
 
-  const startIdx = globalKeyIndex
-  globalKeyIndex = (globalKeyIndex + 1) % keys.length
+  if (keys.length > 0) {
+    const startIdx = globalKeyIndex
+    globalKeyIndex = (globalKeyIndex + 1) % keys.length
 
-  for (let i = 0; i < modelsToTry.length; i++) {
-    const model = modelsToTry[i]
-    const apiKey = keys[(startIdx + i) % keys.length]
-    const genAI = new GoogleGenerativeAI(apiKey)
-    
-    const geminiModel = genAI.getGenerativeModel({
-      model: model,
-      systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
-    })
-
-    try {
-      const parts = [{ text: prompt }]
-      const result = await geminiModel.generateContentStream(parts)
+    for (let i = 0; i < modelsToTry.length; i++) {
+      const model = modelsToTry[i]
+      const apiKey = keys[(startIdx + i) % keys.length]
+      const genAI = new GoogleGenerativeAI(apiKey)
       
-      let gotChunk = false
-      for await (const chunk of result.stream) {
-        gotChunk = true
-        const chunkText = chunk.text()
-        if (chunkText) {
-          yield chunkText
+      const geminiModel = genAI.getGenerativeModel({
+        model: model,
+        systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
+      })
+
+      try {
+        const parts = [{ text: prompt }]
+        const result = await geminiModel.generateContentStream(parts)
+        
+        let gotChunk = false
+        for await (const chunk of result.stream) {
+          gotChunk = true
+          const chunkText = chunk.text()
+          if (chunkText) {
+            yield chunkText
+          }
         }
+        
+        if (gotChunk) return // Successfully streamed all chunks
+      } catch (e: any) {
+        console.warn(`[Gemini SDK Stream] Model ${model} failed, trying next...`, e?.message || e)
       }
-      
-      if (gotChunk) return // Successfully streamed all chunks
-    } catch (e: any) {
-      console.warn(`[Gemini SDK Stream] Model ${model} failed, trying next...`, e?.message || e)
     }
   }
-  
-  throw new Error('All AI models failed. Please check your API keys or try again later.')
+
+  // Fallback 1: Groq Stream Fallback
+  const GROQ_API_KEY = process.env.GROQ_API_KEY
+  if (GROQ_API_KEY) {
+    console.warn('[Gemini Stream Failed] Falling back to Groq AI Stream...')
+    const groqModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768']
+    const messages: any[] = []
+    if (systemInstruction) messages.push({ role: 'system', content: systemInstruction })
+    messages.push({ role: 'user', content: prompt })
+
+    for (const m of groqModels) {
+      let chunkCount = 0
+      try {
+        for await (const chunk of callOpenAICompatibleStream(
+          'https://api.groq.com/openai/v1/chat/completions',
+          GROQ_API_KEY,
+          m,
+          messages,
+          'Groq'
+        )) {
+          chunkCount++
+          yield chunk
+        }
+        if (chunkCount > 0) {
+          console.log(`[Groq Stream Fallback] ✅ ${m} streamed successfully!`)
+          return
+        }
+      } catch (err: any) {
+        console.warn(`[Groq Stream] Model ${m} failed:`, err?.message || err)
+      }
+    }
+  }
+
+  // Fallback 2: Nvidia Stream Fallback
+  const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY
+  if (NVIDIA_API_KEY) {
+    console.warn('[Gemini & Groq Stream Failed] Falling back to Nvidia AI Stream...')
+    const nvidiaModels = ['meta/llama-3.3-70b-instruct', 'nvidia/llama-3.1-nemotron-70b-instruct']
+    const messages: any[] = []
+    if (systemInstruction) messages.push({ role: 'system', content: systemInstruction })
+    messages.push({ role: 'user', content: prompt })
+
+    for (const m of nvidiaModels) {
+      let chunkCount = 0
+      try {
+        for await (const chunk of callOpenAICompatibleStream(
+          'https://integrate.api.nvidia.com/v1/chat/completions',
+          NVIDIA_API_KEY,
+          m,
+          messages,
+          'Nvidia'
+        )) {
+          chunkCount++
+          yield chunk
+        }
+        if (chunkCount > 0) {
+          console.log(`[Nvidia Stream Fallback] ✅ ${m} streamed successfully!`)
+          return
+        }
+      } catch (err: any) {
+        console.warn(`[Nvidia Stream] Model ${m} failed:`, err?.message || err)
+      }
+    }
+  }
+
+  throw new Error('All AI models (Gemini, Groq, Nvidia) failed to respond. Please check your API keys or try again later.')
 }
 
 export async function callGemini(
@@ -266,7 +403,7 @@ export async function callGemini(
   // 1. Try Official Gemini First
   const geminiText = await callOfficialGemini(prompt, systemInstruction, images)
   if (geminiText) return geminiText
-  console.warn('[Gemini] failed or returned empty, falling back to Nvidia')
+  console.warn('[Gemini] failed or returned empty, trying Groq fallback...')
 
   // Build OpenAI-compatible messages array for fallback providers
   const messages: any[] = []
@@ -289,26 +426,7 @@ export async function callGemini(
   userContent.push({ type: 'text', text: prompt })
   messages.push({ role: 'user', content: userContent })
 
-  // 2. Fallback to Nvidia API
-  const nvidiaModels = hasImages 
-    ? ['meta/llama-3.2-11b-vision-instruct']
-    : ['meta/llama-3.3-70b-instruct', 'meta/llama-3.1-70b-instruct', 'nvidia/llama-3.1-nemotron-70b-instruct']
-    
-  for (const m of nvidiaModels) {
-    try {
-      const text = await callNvidia(m, messages)
-      if (text) {
-        console.log(`[Nvidia Fallback] ✅ ${m} answered!`)
-        return text
-      }
-    } catch (e: any) {
-      console.warn(`[Nvidia] ${m} failed:`, e?.message || e)
-      continue
-    }
-  }
-  console.warn('[Nvidia] all models failed or returned empty, falling back to Groq...')
-
-  // 3. Fallback to Groq API
+  // 2. Fallback to Groq API
   const groqModels = hasImages
     ? ['llama-3.2-11b-vision-preview']
     : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768']
@@ -325,9 +443,28 @@ export async function callGemini(
       continue
     }
   }
-  console.warn('[Groq] all models failed or returned empty')
+  console.warn('[Groq] all models failed or returned empty, falling back to Nvidia...')
 
-  throw new Error('All AI providers (Gemini, Nvidia, Groq) failed to respond. Please check your API keys or try again later.')
+  // 3. Fallback to Nvidia API
+  const nvidiaModels = hasImages 
+    ? ['meta/llama-3.2-11b-vision-instruct']
+    : ['meta/llama-3.3-70b-instruct', 'meta/llama-3.1-70b-instruct', 'nvidia/llama-3.1-nemotron-70b-instruct']
+    
+  for (const m of nvidiaModels) {
+    try {
+      const text = await callNvidia(m, messages)
+      if (text) {
+        console.log(`[Nvidia Fallback] ✅ ${m} answered!`)
+        return text
+      }
+    } catch (e: any) {
+      console.warn(`[Nvidia] ${m} failed:`, e?.message || e)
+      continue
+    }
+  }
+  console.warn('[Nvidia] all models failed or returned empty')
+
+  throw new Error('All AI providers (Gemini, Groq, Nvidia) failed to respond. Please check your API keys or try again later.')
 }
 
 // Dedicated Multi-Provider Helper for High Reliability AI Tasks

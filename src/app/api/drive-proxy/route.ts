@@ -30,11 +30,14 @@ function resolveDriveUrl(url: string): string | null {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const url = searchParams.get('url')
+  const urlParam = searchParams.get('url')
+  const idParam = searchParams.get('id')
   const mode = searchParams.get('mode') || 'file'
 
+  const url = urlParam || (idParam ? `https://drive.google.com/file/d/${idParam}/view` : null)
+
   if (!url) {
-    return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 })
+    return NextResponse.json({ error: 'Missing url or id parameter' }, { status: 400 })
   }
 
   const safeUrl = resolveDriveUrl(url)
