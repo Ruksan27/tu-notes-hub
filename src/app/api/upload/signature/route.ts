@@ -26,7 +26,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No cloudinary accounts configured' }, { status: 500 })
     }
 
-    const account = accounts[Math.floor(Math.random() * accounts.length)]
+    let account;
+    // Always upload avatars to the first Cloudinary account to keep them centralized
+    if (folder.includes('avatars')) {
+      account = accounts[0];
+    } else {
+      // Randomly balance everything else
+      account = accounts[Math.floor(Math.random() * accounts.length)];
+    }
 
     cloudinary.config({
       cloud_name: account.cloud_name,
