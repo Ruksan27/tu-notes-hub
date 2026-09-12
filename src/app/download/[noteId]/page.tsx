@@ -41,15 +41,30 @@ function getDriveProxyUrl(link: string): string {
 
 import { extractIdFromSlug } from '@/lib/utils'
 
+const KNOWN_TYPES = ['cheatsheet', 'past-paper', 'note', 'mcq'] as const
+type ContentType = typeof KNOWN_TYPES[number] | null
+
 function getNoteTargetId(p: any): string {
   if (p?.noteParams && Array.isArray(p.noteParams) && p.noteParams.length > 0) {
-    const subjectPart = p.noteParams[0] || ''
-    const itemPart = p.noteParams[p.noteParams.length - 1] || ''
-    return extractIdFromSlug(`${subjectPart}-${itemPart}`)
+    // Filter out known type-segment keywords before building the slug
+    const filtered = (p.noteParams as string[]).filter(s => !KNOWN_TYPES.includes(s as any))
+    const subjectPart = filtered[0] || ''
+    const itemPart = filtered[filtered.length - 1] || ''
+    return extractIdFromSlug(subjectPart === itemPart ? subjectPart : `${subjectPart}-${itemPart}`)
   }
   const raw = ((p?.noteSlug || p?.noteId) as string) || ''
   return extractIdFromSlug(raw)
 }
+
+function getContentType(p: any): ContentType {
+  if (p?.noteParams && Array.isArray(p.noteParams)) {
+    for (const seg of p.noteParams as string[]) {
+      if (KNOWN_TYPES.includes(seg as any)) return seg as ContentType
+    }
+  }
+  return null
+}
+
 
 export default function DownloadPage() {
   const params = useParams()
@@ -164,7 +179,9 @@ export default function DownloadPage() {
     setMounted(true)
 
     if (targetNoteId) {
-      fetch(`/api/notes/${targetNoteId}`)
+      const contentType = getContentType(params)
+      const typeQuery = contentType ? `?type=${contentType}` : ''
+      fetch(`/api/notes/${targetNoteId}${typeQuery}`)
         .then((r) => r.json())
         .then(setNote)
     }
@@ -252,7 +269,7 @@ export default function DownloadPage() {
     fileUrl.toLowerCase().includes('.webp') ||
     fileUrl.toLowerCase().includes('.gif'))
 
-  const isPdf = !isDriveLink && fileUrl.toLowerCase().includes('.pdf')
+  const isPdf = !isDriveLink && (fileUrl.toLowerCase().includes('.pdf') || fileUrl.includes('/raw/upload/'))
   const isDriveImage = isDriveLink && (
     driveContentType.startsWith('image/') ||
     fileUrl.toLowerCase().includes('.png') ||
@@ -273,16 +290,25 @@ export default function DownloadPage() {
     fileUrl.toLowerCase().includes('.pptx')
   )
 
-  // Drive files render from our own proxy. Images and PDFs can be shown directly,
-  // while Office docs/presentations use the Docs viewer with the proxied file URL.
+  // Drive files render from our own proxy or gview. Images and PDFs can be shown directly
+  // via our own proxy (bypassing CORS and auth issues), while Office docs use Docs viewer.
   const driveId = extractDriveFileId(fileUrl)
-  const googleDocsViewer = `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
+  
+  // Use the proxied URL for Google Docs Viewer so it can bypass Cloudinary restrictions
+  // Note: gview needs an absolute URL to work, but on localhost it will fail anyway.
+  // In production, NEXT_PUBLIC_BASE_URL should be set.
+  const absoluteProxiedUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}${proxiedUrl}` 
+    : proxiedUrl
+
+  const googleDocsViewer = `https://docs.google.com/gview?url=${encodeURIComponent(absoluteProxiedUrl)}&embedded=true`
+  
   const previewUrl = isDriveLink
     ? (driveId
       ? `https://docs.google.com/gview?url=${encodeURIComponent(`https://drive.google.com/uc?export=download&id=${driveId}`)}&embedded=true`
-      : googleDocsViewer)
+      : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`)
     : isPdf
-      ? googleDocsViewer
+      ? proxiedUrl
       : isImage
         ? proxiedUrl
         : googleDocsViewer

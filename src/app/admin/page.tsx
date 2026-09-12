@@ -1894,11 +1894,16 @@ function ManageMaterialsTab() {
                         <span style={{ fontSize: '12px', color: '#a5b4fc', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
                           📁 File: {viewPaperItem.cloudinaryUrl}
                         </span>
-                        <a href={viewPaperItem.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ textDecoration: 'none' }}>
+                        {/* Open (viewer) */}
+                        <a href={viewPaperItem.cloudinaryUrl.includes('res.cloudinary.com') && viewPaperItem.cloudinaryUrl.includes('/raw/') ? `/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}` : viewPaperItem.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ textDecoration: 'none' }}>
                           🔗 Open File in New Tab
                         </a>
+                        {/* Download original file */}
+                        <a href={`/api/file-proxy?url=${encodeURIComponent(viewPaperItem.cloudinaryUrl)}&filename=${encodeURIComponent(viewPaperItem.title || 'download')}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-secondary ml-2" style={{ textDecoration: 'none' }}>
+                          📥 Download Original
+                        </a>
                       </div>
-                      {viewPaperItem.cloudinaryUrl.match(/\.(png|jpg|jpeg|webp|gif)($|\?)/i) ? (
+                      {viewPaperItem.cloudinaryUrl && viewPaperItem.cloudinaryUrl.match(/\.(png|jpg|jpeg|webp|gif)($|\?)/i) ? (
                         <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', borderRadius: '12px', overflow: 'auto', padding: '20px' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={viewPaperItem.cloudinaryUrl} alt={viewPaperItem.title} style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '8px' }} />
@@ -1946,7 +1951,7 @@ function ManageMaterialsTab() {
                 <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                   {(() => {
                     // Cheatsheets — show content text directly
-                    if (viewPaperItem.type === 'cheatsheet' && viewPaperItem.extractedText) {
+                    if (viewPaperItem.extractedText) {
                       return (
                         <div style={{ maxWidth: '800px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                           <span className="badge badge-elite" style={{ fontSize: '11px', padding: '4px 12px', width: 'fit-content' }}>✨ CHEATSHEET CONTENT</span>
@@ -3643,7 +3648,8 @@ function UploadTab({ user }: { user?: any }) {
             const { timestamp, signature, cloudName, apiKey, folder: sf } = await sigRes.json()
             
             const ext = noteFile.name.split('.').pop()?.toLowerCase() || ''
-            const rt = ['jpg','jpeg','png','webp','pdf'].includes(ext) ? 'image' : 'auto'
+            // PDFs must be 'raw' — uploading as 'image' restricts access (401)
+            const rt = ext === 'pdf' ? 'raw' : ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'auto'
             
             const cf = new FormData()
             cf.append('file', noteFile)
@@ -3704,7 +3710,8 @@ function UploadTab({ user }: { user?: any }) {
           for (let i = 0; i < sheetFiles.length; i++) {
             const file = sheetFiles[i]
             const ext = file.name.split('.').pop()?.toLowerCase() || ''
-            const resourceType = ['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(ext) ? 'image' : 'auto'
+            // PDFs must be uploaded as 'raw' — uploading as 'image' makes them authenticated-only (401)
+            const resourceType = ext === 'pdf' ? 'raw' : ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? 'image' : 'auto'
 
             const formData = new FormData()
             formData.append('file', file)
