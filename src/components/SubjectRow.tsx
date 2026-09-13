@@ -147,8 +147,8 @@ export default function SubjectRow({
   }
 
   // Categorize notes
-  const notes = subject.notes.filter(n => !['PROJECT_WORK', 'PROJECT', 'GUIDE', 'LAB_WORK', 'SYLLABUS', 'PDF_BOOK'].includes(n.noteType))
-  const labWorks = subject.notes.filter(n => n.noteType === 'LAB_WORK')
+  const notes = subject.notes.filter(n => !['PROJECT_WORK', 'PROJECT', 'GUIDE', 'LAB_WORK', 'LAB_REPORT', 'SYLLABUS', 'PDF_BOOK'].includes(n.noteType))
+  const labWorks = subject.notes.filter(n => n.noteType === 'LAB_WORK' || n.noteType === 'LAB_REPORT')
   const projectWorks = subject.notes.filter(n => n.noteType === 'PROJECT_WORK')
   const projects = subject.notes.filter(n => n.noteType === 'PROJECT')
   const guides = subject.notes.filter(n => n.noteType === 'GUIDE')

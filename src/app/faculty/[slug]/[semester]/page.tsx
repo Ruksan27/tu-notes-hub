@@ -222,7 +222,7 @@ export default async function SemesterPage({ params }: Props) {
     if (linked) {
       if (linked.notes) {
         const filteredLinkedNotes = linked.notes.filter((n: any) => {
-          if (n.noteType === 'LAB_WORK') return sub.linkIncludeLabWork !== false
+          if (n.noteType === 'LAB_WORK' || n.noteType === 'LAB_REPORT') return sub.linkIncludeLabWork !== false
           if (n.noteType === 'PROJECT_WORK') return sub.linkIncludeProjectWork !== false
           if (n.noteType === 'PROJECT') return sub.linkIncludeProjects !== false
           if (n.noteType === 'GUIDE') return sub.linkIncludeGuides !== false

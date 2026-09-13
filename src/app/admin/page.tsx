@@ -3840,8 +3840,6 @@ function UploadTab({ user }: { user?: any }) {
             }
             cloudinaryUrl = driveData.driveLink
             fileSize = driveData.fileSize || `${(noteFile.size / 1024 / 1024).toFixed(2)} MB`
-            toast.dismiss('upload-progress')
-            toast.success('Uploaded to Google Drive automatically! 🚀')
           } catch (err: any) {
             toast.dismiss('upload-progress')
             toast.error(err.message || 'Drive upload error')
@@ -4045,8 +4043,6 @@ function UploadTab({ user }: { user?: any }) {
         }
         cloudinaryUrl = driveData.driveLink
         fileSize = driveData.fileSize || `${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`
-        toast.dismiss('upload-progress')
-        toast.success('Uploaded to Google Drive automatically! 🚀')
       } catch (err: any) {
         toast.dismiss('upload-progress')
         toast.error(err.message || 'Drive upload error')
