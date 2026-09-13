@@ -133,12 +133,17 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          projectId: editingProject?.id,
           title: formData.title,
           description: formData.description,
           technologies: formData.technologies,
           sourceDriveLink: formData.sourceDriveLink,
+          adminDriveLink: formData.adminDriveLink,
           features: formData.features,
           demoUrl: formData.demoUrl,
+          youtubeUrl: formData.youtubeUrl,
+          originalPrice: formData.originalPrice,
+          discountPercentage: formData.discountPercentage,
           hasReportPdf,
           hasDocumentation,
           hasDemoVideo,
@@ -1092,47 +1097,126 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
 
                   {/* AI Valuation Result Card */}
                   {aiValuationResult && (
-                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/80 border border-sky-400/40 rounded-xl p-4">
-                      <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      className="relative overflow-hidden rounded-2xl p-5 sm:p-6 border transition-all duration-300 shadow-2xl"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.98))',
+                        borderColor: 'rgba(56, 189, 248, 0.35)',
+                        boxShadow: '0 20px 40px -15px rgba(14, 165, 233, 0.25)',
+                      }}
+                    >
+                      {/* Glowing background accent */}
+                      <div className="absolute -top-24 -right-24 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                      {/* Top Header Bar: Grade + AI Engine Badge + Apply Button */}
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/10 relative z-10">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <div className="flex items-center gap-1.5 bg-sky-500/15 border border-sky-500/30 px-3 py-1.5 rounded-xl">
+                            <span className="text-sm">⚡</span>
+                            <span className="text-xs font-bold text-sky-300">
+                              Engine: {aiValuationResult.providerUsed || 'Groq / Nvidia / Gemini'}
+                            </span>
+                          </div>
+
                           <span className={`
-                            px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-white/10
-                            ${aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED' 
-                              ? 'bg-pink-500/20 text-pink-400' 
-                              : 'bg-sky-500/20 text-sky-400'}
+                            px-3 py-1.5 rounded-xl text-xs font-black tracking-wider uppercase border shadow-md flex items-center gap-1.5
+                            ${aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED'
+                              ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border-pink-500/40'
+                              : 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-500/40'}
                           `}>
-                            GRADE: {aiValuationResult.complexityGrade}
-                          </span>
-                          <span className="text-sm font-extrabold text-emerald-400">
-                            Calculated Price: Rs. {aiValuationResult.calculatedPriceNpr}
-                          </span>
-                          <span className="text-xs text-slate-400">
-                            (Fair Range: Rs. {aiValuationResult.suggestedRange?.min} - Rs. {aiValuationResult.suggestedRange?.max})
+                            <span>🏆</span> GRADE: {aiValuationResult.complexityGrade || 'INTERMEDIATE'}
                           </span>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => setFormData(f => ({ ...f, originalPrice: aiValuationResult.calculatedPriceNpr }))}
-                          className="text-[11px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg font-extrabold cursor-pointer hover:bg-emerald-500/25 transition-all"
+                          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-xs shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
                         >
-                          ✅ Apply AI Price (Rs. {aiValuationResult.calculatedPriceNpr})
+                          <span>✅</span> Apply AI Price (Rs. {aiValuationResult.calculatedPriceNpr?.toLocaleString()})
                         </button>
                       </div>
 
-                      {/* Justification List */}
-                      {aiValuationResult.justificationList && aiValuationResult.justificationList.length > 0 && (
-                        <div className="mt-2">
-                          <span className="text-[11px] font-extrabold text-slate-400 block mb-1">
-                            💡 Why this price? (Calculation Breakdown):
+                      {/* Price Breakdown Banner */}
+                      <div className="my-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-indigo-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                        <div>
+                          <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">
+                            Calculated Fair Selling Price
                           </span>
-                          <ul className="m-0 pl-4 text-xs text-slate-300 leading-relaxed list-disc">
-                            {aiValuationResult.justificationList.map((reason: string, idx: number) => (
-                              <li key={idx}>{reason}</li>
-                            ))}
-                          </ul>
+                          <div className="flex items-baseline gap-3 flex-wrap">
+                            <span className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-300 to-sky-400">
+                              Rs. {aiValuationResult.calculatedPriceNpr?.toLocaleString()}
+                            </span>
+                            <span className="text-xs font-bold text-slate-300 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
+                              Fair Range: Rs. {aiValuationResult.suggestedRange?.min?.toLocaleString()} – Rs. {aiValuationResult.suggestedRange?.max?.toLocaleString()}
+                            </span>
+                          </div>
                         </div>
-                      )}
+
+                        {aiValuationResult.scoreBreakdown && (
+                          <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                            <div className="bg-black/30 border border-white/10 px-3 py-1.5 rounded-xl">
+                              <span className="text-[10px] text-slate-400 block font-semibold">Tech Stack</span>
+                              <span className="font-extrabold text-cyan-300">{aiValuationResult.scoreBreakdown.techStackScore || 25}/25</span>
+                            </div>
+                            <div className="bg-black/30 border border-white/10 px-3 py-1.5 rounded-xl">
+                              <span className="text-[10px] text-slate-400 block font-semibold">Features</span>
+                              <span className="font-extrabold text-emerald-300">{aiValuationResult.scoreBreakdown.featuresScore || 25}/25</span>
+                            </div>
+                            <div className="bg-black/30 border border-white/10 px-3 py-1.5 rounded-xl">
+                              <span className="text-[10px] text-slate-400 block font-semibold">Deliverables</span>
+                              <span className="font-extrabold text-purple-300">{aiValuationResult.scoreBreakdown.deliverablesScore || 25}/25</span>
+                            </div>
+                            <div className="bg-black/30 border border-white/10 px-3 py-1.5 rounded-xl">
+                              <span className="text-[10px] text-slate-400 block font-semibold">Demand</span>
+                              <span className="font-extrabold text-amber-300">{aiValuationResult.scoreBreakdown.marketDemandScore || 25}/25</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Calculation Breakdown & Marketability Tips */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                        {/* Justification List */}
+                        {aiValuationResult.justificationList && aiValuationResult.justificationList.length > 0 && (
+                          <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4">
+                            <span className="text-xs font-black uppercase tracking-wider text-sky-400 flex items-center gap-1.5 mb-3">
+                              <span>💡</span> Calculation Breakdown &amp; Rationale:
+                            </span>
+                            <div className="space-y-2">
+                              {aiValuationResult.justificationList.map((reason: string, idx: number) => (
+                                <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-200 leading-relaxed">
+                                  <span className="w-4 h-4 rounded-full bg-sky-500/20 text-sky-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 border border-sky-500/30">
+                                    ✓
+                                  </span>
+                                  <span>{reason}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Marketability Tips */}
+                        {aiValuationResult.marketabilityTips && aiValuationResult.marketabilityTips.length > 0 && (
+                          <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4">
+                            <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5 mb-3">
+                              <span>🚀</span> Value Boost Pro Tips:
+                            </span>
+                            <div className="space-y-2">
+                              {aiValuationResult.marketabilityTips.map((tip: string, idx: number) => (
+                                <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-200 leading-relaxed">
+                                  <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30">
+                                    ★
+                                  </span>
+                                  <span>{tip}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </motion.div>
                   )}
                 </div>

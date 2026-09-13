@@ -55,15 +55,16 @@ async function callOfficialGemini(
     }
     
     // Valid Top Gemini Models
-    const modelsToRace = [
+    const modelsToTry = [
       'gemini-3.6-flash',
       'gemini-3.5-flash',
       'gemini-3.5-flash-lite',
       'gemini-2.5-flash',
     ]
     
-    const promises = modelsToRace.map(async (model, index) => {
-      // Pick a distinct API key rotated per request and per model index
+    // Sequential execution: Try 1 model at a time. Stop immediately on first success!
+    for (let index = 0; index < modelsToTry.length; index++) {
+      const model = modelsToTry[index]
       const keyIdx = (startKeyIdx + index) % keys.length
       const apiKey = keys[keyIdx]
       
@@ -76,36 +77,34 @@ async function callOfficialGemini(
         
         const result = await geminiModel.generateContent(parts)
         const text = result.response.text()
-        if (text) {
+        if (text && text.trim()) {
           console.log(`[Gemini SDK] ✅ ${model} (Key #${keyIdx + 1}/${keys.length}) answered!`)
           return text
         }
       } catch (err: any) {
         // If rate limit (429) or quota error occurs, retry immediately with next key
         if (err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('quota')) {
-          console.warn(`[Gemini SDK] Key #${keyIdx + 1} hit quota/429 on ${model}. Retrying with next key...`)
-          const fallbackKey = keys[(keyIdx + 1) % keys.length]
-          const genAI = new GoogleGenerativeAI(fallbackKey)
-          const geminiModel = genAI.getGenerativeModel({
-            model: model,
-            systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
-          })
-          const result = await geminiModel.generateContent(parts)
-          const text = result.response.text()
-          if (text) {
-            console.log(`[Gemini SDK Fallback] ✅ ${model} (Fallback Key) answered!`)
-            return text
+          console.warn(`[Gemini SDK] Key #${keyIdx + 1} hit quota/429 on ${model}. Retrying with fallback key...`)
+          try {
+            const fallbackKey = keys[(keyIdx + 1) % keys.length]
+            const genAI = new GoogleGenerativeAI(fallbackKey)
+            const geminiModel = genAI.getGenerativeModel({
+              model: model,
+              systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
+            })
+            const result = await geminiModel.generateContent(parts)
+            const text = result.response.text()
+            if (text && text.trim()) {
+              console.log(`[Gemini SDK Fallback] ✅ ${model} (Fallback Key) answered!`)
+              return text
+            }
+          } catch {
+            // Proceed to next model
           }
         }
-        throw err
+        console.warn(`[Gemini SDK] Model ${model} (Key #${keyIdx + 1}) failed: ${err?.message || err}. Moving to next model...`)
       }
-      throw new Error(`Empty response from ${model}`)
-    })
-
-    // RACE! Whichever Gemini model answers first without error, wins!
-    const fastestResponse = await Promise.any(promises)
-    return fastestResponse
-
+    }
   } catch (e: any) {
     console.error('[Gemini SDK All Models Failed]', e?.message || e)
   }
@@ -476,13 +475,55 @@ export async function callMultiProviderAI(
   return callGemini(prompt, systemInstruction, images)
 }
 
-// Custom Fallback for Project Valuation (Groq -> Nvidia -> Gemini)
+// Custom Sequential Fallback for Project Valuation (Groq -> Nvidia -> Gemini)
 export async function callProjectValuationAI(
   prompt: string,
   systemInstruction?: string
-): Promise<string> {
-  // Use the multi-provider race (Promise.any) which is much faster and more reliable
-  return callGemini(prompt, systemInstruction)
+): Promise<{ text: string; providerUsed: string }> {
+  const messages: any[] = []
+  if (systemInstruction) {
+    messages.push({ role: 'system', content: systemInstruction })
+  }
+  messages.push({ role: 'user', content: prompt })
+
+  // 1. Try Groq AI First
+  const groqModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768']
+  for (const m of groqModels) {
+    try {
+      const text = await callGroq(m, messages)
+      if (text && text.trim()) {
+        console.log(`[Project Valuation AI] ✅ Groq (${m}) answered!`)
+        return { text, providerUsed: `Groq (${m})` }
+      }
+    } catch (e: any) {
+      console.warn(`[Project Valuation AI] Groq ${m} failed: ${e?.message || e}`)
+    }
+  }
+
+  // 2. Try Nvidia NIM Second
+  console.warn('[Project Valuation AI] Groq failed, switching to Nvidia NIM...')
+  const nvidiaModels = ['meta/llama-3.3-70b-instruct', 'nvidia/llama-3.1-nemotron-70b-instruct']
+  for (const m of nvidiaModels) {
+    try {
+      const text = await callNvidia(m, messages)
+      if (text && text.trim()) {
+        console.log(`[Project Valuation AI] ✅ Nvidia (${m}) answered!`)
+        return { text, providerUsed: `Nvidia (${m})` }
+      }
+    } catch (e: any) {
+      console.warn(`[Project Valuation AI] Nvidia ${m} failed: ${e?.message || e}`)
+    }
+  }
+
+  // 3. Fallback to Gemini AI Third
+  console.warn('[Project Valuation AI] Nvidia failed, switching to Gemini AI...')
+  const geminiText = await callOfficialGemini(prompt, systemInstruction)
+  if (geminiText && geminiText.trim()) {
+    console.log(`[Project Valuation AI] ✅ Gemini answered!`)
+    return { text: geminiText, providerUsed: 'Gemini 3.6 Flash' }
+  }
+
+  throw new Error('All AI providers (Groq, Nvidia, Gemini) failed to evaluate project valuation.')
 }
 
 // Extract text from a document URL (PDF or Image) using Gemini

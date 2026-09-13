@@ -975,7 +975,7 @@ function ManageMaterialsTab() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectId])
 
-  async function handleRunOcr(id: string, type: 'pastpaper' | 'note' | 'cheatsheet', label: string) {
+  async function handleRunOcr(id: string, type: 'pastpaper' | 'note' | 'cheatsheet' | 'solutionbook', label: string) {
     if (!window.confirm(`🤖 Run AI OCR Text Extraction for "${label}"?\n\nThis will send the document to Gemini 3.6 Flash to extract structured questions & text.`)) return
     setOcrRunningId(id)
     toast.info('Extracting text using Gemini AI... ⏳', { autoClose: 10000 })
