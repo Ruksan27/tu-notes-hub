@@ -24,13 +24,28 @@ export async function POST(req: NextRequest) {
       const { title, description = '', noteType = 'PDF_BOOK', isPremium, author = '' } = body
       if (!title) return NextResponse.json({ error: 'Title is required' }, { status: 400 })
 
+      const ALLOWED_NOTE_TYPES = [
+        'HANDWRITTEN', 'SLIDES_PPT', 'PDF_BOOK', 'SHORT_NOTES',
+        'PROJECT_WORK', 'PROJECT', 'GUIDE', 'LAB_WORK', 'LAB_REPORT',
+        'SYLLABUS', 'MCQ_FILE'
+      ]
+      
+      let safeNoteType = noteType
+      if (!ALLOWED_NOTE_TYPES.includes(safeNoteType)) {
+        if (safeNoteType === 'Lab Report') safeNoteType = 'LAB_REPORT'
+        else if (safeNoteType === 'Lab Work') safeNoteType = 'LAB_WORK'
+        else if (safeNoteType === 'Project Work') safeNoteType = 'PROJECT_WORK'
+        else if (safeNoteType === 'PDF Book') safeNoteType = 'PDF_BOOK'
+        else safeNoteType = 'PDF_BOOK'
+      }
+
       const note = await prisma.note.create({
         data: {
           title,
           description,
           cloudinaryUrl,
           fileSize: fileSize || '',
-          noteType,
+          noteType: safeNoteType as any,
           isPremium: isPremium === 'true' || isPremium === true,
           author,
           subjectId,
