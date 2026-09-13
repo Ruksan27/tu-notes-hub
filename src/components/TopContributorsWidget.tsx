@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Trophy } from 'lucide-react';
 
 interface Contributor {
@@ -176,10 +177,11 @@ export default function TopContributorsWidget({ limit = 3 }: { limit?: number })
 
                   {/* Avatar Photo OR First+Last Initials Circle */}
                   {user.avatarUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
+                    <Image
                       src={user.avatarUrl}
                       alt={user.name || 'User avatar'}
+                      width={34}
+                      height={34}
                       style={{
                         width: '34px',
                         height: '34px',

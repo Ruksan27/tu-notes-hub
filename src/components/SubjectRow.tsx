@@ -147,11 +147,12 @@ export default function SubjectRow({
   }
 
   // Categorize notes
-  const notes = subject.notes.filter(n => !['PROJECT_WORK', 'PROJECT', 'GUIDE', 'LAB_WORK', 'SYLLABUS'].includes(n.noteType))
+  const notes = subject.notes.filter(n => !['PROJECT_WORK', 'PROJECT', 'GUIDE', 'LAB_WORK', 'SYLLABUS', 'PDF_BOOK'].includes(n.noteType))
   const labWorks = subject.notes.filter(n => n.noteType === 'LAB_WORK')
   const projectWorks = subject.notes.filter(n => n.noteType === 'PROJECT_WORK')
   const projects = subject.notes.filter(n => n.noteType === 'PROJECT')
   const guides = subject.notes.filter(n => n.noteType === 'GUIDE')
+  const pdfBooks = subject.notes.filter(n => n.noteType === 'PDF_BOOK')
   const syllabusFiles = subject.notes.filter(n => n.noteType === 'SYLLABUS')
   const pastPapers = subject.pastPapers
   const cheatsheets = subject.cheatsheets
@@ -161,7 +162,7 @@ export default function SubjectRow({
   const subSlug = slugify(subject.title) || slugify(subject.code)
   const mcqUrl = semPath ? `${semPath}/${subSlug}/mcq` : `/mcq/${subject.id}`
 
-  const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus') => {
+  const toggleTab = (tabName: 'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'pdfBooks' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus') => {
     if (activeTab === tabName) {
       setActiveTab(null)
     } else {
@@ -206,6 +207,7 @@ export default function SubjectRow({
     else if (projectWorks.length > 0) setActiveTab('projectWork')
     else if (projects.length > 0) setActiveTab('project')
     else if (guides.length > 0) setActiveTab('guide')
+    else if (pdfBooks.length > 0) setActiveTab('pdfBooks')
     else if (syllabusFiles.length > 0) setActiveTab('syllabus')
     else if (cheatsheets.length > 0) setActiveTab('cheatsheets')
     else if (mcqSetsCount > 0) setActiveTab('mcqs')
@@ -278,7 +280,7 @@ export default function SubjectRow({
         </div>
 
         {/* Action Toggles */}
-        {(notes.length > 0 || labWorks.length > 0 || projectWorks.length > 0 || projects.length > 0 || pastPapers.length > 0 || guides.length > 0 || syllabusFiles.length > 0 || solutionBooks.length > 0 || cheatsheets.length > 0 || mcqSetsCount > 0) && (
+        {(notes.length > 0 || labWorks.length > 0 || projectWorks.length > 0 || projects.length > 0 || pastPapers.length > 0 || guides.length > 0 || pdfBooks.length > 0 || syllabusFiles.length > 0 || solutionBooks.length > 0 || cheatsheets.length > 0 || mcqSetsCount > 0) && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
             {notes.length > 0 && (
               <Link
@@ -347,7 +349,19 @@ export default function SubjectRow({
                 style={{ textDecoration: 'none' }}
               >
                 <span style={getPillStyle('guide', guides.length)}>
-                  📘 Books ({guides.length})
+                  📘 Guides ({guides.length})
+                </span>
+              </Link>
+            )}
+
+            {pdfBooks.length > 0 && (
+              <Link
+                href={semPath ? `${semPath}/${subSlug}/pdf-books` : '#'}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTab('pdfBooks') }}
+                style={{ textDecoration: 'none' }}
+              >
+                <span style={getPillStyle('pdfBooks', pdfBooks.length)}>
+                  📚 Books ({pdfBooks.length})
                 </span>
               </Link>
             )}
@@ -553,10 +567,30 @@ export default function SubjectRow({
               {/* Guides List */}
               {activeTab === 'guide' && (
                 <div>
-                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📘 Books & Exam Guides</h4>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📘 Guides & Books</h4>
                   <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                     {guides.map(note => (
                       <Link key={note.id} href={getResourceLink(note.title, 'guides', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
+                        <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>
+                            <span>{note.fileSize || 'N/A'}</span>
+                            {note.isPremium && <span className="badge badge-elite" style={{ fontSize: '9px', padding: '2px 8px' }}>PREMIUM</span>}
+                          </div>
+                        </motion.div>
+                      </Link>
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+
+              {/* PDF Books List */}
+              {activeTab === 'pdfBooks' && (
+                <div>
+                  <h4 style={{ fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>📚 Reference Books</h4>
+                  <motion.div variants={listContainerVariants} initial="hidden" animate="show" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
+                    {pdfBooks.map(note => (
+                      <Link key={note.id} href={getResourceLink(note.title, 'books', getNoteSlug({ ...note, subject: { title: subject.title, code: subject.code } }))} style={{ textDecoration: 'none' }}>
                         <motion.div variants={cardItemVariants} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="glass-card" style={{ padding: '16px', margin: 0, cursor: 'pointer', borderRadius: '12px' }}>
                           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-text-1)', marginBottom: '6px' }}>{note.title}</p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--clr-text-3)' }}>

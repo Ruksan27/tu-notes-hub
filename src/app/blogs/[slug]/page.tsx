@@ -195,12 +195,6 @@ export default async function BlogPostPage({ params }: Props) {
                 <time dateTime={blog.createdAt.toISOString()}>
                   {new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </time>
-                <span style={{ opacity: 0.5 }}>•</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#6ee7b7' }}>
-                  ⏱️ {readingTime} min read
-                </span>
-                <span style={{ opacity: 0.5 }}>•</span>
-                <span>👁️ {blog.views} views</span>
               </div>
             </header>
 

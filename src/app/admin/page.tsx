@@ -4000,7 +4000,16 @@ function UploadTab({ user }: { user?: any }) {
       try {
         const sr = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         const sd = await sr.json()
-        if (sr.ok) { toast.success(sd.message || 'Saved! 🎉'); setNoteTitle(''); setNoteDescription(''); setAuthor(''); setNoteFile(null); setPaperFile(null); setDriveLink('') }
+        if (sr.ok) { 
+          toast.success(sd.message || 'Saved! 🎉'); 
+          setNoteTitle(''); 
+          setNoteDescription(''); 
+          setAuthor(''); 
+          setNoteFile(null); 
+          setPaperFile(null); 
+          setDriveLink('');
+          try { loadMaterials() } catch(e) {}
+        }
         else { toast.error(sd.error || 'Failed') }
       } catch (error) {
         console.error(error)
@@ -4158,6 +4167,7 @@ function UploadTab({ user }: { user?: any }) {
         setAuthor('')
         setNoteFile(null)
         setPaperFile(null)
+        loadMaterials()
       } else {
         toast.error(sd.error || 'Failed to save material')
       }

@@ -359,6 +359,9 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
           .project-right-col {
             display: none !important;
           }
+          .mobile-hide-reviews {
+            display: none !important;
+          }
           body {
             padding-bottom: 75px !important;
           }
@@ -562,7 +565,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
               {[
                 { icon: '💻', label: 'Full Source Code' },
-                { icon: '🗄️', label: 'Database (.sql)' },
+                { icon: '🗄️', label: 'Database' },
                 { icon: '📑', label: 'Project Report / Docs' },
                 { icon: '📧', label: 'Email Delivery' },
               ].map(item => (
@@ -592,79 +595,6 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
             </div>
           </div>
 
-          {/* ── Reviews & Ratings Section ── */}
-          <div style={{ marginTop: '32px', marginBottom: '24px', background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--clr-text-1)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              ⭐ Reviews & Ratings
-            </h2>
-
-            {/* Submit Review Form */}
-            <form onSubmit={handleReviewSubmit} style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Your Rating</label>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setReviewRating(star)}
-                      style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: star <= reviewRating ? '#fbbf24' : 'rgba(255,255,255,0.1)' }}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--clr-text-3)', marginBottom: '6px', fontWeight: 600 }}>Your Comment</label>
-                <textarea
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="Share your experience with this project..."
-                  rows={3}
-                  className="input-field"
-                  style={{ width: '100%', fontSize: '13px' }}
-                />
-              </div>
-              <button type="submit" disabled={isSubmittingReview} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '13px' }}>
-                {isSubmittingReview ? 'Posting...' : 'Post Review'}
-              </button>
-            </form>
-
-            {/* List Reviews */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {reviews.length === 0 ? (
-                <p style={{ color: 'var(--clr-text-3)', fontSize: '13px', fontStyle: 'italic' }}>No reviews yet. Be the first to review!</p>
-              ) : (
-                reviews.map(review => (
-                  <div key={review.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--clr-text-1)' }}>{review.user?.name || 'Anonymous'}</div>
-                        <div style={{ color: '#fbbf24', fontSize: '12px' }}>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--clr-text-3)' }}>
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </span>
-                        {currentUserRole === 'ADMIN' && (
-                          <button
-                            onClick={() => handleDeleteReview(review.id)}
-                            style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', padding: '4px 8px', fontSize: '10px', cursor: 'pointer' }}
-                          >
-                            🗑️ Delete
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <p style={{ color: 'var(--clr-text-2)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
-                      {review.comment}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
 
         </div>
 
@@ -756,7 +686,7 @@ export default function ProjectDetailClient({ project }: { project: Project }) {
               <div style={{ fontSize: '11px', color: 'var(--clr-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, marginBottom: '10px' }}>📦 Package Includes</div>
               {[
                 { icon: '💻', label: 'Full Source Code' },
-                { icon: '🗄️', label: 'Database (.sql)' },
+                { icon: '🗄️', label: 'Database' },
                 { icon: '📑', label: 'Project Report / Docs' },
                 { icon: '📧', label: 'Email Delivery' },
               ].map(item => (

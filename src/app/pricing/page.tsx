@@ -2,7 +2,7 @@
 import type { Metadata } from 'next'
 import PricingPlans from '@/components/PricingPlans'
 
-export const dynamic = 'force-dynamic'
+// removed force-dynamic to allow full static SSG
 
 export const metadata: Metadata = {
   title: 'Pricing — TU Notes Hub Premium Plans',

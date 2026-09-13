@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
 import FacultiesList from '@/components/FacultiesList'
 
-export const dynamic = 'force-dynamic'
+// removed force-dynamic to allow full static SSG
 
 export const metadata: Metadata = {
   title: 'All TU Faculties — BCA, CSIT, BIT, BBS, BBA & More',

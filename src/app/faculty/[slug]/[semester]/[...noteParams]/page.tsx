@@ -6,7 +6,7 @@ import { slugify } from '@/lib/slugs'
 import McqPracticeClient from '@/app/mcq/[subjectId]/McqPracticeClient'
 import DownloadPage from '@/app/download/[noteId]/page'
 
-const KNOWN_TYPES = ['cheatsheet', 'past-paper', 'note', 'mcq', 'notes', 'lab-work', 'project-work', 'projects', 'books', 'question-paper', 'solution-book', 'syllabus', 'guides']
+const KNOWN_TYPES = ['cheatsheet', 'past-paper', 'note', 'mcq', 'notes', 'lab-work', 'project-work', 'projects', 'books', 'question-paper', 'solution-book', 'syllabus', 'guides', 'pdf-books']
 
 interface Props {
   params: Promise<{
@@ -153,7 +153,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (lastSeg === 'lab-work') { typeLabel = 'Lab Reports & Practical Works'; keywordLabel = 'lab reports' }
     else if (lastSeg === 'project-work') { typeLabel = 'Project Work Reports & Documentation'; keywordLabel = 'project works' }
     else if (lastSeg === 'projects') { typeLabel = 'Projects & Source Code'; keywordLabel = 'projects' }
-    else if (lastSeg === 'books' || lastSeg === 'guides') { typeLabel = 'Reference Books & Exam Guides'; keywordLabel = 'guides and books' }
+    else if (lastSeg === 'books' || lastSeg === 'guides') { typeLabel = 'Exam Guides'; keywordLabel = 'guides' }
+    else if (lastSeg === 'pdf-books') { typeLabel = 'Reference Books'; keywordLabel = 'books' }
     else if (lastSeg === 'syllabus') { typeLabel = 'Official Course Syllabus'; keywordLabel = 'syllabus' }
     else if (lastSeg === 'question-paper' || lastSeg === 'past-paper') { typeLabel = 'Past Question Papers'; keywordLabel = 'past paper questions' }
     else if (lastSeg === 'cheatsheet') { typeLabel = 'Exam Revision Cheatsheet'; keywordLabel = 'cheatsheet' }

@@ -15,6 +15,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: '*.cloudinary.com' },
+      { protocol: 'https', hostname: '*.googleusercontent.com' },
     ],
     // Optimize image caching
     minimumCacheTTL: 86400, // 24 hours

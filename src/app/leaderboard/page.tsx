@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { Trophy, Award, UploadCloud, Users, Gift, Star, ArrowLeft } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300 // Update leaderboard every 5 mins instead of every request
 
 export const metadata: Metadata = {
   title: 'Top Student Contributors & Leaderboard | TU Notes Hub',
@@ -205,16 +206,44 @@ export default async function LeaderboardPage() {
                   zIndex: isRank1 ? 2 : 1,
                 }}
               >
-                {/* Glow for Rank 1 */}
+                {/* Glow & Animated Background for Rank 1 */}
                 {isRank1 && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'radial-gradient(circle at 50% 0%, rgba(245,158,11,0.22) 0%, transparent 75%)',
-                      pointerEvents: 'none',
-                    }}
-                  />
+                  <>
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'radial-gradient(circle at 50% 0%, rgba(245,158,11,0.22) 0%, transparent 75%)',
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        opacity: 0.35, // Increased opacity so it is clearly visible
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mixBlendMode: 'screen', // makes it blend nicely with the dark background
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src="/Successful%20target.svg" 
+                        alt="Champion Background" 
+                        style={{ 
+                          width: '140%', 
+                          height: '140%', 
+                          objectFit: 'cover',
+                          transform: 'translateY(5px)'
+                        }} 
+                      />
+                    </div>
+                  </>
                 )}
 
                 {/* Rank Badge Header */}
@@ -231,13 +260,14 @@ export default async function LeaderboardPage() {
                     fontSize: isRank1 ? '13px' : '12px',
                     boxShadow: `0 4px 14px ${avatarBorderColor}55`,
                     letterSpacing: '0.3px',
+                    zIndex: 10, // Bring to front
                   }}
                 >
                   {badgeTitle}
                 </div>
 
                 {/* Avatar with Crown for #1 */}
-                <div style={{ marginBottom: '16px', marginTop: isRank1 ? '8px' : '12px', position: 'relative', display: 'inline-block' }}>
+                <div style={{ marginBottom: '16px', marginTop: isRank1 ? '8px' : '12px', position: 'relative', display: 'inline-block', zIndex: 10 }}>
                   {isRank1 && (
                     <span
                       style={{
@@ -257,10 +287,11 @@ export default async function LeaderboardPage() {
                   )}
 
                   {user.avatarUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
+                    <Image
                       src={user.avatarUrl}
                       alt={user.name}
+                      width={84}
+                      height={84}
                       style={{
                         width: avatarSize,
                         height: avatarSize,
@@ -296,6 +327,8 @@ export default async function LeaderboardPage() {
                 {/* Name */}
                 <h3
                   style={{
+                    position: 'relative',
+                    zIndex: 10,
                     fontSize: isRank1 ? '20px' : '17px',
                     fontWeight: 900,
                     color: '#ffffff',
@@ -309,6 +342,8 @@ export default async function LeaderboardPage() {
                 {/* College / Campus */}
                 <p
                   style={{
+                    position: 'relative',
+                    zIndex: 10,
                     fontSize: '12.5px',
                     color: isRank1 ? '#fde68a' : 'var(--clr-text-3)',
                     margin: '0 0 18px 0',
@@ -321,6 +356,8 @@ export default async function LeaderboardPage() {
                 {/* Points Pill */}
                 <div
                   style={{
+                    position: 'relative',
+                    zIndex: 10,
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -391,8 +428,7 @@ export default async function LeaderboardPage() {
                   <td style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       {user.avatarUrl ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={user.avatarUrl} alt={user.name} style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover' }} />
+                        <Image src={user.avatarUrl} alt={user.name} width={34} height={34} style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', border: `1.5px solid ${idx === 0 ? '#f59e0b' : idx === 1 ? '#94a3b8' : idx === 2 ? '#f97316' : 'rgba(255,255,255,0.1)'}` }}>
                           {getInitials(user.name)}

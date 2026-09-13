@@ -87,8 +87,8 @@ const EMPTY_FORM = {
   features: '',
 }
 
-const LABEL_CLS = 'block text-[10px] font-bold uppercase tracking-widest text-text3 mb-2'
-const INPUT_CLS = 'input-field text-sm'
+const LABEL_CLS = 'block text-[11px] font-bold uppercase tracking-widest text-text3 mb-2.5'
+const INPUT_CLS = 'w-full bg-bg900 border border-border rounded-xl px-4 py-3 text-sm text-text1 placeholder:text-text3 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all'
 
 export default function AdminProjectsTab({ externalSubTab }: Props) {
   const [activeSubTab, setActiveSubTab] = useState<'ITEMS' | 'ORDERS' | 'CARTS'>(externalSubTab ?? 'ITEMS')
@@ -114,10 +114,6 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
   // AI Valuation State for Marketplace Projects
   const [evaluatingPrice, setEvaluatingPrice] = useState(false)
   const [aiValuationResult, setAiValuationResult] = useState<any>(null)
-  const [hasReportPdf, setHasReportPdf] = useState(true)
-  const [hasDocumentation, setHasDocumentation] = useState(true)
-  const [hasDemoVideo, setHasDemoVideo] = useState(false)
-  const [hasSqlScript, setHasSqlScript] = useState(true)
 
   async function handleEvaluateProjectPrice() {
     if (!formData.title && !formData.description && !formData.technologies) {
@@ -143,11 +139,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
           demoUrl: formData.demoUrl,
           youtubeUrl: formData.youtubeUrl,
           originalPrice: formData.originalPrice,
-          discountPercentage: formData.discountPercentage,
-          hasReportPdf,
-          hasDocumentation,
-          hasDemoVideo,
-          hasSqlScript
+          discountPercentage: formData.discountPercentage
         })
       })
 
@@ -1031,17 +1023,17 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
 
                 {/* ── Drive Links ── */}
                 <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-4">
-                  <p className="text-[10px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Source &amp; Delivery</p>
+                  <p className="text-[11px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Source &amp; Delivery</p>
 
                   <div>
-                    <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-brand mb-1"><FolderCode size={12}/> Seller Source Link</label>
-                    <p className="text-[10px] text-text3 mb-2.5">Submitted by seller — for your verification only</p>
+                    <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand mb-1.5"><FolderCode size={14}/> Seller Source Link</label>
+                    <p className="text-[11px] text-text3 mb-3">Submitted by seller — for your verification only</p>
                     <input className={INPUT_CLS + ' font-mono text-xs'} type="url" placeholder="https://drive.google.com/..." value={formData.sourceDriveLink} onChange={e => setFormData({ ...formData, sourceDriveLink: e.target.value })} />
                   </div>
 
                   <div>
-                    <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-warning mb-1"><Rocket size={12}/> Admin Delivery Link</label>
-                    <p className="text-[10px] text-text3 mb-2.5">Emailed to buyer after payment approval</p>
+                    <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-warning mb-1.5"><Rocket size={14}/> Admin Delivery Link</label>
+                    <p className="text-[11px] text-text3 mb-3">Emailed to buyer after payment approval</p>
                     <input className={`${INPUT_CLS} font-mono text-xs focus:border-warning ${formData.adminDriveLink ? 'border-warning/30' : ''}`} type="url" placeholder="https://drive.google.com/..." value={formData.adminDriveLink} onChange={e => setFormData({ ...formData, adminDriveLink: e.target.value })} />
                   </div>
                 </div>
@@ -1075,25 +1067,7 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                     </button>
                   </div>
 
-                  {/* Drive Deliverables Checklist for AI Context */}
-                  <div className="bg-black/20 p-3.5 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                      <input type="checkbox" checked={hasReportPdf} onChange={e => setHasReportPdf(e.target.checked)} className="cursor-pointer" />
-                      📄 Report
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                      <input type="checkbox" checked={hasDocumentation} onChange={e => setHasDocumentation(e.target.checked)} className="cursor-pointer" />
-                      📘 Setup Guide
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                      <input type="checkbox" checked={hasSqlScript} onChange={e => setHasSqlScript(e.target.checked)} className="cursor-pointer" />
-                      🗄️ SQL DB Dump
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                      <input type="checkbox" checked={hasDemoVideo} onChange={e => setHasDemoVideo(e.target.checked)} className="cursor-pointer" />
-                      🎥 Video Link
-                    </label>
-                  </div>
+                  {/* Drive Deliverables Checklist removed as per requirement */}
 
                   {/* AI Valuation Result Card */}
                   {aiValuationResult && (
@@ -1222,8 +1196,8 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
                 </div>
 
                 {/* ── Pricing ── */}
-                <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-4">
-                  <p className="text-[10px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Pricing</p>
+                <div className="bg-bg800 border border-border rounded-2xl p-5 space-y-5">
+                  <p className="text-[11px] font-bold text-text2 uppercase tracking-widest border-b border-border pb-2">Pricing</p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
@@ -1256,21 +1230,21 @@ export default function AdminProjectsTab({ externalSubTab }: Props) {
 
                   {/* Live price preview */}
                   {formData.originalPrice > 0 && (
-                    <div className="bg-bg900 border border-border rounded-xl px-5 py-4 flex items-center justify-between gap-4 mt-2">
+                    <div className="bg-bg900 border border-border rounded-xl px-5 py-4 flex items-center justify-between gap-4 mt-3 shadow-inner">
                       <div>
-                        <div className="text-[10px] uppercase tracking-widest text-text3 mb-1 font-bold">Final Price</div>
-                        <div className="flex items-baseline gap-2.5">
+                        <div className="text-[11px] uppercase tracking-widest text-text3 mb-1.5 font-bold">Final Price</div>
+                        <div className="flex items-baseline gap-3">
                           {formData.discountPercentage > 0 && (
-                            <span className="text-xs text-text3 line-through font-medium">Rs. {formData.originalPrice}</span>
+                            <span className="text-sm text-text3 line-through font-medium">Rs. {formData.originalPrice}</span>
                           )}
-                          <span className="font-black text-2xl text-success">Rs. {calcDiscounted(formData.originalPrice, formData.discountPercentage)}</span>
+                          <span className="font-black text-3xl text-success drop-shadow-md">Rs. {calcDiscounted(formData.originalPrice, formData.discountPercentage)}</span>
                         </div>
                       </div>
                       {formData.discountPercentage > 0 && (
                         <div className="text-right flex flex-col items-end">
-                          <div className="text-[10px] text-text3 uppercase tracking-widest mb-0.5 font-bold">Customer Saves</div>
-                          <div className="font-bold text-lg text-rose-400 mb-1">Rs. {saved(formData.originalPrice, formData.discountPercentage)}</div>
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20">{formData.discountPercentage}% OFF</span>
+                          <div className="text-[11px] text-text3 uppercase tracking-widest mb-1 font-bold">Customer Saves</div>
+                          <div className="font-bold text-xl text-rose-400 mb-1">Rs. {saved(formData.originalPrice, formData.discountPercentage)}</div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20">{formData.discountPercentage}% OFF</span>
                         </div>
                       )}
                     </div>

@@ -79,6 +79,14 @@ export default function SellerCenterTab({ user }: { user: User }) {
   // Declaration Checkboxes
   const [agreeDeclaration, setAgreeDeclaration] = useState(false)
 
+  // AI Pricing Helper States
+  const [evaluatingPrice, setEvaluatingPrice] = useState(false)
+  const [aiValuationResult, setAiValuationResult] = useState<any>(null)
+  const [hasReportPdf, setHasReportPdf] = useState(false)
+  const [hasDocumentation, setHasDocumentation] = useState(false)
+  const [hasSqlScript, setHasSqlScript] = useState(false)
+  const [hasDemoVideo, setHasDemoVideo] = useState(false)
+
   const [saving, setSaving] = useState(false)
   const thumbInputRef = useRef<HTMLInputElement>(null)
   const screenRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
@@ -174,7 +182,71 @@ export default function SellerCenterTab({ user }: { user: User }) {
     setScreenshots([null, null, null, null])
     setScreenshotPreviews([null, null, null, null])
     setAgreeDeclaration(false)
+    setAiValuationResult(null)
     setIsModalOpen(true)
+  }
+
+  async function handleEvaluateProjectPrice() {
+    if (!formData.title && !formData.description && !formData.technologies) {
+      toast.error('Please enter Title, Description, and Tech Stack to run AI Pricing.')
+      return
+    }
+
+    const toastId = toast.loading('🤖 AI is evaluating project complexity...')
+    setEvaluatingPrice(true)
+
+    try {
+      const res = await fetch('/api/ai/project-valuation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          shortDescription: formData.shortDescription,
+          description: formData.description,
+          projectType: formData.projectType,
+          category: formData.category,
+          subcategory: formData.subcategory,
+          technologies: formData.technologies,
+          frontend: formData.frontend,
+          backend: formData.backend,
+          dbType: formData.dbType,
+          framework: formData.framework,
+          libraries: formData.libraries,
+          features: formData.features,
+          modules: formData.modules,
+          projectObjective: formData.projectObjective,
+          requirements: formData.requirements,
+          installation: formData.installation,
+          limitations: formData.limitations,
+          version: formData.version,
+          license: formData.license,
+          salesType: formData.salesType,
+          demoUrl: formData.demoUrl,
+          youtubeUrl: formData.youtubeUrl,
+          githubUrl: formData.githubUrl,
+          sourceDriveLink: formData.sourceDriveLink,
+          hasReportPdf,
+          hasDocumentation,
+          hasDemoVideo,
+          hasSqlScript
+        })
+      })
+
+      const data = await res.json()
+      toast.dismiss(toastId)
+
+      if (res.ok && data.appraisal) {
+        setAiValuationResult(data.appraisal)
+        toast.success(`✨ Fair Price Calculated: Rs. ${data.appraisal.calculatedPriceNpr} (${data.appraisal.complexityGrade})`)
+      } else {
+        toast.error(data.error || 'Failed to evaluate price')
+      }
+    } catch (err: any) {
+      toast.dismiss(toastId)
+      toast.error(err.message || 'Network error during valuation')
+    } finally {
+      setEvaluatingPrice(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -552,64 +624,130 @@ export default function SellerCenterTab({ user }: { user: User }) {
                 <div>
                   <h3 style={{ fontSize: '16px', color: '#a5b4fc', marginBottom: '16px', borderBottom: '1px solid rgba(165,180,252,0.2)', paddingBottom: '8px' }}>Section H — Pricing & AI Valuation Helper</h3>
                   
-                  {/* AI Suggested Pricing Helper Box */}
-                  {(() => {
-                    let baseMin = 1200
-                    let baseMax = 2200
-
-                    if (formData.projectType === 'AI/ML') { baseMin += 1800; baseMax += 3500 }
-                    else if (formData.projectType === 'Mobile Application') { baseMin += 1400; baseMax += 2800 }
-                    else if (formData.projectType === 'Web Application') { baseMin += 1000; baseMax += 2200 }
-
-                    const featureCount = formData.features ? formData.features.split('\n').filter(Boolean).length : 0
-                    baseMin += featureCount * 200
-                    baseMax += featureCount * 400
-
-                    if (formData.backend) { baseMin += 400; baseMax += 800 }
-                    if (formData.dbType) { baseMin += 500; baseMax += 1000 }
-
-                    const suggestedPrice = Math.round((baseMin + baseMax) / 2 / 100) * 100
-                    const est = { min: baseMin, max: baseMax, suggested: Math.max(1500, suggestedPrice) }
-
-                    return (
-                      <div style={{
-                        background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(6,182,212,0.1))',
-                        border: '1px solid rgba(99,102,241,0.3)',
-                        borderRadius: '14px',
-                        padding: '16px',
-                        marginBottom: '16px',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 800, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            🤖 AI Valuation Helper
-                          </span>
-                          <span style={{ fontSize: '13px', fontWeight: 800, color: '#67e8f9' }}>
-                            Fair Range: Rs. {est.min.toLocaleString()} – Rs. {est.max.toLocaleString()}
+                  <div className="bg-gradient-to-br from-sky-500/10 to-indigo-500/10 border border-sky-500/30 rounded-2xl p-5 flex flex-col gap-4 mb-4">
+                    <div className="flex justify-between items-center flex-wrap gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[22px]">🤖</span>
+                        <div>
+                          <h4 className="m-0 font-extrabold text-sky-400 text-[15px]">
+                            AI Project Complexity & Fair Price Evaluator
+                          </h4>
+                          <span className="text-xs text-slate-400">
+                            Student-friendly pricing bounded strictly between <strong>Rs. 1,500 (1.5k)</strong> and <strong>Rs. 9,999 (10k)</strong>.
                           </span>
                         </div>
-                        <p style={{ fontSize: '12px', color: 'var(--clr-text-2)', margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                          Suggested market price based on project type ({formData.projectType || 'General'}), tech stack & features.
-                        </p>
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={() => setFormData({ ...formData, originalPrice: est.suggested })}
-                          style={{
-                            background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-                            color: '#ffffff',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '6px 14px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          ⚡ Apply AI Suggested Price (Rs. {est.suggested.toLocaleString()})
-                        </button>
                       </div>
-                    )
-                  })()}
+
+                      <button
+                        type="button"
+                        onClick={handleEvaluateProjectPrice}
+                        disabled={evaluatingPrice}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 text-white font-extrabold text-[13px] border-none shadow-lg shadow-sky-500/30 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
+                      >
+                        {evaluatingPrice ? (
+                          <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Evaluating...</>
+                        ) : (
+                          '✨ Run Fair AI Pricing'
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Drive Deliverables Checklist for AI Context (Seller Declaration) */}
+                    <div className="bg-black/20 p-3.5 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                        <input type="checkbox" checked={hasReportPdf} onChange={e => setHasReportPdf(e.target.checked)} className="cursor-pointer" />
+                        📄 Report
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                        <input type="checkbox" checked={hasDocumentation} onChange={e => setHasDocumentation(e.target.checked)} className="cursor-pointer" />
+                        📘 Setup Guide
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                        <input type="checkbox" checked={hasSqlScript} onChange={e => setHasSqlScript(e.target.checked)} className="cursor-pointer" />
+                        🗄️ SQL DB Dump
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                        <input type="checkbox" checked={hasDemoVideo} onChange={e => setHasDemoVideo(e.target.checked)} className="cursor-pointer" />
+                        🎥 Video Link
+                      </label>
+                    </div>
+
+                    {/* AI Valuation Result Card */}
+                    {aiValuationResult && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="relative overflow-hidden rounded-2xl p-5 sm:p-6 border transition-all duration-300 shadow-2xl"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.98))',
+                          borderColor: 'rgba(56, 189, 248, 0.35)',
+                          boxShadow: '0 20px 40px -15px rgba(14, 165, 233, 0.25)',
+                        }}
+                      >
+                        <div className="absolute -top-24 -right-24 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/10 relative z-10">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <div className="flex items-center gap-1.5 bg-sky-500/15 border border-sky-500/30 px-3 py-1.5 rounded-xl">
+                              <span className="text-sm">⚡</span>
+                              <span className="text-xs font-bold text-sky-300">
+                                Engine: {aiValuationResult.providerUsed || 'Groq / Nvidia / Gemini'}
+                              </span>
+                            </div>
+
+                            <span className={`
+                              px-3 py-1.5 rounded-xl text-xs font-black tracking-wider uppercase border shadow-md flex items-center gap-1.5
+                              ${aiValuationResult.complexityGrade === 'ENTERPRISE' || aiValuationResult.complexityGrade === 'ADVANCED'
+                                ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border-pink-500/40'
+                                : 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-500/40'}
+                            `}>
+                              <span>🏆</span> GRADE: {aiValuationResult.complexityGrade || 'INTERMEDIATE'}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setFormData(f => ({ ...f, originalPrice: aiValuationResult.calculatedPriceNpr }))}
+                            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-xs shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
+                          >
+                            <span>✅</span> Apply AI Price (Rs. {aiValuationResult.calculatedPriceNpr?.toLocaleString()})
+                          </button>
+                        </div>
+
+                        <div className="my-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-indigo-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                          <div>
+                            <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">
+                              Calculated Fair Selling Price
+                            </span>
+                            <div className="flex items-baseline gap-3 flex-wrap">
+                              <span className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-300 to-sky-400">
+                                Rs. {aiValuationResult.calculatedPriceNpr?.toLocaleString()}
+                              </span>
+                              <span className="text-sm font-semibold text-sky-200/60 bg-sky-500/10 px-2.5 py-1 rounded-lg border border-sky-500/20">
+                                Suggested: Rs. {aiValuationResult.suggestedRange?.min?.toLocaleString()} - {aiValuationResult.suggestedRange?.max?.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 relative z-10">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-400 mb-2.5 flex items-center gap-2 border-b border-sky-500/20 pb-1.5">
+                              <span>📊</span> Value Justification
+                            </span>
+                            <ul className="grid gap-2 m-0 p-0 pl-1 list-none">
+                              {aiValuationResult.justificationList?.map((item: string, idx: number) => (
+                                <li key={idx} className="text-xs text-slate-300 flex items-start gap-2 leading-relaxed">
+                                  <span className="text-emerald-400 shrink-0 mt-0.5">✓</span>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
 
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--clr-text-3)', marginBottom: '8px' }}>Expected Price (Rs.) *</label>

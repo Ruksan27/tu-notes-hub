@@ -12,7 +12,7 @@ const GamifiedCTABanner = nextDynamic(() => import('@/components/GamifiedCTABann
 const TopContributorsWidget = nextDynamic(() => import('@/components/TopContributorsWidget'))
 const AnimatedCounter = nextDynamic(() => import('@/components/AnimatedCounter'))
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60 // Revalidate every 60 seconds (ISR) instead of force-dynamic for much faster loading
 
 export const metadata: Metadata = {
   title: 'TU Notes Hub – Free Notes, Past Papers & AI Exam Predictions for Nepal Students',

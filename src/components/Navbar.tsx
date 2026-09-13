@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'react-toastify'
 
@@ -120,7 +121,7 @@ export default function Navbar() {
         <div className="nav-inner">
           {/* Logo */}
           <Link href="/" className="nav-logo" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <img src="/Logo.gif" alt="TU Notes Hub Logo" style={{ height: '65px', width: 'auto', objectFit: 'contain' }} />
+            <Image src="/Logo.gif" alt="TU Notes Hub Logo" width={180} height={65} style={{ width: 'auto', height: 'auto', maxHeight: '65px', objectFit: 'contain' }} unoptimized />
           </Link>
 
           <div className="nav-links">
@@ -169,7 +170,7 @@ export default function Navbar() {
                   {/* Avatar */}
                   {user.avatarUrl ? (
                     <div className="nav-avatar" style={{ padding: 0, overflow: 'hidden' }}>
-                      <img src={user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <Image src={user.avatarUrl} alt="Avatar" width={32} height={32} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ) : (
                     <div className="nav-avatar">{user.name[0].toUpperCase()}</div>
@@ -291,7 +292,7 @@ export default function Navbar() {
               <div className="nav-mobile-user">
                 {user.avatarUrl ? (
                   <div className="nav-avatar" style={{ width: '42px', height: '42px', padding: 0, overflow: 'hidden' }}>
-                    <img src={user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <Image src={user.avatarUrl} alt="Avatar" width={42} height={42} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 ) : (
                   <div className="nav-avatar" style={{ width: '42px', height: '42px', fontSize: '18px' }}>

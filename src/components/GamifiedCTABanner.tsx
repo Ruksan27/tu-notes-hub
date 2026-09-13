@@ -201,13 +201,15 @@ export default function GamifiedCTABanner() {
         @media (max-width: 768px) {
           .gamified-cta-inner {
             flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 24px !important;
+            align-items: stretch !important;
+            gap: 32px !important;
             padding: 0 20px !important;
           }
           .gamified-cta-right {
             width: 100% !important;
-            justify-content: space-between !important;
+            flex-direction: column-reverse !important;
+            align-items: stretch !important;
+            gap: 24px !important;
           }
         }
       `}</style>

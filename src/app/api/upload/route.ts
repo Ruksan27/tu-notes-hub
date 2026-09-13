@@ -1,5 +1,5 @@
-// src/app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { extractTextFromPdfUrl } from '@/lib/gemini'
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
       // The extractTextFromPdfUrl() model is trained for TU exam-paper format (JSON with groups/questions/options).
       // Running it on regular study notes produces wrong structured output. OCR is for Past Papers only.
 
+      revalidatePath('/', 'layout')
       return NextResponse.json({ note, message: 'Study Note uploaded successfully' })
     }
 
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
         })()
       }
 
+      revalidatePath('/', 'layout')
       return NextResponse.json({ pastPaper, message: 'Past Paper uploaded successfully' })
     }
 
@@ -91,6 +93,7 @@ export async function POST(req: NextRequest) {
           files: files || null
         }
       })
+      revalidatePath('/', 'layout')
       return NextResponse.json({ cheatsheet, message: 'Cheatsheet created successfully' })
     }
 
