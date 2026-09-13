@@ -4006,7 +4006,7 @@ function UploadTab({ user }: { user?: any }) {
           setNoteFile(null); 
           setPaperFile(null); 
           setDriveLink('');
-          try { loadMaterials() } catch(e) {}
+          try { typeof loadMaterials === 'function' && loadMaterials() } catch(e) {}
         }
         else { toast.error(sd.error || 'Failed') }
       } catch (error) {
@@ -4163,7 +4163,7 @@ function UploadTab({ user }: { user?: any }) {
         setAuthor('')
         setNoteFile(null)
         setPaperFile(null)
-        loadMaterials()
+        try { typeof loadMaterials === 'function' && loadMaterials() } catch {}
       } else {
         toast.error(sd.error || 'Failed to save material')
       }

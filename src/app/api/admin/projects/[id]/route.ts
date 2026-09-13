@@ -107,6 +107,44 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const project = await prisma.projectItem.findUnique({ where: { id } })
+    if (project) {
+      const { deleteFromCloudinary } = await import('@/lib/cloudinary')
+      const { deleteFileFromDriveNative } = await import('@/lib/googleDrive')
+
+      const cleanUrl = (url: string) => {
+        try {
+          const parts = url.split('/upload/')
+          if (parts.length === 2) {
+            let path = parts[1]
+            if (path.match(/^v\d+\//)) path = path.substring(path.indexOf('/') + 1)
+            const dot = path.lastIndexOf('.')
+            return dot !== -1 ? path.substring(0, dot) : path
+          }
+        } catch {}
+        return null
+      }
+
+      const filesToDelete = [project.thumbnailUrl, project.screenshot1, project.screenshot2, project.screenshot3, project.screenshot4].filter(Boolean) as string[]
+      for (const fUrl of filesToDelete) {
+        const pubId = cleanUrl(fUrl)
+        if (pubId) {
+          await deleteFromCloudinary(pubId, 'image')
+          await deleteFromCloudinary(pubId, 'raw')
+        }
+      }
+
+      const driveLinks = [project.sourceDriveLink, project.adminDriveLink].filter(Boolean) as string[]
+      for (const dUrl of driveLinks) {
+        let fileId: string | null = null
+        const dMatch = dUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)
+        const idMatch = dUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+        if (dMatch) fileId = dMatch[1]
+        else if (idMatch) fileId = idMatch[1]
+        if (fileId) await deleteFileFromDriveNative(fileId)
+      }
+    }
+
     await prisma.$transaction([
       prisma.cartItem.deleteMany({ where: { projectItemId: id } }),
       prisma.projectOrder.deleteMany({ where: { projectItemId: id } }),

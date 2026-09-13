@@ -313,7 +313,7 @@ export default function SubjectRow({
                 style={{ textDecoration: 'none' }}
               >
                 <span style={getPillStyle('projectWork', projectWorks.length)}>
-                  📁 Proj Work ({projectWorks.length})
+                  📁 Project Work ({projectWorks.length})
                 </span>
               </Link>
             )}
@@ -337,7 +337,7 @@ export default function SubjectRow({
                 style={{ textDecoration: 'none' }}
               >
                 <span style={getPillStyle('pastPapers', pastPapers.length)}>
-                  📝 Papers ({pastPapers.length})
+                  📝 Past Papers ({pastPapers.length})
                 </span>
               </Link>
             )}

@@ -163,7 +163,7 @@ export default function FacultySemesterList({ faculty }: { faculty: FacultyData 
                   {/* Stats Badges — Only show when count > 0 */}
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {totalNotes > 0 && <span className="badge badge-free" style={{ fontSize: '12px' }}>📄 {totalNotes} Notes</span>}
-                    {totalPapers > 0 && <span className="badge badge-semester" style={{ fontSize: '12px' }}>📝 {totalPapers} Papers</span>}
+                    {totalPapers > 0 && <span className="badge badge-semester" style={{ fontSize: '12px' }}>📝 {totalPapers} Past Papers</span>}
                     {totalSolutionBooks > 0 && <span className="badge badge-primary" style={{ fontSize: '12px' }}>📘 {totalSolutionBooks} Books</span>}
                     {totalMcqs > 0 && <span className="badge badge-success" style={{ fontSize: '12px', background: 'rgba(16,185,129,0.15)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }}>✅ {totalMcqs} MCQs</span>}
                     {totalSyllabus > 0 && <span className="badge" style={{ fontSize: '12px', background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>📋 {totalSyllabus} Syllabus</span>}

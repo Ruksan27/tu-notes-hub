@@ -20,7 +20,11 @@ async function deleteFileFromStorage(url: string) {
     }
   } else {
     const publicId = extractPublicId(url)
-    if (publicId) await deleteFromCloudinary(publicId, 'raw')
+    if (publicId) {
+      // Delete from Cloudinary checking both 'raw' (PDFs/docs) and 'image' formats
+      await deleteFromCloudinary(publicId, 'raw')
+      await deleteFromCloudinary(publicId, 'image')
+    }
   }
 }
 
