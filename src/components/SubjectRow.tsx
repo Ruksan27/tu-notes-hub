@@ -105,7 +105,7 @@ export default function SubjectRow({
   semesterOrder?: number
   systemType?: string
 }) {
-  const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus' | null>(null)
+  const [activeTab, setActiveTab] = useState<'notes' | 'labWork' | 'projectWork' | 'project' | 'pastPapers' | 'guide' | 'pdfBooks' | 'cheatsheets' | 'solutionBooks' | 'mcqs' | 'syllabus' | null>(null)
   const [isEliteAI, setIsEliteAI] = useState(false)
   const [selectedCheatsheet, setSelectedCheatsheet] = useState<Cheatsheet | null>(null)
 
