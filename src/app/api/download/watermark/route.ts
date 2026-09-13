@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib'
 import QRCode from 'qrcode'
+import { signCloudinaryUrl } from '@/lib/cloudinary'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. Fetch the original file
-    let fetchUrl = fileUrl
+    let fetchUrl = signCloudinaryUrl(fileUrl)
 
     // Handle Google Drive: convert share URL to direct download URL
     if (fileUrl.includes('drive.google.com')) {
@@ -144,8 +145,8 @@ export async function GET(req: NextRequest) {
         opacity: 0.85,
       })
 
-      // D. Bottom Left: "Downloaded from tunoteshub.me"
-      page.drawText('Downloaded from tunoteshub.me — Free TU Notes & Past Papers', {
+      // D. Bottom Left: "Downloaded from https://tunoteshub.me"
+      page.drawText('Downloaded from https://tunoteshub.me — Free TU Notes & Past Papers', {
         x: 12,
         y: 13,
         size: 8,
@@ -164,10 +165,10 @@ export async function GET(req: NextRequest) {
       })
 
       // F. "Scan to visit" text just below QR (tiny)
-      page.drawText('tunoteshub.me', {
-        x: width - qrSize - 8,
+      page.drawText('https://tunoteshub.me', {
+        x: width - qrSize - 20,
         y: 2,
-        size: 6,
+        size: 5.5,
         font: fontBold,
         color: rgb(0.25, 0.25, 0.25),
         opacity: 0.9,

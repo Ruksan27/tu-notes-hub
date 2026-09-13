@@ -149,7 +149,9 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
         link.href = downloadUrl
         const extension = downloadUrl.includes('fl_attachment') && downloadUrl.match(/\.(png|jpg|jpeg|webp|gif)$/i) ? 'jpg' : 'pdf'
         link.setAttribute('download', `${fileName}.${extension}`)
-        link.target = '_blank'
+        if (!downloadUrl.startsWith('/api/download/')) {
+          link.target = '_blank'
+        }
         link.rel = 'noopener noreferrer'
         document.body.appendChild(link)
         link.click()
@@ -169,7 +171,9 @@ export default function SolutionBookClientView({ book }: { book: BookData }) {
       link.href = downloadUrl
       const extension = downloadUrl.includes('fl_attachment') && downloadUrl.match(/\.(png|jpg|jpeg|webp|gif)$/i) ? 'jpg' : 'pdf'
       link.setAttribute('download', `${fileName}.${extension}`)
-      link.target = '_blank'
+      if (!downloadUrl.startsWith('/api/download/')) {
+        link.target = '_blank'
+      }
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

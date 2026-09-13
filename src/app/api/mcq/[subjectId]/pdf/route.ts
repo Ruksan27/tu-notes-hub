@@ -89,7 +89,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ sub
       })
 
       // Footer Website Link (Bottom Left)
-      page.drawText('Downloaded from tunoteshub.me — Free TU Notes & Solution Hub', {
+      page.drawText('Downloaded from https://tunoteshub.me — Free TU Notes & Solution Hub', {
         x: 40,
         y: 20,
         size: 8,

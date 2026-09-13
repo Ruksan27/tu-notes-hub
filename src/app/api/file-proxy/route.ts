@@ -32,89 +32,10 @@ function getCloudinaryAccounts() {
  * Tries 'authenticated' delivery type first, then 'upload' (public).
  * Falls back to the original URL if signing fails or credentials are missing.
  */
+import { signCloudinaryUrl } from '@/lib/cloudinary'
+
 function trySignCloudinaryUrl(rawUrl: string): string {
-  // Already signed – nothing to do
-  if (/\/s--/.test(rawUrl)) return rawUrl
-
-  const accounts = getCloudinaryAccounts()
-  if (accounts.length === 0) return rawUrl
-
-  const isRaw = rawUrl.includes('/raw/upload/')
-  const isImage = rawUrl.includes('/image/upload/')
-  if (!isRaw && !isImage) return rawUrl
-
-  try {
-    // Extract cloud_name from URL (e.g. https://res.cloudinary.com/<cloud_name>/...)
-    const match = rawUrl.match(/res\.cloudinary\.com\/([^/]+)\//)
-    const urlCloudName = match ? match[1] : ''
-
-    // Find the matching account, or fall back to default
-    const account = accounts.find(a => a.cloud_name === urlCloudName) || accounts[0]
-    if (!account?.api_secret) return rawUrl
-
-    // Configure the SDK with the correct account credentials for this URL
-    cloudinary.config({
-      cloud_name: account.cloud_name,
-      api_key: account.api_key,
-      api_secret: account.api_secret,
-      secure: true,
-    })
-
-    const uploadSegment = isRaw ? '/raw/upload/' : '/image/upload/'
-    const afterUpload = rawUrl.split(uploadSegment)[1]
-    if (!afterUpload) return rawUrl
-
-    // Strip query-string
-    const withoutQuery = afterUpload.split('?')[0]
-    
-    // Extract version if present (e.g. v1789117166)
-    const versionMatch = withoutQuery.match(/^v(\d+)\//)
-    const version = versionMatch ? versionMatch[1] : undefined
-    
-    // Strip leading version prefix for the public ID
-    const publicId = withoutQuery.replace(/^v\d+\//, '')
-
-    if (isRaw) {
-      try {
-        const downloadUrl = cloudinary.utils.private_download_url(publicId, '', {
-          resource_type: 'raw',
-          type: 'upload',
-          expires_at: Math.floor(Date.now() / 1000) + 3600,
-        })
-        console.log('[FILE_PROXY_SIGN] Generated private download URL for raw asset:', downloadUrl)
-        return downloadUrl
-      } catch (err) {
-        console.warn('[FILE_PROXY_SIGN] private_download_url failed:', err)
-      }
-    }
-
-    // For images, try standard signed URLs
-    for (const deliveryType of ['authenticated', 'upload'] as const) {
-      try {
-        const options: any = {
-          resource_type: isImage ? 'image' : 'raw',
-          type: deliveryType,
-          sign_url: true,
-          secure: true,
-          expires_at: Math.floor(Date.now() / 1000) + 3600,
-        }
-        
-        if (version) {
-          options.version = version
-        }
-
-        const signedUrl: string = cloudinary.url(publicId, options)
-        return signedUrl
-      } catch (innerErr) {
-        // Try next type
-      }
-    }
-
-    return rawUrl
-  } catch (e) {
-    console.error('[FILE_PROXY_SIGN] failed, falling back to unsigned URL:', e)
-    return rawUrl
-  }
+  return signCloudinaryUrl(rawUrl)
 }
 
 export async function GET(req: NextRequest) {

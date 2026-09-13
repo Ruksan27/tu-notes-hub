@@ -254,7 +254,9 @@ export default function DownloadPage() {
 
         const link = document.createElement('a')
         link.href = downloadHref
-        link.target = '_blank'
+        if (!downloadHref.startsWith('/api/download/')) {
+          link.target = '_blank'
+        }
         link.download = fileName
         document.body.appendChild(link)
         link.click()
@@ -362,7 +364,9 @@ export default function DownloadPage() {
 
         const link = document.createElement('a')
         link.href = downloadHref
-        link.target = '_blank'
+        if (!downloadHref.startsWith('/api/download/')) {
+          link.target = '_blank'
+        }
         link.download = fileName
         document.body.appendChild(link)
         link.click()
@@ -393,35 +397,29 @@ export default function DownloadPage() {
 
   const getDisplayTitle = () => {
     if (!note || !note.title) return 'Document Not Found'
-    if (note.isCheatsheet) {
-      const facCode = note.subject?.semester?.faculty?.id?.toUpperCase() || 'TU'
-      const semName = note.subject?.semester?.name
-        ? (note.subject.semester.name.toLowerCase().includes('semester') ? note.subject.semester.name : `${note.subject.semester.name} Semester`)
-        : (note.subject?.semester?.order ? `${note.subject.semester.order}th Semester` : '')
-      const subTitle = note.subject?.title ? note.subject.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim() : ''
-      return [
-        `TU ${facCode}`,
-        semName,
-        subTitle,
-        `${note.title} (Cheatsheet)`
-      ].filter(Boolean).join(' — ')
-    }
-    if (note.isPastPaper || !note.noteType) {
-      return (note.title || 'Question Paper').replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
-    }
+    
     const facCode = note.subject?.semester?.faculty?.id?.toUpperCase() || 'BCA'
     const semName = note.subject?.semester?.name
       ? (note.subject.semester.name.toLowerCase().includes('semester') ? note.subject.semester.name : `${note.subject.semester.name} Semester`)
       : (note.subject?.semester?.order ? `${note.subject.semester.order}th Semester` : '')
     const subTitle = note.subject?.title ? note.subject.title.replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim() : ''
-    const cleanNoteTitle = (note.title || 'Study Material').replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
+    const rawNoteTitle = (note.title || 'Study Material').replace(/\s*\((Old|New)\s*Syllabus\)/gi, '').trim()
 
-    const isSubIncluded = subTitle && cleanNoteTitle.toLowerCase().includes(subTitle.toLowerCase())
+    if (note.isCheatsheet) {
+      return [`TU ${facCode}`, semName, subTitle, `${rawNoteTitle} (Cheatsheet)`].filter(Boolean).join(' — ')
+    }
+    
+    if (note.isPastPaper || !note.noteType) {
+      const isSubIncluded = subTitle && rawNoteTitle.toLowerCase().includes(subTitle.toLowerCase())
+      return [`TU ${facCode}`, semName, !isSubIncluded ? subTitle : '', rawNoteTitle].filter(Boolean).join(' — ')
+    }
+
+    const isSubIncluded = subTitle && rawNoteTitle.toLowerCase().includes(subTitle.toLowerCase())
     const parts = [
       `TU ${facCode}`,
       semName,
       !isSubIncluded ? subTitle : '',
-      cleanNoteTitle
+      rawNoteTitle
     ].filter(Boolean)
 
     return parts.join(' — ')
@@ -717,7 +715,9 @@ export default function DownloadPage() {
                       const downloadHref = getFinalDownloadUrl(fileUrl, proxiedUrl, note?.title || '', !isPastPaper)
                       const link = document.createElement('a')
                       link.href = downloadHref
-                      link.target = '_blank'
+                      if (!downloadHref.startsWith('/api/download/')) {
+                        link.target = '_blank'
+                      }
                       link.download = getCleanDownloadFileName(note?.title || '')
                       document.body.appendChild(link)
                       link.click()
